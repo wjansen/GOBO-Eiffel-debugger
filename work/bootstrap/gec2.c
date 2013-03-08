@@ -8544,7 +8544,7 @@ T6 T86f10(T0* C, T14 a1, T14 a2, T6 a3)
 			#ifdef EIF_WINDOWS
 				return (EIF_INTEGER) MultiByteToWideChar(CP_ACP, 0, (LPSTR) a1, -1, (LPWSTR) a2, (int) a3) * sizeof(wchar_t);
 			#else
-				return a3
+				return a3;
 			#endif
 }
 

@@ -5734,7 +5734,7 @@ EIF_POINTER eif_file_dopen(int fd, int how) {
 #ifdef EIF_WINDOWS
 	fp = (FILE *)rt_file_fdopen(fd, rt_file_open_mode(how, (how < 10 ? 't' : 'b')));
 #else
-	fp = (FILE *)rt_file_fdopen(fd, rt_file_open_mode(how'\0'));
+	fp = (FILE *)rt_file_fdopen(fd, rt_file_open_mode(how, '\0'));
 #endif
 	if (fp == (FILE *)0) {
 		esys(); /* Open failed, raise exception */
@@ -7674,7 +7674,7 @@ EIF_BOOLEAN eif_dir_is_executable(EIF_FILENAME dirname) {
 		return ((mode & S_IXGRP) ? EIF_TRUE : EIF_FALSE);
 #ifdef HAS_GETGROUPS
 	else if (eif_group_in_list(gid))
-		return (EIF_BOOLEAN) ((mode & S_IXGRP) ? 'EIF_TRUE : EIF_FALSE);
+		return (EIF_BOOLEAN) ((mode & S_IXGRP) ? EIF_TRUE : EIF_FALSE);
 #endif
 	else
 		return ((mode & S_IXOTH) ? EIF_TRUE : EIF_FALSE);

@@ -14,6 +14,7 @@
 	<option if="${GOBO_EIFFEL}=ge">
 		<option if="${BOEHM_GC}">
 			<option name="garbage_collector" value="boehm"/>
+			<option name="link" value="-pthread"/>
 		</option>
 	</option>
 	<option unless="${DEBUG}">
