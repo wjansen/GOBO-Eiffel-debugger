@@ -205,9 +205,9 @@ EIF_POINTER eif_dir_next(EIF_POINTER dir) {
 #else
 	struct dirent* p = readdir((DIR*)dir);
 	if (p) {
-		char* s = p->d_name;
+		return p->d_name;
 	} else {
-		return EIF_VOID;
+		return NULL;
 	}
 #endif
 }
