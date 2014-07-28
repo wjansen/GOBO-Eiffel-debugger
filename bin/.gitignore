@@ -28,6 +28,7 @@ gexace.exe
 libgexace.dll
 gedb
 gedb.exe
+gedb.sh
 libgedb.so
 libgedb.dll
 gexmlsplit

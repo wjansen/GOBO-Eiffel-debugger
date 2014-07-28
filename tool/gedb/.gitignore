@@ -1,6 +1,7 @@
 *~
 *.vapi
-*.h
+[a-hj-z]*.h
+info.h
 *.c
 *.o
 *.a
