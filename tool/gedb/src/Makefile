@@ -11,8 +11,7 @@ ${SOBJECT} : src_scanner.o _GedbScannerParser.o
 	${AR} q ${SOBJECT} src_scanner.o _GedbScannerParser.o 
 
 _GedbScannerParser.vapi _GedbScannerLexer.lex _GedbScannerParser2.h : src_scanner.vala
-	#vala-lemon-extractor
-	~/vala-lemon-extractor/vle
+	../vle/vala-lemon-extractor
 
 src_scanner.vapi src_scanner.c _GedbScanner.h : src_scanner.vala _GedbScannerParser.vapi ../inspect.vapi
 	valac ${CFLAGS_VALA} --disable-warnings --vapidir=. --vapi=src_scanner.vapi -C -H _GedbScanner.h src_scanner.vala ../inspect.vapi _GedbScannerParser.vapi

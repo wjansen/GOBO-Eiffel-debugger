@@ -10,8 +10,7 @@ SOBJECT ?= libeval_parser.so
 all : ${SOBJECT} eval_parser.vapi
 
 _EvalParserParser2.h _EvalParserParser.vapi _EvalParserLexer.lex _EvalParserParser.lemon: eval_parser.vala
-	#vala-lemon-extractor
-	~/vala-lemon-extractor/vle
+	../vle/vala-lemon-extractor
 
 _EvalParserLexer.c : _EvalParserLexer.lex
 	${LEX} -o _EvalParserLexer.c _EvalParserLexer.lex

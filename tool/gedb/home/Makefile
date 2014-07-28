@@ -10,8 +10,7 @@ SOBJECT ?= libhome_parser.so
 all : ${SOBJECT} home_parser.vapi
 
 _GedbParserParser2.h _GedbParserParser.vapi _GedbParserLexer.lex _GedbParserParser.lemon: home_parser.vala
-	#vala-lemon-extractor
-	~/vala-lemon-extractor/vle
+	../vle/vala-lemon-extractor
 
 _GedbParserLexer.c : _GedbParserLexer.lex
 	${LEX} -o _GedbParserLexer.c _GedbParserLexer.lex

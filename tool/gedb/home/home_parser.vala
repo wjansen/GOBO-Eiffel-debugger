@@ -1,3 +1,8 @@
+/**
+   Scenner/Parser of Eiffel source code to produce tags in the debugger's 
+   text buffer. 
+ */
+
 namespace Gedb {
 
 	[Lemon(token_type=true)]
