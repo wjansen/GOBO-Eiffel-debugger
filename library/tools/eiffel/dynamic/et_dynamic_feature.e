@@ -11,16 +11,19 @@ note
 	revision: "$Revision$"
 
 class ET_DYNAMIC_FEATURE
-
+	
 inherit
-
+	
 	DEBUG_OUTPUT
-
+	
 	ET_TOKEN_CODES
 		export {NONE} all end
-
+		
 	ET_SHARED_TOKEN_CONSTANTS
 		export {NONE} all end
+
+	HASHABLE
+ 		redefine hash_code end
 
 create
 
@@ -517,8 +520,27 @@ feature -- Status setting
 			current_type_needed_set: is_current_type_needed = b
 		end
 
+feature -- HASHABLE
+	
+	hash_code: INTEGER
+		do
+			if internal_hash_code = 0 then
+				internal_hash_code := 3 * static_feature.hash_code + 5 * target_type.hash_code
+				if first_precursor /= Void then
+					internal_hash_code := internal_hash_code + 7 * first_precursor.hash_code
+				end
+				if internal_hash_code < 0 then
+					internal_hash_code := 1 - internal_hash_code
+				end
+				if internal_hash_code = 0 then
+					internal_hash_code := 1
+				end
+			end
+			Result := internal_hash_code
+		end
+	
 feature -- Output
-
+	
 	debug_output: STRING
 			-- String that should be displayed in debugger to represent `Current'
 		do
@@ -535,6 +557,10 @@ feature {NONE} -- Constants
 			dynamic_type_sets_not_void: Result /= Void
 			dynamic_type_sets_empty: Result.is_empty
 		end
+
+feature {NONE} -- Implementation
+	
+	internal_hash_code: INTEGER
 
 invariant
 

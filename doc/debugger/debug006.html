@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
+<meta name="generator" content="hevea 2.09">
+<link rel="stylesheet" type="text/css" href="debug.css">
+<title>Run part</title>
+</head>
+<body >
+<a href="debug005.html"><img src="previous_motif.gif" alt="Previous"></a>
+<a href="index.html"><img src="contents_motif.gif" alt="Up"></a>
+<a href="debug007.html"><img src="next_motif.gif" alt="Next"></a>
+<hr>
+Gedb &#X2013; The Gec debugger<h3 id="sec13" class="subsection">3.3&#XA0;&#XA0;Run part</h3>
+<p><a id="S:run"></a>
+The <span style="font-family:sans-serif">Run</span> part is available only if the debugger is used as runtime analyser 
+(otherwise, the part is hidden). 
+The elements of the part control the stop-and-go behaviour of the debuggee.
+</p><blockquote class="figure"><div class="center"><hr style="width:80%;height:2"></div>
+<div class="center"><img src="debug002.png"></div>
+<div class="caption"><table style="border-spacing:6px;border-collapse:separate;" class="cellpading0"><tr><td style="vertical-align:top;text-align:left;" >Figure 2: The <span style="font-family:sans-serif">Run</span> part.</td></tr>
+</table></div><a id="F:run"></a>
+<div class="center"><hr style="width:80%;height:2"></div></blockquote><p>When the debugger gets invoked then the expression list (if any) 
+in text field <span style="font-family:sans-serif">Print on stop</span> will be evaluated and its values will 
+printed on the <span style="font-family:sans-serif">Console</span> part (see Sec.&#XA0;<a href="debug009.html#S%3Aconsole">3.6</a>). 
+The expressions are evaluated in the routine of the topmost call stack level. 
+If the routine changed after a stop then the expression list disappears 
+(names of local variables in the expressions are now invalid, 
+maybe also query names) and reappears as soon as the routine 
+is entered again with the same target type. </p>
+<h4 id="sec14" class="subsubsection">3.3.1&#XA0;&#XA0;Stop-and-go behaviour</h4>
+<p><a id="S:stopAndGo"></a>
+Control switches forth and back between debugger and debuggee. 
+More precisely, the debugger regains control for any of the following reasons: 
+</p><ul class="itemize"><li class="li-itemize">just after loading the debuggee;
+</li><li class="li-itemize">when the program reaches the target condition of a dynamic command 
+(see below);
+</li><li class="li-itemize">when a <span style="font-family:monospace">debug</span> instruction is reached 
+(and stopping there is enabled, see Sec.&#XA0;<a href="debug007.html#S%3AbreakpointManipulation">3.4.3</a>); 
+</li><li class="li-itemize">when the debuggee is interrupted by pressing the <span style="font-family:sans-serif">Stop</span> button 
+(same effect as interrupt from keyboard); 
+</li><li class="li-itemize">after program end. 
+</li></ul><p>When the debugger got the control the debuggee may be continued 
+by means of the buttons on the top of the part. 
+In particular they have the following effect 
+(where <span style="font-style:italic">n</span> is the value of <span style="font-family:monospace">repeat</span>):
+<br>
+</p><div class="center"><table border=1  style="border-spacing:0;" class="cellpadding1"><tr><td style="text-align:left;border:solid 1px;white-space:nowrap" > Button</td><td style="text-align:left;border:solid 1px;white-space:nowrap" >Key</td><td style="text-align:left;border:solid 1px;white-space:nowrap" >Meaning </td></tr>
+<tr><td style="text-align:left;border:solid 1px;white-space:nowrap" ><span style="font-family:sans-serif">Cont</span></td><td style="text-align:left;border:solid 1px;white-space:nowrap" ><span style="font-family:monospace">F3</span></td><td style="text-align:left;border:solid 1px;white-space:nowrap" >continue to <span style="font-style:italic">n</span>-th occurrence of a breakpoint </td></tr>
+<tr><td style="text-align:left;border:solid 1px;white-space:nowrap" ><span style="font-family:sans-serif">End</span></td><td style="text-align:left;border:solid 1px;white-space:nowrap" ><span style="font-family:monospace">F4</span></td><td style="text-align:left;border:solid 1px;white-space:nowrap" >continue to the end of the <span style="font-style:italic">n</span>-th nested compound </td></tr>
+<tr><td style="text-align:left;border:solid 1px;white-space:nowrap" >&nbsp;</td><td style="text-align:left;border:solid 1px;white-space:nowrap" >&nbsp;</td><td style="text-align:left;border:solid 1px;white-space:nowrap" >instruction, in particular leave <span style="font-family:monospace">loop</span> clauses </td></tr>
+<tr><td style="text-align:left;border:solid 1px;white-space:nowrap" ><span style="font-family:sans-serif">Next</span></td><td style="text-align:left;border:solid 1px;white-space:nowrap" ><span style="font-family:monospace">F5</span></td><td style="text-align:left;border:solid 1px;white-space:nowrap" >continue to the <span style="font-style:italic">n</span>-th instruction </td></tr>
+<tr><td style="text-align:left;border:solid 1px;white-space:nowrap" >	</td><td style="text-align:left;border:solid 1px;white-space:nowrap" >&nbsp;</td><td style="text-align:left;border:solid 1px;white-space:nowrap" >without stepping into called routines </td></tr>
+<tr><td style="text-align:left;border:solid 1px;white-space:nowrap" ><span style="font-family:sans-serif">Step</span></td><td style="text-align:left;border:solid 1px;white-space:nowrap" ><span style="font-family:monospace">F6</span></td><td style="text-align:left;border:solid 1px;white-space:nowrap" >do <span style="font-style:italic">n</span> steps, step also into called routines </td></tr>
+<tr><td style="text-align:left;border:solid 1px;white-space:nowrap" ><span style="font-family:sans-serif">Back</span></td><td style="text-align:left;border:solid 1px;white-space:nowrap" ><span style="font-family:monospace">F7</span></td><td style="text-align:left;border:solid 1px;white-space:nowrap" >continue to the selected stack level </td></tr>
+<tr><td style="text-align:left;border:solid 1px;white-space:nowrap" ><span style="font-family:sans-serif">Stop</span></td><td style="text-align:left;border:solid 1px;white-space:nowrap" ><span style="font-family:monospace">Pause</span></td><td style="text-align:left;border:solid 1px;white-space:nowrap" >interrupt the debuggee 
+</td></tr>
+</table></div><p>
+If some classes have been compiled without debugger information 
+(see Sec.&#XA0;<a href="debug003.html#S%3Ausage">2.3</a>) 
+then the continuation commands stop at the first possible position 
+for which debugger information is available, 
+in particular, the <span style="font-family:sans-serif">Step</span> command stops at the first nested routine call 
+for which debugging information has been generated (if any) 
+or simply jumps over routine calls of the class. 
+Nonetheless, even if debugger information is not generated 
+the actual program positions are monitored, 
+so the contents of the <span style="font-family:sans-serif">Call stack</span> part is correct. 
+</p><p>The counter <span style="font-style:italic">n</span> is determined by the spin button <span style="font-family:sans-serif">repeat</span>. 
+Moreover the effect of <span style="font-family:sans-serif">Cont</span> is modified by the radio buttons
+</p><dl class="description"><dt class="dt-description"><span style="font-family:sans-serif">break</span></dt><dd class="dd-description"> treat breakpoints and tracepoints as defined;
+</dd><dt class="dt-description"><span style="font-family:sans-serif">trace</span></dt><dd class="dd-description"> treat breakpoints as tracepoints, i.e. do not stop;
+</dd><dt class="dt-description"><span style="font-family:sans-serif">ignore</span></dt><dd class="dd-description"> ignore breakpoints and tracepoints at all.
+</dd></dl><p>The effect of button <span style="font-family:sans-serif">Stop</span> <sup><a id="text1" href="debug020.html#note1">1</a></sup> 
+is complementary to that of the other buttons. 
+Quite naturally, also its sensitivity is complementary:
+if the debuggee has stopped for some reason then <span style="font-family:sans-serif">Stop</span> is insensitive 
+while the other &#X201C;dynamic&#X201D; buttons are sensitive, 
+but if the debuggee is running then <span style="font-family:sans-serif">Stop</span> is sensitive while 
+the dynamic buttons (and most GUI elements) are insensitive.
+</p><p>Some remarks seem to be in order to explain when the <span style="font-family:sans-serif">Next</span> 
+and <span style="font-family:sans-serif">Step</span> commands actually stop. 
+Command <span style="font-family:sans-serif">Next</span> stops before the next instruction. 
+In particular, it stops at the keywords and special symbols 
+<span style="font-family:monospace">do</span>, <span style="font-family:monospace">once</span>, <span style="font-family:monospace">from</span>, <span style="font-family:monospace">until</span> (each iteration), <span style="font-family:monospace">across</span>, 
+<span style="font-family:monospace">if</span>, <span style="font-family:monospace">inspect</span>, 
+<span style="font-family:monospace">create</span> (if an instruction), <span style="font-family:monospace">retry</span>, 
+<span style="font-family:monospace">:=</span>, and <span style="font-family:monospace">?=</span>, 
+as well as before a procedure call (qualified or not). 
+</p><blockquote class="quote">
+<div class="center"><span style="font-weight:bold">Hint</span></div> These program points are those where a breakpoint can be set. 
+</blockquote><p>The stop of command <span style="font-family:sans-serif">Step</span> is more involved. 
+If stopped at an instruction (e.g. as the result of a <span style="font-family:sans-serif">Next</span> command) 
+then the program continues to the next routine call or instruction; 
+but if it stopped at (not before!) a routine call 
+then the program steps into the routine 
+and stops there at the <span style="font-family:monospace">do</span> or <span style="font-family:monospace">once</span> keyword 
+(or at the <span style="font-family:monospace">end</span> keyword in case of an already initialised once routine) 
+what is considered stopping at an instruction. 
+The two stages of the <span style="font-family:sans-serif">Step</span> command have been introduced to be able 
+to stop before nested function calls, and to make those stops visible. 
+For example, consider the procedure call 
+<span style="font-family:monospace">some_proc&#XA0;(some_func&#XA0;(arg))</span> 
+(where for simplicity <span style="font-family:monospace">arg</span> is not a function call) 
+and suppose that a <span style="font-family:sans-serif">Next</span> command stopped before the call:
+</p><pre>
+  <span class="textboxed"> </span>some_proc (some_func (arg))
+</pre><p>
+(the stop point is indicated in the displayed source code 
+by green background, here by a boxed character). 
+A following <span style="font-family:sans-serif">Step</span> command continues to the call of <span style="font-family:monospace">some_func</span> 
+but does not yet enter the function (that&#X2019;s for visibility):
+</p><pre>
+   some_proc (<span class="textboxed">s</span>ome_func (arg))
+</pre><p>
+The next <span style="font-family:sans-serif">Step</span> command jumps into the function, and after 
+return (e.g. by command <span style="font-family:sans-serif">Back</span>) 
+the program is ready to enter the procedure by one more <span style="font-family:sans-serif">Step</span> command 
+(again for visibility not yet in the procedure):
+</p><pre>
+  <span class="textboxed">s</span>ome_proc (some_func (arg))
+</pre><p>
+A similar role as the call instructions play for stepping 
+into their argument expressions 
+do the keywords <span style="font-family:monospace">create</span>, <span style="font-family:monospace">if</span>, <span style="font-family:monospace">inspect</span>, <span style="font-family:monospace">until</span> play for the expressions following them. </p>
+<h4 id="sec15" class="subsubsection">3.3.2&#XA0;&#XA0;Mark and reset</h4>
+<p><a id="S:markReset"></a>
+If the program stopped at a point where a breakpoint can be set 
+(underlined in the <span style="font-family:sans-serif">Source</span> part) then the program state 
+(variables on heap and stack, once function values, and program point) 
+may be stored to a file for later restoring during the same debugger session. 
+The stored system state remains valid as long as the current routine 
+is not left to its caller, otherwise, the stored state is silently discarded. 
+Storing and restoring the system state may be used to approximate 
+a critical program point more and more closely. 
+</p><p>Clicking button <span style="font-family:sans-serif">Mark</span> stores the program state and marks 
+the program point to be recoverable. 
+The program point is added to the combobox to its right. 
+A program point in this combobox is recovered when selected. 
+Then also marked program points not in the call stack 
+up to the selected program point are discarded 
+but marked points at the same call stack level remain valid. 
+So, it is possible to jump forward and backward in the same routine call. 
+</p><blockquote class="quote">
+<div class="center"><span style="font-weight:bold">Warnings</span></div> 
+<ul class="itemize"><li class="li-itemize">Non-Eiffel data, e.g. file contents, are not stored and restored. 
+This may cause the program state to be incorrect after <span style="font-family:sans-serif">Reset</span>. 
+</li><li class="li-itemize">Store and restore make a deep traversal through the objects reachable 
+from the current routine, so these actions may take some time. 
+</li><li class="li-itemize">The program state is written to a binary file 
+<span style="font-style:italic">debuggee</span><span style="font-family:sans-serif">.m</span><span style="font-style:italic">n</span> in a temporary directory 
+(<span style="font-style:italic">n</span> is a counter). 
+This file should not be viewed or printed and must not be modified 
+(it is deleted at end of the debugging session).
+</li><li class="li-itemize">Debugger settings such as breakpoint definitions are not stored and restored. 
+So, any breakpoint definitions are preserved 
+across the <span style="font-family:sans-serif">Reset</span> command. 
+</li></ul>
+</blockquote><p>A special variant of restoring a previous program state is given 
+by button <span style="font-family:sans-serif">Restart</span>. The program start is marked automatically 
+(but not shown in the <span style="font-family:sans-serif">Reset</span> list) and restored, 
+as the button name indicates, by clicking <span style="font-family:sans-serif">Restart</span>. 
+This form of restoring does even a bit more: the string in text field 
+<span style="font-family:sans-serif">Arguments</span> becomes the new command line arguments. 
+After editing this field its contents does <U>not</U> 
+present the actual arguments as long as the <span style="font-family:sans-serif">Restart</span> button 
+has not been clicked.
+</p><blockquote class="quote">
+<div class="center"><span style="font-weight:bold">Hint</span></div> 
+Pressing the right mouse button in this text field
+pops up a menu showing how the string is parsed into separate arguments. 
+The menu is for visualization only, clicking an item has no effect. 
+</blockquote><blockquote class="quote">
+<div class="center"><span style="font-weight:bold">Restriction</span></div> Argument parsing works very well 
+under <span style="font-style:oblique">Posix</span> compliant operating systems, 
+otherwise it is rather poor. 
+</blockquote>
+<hr>
+<a href="debug005.html"><img src="previous_motif.gif" alt="Previous"></a>
+<a href="index.html"><img src="contents_motif.gif" alt="Up"></a>
+<a href="debug007.html"><img src="next_motif.gif" alt="Next"></a>
+</body>
+</html>

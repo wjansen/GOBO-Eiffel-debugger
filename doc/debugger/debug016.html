@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
+<meta name="generator" content="hevea 2.09">
+<link rel="stylesheet" type="text/css" href="debug.css">
+<title>Expression lists</title>
+</head>
+<body >
+<a href="debug015.html"><img src="previous_motif.gif" alt="Previous"></a>
+<a href="index.html"><img src="contents_motif.gif" alt="Up"></a>
+<a href="debug017.html"><img src="next_motif.gif" alt="Next"></a>
+<hr>
+Gedb &#X2013; The Gec debugger<h3 id="sec39" class="subsection">4.2&#XA0;&#XA0;Expression lists</h3>
+<p><a id="S:expressionList"></a>
+The more sophisticated expressions are composed as follows: 
+</p><table class="display dcenter"><tr style="vertical-align:middle"><td class="dcell">
+&#XA0;&#XA0;&#XA0;&#XA0;&#XA0;
+
+</td><td class="dcell"><table style="border-spacing:6px;border-collapse:separate;" class="cellpading0"><tr><td style="text-align:right;white-space:nowrap" >&#XA0;&#XA0;<span style="font-style:italic">expression</span>_<span style="font-style:italic">list</span></td><td style="text-align:left;white-space:nowrap" >::=&#XA0;{&#XA0;&#XA0;<span style="font-style:italic">detailed</span>_<span style="font-style:italic">expression</span>&#XA0;&#XA0;&#X201C;<span style="font-family:monospace">,</span>&#X201D;&#XA0;&#XA0;}<sup>+</sup>&#XA0;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&nbsp;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&nbsp;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&nbsp;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&nbsp;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td></tr>
+<tr><td style="text-align:right;white-space:nowrap" >
+<span style="font-style:italic">detailed</span>_<span style="font-style:italic">expression</span></td><td style="text-align:left;white-space:nowrap" >::=&#XA0;<span style="font-style:italic">expression</span>&#XA0;
+&#XA0;[&#XA0;&#XA0;&#X201C;<span style="font-family:monospace">[[</span>&#X201D;&#XA0;&#XA0;<span style="font-style:italic">index</span>_<span style="font-style:italic">range</span>&#XA0;&#XA0;&#X201C;<span style="font-family:monospace">]]</span>&#X201D;&#XA0;]&#XA0;&#XA0;[&#XA0;<span style="font-style:italic">details</span>&#XA0;]&#XA0;&#XA0;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&nbsp;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&nbsp;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&nbsp;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&nbsp;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td></tr>
+<tr><td style="text-align:right;white-space:nowrap" >
+<span style="font-style:italic">details</span></td><td style="text-align:left;white-space:nowrap" >::=&#XA0;&#XA0;&#X201C;<span style="font-family:monospace">{</span>&#X201D;&#XA0;&#XA0;<span style="font-style:italic">expression</span>_<span style="font-style:italic">list</span>&#XA0;&#XA0;&#X201C;<span style="font-family:monospace">}</span>&#X201D;&#XA0;&#XA0;&#XA0;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&nbsp;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&nbsp;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&nbsp;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&nbsp;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td></tr>
+<tr><td style="text-align:right;white-space:nowrap" >
+<span style="font-style:italic">index</span><span style="font-style:italic">_</span><span style="font-style:italic">range</span></td><td style="text-align:left;white-space:nowrap" >::=&#XA0;<span style="font-style:italic">first</span>&#XA0;&#XA0;&#X201C;<span style="font-family:monospace">:</span>&#X201D;&#XA0;&#XA0;<span style="font-style:italic">last</span>&#XA0;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&nbsp;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&nbsp;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&nbsp;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&nbsp;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td></tr>
+<tr><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&#XA0;&#XA0;&#XA0;&#XA0;&#X2223;&#XA0;<span style="font-style:italic">first</span>&#XA0;&#XA0;&#X201C;<span style="font-family:monospace">$</span>&#X201D;&#XA0;&#XA0;<span style="font-style:italic">count</span>&#XA0;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&nbsp;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&nbsp;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&nbsp;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&nbsp;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td></tr>
+<tr><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&#XA0;&#XA0;&#XA0;&#XA0;&#X2223;&#XA0;&#XA0;&#X201C;<span style="font-family:monospace">all</span>&#X201D;&#XA0;&#XA0;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&nbsp;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&nbsp;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&nbsp;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&nbsp;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td></tr>
+<tr><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&#XA0;&#XA0;&#XA0;&#XA0;&#X2223;&#XA0;&#XA0;&#X201C;<span style="font-family:monospace">if</span>&#X201D;&#XA0;&#XA0;<span style="font-style:italic">expression</span>&#XA0;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&nbsp;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&nbsp;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&nbsp;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&nbsp;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td></tr>
+<tr><td style="text-align:right;white-space:nowrap" >
+<span style="font-style:italic">expression</span></td><td style="text-align:left;white-space:nowrap" >::=&#XA0; -&#XA0;- Eiffel expression as just described
+</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&nbsp;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&nbsp;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&nbsp;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&nbsp;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td></tr>
+</table></td></tr>
+</table><p>
+The <span style="font-style:italic">index_range</span> will be discussed in Sec.&#XA0;<a href="debug017.html#S%3AevalArrays">4.3</a>. 
+The expressions within the braces of <span style="font-style:italic">details</span> may start 
+(besides the start item of arbitrary <span style="font-style:italic">expression</span>s) 
+with one or more place-holders <span style="font-family:sans-serif">?</span> 
+referring to the value of the <span style="font-style:italic">expression</span> in front of the braces 
+(if just one <span style="font-family:sans-serif">?</span>) 
+or in front of the <span style="font-style:italic">p</span><sup>th</sup> nested braces (if <span style="font-style:italic">p</span> placeholders). 
+In contrast to <span style="font-style:italic">expression</span>s, <span style="font-style:italic">detailed_expression</span>s 
+may not be further referenced. 
+</p><p>Whether a simple expression is required on input or an expression 
+list is possible depends on the context, 
+the manual precisely distinguishes between
+&#X201C;expression&#X201D;, &#X201C;detailed_expression&#X201D;, and &#X201C;expression list&#X201D;. </p>
+<hr>
+<a href="debug015.html"><img src="previous_motif.gif" alt="Previous"></a>
+<a href="index.html"><img src="contents_motif.gif" alt="Up"></a>
+<a href="debug017.html"><img src="next_motif.gif" alt="Next"></a>
+</body>
+</html>

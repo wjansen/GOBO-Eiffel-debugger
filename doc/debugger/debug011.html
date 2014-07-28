@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
+<meta name="generator" content="hevea 2.09">
+<link rel="stylesheet" type="text/css" href="debug.css">
+<title>Data part</title>
+</head>
+<body >
+<a href="debug010.html"><img src="previous_motif.gif" alt="Previous"></a>
+<a href="index.html"><img src="contents_motif.gif" alt="Up"></a>
+<a href="debug012.html"><img src="next_motif.gif" alt="Next"></a>
+<hr>
+Gedb &#X2013; The Gec debugger<h3 id="sec28" class="subsection">3.8&#XA0;&#XA0;Data part</h3>
+<p><a id="S:data"></a>
+The <span style="font-family:sans-serif">Data</span> part consists of two subparts: 
+a tree displaying objects and their fields and a row of buttons. 
+</p><blockquote class="figure"><div class="center"><hr style="width:80%;height:2"></div>
+<div class="center"><img src="debug006.png"></div>
+<div class="caption"><table style="border-spacing:6px;border-collapse:separate;" class="cellpading0"><tr><td style="vertical-align:top;text-align:left;" >Figure 6: The <span style="font-family:sans-serif">Data</span> part.
+The <span style="font-family:monospace">*</span> in the second column denotes the <span style="font-family:monospace">Current</span> object
+and <span style="font-family:monospace">A</span> denotes a routine argument, 
+the other contents should be clear.</td></tr>
+</table></div><a id="F:data"></a>
+<div class="center"><hr style="width:80%;height:2"></div></blockquote>
+<h4 id="sec29" class="subsubsection">3.8.1&#XA0;&#XA0;Data representation</h4>
+<p><a id="S:dataTree"></a>
+The tree displays the result of expressions in hierarchical order: 
+fields of an object may be displayed as subtrees.
+The nodes of the tree contain the name of the object or field, 
+its category (see below), its value, and its type. 
+The category is a single letter meaning
+</p><dl class="description"><dt class="dt-description"><span style="font-family:sans-serif">*</span></dt><dd class="dd-description"> the <span style="font-weight:bold"><span style="font-family:monospace">Current</span></span> object; 
+</dd><dt class="dt-description">(empty)</dt><dd class="dd-description"> an attribute of the node&#X2019;s parent object;
+</dd><dt class="dt-description"><span style="font-family:sans-serif">A</span></dt><dd class="dd-description"> an argument of the current routine;
+</dd><dt class="dt-description"><span style="font-family:sans-serif">L</span></dt><dd class="dd-description"> a local variable; 
+</dd><dt class="dt-description"><span style="font-family:sans-serif">S</span></dt><dd class="dd-description"> scope dependent variable: variable of an object test 
+or iterator of an <span style="font-family:monospace">across</span> clause; 
+</dd><dt class="dt-description"><span style="font-family:sans-serif">X</span></dt><dd class="dd-description"> the result of an expression evaluation 
+(see Sec.&#XA0;<a href="debug013.html#S%3Aeval">3.10</a>). 
+</dd></dl><p>The tree is filled the following ways:
+</p><ul class="itemize"><li class="li-itemize">by the values of <span style="font-family:monospace">Current</span> and the local variables 
+when a stack frame has been selected, 
+in particular, after stop of the debuggee; 
+</li><li class="li-itemize">additionally by the value of the expression within the <span style="font-family:sans-serif">Evaluation</span> part; 
+</li></ul><p>The format of the data values is controlled by the radio buttons 
+on the bottom of the <span style="font-family:sans-serif">Data</span> part: 
+</p><dl class="description"><dt class="dt-description">
+<span style="font-family:sans-serif">natural</span></dt><dd class="dd-description"> the &#X201C;natural&#X201D; representation of the value 
+if it is of a basic expanded type or is a <span style="font-family:monospace">STRING_*</span>, 
+the address (hexadecimal) of other reference types, 
+empty of other expanded types 
+(the value is given by the values of the object&#X2019;s attributes); 
+</dd><dt class="dt-description"><span style="font-family:sans-serif">ident</span></dt><dd class="dd-description"> objects of a reference type are represented 
+by a unique integer number, the number has a leading underscore 
+to distinguish it from common integer numbers
+(see Sec.&#XA0;<a href="debug012.html#S%3Asql">3.9</a> how the numbers are obtained);
+</dd><dt class="dt-description"><span style="font-family:sans-serif">hex</span></dt><dd class="dd-description"> values of basic expanded types are shown by their 
+hexadecimal representations and values of any reference type 
+by their address. 
+</dd></dl><p>The fields of a value of a <span style="font-family:monospace">SPECIAL</span> type get a <span style="font-style:oblique">C</span> inspired name: 
+the field index enclosed in brackets. Also the type name <span style="font-style:oblique">C</span> inspired:
+the field type name and the value&#X2019;s count enclosed in brackets. 
+For practical reasons the arrangement of both parts has been reversed, 
+first the count then the type name. The reason is that the count at the 
+end would often not be visible in case of a long type name, 
+so it would not be clear that the value is of a <span style="font-family:monospace">SPECIAL</span> type. 
+</p><p>The fields of value of a <span style="font-family:monospace">TUPLE</span> type get the name of their label 
+if the object itself has been declared as <span style="font-family:monospace">TUPLE</span> type 
+with labels, otherwise the names are <span style="font-family:monospace">item_1</span> etc.
+</p><p>Values of <span style="font-family:monospace">agent</span> objects are more peculiar. 
+They are considered to be of an own anonymous type that conforms to 
+<span style="font-family:monospace">ROUTINE</span>, <span style="font-family:monospace">FUNCTION</span>, or <span style="font-family:monospace">PREDICATE</span>. 
+The fields of such a type are its closed arguments and 
+(in case of a <span style="font-family:monospace">FUNCTION</span>) its result value, 
+the field names are the argument names of the agent&#X2019;s routine 
+for the closed arguments or <span style="font-family:monospace">Result</span> for agent&#X2019;s result value.
+Since the type is anonymous, the type name in the table 
+is automatically generated such that it is guaranteed a unique 
+and otherwise invalid type name: it is composed like 
+</p><pre>
+    agent <span style="font-style:italic">type</span>.<span style="font-style:italic">routine</span>(<span style="font-style:italic">args</span>)
+</pre><p>
+where <span style="font-style:italic">type</span> is the name of the agent&#X2019;s base type 
+(enclosed in braces if the target is an open argument),
+<span style="font-style:italic">routine</span> denotes the feature called 
+(the routine name in case of a call agent, 
+otherwise another automatically generated name), 
+and <span style="font-style:italic">args</span> is a comma separated list of question marks
+and underscores indicating open and closed arguments, respectively. 
+The <span style="font-style:italic">routine</span> of an inline agent looks like 
+<span style="font-family:monospace">_</span><span style="font-style:italic">integer</span><span style="font-family:monospace">_</span><span style="font-style:italic">routine</span>
+where <span style="font-style:italic">routine</span> is the name of the routine 
+declaring the agent and <span style="font-style:italic">integer</span> is simply a counter 
+(observe the leading underscore of the resulting name). 
+The <span style="font-style:italic">args</span> include both the open and closed arguments 
+to show how open and closed arguments are distributed in the resulting 
+feature call, this choice makes also the generated type name unique. 
+</p><p>A final remark on the presentation of data whose underlying class 
+is excluded from debugging. 
+If a special treatment of the data is provided as described above 
+(i.e. for basic expanded types, <span style="font-family:monospace">SPECIAL</span>s, <span style="font-family:monospace">TUPLE</span>s, and agents) 
+then this treatment applies (the associated meta-information is not discarded), 
+otherwise, no attributes are shown. 
+Similarly, if the routine of the selected call stack level belongs 
+to such a class then arguments, local variables, object test variables, 
+and across iterators are not shown, only <span style="font-family:monospace">Current</span> is shown 
+(that in turn has no attributes). 
+</p>
+<h4 id="sec30" class="subsubsection">3.8.2&#XA0;&#XA0;Actions</h4>
+<p><a id="S:dataActions"></a>
+A single row in the data tree (provided its category is an attribute 
+or a local variable) can be selected by left clicking. 
+The associated value may then become the source 
+of a breakpoint&#X2019;s <span style="font-family:sans-serif">Watch</span> condition or the target of an assignment 
+from the <span style="font-family:sans-serif">Evaluation</span> part.
+</p><p>A right click on a row (columns <span style="font-family:sans-serif">Name</span> &#X2026;<span style="font-family:sans-serif">Value</span>) 
+opens a pop-up menu showing first an empty line for the value itself 
+then all queries of its dynamic type. 
+Selecting a menu item inserts it into the <span style="font-family:sans-serif">Expr</span> field 
+of the <span style="font-family:sans-serif">Evaluation</span> part. 
+There the query may be treated as any other expression. 
+In particular, arguments of functions are indicated as bullets, 
+they have to be replaced by meaningful expressions 
+before the resulting expression can be computed. 
+In particular, the right operand of infix operators is indicated 
+by a bullet while its left operand is the data clicked, 
+and so is the unique operand of prefix operators. 
+</p><p>A right click on a row in column <span style="font-family:sans-serif">Type</span> opens a pop-up menu 
+showing the typeset of the row&#X2019;s data 
+(i.e. types of source expressions that can be assigned to the data 
+such that forthcoming resolution of dynamic dispatch will work) 
+if assignment is supported and if this set is not trivial 
+(e.g. not for expanded types). 
+The menu is for information display only, 
+selecting an item has no effect. </p>
+<h4 id="sec31" class="subsubsection">3.8.3&#XA0;&#XA0;More data windows</h4>
+<p><a id="S:moreData"></a>
+More <span style="font-family:sans-serif">Data</span> windows can be opened from menu <span style="font-family:sans-serif">Window </span>&#X2192;<span style="font-family:sans-serif"> New data</span>, 
+they contain the data tree and additionally a combobox on top 
+to select a stack level and the buttons <span style="font-family:sans-serif">manually/automatic</span>, 
+<span style="font-family:sans-serif">Update</span>, <span style="font-family:sans-serif">Close</span> on bottom, but they do not contain the radio buttons
+for format selection. 
+These windows and the <span style="font-family:sans-serif">Data</span> part on the main window work independently 
+of each other. 
+After stopping the debuggee the main <span style="font-family:sans-serif">Data</span> part is automatically 
+updated, not the additional <span style="font-family:sans-serif">Data</span> windows if <span style="font-family:sans-serif">manually</span> is selected 
+(in case of <span style="font-family:sans-serif">automatic</span> it is updated like the main <span style="font-family:sans-serif">Data</span> window). 
+This way, it is possible to have at the same time a look 
+at the actual values and at previous values. 
+An additional <span style="font-family:sans-serif">Data</span> window is synchronized to the main <span style="font-family:sans-serif">Data</span> window 
+when its <span style="font-family:sans-serif">Update</span> button is clicked. 
+As long as the window is not synchronized manipulation of data and stack 
+is not possible, the window simply shows what was shown 
+in the last synchronized state. 
+Moreover, a right mouse click works similarly as in the <span style="font-family:sans-serif">Data</span> part 
+if the stack level is not below the <span style="font-family:sans-serif">Data</span> part&#X2019;s stack level 
+(and, of course, if the window is synchronized): 
+the selected query is inserted into the <span style="font-family:sans-serif">Evaluation</span> part 
+with the necessary leading <span style="font-family:sans-serif">^</span> characters added 
+(see Sec.&#XA0;<a href="debug015.html#S%3AgeneralExpression">4.1</a> for the meaning of these characters).
+</p><p>A similar structure has the additional window opened 
+from menu <span style="font-family:sans-serif">Window </span>&#X2192;<span style="font-family:sans-serif"> Global data</span>. 
+It shows the values of constant attributes (indicated by <span style="font-family:monospace">C</span>), 
+once functions (if already computed), 
+and the initialization status of any once routine (indicated by <span style="font-family:monospace">O</span>); 
+the latter are struck through if not yet initialized. 
+The data are arranged class by class, 
+and the window&#X2019;s table has an additional column showing the name 
+of the defining class. 
+The table can be searched for items: 
+after pressing <span style="font-family:monospace">Control-f</span> a text field opens 
+where a string can be entered, 
+then any constant attribute and once routine whose name starts 
+with this string will be highlighted. </p>
+<hr>
+<a href="debug010.html"><img src="previous_motif.gif" alt="Previous"></a>
+<a href="index.html"><img src="contents_motif.gif" alt="Up"></a>
+<a href="debug012.html"><img src="next_motif.gif" alt="Next"></a>
+</body>
+</html>

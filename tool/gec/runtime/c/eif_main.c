@@ -1,3 +1,5 @@
+#ifndef EIF_MAIN_C
+#define EIF_MAIN_C
 /*
 	description:
 
@@ -9,9 +11,6 @@
 	date: "$Date$"
 	revision: "$Revision$"
 */
-
-#ifndef EIF_MAIN_C
-#define EIF_MAIN_C
 
 #ifdef __cplusplus
 extern "C" {

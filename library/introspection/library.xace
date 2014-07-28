@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+
+<library name="introspection" prefix="is_">
+	<description>
+		description: "Xace file for the Gobo Eiffel Introspection Library"
+		library: "Gobo Eiffel Introspection Library"
+		copyright: "Copyright (c) 2001-2009, Eric Bezault and others"
+		license: "MIT License"
+		date: "$Date$"
+		revision: "$Revision$"
+	</description>
+
+	<cluster name="intro" location="${GOBO}/library/introspection">
+	</cluster>
+</library>

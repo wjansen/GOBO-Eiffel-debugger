@@ -45,7 +45,7 @@ feature -- Access
 
 feature -- Basic operations
 
-	build_scope (a_expression: ET_EXPRESSION; a_scope: ET_OBJECT_TEST_SCOPE; a_class: ET_CLASS)
+	build_scope (a_expression: ET_EXPRESSION; a_scope: ET_OBJECT_TEST_SCOPE; a_class: ET_CLASS; a_first_node, a_last_node: ET_AST_NODE)
 			-- Add to `a_scope' the object-tests found in `a_expression', appearing in
 			-- class `a_class', that are guaranteed to be successful if `a_expression'
 			-- is evaluated to True.
@@ -53,10 +53,12 @@ feature -- Basic operations
 		require
 			a_expression_not_void: a_expression /= Void
 			a_class_not_void: a_class /= Void
+			when_first_node: a_first_node /= Void implies a_last_node /= Void
 		local
 			old_negated: BOOLEAN
 			old_scope: like scope
 			old_class: ET_CLASS
+			old_first, old_last: ET_AST_NODE
 		do
 			has_fatal_error := False
 			old_class := current_class
@@ -65,13 +67,19 @@ feature -- Basic operations
 			scope := a_scope
 			old_negated := is_negated
 			is_negated := False
+			old_first := first_node
+			first_node := a_first_node
+			old_last := last_node
+			last_node := a_last_node
 			a_expression.process (Current)
 			is_negated := old_negated
 			current_class := old_class
 			scope := old_scope
+			first_node := old_first
+			last_node := old_last
 		end
 
-	build_negated_scope (a_expression: ET_EXPRESSION; a_scope: ET_OBJECT_TEST_SCOPE; a_class: ET_CLASS)
+	build_negated_scope (a_expression: ET_EXPRESSION; a_scope: ET_OBJECT_TEST_SCOPE; a_class: ET_CLASS; a_first_node, a_last_node: ET_AST_NODE)
 			-- Add to `a_scope' the object-tests found in `a_expression', appearing in
 			-- class `a_class', that are guaranteed to be successful if `a_expression'
 			-- is evaluated to False.
@@ -79,10 +87,12 @@ feature -- Basic operations
 		require
 			a_expression_not_void: a_expression /= Void
 			a_class_not_void: a_class /= Void
+			when_first_node: a_first_node /= Void implies a_last_node /= Void
 		local
 			old_negated: BOOLEAN
 			old_scope: like scope
 			old_class: ET_CLASS
+			old_first, old_last: ET_AST_NODE
 		do
 			has_fatal_error := False
 			old_class := current_class
@@ -91,10 +101,16 @@ feature -- Basic operations
 			scope := a_scope
 			old_negated := is_negated
 			is_negated := True
+			old_first := first_node
+			first_node := a_first_node
+			old_last := last_node
+			last_node := a_last_node
 			a_expression.process (Current)
 			is_negated := old_negated
 			current_class := a_class
 			scope := old_scope
+			first_node := old_first
+			last_node := old_last
 		end
 
 feature {ET_AST_NODE} -- Processing
@@ -129,6 +145,7 @@ feature {ET_AST_NODE} -- Processing
 	process_named_object_test (an_expression: ET_NAMED_OBJECT_TEST)
 			-- Process `an_expression'.
 		local
+			l_object_test: ET_NAMED_OBJECT_TEST
 			l_other_object_test: ET_NAMED_OBJECT_TEST
 		do
 			if not is_negated then
@@ -146,6 +163,11 @@ feature {ET_AST_NODE} -- Processing
 						error_handler.report_vuot1f_error (current_class, an_expression, l_other_object_test)
 					else
 						scope.add_object_test (an_expression)
+						l_object_test := scope.object_tests.item (scope.count)
+						if first_node /= Void and last_node /= Void then
+							l_object_test.set_first_scope_position (first_node.first_position)
+							l_object_test.set_last_scope_position (last_node.last_position)	
+						end
 					end
 				end
 			end
@@ -175,4 +197,12 @@ feature {ET_AST_NODE} -- Processing
 			end
 		end
 
+feature {NONE} -- Implementation
+
+	first_node, last_node: ET_AST_NODE
+
+invariant
+
+	when_first_node: first_node /=Void implies last_node /= Void
+	
 end

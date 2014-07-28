@@ -12,6 +12,7 @@
 
 	<cluster name="parse" location="${GOBO}/library/parse">
 		<option name="abstract" value="true"/>
+		<option name="debugger" value="false"/>
 		<cluster name="error"/>
 		<cluster name="fsm"/>
 		<cluster name="generation"/>

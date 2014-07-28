@@ -1744,6 +1744,19 @@ feature {NONE} -- Kernel feature validity
 				else
 					current_system.set_iteration_cursor_forth_seed (0)
 				end
+			elseif l_class.is_actionable_class then
+					-- ACTIONABLE.make_as_actionable.
+				named_features.search (tokens.make_as_actionable_feature_name)
+				if named_features.found then
+					l_feature := named_features.found_item.flattened_feature
+					if l_feature.is_procedure then
+						current_system.set_make_as_actionable_seed (l_feature.first_seed)
+					else
+						current_system.set_make_as_actionable_seed (0)
+					end
+				else
+					current_system.set_make_as_actionable_seed (0)
+				end
 			end
 		end
 

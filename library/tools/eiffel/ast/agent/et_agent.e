@@ -19,6 +19,8 @@ inherit
 			is_never_void
 		end
 
+	HASHABLE
+
 feature -- Access
 
 	agent_keyword: ET_AGENT_KEYWORD
@@ -30,6 +32,9 @@ feature -- Access
 	arguments: ET_AGENT_ARGUMENT_OPERANDS
 			-- Arguments
 
+	closed_operands_tuple: ET_DYNAMIC_TUPLE_TYPE
+			-- Tuple type of the closed operands
+	
 	implicit_result: ET_RESULT
 			-- Fictitious node corresponding to the result of the
 			-- associated feature when it's a query
@@ -85,6 +90,29 @@ feature -- Setting
 			argumnts_set: arguments = an_arguments
 		end
 
+	set_closed_operands_tuple(a_type: ET_DYNAMIC_TYPE)
+		require
+			a_type_not_void: a_type /= Void
+		do
+			closed_operands_tuple ?= a_type
+		ensure
+			closed_operands_tuple_set: closed_operands_tuple = a_type
+		end
+	
+feature -- HASHABLE
+
+	hash_code: INTEGER
+		do
+			if internal_hash_code = 0 then
+				internal_hash_code := 2 * agent_keyword.position.line 
+					* agent_keyword.position.column + 1
+				if internal_hash_code < 0 then
+					internal_hash_code := -internal_hash_code
+				end
+			end
+			Result := internal_hash_code
+		end
+
 feature {ET_AGENT_IMPLICIT_CURRENT_TARGET} -- Implicit node positions
 
 	implicit_target_position: ET_AST_NODE
@@ -102,6 +130,11 @@ feature {ET_AGENT_IMPLICIT_OPEN_ARGUMENT} -- Implicit node positions
 		ensure
 			implicit_argument_position_not_void: Result /= Void
 		end
+
+feature {NONE} -- Implementation
+
+	internal_hash_code: INTEGER
+		-- Fixed hashcode value 
 
 invariant
 

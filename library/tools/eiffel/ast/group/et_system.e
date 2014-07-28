@@ -145,6 +145,9 @@ feature -- Feature seeds
 	dispose_seed: INTEGER
 			-- Seed of feature 'dispose' in class "DISPOSABLE"
 
+	make_as_actionable_seed: INTEGER
+			-- Seed of feature 'make_as_actionable' in class "PC_ACTIONABLE"
+
 	routine_call_seed: INTEGER
 			-- Seed of feature 'call' in class "ROUTINE"
 
@@ -200,6 +203,16 @@ feature -- Feature seeds setting
 			dispose_seed := a_seed
 		ensure
 			dispose_seed_set: dispose_seed = a_seed
+		end
+
+	set_make_as_actionable_seed (a_seed: INTEGER)
+			-- Set `make_as_actionable_seed' to `a_seed'.
+		require
+			a_seed_not_negative: a_seed >= 0
+		do
+			make_as_actionable_seed := a_seed
+		ensure
+			make_as_actionable_seed_set: make_as_actionable_seed = a_seed
 		end
 
 	set_routine_call_seed (a_seed: INTEGER)
@@ -378,6 +391,9 @@ feature -- Compilation options
 	use_boehm_gc: BOOLEAN
 			-- Should the application be compiled with the Boehm GC?
 
+	debugger_level: INTEGER
+			-- Should the application be compiled with debugger?
+	
 	system_name: STRING
 			-- Name of system
 
@@ -430,6 +446,14 @@ feature -- Compilation options setting
 			use_boehm_gc := b
 		ensure
 			use_boehm_gc_set: use_boehm_gc = b
+		end
+
+	set_debugger_level (l: INTEGER)
+			-- Set `debugger_level' to `l'.
+		do
+			debugger_level := l
+		ensure
+			debugger_level_set: debugger_level = l
 		end
 
 	set_system_name (a_name: like system_name)
@@ -1488,6 +1512,7 @@ invariant
 	copy_seed_not_negative: copy_seed >= 0
 	is_equal_seed_not_negative: is_equal_seed >= 0
 	dispose_seed_not_negative: dispose_seed >= 0
+	make_as_actionable_seed_not_negative: make_as_actionable_seed >= 0
 	routine_call_seed_not_negative: routine_call_seed >= 0
 	function_item_seed_not_negative: function_item_seed >= 0
 		-- Processors.

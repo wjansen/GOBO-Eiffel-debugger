@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
+<meta name="generator" content="hevea 2.09">
+<link rel="stylesheet" type="text/css" href="debug.css">
+<title>Alias names</title>
+</head>
+<body >
+<a href="debug017.html"><img src="previous_motif.gif" alt="Previous"></a>
+<a href="index.html"><img src="contents_motif.gif" alt="Up"></a>
+<a href="debug019.html"><img src="next_motif.gif" alt="Next"></a>
+<hr>
+Gedb &#X2013; The Gec debugger<h3 id="sec41" class="subsection">4.4&#XA0;&#XA0;Alias names</h3>
+<p><a id="S:alias"></a>
+To ease the repeated typing of the same complicated expression, 
+alias names for expressions can be defined. 
+To this end, menu <span style="font-family:sans-serif">Window</span> &#X2192; <span style="font-family:sans-serif">Alias definition</span> 
+opens a window containing an editable table 
+in the style of key/value pairs.
+The table holds a row for each alias name definiton 
+where column <span style="font-family:sans-serif">Name</span> contain the alias names and column <span style="font-family:sans-serif">Expression</span> 
+holds the <span style="font-style:italic">expression</span> the row&#X2019;s name stands for. 
+A new alias name is created (i.e. a new row is added to the table) 
+by clicking button <span style="font-family:sans-serif">New</span> of the window, 
+it starts with bullets as name and expression. 
+An alias definition is discarded (and the row will be removed from the table) 
+by setting its name to the empty string. 
+An alias name is valid if it is a valid <span style="font-style:oblique">Eiffel</span> identifier, 
+an expression is valid if it is a <span style="font-style:italic">detailed</span>_<span style="font-style:italic">expression</span> 
+(i.e. it may contain an <span style="font-style:italic">index</span>_<span style="font-style:italic">range</span> and <span style="font-style:italic">details</span>, 
+but there is merely a syntax check). 
+If an invalid name or expression has been entered 
+then it will be indicated by striking it through. 
+In particular, the bullets of a newly created alias definition are invalid 
+and need to be edited. 
+</p><blockquote class="quote">
+<div class="center"><span style="font-weight:bold">Extension</span></div> 
+By contrast to normal expressions, 
+an alias name definition may contain placeholders that point outside 
+the expression. 
+They are resolved when the alias name is used within an expression, 
+i.e. this expression must have sufficiently many nested details 
+in front of the alias name. 
+</blockquote><blockquote class="quote">
+<div class="center"><span style="font-weight:bold">Restriction</span></div> 
+To avoid cyclic dependencies, 
+an alias expression must not contain alias names. 
+</blockquote><p>An alias definition may be used when composing a <span style="font-style:italic">detailed_expression</span>: 
+the alias name is to be prefixed by an underscore; 
+the leading underscore ensures that the alias name cannot be misunderstood 
+as the feature name of a class. 
+Within the <span style="font-style:italic">detailed_expression</span> to be composed the alias name 
+is replaced by a copy of its associated <span style="font-style:italic">detailed_expression</span>. 
+The resulting <span style="font-style:italic">detailed_expression</span> is in fact an <span style="font-style:italic">expression</span> 
+if the defining <span style="font-style:italic">detailed_expression</span> does not contain 
+an <span style="font-style:italic">index_range</span> or <span style="font-style:italic">details</span>. 
+In this case it may be further referenced 
+or a <span style="font-style:italic">range</span> or <span style="font-style:italic">detail</span> may be added. 
+The expansion of an alias name will be checked for validity 
+in the given context. 
+</p><blockquote class="quote">
+<div class="center"><span style="font-weight:bold">Example</span></div> (continuation of example in Sec.&#XA0;<a href="debug017.html#X.%20range">4.3</a>): 
+Define the alias name <span style="font-family:monospace">pairs</span> as 
+<pre class="verbatim">  ?.keys [[if ? /= Void]] { ??.content[!] }
+</pre>and assume that variable <span style="font-family:monospace">table</span> is of a <span style="font-family:monospace">HASH_TABLE</span> type 
+whose keys are of a reference type. 
+Then expression <code>table { _pairs }</code> expands to 
+<pre class="verbatim">  table { ?.keys [[if ? /= Void]] { ??.content[!] } }
+</pre>where the first <span style="font-family:sans-serif">?</span> and the <span style="font-family:sans-serif">??</span> 
+refer to <span style="font-family:monospace">table</span> (in front of one or two nested details, respectively, 
+as seen from the placeholders)
+while the second <span style="font-family:sans-serif">?</span> and the <span style="font-family:sans-serif">!</span> refer to the actual item 
+of <span style="font-family:monospace">keys</span> and <span style="font-family:monospace">content</span> (range and innermost details specification). 
+<p>In fact, the rather complex syntax of <span style="font-style:italic">detailed_expression</span> 
+has been motivated by the need for displaying key/value pairs of a hashtable, 
+and to do this repeatedly motivated the introduction of alias names. 
+</p></blockquote>
+<hr>
+<a href="debug017.html"><img src="previous_motif.gif" alt="Previous"></a>
+<a href="index.html"><img src="contents_motif.gif" alt="Up"></a>
+<a href="debug019.html"><img src="next_motif.gif" alt="Next"></a>
+</body>
+</html>

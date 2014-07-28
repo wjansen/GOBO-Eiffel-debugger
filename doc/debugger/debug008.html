@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
+<meta name="generator" content="hevea 2.09">
+<link rel="stylesheet" type="text/css" href="debug.css">
+<title>Source part</title>
+</head>
+<body >
+<a href="debug007.html"><img src="previous_motif.gif" alt="Previous"></a>
+<a href="index.html"><img src="contents_motif.gif" alt="Up"></a>
+<a href="debug009.html"><img src="next_motif.gif" alt="Next"></a>
+<hr>
+Gedb &#X2013; The Gec debugger<h3 id="sec20" class="subsection">3.5&#XA0;&#XA0;Source part</h3>
+<p><a id="S:source"></a>
+The <span style="font-family:sans-serif">Source</span> part consists of the main text field 
+that is the overlay of several source texts 
+(and the <span style="font-family:sans-serif">Console</span> part, see Sec.&#XA0;<a href="debug009.html#S%3Aconsole">3.6</a>) 
+and of the bottom fields to enter a search string or a line number. 
+</p><blockquote class="figure"><div class="center"><hr style="width:80%;height:2"></div>
+<div class="center"><img src="debug004.png"></div>
+<div class="caption"><table style="border-spacing:6px;border-collapse:separate;" class="cellpading0"><tr><td style="vertical-align:top;text-align:left;" >Figure 4: The <span style="font-family:sans-serif">Source</span> part
+showing a breakpoint (red) and the actual stop point (green).
+The underlined characters represent possible positions 
+for breakpoints.</td></tr>
+</table></div><a id="F:source"></a>
+<div class="center"><hr style="width:80%;height:2"></div></blockquote>
+<h4 id="sec21" class="subsubsection">3.5.1&#XA0;&#XA0;Highlighted text</h4>
+<p><a id="S:highlights"></a>
+Within the displayed source code a few small parts may be highlighted 
+(besides syntax highlighting) as follows:
+</p><dl class="description"><dt class="dt-description"><span style="font-family:sans-serif">green background</span></dt><dd class="dd-description"> actual stop position if the class is that 
+of the actual stack level or belongs otherwise to the call stack
+(see remark in Sec.&#XA0;<a href="#S%3AsourceActions">3.5.5</a>); 
+</dd><dt class="dt-description"><span style="font-family:sans-serif">light green background</span></dt><dd class="dd-description"> line of actual stop position 
+(to make the stop position better detectable);
+</dd><dt class="dt-description"><span style="font-family:sans-serif">red background</span></dt><dd class="dd-description"> 
+the position of the <span style="font-family:sans-serif">At</span> condition of a breakpoint; 
+</dd><dt class="dt-description"><span style="font-family:sans-serif">underlined</span></dt><dd class="dd-description"> 
+possible positions for the <span style="font-family:sans-serif">At</span> condition of breakpoints 
+(classes not compiled for debugging or routines without generated <span style="font-style:oblique">C</span> code
+don&#X2019;t have those positions);
+</dd><dt class="dt-description"><span style="font-family:sans-serif">orange background</span></dt><dd class="dd-description"> string found by a search 
+(see Sec.&#XA0;<a href="#S%3Asearching">3.5.4</a>); 
+</dd><dt class="dt-description"><span style="font-family:sans-serif">medium blue background</span></dt><dd class="dd-description"> 
+name of the class under the mouse pointer that can be displayed 
+(see Sec.&#XA0;<a href="#S%3AsourceActions">3.5.5</a>);
+</dd><dt class="dt-description"><span style="font-family:sans-serif">light blue background</span></dt><dd class="dd-description"> 
+name of the feature under the mouse pointer that can be listed 
+(see Sec.&#XA0;<a href="#S%3AsourceActions">3.5.5</a>);
+</dd><dt class="dt-description"><span style="font-family:sans-serif">light pink background</span></dt><dd class="dd-description"> 
+name of the feature under the mouse pointer that can be listed and computed, 
+the enclosing routine must belong to the call stack 
+(see Sec.&#XA0;<a href="#S%3AsourceActions">3.5.5</a>);
+</dd><dt class="dt-description"><span style="font-family:sans-serif">light gray background</span></dt><dd class="dd-description"> line of the insertion cursor 
+(to make the cursor position better detectable).
+</dd></dl><p>
+The various background colors take the priorities: 
+orange, red, green, light pink, light blue, medium blue, 
+light green, light gray. 
+</p>
+<h4 id="sec22" class="subsubsection">3.5.2&#XA0;&#XA0;Class selection</h4>
+<p><a id="S:classSelection"></a>
+The class is selected (and added to the tag fields bar if not yet there) by 
+</p><ul class="itemize"><li class="li-itemize">choosing a tag from the tag fields bar 
+(the tag can also be selected by right clicking somewhere 
+in the tag fields bar: 
+a pop-up menu opens from which the class can be chosen); 
+</li><li class="li-itemize">choosing a class from the text entry at the left of the tag field bar 
+(see Sec.&#XA0;<a href="debug004.html#S%3AtypenameField">3.1.1</a> for details on class name selection);
+</li><li class="li-itemize">choosing a stack level in the <span style="font-family:sans-serif">Call stack</span> part (see Sec.&#XA0;<a href="debug010.html#S%3Astack">3.7</a>), 
+in this case the source code around the actual stop point is displayed;
+</li><li class="li-itemize">the class of the additional <span style="font-family:sans-serif">Feature</span> window 
+when clicking <span style="font-family:sans-serif">To source</span> there 
+(see Sec.&#XA0;<a href="#S%3AsourceActions">3.5.5</a>). 
+</li></ul><p>
+If a class is selected that has been excluded from debugging 
+then this fact will be indicated by striking through the class name 
+in the tag fields bar. </p>
+<h4 id="sec23" class="subsubsection">3.5.3&#XA0;&#XA0;Cursor movement</h4>
+<p><a id="S:textCursor"></a>
+Within the text field a special location is indicated 
+by the insertion cursor (not to be confused with the mouse pointer): 
+a small bar that sits between two characters of a line 
+(or at the very begin or end of a line). 
+It can be moved by 
+</p><dl class="description"><dt class="dt-description">
+<span style="font-weight:bold"><span style="font-family:monospace">left click</span></span></dt><dd class="dd-description"> the cursor jumps to the position of the mouse pointer;
+</dd><dt class="dt-description"><span style="font-weight:bold"><span style="font-family:monospace">arrow </span></span>keys</dt><dd class="dd-description"> move one position in the indicated direction;
+</dd><dt class="dt-description"><span style="font-weight:bold"><span style="font-family:monospace">Home, End </span></span>keys</dt><dd class="dd-description"> move to the line start or end;
+</dd><dt class="dt-description"><span style="font-weight:bold"><span style="font-family:monospace">Page Up, Page Down </span></span>keys</dt><dd class="dd-description"> move up or down as many lines 
+as are shown in the source text.
+</dd><dt class="dt-description"><span style="font-weight:bold"><span style="font-family:monospace">Control-l</span></span></dt><dd class="dd-description"> select a line directly (see below); 
+</dd><dt class="dt-description"><span style="font-weight:bold"><span style="font-family:monospace">Control-f</span></span></dt><dd class="dd-description"> search for a string (see Sec.&#XA0;<a href="#S%3Asearching">3.5.4</a>).
+</dd></dl><p>
+A specific line can be selected by entering a number 
+into the entry on bottom right of the <span style="font-family:sans-serif">Source</span> part. 
+Entering of the number may be initiated 
+by clicking in the entry to make it sensitive for keyboard input, 
+or by <span style="font-family:monospace">Control-l</span> in the text field 
+(in this case the text field remains sensitive); 
+entering is finished by pressing the <span style="font-family:monospace">Enter</span> key. 
+The entered number <span style="font-style:italic">n</span> may be
+</p><dl class="description"><dt class="dt-description">
+<span style="font-family:sans-serif">positive</span></dt><dd class="dd-description"> the <span style="font-style:italic">n</span>-th line from start is selected 
+(the one with line number <span style="font-style:italic">n</span>);
+</dd><dt class="dt-description"><span style="font-family:sans-serif">negative</span></dt><dd class="dd-description"> the <span style="font-style:italic">n</span>-th line from the text end is selected;
+</dd><dt class="dt-description"><span style="font-family:sans-serif">zero</span></dt><dd class="dd-description"> the line of the previous show line action is selected. 
+</dd></dl>
+<h4 id="sec24" class="subsubsection">3.5.4&#XA0;&#XA0;Searching</h4>
+<p><a id="S:searching"></a>
+The text field is not writeable but searchable: two methods are provided.
+First, enter the string (generally: regular expression) to be searched 
+into the search field at the part&#X2019;s bottom, 
+close input by pressing <span style="font-family:monospace">Enter</span>. 
+Repeatedly search of the same pattern continues the search 
+starting after the previously found pattern. 
+</p><p>Second, fast processing incremental search can be performed 
+from within the text field. 
+Entering <span style="font-family:monospace">Control-f</span> starts a search cycle, 
+then forthcoming entered printable keys are accumulated to a string 
+that is searched immediately. The sequence of key presses may include 
+<span style="font-family:monospace">BackSpace</span> to remove the last key from the search string 
+(and search goes back to the previously found pattern), or it may include 
+<span style="font-family:monospace">Arrow Up</span>, <span style="font-family:monospace">Arrow Down</span> to search the same string again 
+in the given direction. 
+All other keys and moving the mouse pointer outside the text field 
+terminate the search cycle. 
+After termination the same string may be searched by initiating 
+another search cycle with two <span style="font-family:monospace">Control-f</span> presses. 
+In any case, 
+the search is case insensitive and regular expressions are not supported.
+</p>
+<h4 id="sec25" class="subsubsection">3.5.5&#XA0;&#XA0;Other actions</h4>
+<p><a id="S:sourceActions"></a>
+The actions of the <span style="font-family:sans-serif">Source</span> part described so far 
+work completely inside the GUI without interacting the debuggee 
+and these actions are available even when the debuggee is running. 
+By contrast, if not the contrary is not stated explicitly, 
+the following actions are available only if the debuggee is not running. 
+</p><dl class="description"><dt class="dt-description">
+<span style="font-weight:bold"><span style="font-family:monospace">Control-.</span></span></dt><dd class="dd-description"> (dot) 
+If the displayed class is not the base class of a routine in the call stack 
+then the base class of the selected stack routine is selected first. 
+Then in any case the source code around the stop point is displayed. 
+</dd><dt class="dt-description"><span style="font-weight:bold"><span style="font-family:monospace">Control-b</span></span></dt><dd class="dd-description"> Set a breakpoint next to the insertion cursor; 
+the breakpoint has only the <span style="font-family:monospace">At</span> condition defined, 
+the other parts may be specified later 
+by manipulation in the <span style="font-family:sans-serif">Breakpoints</span> part. 
+</dd><dt class="dt-description"><span style="font-weight:bold"><span style="font-family:monospace">Control-d</span></span></dt><dd class="dd-description"> 
+Delete the breakpoint(s) next to the insertion cursor. 
+</dd><dt class="dt-description"><span style="font-weight:bold"><span style="font-family:monospace">Control-g</span></span></dt><dd class="dd-description"> 
+If the routine containing the insertion cursor belongs to the call stack 
+then continue debuggee execution to the point next to the insertion cursor 
+(or to the routine&#X2019;s caller if the point is not hit), 
+i.e. define a temporary breakpoint and issue a <span style="font-family:sans-serif">Cont</span> command 
+with <span style="font-family:sans-serif">repeat</span>=1, other breakpoint settings remain active. 
+</dd><dt class="dt-description"><span style="font-weight:bold"><span style="font-family:monospace">Control-G</span></span></dt><dd class="dd-description"> Like <span style="font-family:monospace">Control-g</span> but ignore all other breakpoints 
+(i.e. run in silent mode). 
+</dd><dt class="dt-description"><span style="font-weight:bold"><span style="font-family:monospace">single right click</span></span><span style="font-weight:bold"> or </span><span style="font-weight:bold"><span style="font-family:monospace">Control-t</span></span></dt><dd class="dd-description"> 
+If the feature name under the mouse pointer 
+is highlighted light blue or light pink then the feature definition 
+is shown in an additional window. This window has two buttons: 
+<dl class="description"><dt class="dt-description"><span style="font-family:sans-serif">Close</span></dt><dd class="dd-description"> : close the window
+</dd><dt class="dt-description"><span style="font-family:sans-serif">To source</span></dt><dd class="dd-description"> : 
+close the window and display its contents in the <span style="font-family:sans-serif">Source</span> part. 
+</dd></dl>
+Similarly, if the class name under the mouse pointer 
+is highlighted medium blue then the class text is shown 
+in the <span style="font-family:sans-serif">Source</span> part (no detour through the additional window). 
+<br>
+<U>Hint:</U> This action is always available.
+</dd><dt class="dt-description"><span style="font-weight:bold"><span style="font-family:monospace">double right click</span></span><span style="font-weight:bold"> </span>or<span style="font-weight:bold"> </span><span style="font-weight:bold"><span style="font-family:monospace">Control-e</span></span></dt><dd class="dd-description"> 
+If the feature name under the mouse pointer is highlighted light pink 
+then the feature (in any case a query) is inserted 
+in the <span style="font-family:sans-serif">Evaluation</span> part&#X2019;s <span style="font-family:sans-serif">Expr</span> field at the insertion cursor there 
+where it can be manipulated further. 
+</dd><dt class="dt-description"><span style="font-weight:bold"><span style="font-family:monospace">triple right click</span></span><span style="font-weight:bold"> </span>or<span style="font-weight:bold"> </span><span style="font-weight:bold"><span style="font-family:monospace">Control-E</span></span></dt><dd class="dd-description"> 
+If the feature name under the mouse pointer is highlighted light pink 
+then the <span style="font-family:sans-serif">Evaluation</span> part&#X2019;s <span style="font-family:sans-serif">Expr</span> field is cleared, 
+the feature is inserted in the field, and the evaluation is done immediately. 
+</dd></dl><p>
+The various <span style="font-family:monospace">Control</span> characters may be read as &#X201C;show actual&#X201D;,
+&#X201C;breakpoint&#X201D;, &#X201C;delete breakpoint&#X201D;, &#X201C;go to&#X201D;, &#X201C;go to in any case!&#X201D;, 
+&#X201C;text of&#X201D;, &#X201C;evaluate&#X201D;, and &#X201C;evaluate now!&#X201D;, respectively.
+</p><p>Some final remarks on the phrases &#X201C;routine in the call stack&#X201D;
+and &#X201C;next to the insertion cursor&#X201D;. 
+A routine belongs to the call stack if it is the routine 
+of the selected level in the <span style="font-family:sans-serif">Call stack</span> part (see Sec.&#XA0;<a href="debug010.html#S%3Astack">3.7</a>)
+or the routine of a higher level 
+(for implementation reasons, routines on lower levels are not accessible). 
+If the routine occurs several times then action <span style="font-family:monospace">Control-.</span> 
+and background coloring for the actual point select the one 
+closest to the selected level. 
+</p><p>The location for the breakpoint is the first underlined 
+text position <U>left</U> or <U>above</U> the insertion cursor, 
+it is at the same time a position where a <span style="font-family:sans-serif">Next</span> command stops. </p>
+<hr>
+<a href="debug007.html"><img src="previous_motif.gif" alt="Previous"></a>
+<a href="index.html"><img src="contents_motif.gif" alt="Up"></a>
+<a href="debug009.html"><img src="next_motif.gif" alt="Next"></a>
+</body>
+</html>

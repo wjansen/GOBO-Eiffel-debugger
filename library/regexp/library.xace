@@ -12,6 +12,7 @@
 
 	<cluster name="regexp" location="${GOBO}/library/regexp">
 		<option name="abstract" value="true"/>
+		<option name="debugger" value="false"/>
 		<cluster name="interface"/>
 		<cluster name="pcre"/>
 		<cluster name="support"/>

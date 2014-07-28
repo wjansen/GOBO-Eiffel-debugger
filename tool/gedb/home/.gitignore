@@ -1,0 +1,11 @@
+*~
+*.lex
+*.lemon
+*.out
+*.vapi
+*.h
+*.c
+*.o
+*.a
+*.so
+_*

@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
+<meta name="generator" content="hevea 2.09">
+<link rel="stylesheet" type="text/css" href="debug.css">
+<title>Breakpoints part</title>
+</head>
+<body >
+<a href="debug006.html"><img src="previous_motif.gif" alt="Previous"></a>
+<a href="index.html"><img src="contents_motif.gif" alt="Up"></a>
+<a href="debug008.html"><img src="next_motif.gif" alt="Next"></a>
+<hr>
+Gedb &#X2013; The Gec debugger<h3 id="sec16" class="subsection">3.4&#XA0;&#XA0;Breakpoints part</h3>
+<p><a id="S:breakpoints"></a>
+The <span style="font-family:sans-serif">Breakpoints</span> part is available only if the debugger is used as runtime analyser 
+(otherwise, the part is hidden). 
+The part consists of a table showing all defined breakpoints 
+and a row of buttons. 
+</p><blockquote class="figure"><div class="center"><hr style="width:80%;height:2"></div>
+<div class="center"><img src="debug003.png"></div>
+<div class="caption"><table style="border-spacing:6px;border-collapse:separate;" class="cellpading0"><tr><td style="vertical-align:top;text-align:left;" >Figure 3: The <span style="font-family:sans-serif">Breakpoints</span> part.</td></tr>
+</table></div><a id="F:break"></a>
+<div class="center"><hr style="width:80%;height:2"></div></blockquote>
+<h4 id="sec17" class="subsubsection">3.4.1&#XA0;&#XA0;Breakpoints table</h4>
+<p><a id="S:breakpointTable"></a>
+The columns of the table have the following meaning, 
+most of them denote restricting conditions: the breakpoint becomes active 
+when all specified conditions are satisfied 
+(an empty field means <span style="font-family:monospace">True</span>). 
+</p><dl class="description"><dt class="dt-description">(no title)</dt><dd class="dd-description"> a number identifying the breakpoint (no condition); 
+</dd><dt class="dt-description">(no title)</dt><dd class="dd-description"> one of the values <span style="font-family:monospace">B</span> or <span style="font-family:monospace">T</span> 
+for a breakpoint or a tracepoint, respectively; 
+</dd><dt class="dt-description"><span style="font-family:sans-serif">Catch</span></dt><dd class="dd-description"> one of the values for the following run time errors
+to be caught (in decreasing priority): 
+<dl class="description"><dt class="dt-description">
+<span style="font-weight:bold"><span style="font-family:monospace">void</span></span></dt><dd class="dd-description"> call on void target
+</dd><dt class="dt-description"><span style="font-weight:bold"><span style="font-family:monospace">memory</span></span></dt><dd class="dd-description"> out of memory
+</dd><dt class="dt-description"><span style="font-weight:bold"><span style="font-family:monospace">check</span></span></dt><dd class="dd-description"> failing check condition
+</dd><dt class="dt-description"><span style="font-weight:bold"><span style="font-family:monospace">failure</span></span></dt><dd class="dd-description"> routine failure 
+(i.e. leaving <span style="font-family:monospace">rescue</span> clause without <span style="font-family:monospace">retry</span>) 
+</dd><dt class="dt-description"><span style="font-weight:bold"><span style="font-family:monospace">when</span></span></dt><dd class="dd-description"> inconsistent inspect value
+</dd><dt class="dt-description"><span style="font-weight:bold"><span style="font-family:monospace">signal</span></span></dt><dd class="dd-description"> signal from the operation system
+</dd><dt class="dt-description"><span style="font-weight:bold"><span style="font-family:monospace">eiffel</span></span></dt><dd class="dd-description"> other <span style="font-style:oblique">Eiffel</span> error, particularly a catcall
+</dd><dt class="dt-description"><span style="font-weight:bold"><span style="font-family:monospace">io</span></span></dt><dd class="dd-description"> I/O error
+</dd><dt class="dt-description"><span style="font-weight:bold"><span style="font-family:monospace">raise</span></span></dt><dd class="dd-description"> developer exception (i.e. call of routine <span style="font-family:monospace">raise</span>) 
+</dd><dt class="dt-description"><span style="font-weight:bold"><span style="font-family:monospace">all</span></span></dt><dd class="dd-description"> any error 
+</dd></dl>
+</dd><dt class="dt-description"><span style="font-family:sans-serif">At</span></dt><dd class="dd-description"> location in source code composed of class name, 
+line and column number; 
+</dd><dt class="dt-description"><span style="font-family:sans-serif">Depth</span></dt><dd class="dd-description"> minimum depth of call stack to be entered 
+(an empty field is technically not possible, so &#X201C;<span style="font-family:monospace">0</span>&#X201D; means not set); 
+</dd><dt class="dt-description"><span style="font-family:sans-serif">Watch</span></dt><dd class="dd-description"> address of a memory location 
+that is watched for modification of its contents;
+</dd><dt class="dt-description"><span style="font-family:sans-serif">Type</span></dt><dd class="dd-description"> type of <span style="font-family:monospace">Current</span> 
+(if the class name in the <span style="font-family:sans-serif">At</span> column is not sufficiently precise); 
+</dd><dt class="dt-description"><span style="font-family:sans-serif">If</span></dt><dd class="dd-description"> a boolean expression to be satisfied; 
+</dd><dt class="dt-description"><span style="font-family:sans-serif">Print</span></dt><dd class="dd-description"> no condition but an expression list 
+to be computed and printed 
+when all conditions are satisfied. 
+</dd></dl><p>The <span style="font-family:sans-serif">Type</span> condition may be used to make the expressions 
+in the <span style="font-family:sans-serif">If</span> and <span style="font-family:sans-serif">Print</span> columns valid 
+(the <span style="font-family:monospace">Current</span> object is the starting point for evaluation). 
+More complex is the interaction of the <span style="font-family:sans-serif">Catch</span> and <span style="font-family:sans-serif">At</span> conditions.
+If both are specified then they work together in the following manner: 
+the condition is satisfied if the rescue clause of the routine enclosing 
+the <span style="font-family:sans-serif">At</span> location will catch the exception. 
+In any case (<span style="font-family:sans-serif">At</span> specified or not), 
+the program point shown in the <span style="font-family:sans-serif">Source</span> and <span style="font-family:sans-serif">Call stack</span> parts 
+is the point where the exception occurs, not that of a <span style="font-family:monospace">rescue</span> clause 
+catching the exception, in particular, not the <span style="font-family:sans-serif">At</span> location. </p>
+<h4 id="sec18" class="subsubsection">3.4.2&#XA0;&#XA0;Editing</h4>
+<p><a id="S:breakpointEditing"></a>
+Breakpoints may (and should!) be edited. 
+To this end, clicking the right mouse button on a field in the table 
+starts an editing cycle for this field. According to the column type 
+the &#X201C;editor&#X201D; is as follows.
+</p><dl class="description"><dt class="dt-description">(no name)</dt><dd class="dd-description">a combobox with the values <span style="font-family:monospace">Breakpoint</span>, 
+<span style="font-family:monospace">Tracepoint</span>; 
+</dd><dt class="dt-description"><span style="font-family:sans-serif">Catch</span></dt><dd class="dd-description"> a combobox with the possible values; 
+</dd><dt class="dt-description"><span style="font-family:sans-serif">At</span></dt><dd class="dd-description"> a combobox with values <span style="font-family:monospace">set from source</span> and <span style="font-family:monospace">clear</span>, 
+in the first case the new value is the cursor position in the <span style="font-family:sans-serif">Source</span> part 
+(see Sec.&#XA0;<a href="debug008.html#S%3AsourceActions">3.5.5</a> item <span style="font-family:monospace">Control-b</span> for details);
+</dd><dt class="dt-description"><span style="font-family:sans-serif">Depth</span></dt><dd class="dd-description"> a spinbox with the possible values;
+</dd><dt class="dt-description"><span style="font-family:sans-serif">Watch</span></dt><dd class="dd-description"> 
+a combobox with values <span style="font-family:monospace">set from data</span> and <span style="font-family:monospace">clear</span>, 
+in the first case the new value is the address of the variable 
+selected in the <span style="font-family:sans-serif">Data</span> part; </dd><dt class="dt-description"><span style="font-family:sans-serif">Type</span></dt><dd class="dd-description"> a text entry for entering a type name 
+(see Sec.&#XA0;<a href="debug004.html#S%3AtypenameField">3.1.1</a> for details), 
+there is also the entry <span style="font-family:monospace">clear</span> to remove an already present type; 
+</dd><dt class="dt-description"><span style="font-family:sans-serif">If</span></dt><dd class="dd-description"> a text field to be filled manually 
+(lazy evaluation, see Sec.&#XA0;<a href="debug004.html#S%3AexpressionField">3.1.1</a>);
+</dd><dt class="dt-description"><span style="font-family:sans-serif">Print</span></dt><dd class="dd-description"> a text field to be filled manually
+(lazy evaluation, see Sec.&#XA0;<a href="debug004.html#S%3AexpressionField">3.1.1</a>). 
+</dd></dl><p>
+The editors have been chosen such that most input errors can be avoided. 
+Unfortunately, in case of <span style="font-family:sans-serif">At</span> and <span style="font-family:sans-serif">Watch</span> conditions 
+one has to work in two parts of the graphics, 
+first in the <span style="font-family:sans-serif">Source</span> or <span style="font-family:sans-serif">Data</span> part 
+to select the interesting location or variable 
+and then in the <span style="font-family:sans-serif">Breakpoints</span> part to apply it. 
+</p><blockquote class="quote">
+<div class="center"><span style="font-weight:bold">Hint</span></div>
+For convenience, there is also the possibility to set and remove breakpoints 
+directly in the <span style="font-family:sans-serif">Source</span> part, see Sec.&#XA0;<a href="debug008.html#S%3AsourceActions">3.5.5</a>. 
+</blockquote>
+<h4 id="sec19" class="subsubsection">3.4.3&#XA0;&#XA0;Create and remove</h4>
+<p><a id="S:breakpointManipulation"></a>
+A new breakpoint without any conditions is created 
+by clicking button <span style="font-family:sans-serif">New</span>. 
+One or more breakpoints may be selected by singly left clicking 
+(or selected and deselected when also the <span style="font-family:monospace">Control</span> key is pressed). 
+The set of selected breakpoints will be enabled, disabled, or deleted 
+when clicking the corresponding buttons. 
+Finally, the <span style="font-family:sans-serif">Debug clauses</span> check button controls whether 
+debug clauses in the <span style="font-style:oblique">Eiffel</span> code are to be treated like breakpoints. </p>
+<hr>
+<a href="debug006.html"><img src="previous_motif.gif" alt="Previous"></a>
+<a href="index.html"><img src="contents_motif.gif" alt="Up"></a>
+<a href="debug008.html"><img src="next_motif.gif" alt="Next"></a>
+</body>
+</html>

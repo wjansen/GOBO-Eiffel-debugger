@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
+<meta name="generator" content="hevea 2.09">
+<link rel="stylesheet" type="text/css" href="debug.css">
+<title>Installation</title>
+</head>
+<body >
+<a href="debug001.html"><img src="previous_motif.gif" alt="Previous"></a>
+<a href="index.html"><img src="contents_motif.gif" alt="Up"></a>
+<a href="debug003.html"><img src="next_motif.gif" alt="Next"></a>
+<hr>
+Gedb &#X2013; The Gec debugger<h3 id="sec5" class="subsection">2.2&#XA0;&#XA0;Installation</h3>
+<p>Installation consists of two steps. 
+First, installing the extended <span style="font-style:oblique">Gec</span> compiler 
+(this is done the usual way), thereby the debugger is installed, too. 
+The result is, besides the common programs <span style="font-family:monospace">gec</span> etc., 
+the library <span style="font-family:monospace">libgedb.so</span> (or <span style="font-family:monospace">gedb.dlls</span> on <span style="font-style:oblique">Windows</span>) 
+that contains the bulk of debugger code 
+and the executable <span style="font-family:monospace">gedb</span> (or <span style="font-family:monospace">gedb.exe</span>). 
+Both debugger parts are put into directory <span style="font-family:monospace">$GOBO/bin</span>. 
+When the debugger acts as runtime analyser then <span style="font-family:monospace">gedb</span> is the main program 
+that links <span style="font-family:monospace">libgedb.so</span> as well as the debuggee library, 
+but when the debugger acts as post mortem analyser 
+then the debuggee is the main program linking <span style="font-family:monospace">libgedb.so</span> 
+while <span style="font-family:monospace">gedb</span> is ignored.
+</p><p>Second, to prepare an <span style="font-style:oblique">Eiffel</span> system for debugging 
+operation system specific options are to be provided in files 
+<span style="font-family:monospace">$GOBO/tool/gec/config/c/*.cfg</span>. 
+For example, in case of <span style="font-style:oblique">Linux</span> using <span style="font-style:oblique">gcc</span> 
+the following lines have to be added.
+To section <span style="font-family:monospace">Command lines</span> 
+(for creating a loadable library instead of an executable):
+</p><pre class="verbatim">linklib: gcc $lflags $libflags -o $exe $objs $libs $gc_libs -lm
+</pre><p>to section <span style="font-family:monospace">File extensions</span> 
+(library extension and <span style="font-style:oblique">Posix</span> specific prefix):
+</p><pre class="verbatim">lib: .so
+prelib: lib
+</pre><p>to section <span style="font-family:monospace">Variables</span> (additional flags to create the library):
+</p><pre class="verbatim">#ifdef EIF_DEBUGGER
+cflags: -fPIC
+libflags: -shared 
+#else
+libflags:
+#endif
+</pre><p>These settings have to be adapted for the other configuration files 
+if they are to be used. 
+</p><blockquote class="quote">
+<div class="center"><span style="font-weight:bold">Hint</span></div>
+If the debugger is to be installed form the <span style="font-style:oblique">Vala</span> source code
+switch to directory <span style="font-family:monospace">$GOBO/library/tools/debugger/gui</span> 
+and run <span style="font-family:monospace">make</span> before installing <span style="font-style:oblique">Gec</span>. 
+</blockquote>
+<hr>
+<a href="debug001.html"><img src="previous_motif.gif" alt="Previous"></a>
+<a href="index.html"><img src="contents_motif.gif" alt="Up"></a>
+<a href="debug003.html"><img src="next_motif.gif" alt="Next"></a>
+</body>
+</html>

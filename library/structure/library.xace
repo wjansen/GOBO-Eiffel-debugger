@@ -12,6 +12,7 @@
 
 	<cluster name="structure" location="${GOBO}/library/structure">
 		<option name="abstract" value="true"/>
+		<option name="debugger" value="false"/>
 		<cluster name="container"/>
 		<cluster name="dispenser"/>
 		<cluster name="list"/>

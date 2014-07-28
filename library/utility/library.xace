@@ -12,6 +12,7 @@
 
 	<cluster name="utility" location="${GOBO}/library/utility">
 		<option name="abstract" value="true"/>
+		<option name="debugger" value="false"/>
 		<cluster name="error"/>
 		<cluster name="formatter"/>
 		<cluster name="config"/>

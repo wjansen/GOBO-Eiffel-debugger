@@ -29,15 +29,20 @@ GE_rescue* GE_last_rescue;
 void GE_raise(int code)
 {
 	GE_rescue* r = GE_last_rescue;
+#ifdef GedbD
+	if (code>0) gedb_debug(gedb_dg, code);
+#endif
 	if (r != 0) {
 		GE_last_rescue = r->previous;
 		GE_longjmp(r->jb, code);
 	}
-#ifdef EIF_WINDOWS
+#ifndef GedbD
+#  ifdef EIF_WINDOWS
 	GE_show_console();
-#endif
+#  endif
 	fprintf(stderr, "Unhandled exception\n");
 	exit(1);
+#endif
 }
 
 /*
@@ -59,18 +64,20 @@ EIF_REFERENCE GE_check_catcall(EIF_REFERENCE obj, int type_ids[], int nb)
 			int i;
 			for (i = 0; i < nb; i++) {
 				if (type_id == type_ids[i]) {
-#ifdef EIF_WINDOWS
+#ifndef GedbD
+#  ifdef EIF_WINDOWS
 					GE_show_console();
-#endif
+#  endif
 					fprintf(stderr, "CAT-call error!\n");
-#ifdef EIF_DEBUG
+#  ifdef EIF_DEBUG
 					{
 						char c;
 						fprintf(stderr, "Press Enter...\n");
 						scanf("%c", &c);
 					}
+#  endif
 #endif
-					GE_raise(24);
+					GE_raise(EN_FATAL);
 					break;
 				} else if (type_id < type_ids[i]) {
 						/* type-ids are sorted in increasing order. */
@@ -90,16 +97,18 @@ EIF_REFERENCE GE_check_catcall(EIF_REFERENCE obj, int type_ids[], int nb)
 EIF_REFERENCE GE_check_void(EIF_REFERENCE obj)
 {
 	if (!obj) {
-#ifdef EIF_WINDOWS
+#ifndef GedbD
+#  ifdef EIF_WINDOWS
 		GE_show_console();
-#endif
+#  endif
 		fprintf(stderr, "Call on Void target!\n");
-#ifdef EIF_DEBUG
+#  ifdef EIF_DEBUG
 		{
 			char c;
 			fprintf(stderr, "Press Enter...\n");
 			scanf("%c", &c);
 		}
+#  endif
 #endif
 		GE_raise(1);
 	}
@@ -114,16 +123,18 @@ EIF_REFERENCE GE_check_void(EIF_REFERENCE obj)
 void* GE_check_null(void* ptr)
 {
 	if (!ptr) {
-#ifdef EIF_WINDOWS
+#ifndef GedbD
+#  ifdef EIF_WINDOWS
 		GE_show_console();
-#endif
+#  endif
 		fprintf(stderr, "No more memory!\n");
-#ifdef EIF_DEBUG
+#  ifdef EIF_DEBUG
 		{
 			char c;
 			fprintf(stderr, "Press Enter...\n");
 			scanf("%c", &c);
 		}
+#  endif
 #endif
 		GE_raise(2);
 	}

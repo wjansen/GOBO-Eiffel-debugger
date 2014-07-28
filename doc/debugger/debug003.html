@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
+<meta name="generator" content="hevea 2.09">
+<link rel="stylesheet" type="text/css" href="debug.css">
+<title>Usage</title>
+</head>
+<body >
+<a href="debug002.html"><img src="previous_motif.gif" alt="Previous"></a>
+<a href="index.html"><img src="contents_motif.gif" alt="Up"></a>
+<a href="debug004.html"><img src="next_motif.gif" alt="Next"></a>
+<hr>
+Gedb &#X2013; The Gec debugger<h3 id="sec6" class="subsection">2.3&#XA0;&#XA0;Usage</h3>
+<p><a id="S:usage"></a>
+The use of the debugger is controlled by <span style="font-style:oblique">Gec</span> command line options 
+and/or options in the <span style="font-family:monospace">.xace</span> file 
+(corresponding settings in an <span style="font-family:monospace">.ace</span> file are ignored). 
+The system is not prepared for debugging 
+(and a traditional system is generated) if it is compiled 
+in finalized mode (option <span style="font-family:monospace">--finalize</span> on the command line 
+or <span style="font-family:monospace">&lt;option name="finalize" value="true"/&gt;</span> in the<span style="font-family:monospace">.xace</span> file). 
+If not in finalized mode then the presence or absence 
+of command line option <span style="font-family:monospace">--gedb=</span><span style="font-style:italic">choice</span> controls 
+which debugger variant will be added to the system:
+</p><ul class="itemize"><li class="li-itemize">option absent: the post mortem analyser is added; 
+</li><li class="li-itemize">option present without parameter: the runtime analyser is added; 
+</li><li class="li-itemize">option present with parameter: the parameter <span style="font-style:italic">choice</span> must be one of
+<dl class="description"><dt class="dt-description">
+<span style="font-weight:bold">none</span></dt><dd class="dd-description"> : no debugger is added
+</dd><dt class="dt-description"><span style="font-weight:bold">pma</span></dt><dd class="dd-description"> : the post mortem analyser is added
+</dd><dt class="dt-description"><span style="font-weight:bold">full</span></dt><dd class="dd-description"> : the runtime analyser is added 
+</dd></dl>
+</li></ul><p>
+(so, no option or the parameterless option will be sufficient in most cases).
+It is also possible to generate a debugged system by use of <span style="font-style:oblique">geant</span>: 
+add option <span style="font-family:monospace">-Ddebug</span> to the command line. 
+This option is originally used to prevent 
+finalizing, now it has the second effect of adding the post mortem analyser. 
+The result of the compilation is an executable program 
+if the post mortem analyser is added but it is a loadable library 
+if the runtime analyser is added (precisely, the runtime analyser 
+is the executable program that loads the library). 
+</p><p>The generation of debugging code may be switched off or on 
+for particular classes or for the classes in chosen clusters. To this end, 
+options like the following have to be added to the <span style="font-family:monospace">.xace</span> file:
+</p><pre>
+  &lt;cluster name="<span style="font-style:italic">some_cluster</span>"&gt;
+    &lt;option name="debugger" value="false"/&gt;
+       ...
+    &lt;class name="<span style="font-style:italic">SOME_CLASS</span>"&gt;
+      &lt;option name="debugger" value="true"/&gt;
+         ...
+    &lt;/class&gt;
+       ...
+  &lt;/cluster&gt;
+</pre><p>
+For each class the class specific option (if set) 
+or that of the narrowest enclosing cluster (if any) is applied, 
+settings in wider clusters have no effect on the class, 
+and if no option has set at all then the default value <span style="font-family:monospace">true</span> applies. 
+If debugging code is not generated for a class 
+then meta-information about its variable attributes 
+and local variables of its routines 
+(including routine arguments and object test variables) 
+is not generated, the class looks very poor. 
+Apart from that, the class is treated in the manner 
+of the post mortem analyser: breakpoints cannot be set 
+and the system does not stop within routines of the class 
+(but it can be stopped in routines called from the class). 
+This will improve the runtime behaviour of the system, 
+in particular, if well tested library classes are excluded from debugging. 
+For convenience, if the system is compiled by means of <span style="font-style:oblique">geant</span> 
+where classes from kernel libraries are provided in the <span style="font-family:monospace">.xace</span> file 
+by tags
+</p><pre>
+  &lt;mount location="$GOBO/library/library.xace"/&gt;
+  &lt;mount location="$GOBO/library/free_elks/library.xace"/&gt;
+</pre><p>
+then these classes are automatically excluded from debugging. 
+If debugging code for some classes or subclusters should be generated 
+anyway then the appropriate options have to be set 
+in the <span style="font-style:oblique">geant</span> generated file <span style="font-family:monospace">ge.xace</span>. 
+</p><p>To start a session of the runtime analyser the debugger is started 
+from command line by command <span style="font-family:monospace">gedb</span> or from a desktop element 
+(such an element is <U>not</U> automatically created). 
+The command line may include the library name of the debuggee 
+followed by any command line arguments for it. 
+If no library is specified (in particular when running the debugger 
+from a desktop element) then the library is to be loaded 
+by menu item <span style="font-family:sans-serif">File</span> &#X2192; <span style="font-family:sans-serif">Load</span>. 
+After loading control switches to the debugger immediately 
+after debuggee&#X2019;s start and the debugger GUI is shown waiting 
+for user interactions. 
+Debugger work (and running the debuggee) is terminated by menu item 
+<span style="font-family:sans-serif">File</span> &#X2192; <span style="font-family:sans-serif">Quit</span> or simply by pressing <span style="font-family:monospace">Control-q</span> 
+when the debugger&#X2019;s main window has the keyboard focus. 
+</p><p>In case of the post mortem analyser things are much simpler. 
+The debuggee (now an executable) is started as usually. 
+The debugger is invoked when the debuggee crashes (hopefully never). 
+If so then work continues as in case of the runtime analyser. 
+</p>
+<hr>
+<a href="debug002.html"><img src="previous_motif.gif" alt="Previous"></a>
+<a href="index.html"><img src="contents_motif.gif" alt="Up"></a>
+<a href="debug004.html"><img src="next_motif.gif" alt="Next"></a>
+</body>
+</html>

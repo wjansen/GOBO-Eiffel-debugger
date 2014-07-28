@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
+<meta name="generator" content="hevea 2.09">
+<link rel="stylesheet" type="text/css" href="debug.css">
+<title>Evaluation part</title>
+</head>
+<body >
+<a href="debug012.html"><img src="previous_motif.gif" alt="Previous"></a>
+<a href="index.html"><img src="contents_motif.gif" alt="Up"></a>
+<a href="debug014.html"><img src="next_motif.gif" alt="Next"></a>
+<hr>
+Gedb &#X2013; The Gec debugger<h3 id="sec33" class="subsection">3.10&#XA0;&#XA0;Evaluation part</h3>
+<p><a id="S:eval"></a>
+</p><blockquote class="figure"><div class="center"><hr style="width:80%;height:2"></div>
+<div class="center"><img src="debug008.png"></div>
+<div class="caption"><table style="border-spacing:6px;border-collapse:separate;" class="cellpading0"><tr><td style="vertical-align:top;text-align:left;" >Figure 8: The <span style="font-family:sans-serif">Evaluation</span> part: 
+an expression list entered in the <span style="font-family:sans-serif">Expr</span> field 
+and its value in the <span style="font-family:sans-serif">Value</span> field. Observe that the abbreviated 
+query names have been correctly expanded.</td></tr>
+</table></div><a id="F:eval"></a>
+<div class="center"><hr style="width:80%;height:2"></div></blockquote>
+<h4 id="sec34" class="subsubsection">3.10.1&#XA0;&#XA0;Evaluation</h4>
+<p><a id="S:compute"></a>
+The <span style="font-family:sans-serif">Evaluation</span> part consists of two text fields: <span style="font-family:sans-serif">Expr</span> and <span style="font-family:sans-serif">Value</span>. 
+Field <span style="font-family:sans-serif">Expr</span> may be filled 
+</p><ul class="itemize"><li class="li-itemize">manually with an expression list;
+</li><li class="li-itemize">by right click on a tree node in the <span style="font-family:sans-serif">Data</span> part: 
+a pop-up menu is opened whose entries 
+are the query names of the node, and selecting a query inserts this 
+at the insertion cursor; 
+</li><li class="li-itemize">by multiple right click when the mouse pointer is in <span style="font-family:sans-serif">Source</span> part 
+over a light pink highlighted feature name (in any case a query): 
+the query together with its targets and arguments is inserted 
+at the insertion but not yet computed (double click)
+or the field is first cleared and then the query is computed immediately 
+(triple click). 
+</li></ul><p>
+The expression is computed when <span style="font-family:monospace">Enter</span> is pressed 
+(except for the triple click just mentioned). 
+The value is shown in the non-editable field <span style="font-family:sans-serif">Value</span>. 
+Precisely, the part of the expression list where the insertion cursor 
+of the <span style="font-family:sans-serif">Expr</span> field resides
+(the expression nearest to the left of the cursor 
+up to its leftmost target) is shown. 
+This way, values of even very long expression lists can be shown 
+in the one line field. 
+Not shown are expression ranges and their details 
+since a specific index value is not determined, 
+but the rule applies to the other expression details. 
+</p><p>Clicking the left icon in the <span style="font-family:sans-serif">Expr</span> field copies the values 
+of the items of the expression list to the tree of the <span style="font-family:sans-serif">Data</span> part 
+thereby expanding expression ranges and and their details. 
+There the expressions will indicated by an <span style="font-family:monospace">X</span>. </p>
+<h4 id="sec35" class="subsubsection">3.10.2&#XA0;&#XA0;Assignment</h4>
+<p><a id="S:assign"></a>
+Clicking the left icon in the <span style="font-family:sans-serif">Value</span> field 
+(if sensitive) assigns the shown value to the selected tree item
+of the <span style="font-family:sans-serif">Data</span> part. 
+The icon is sensitive only if the item is assignable from the value. 
+In case of numeric basic expanded types: any <span style="font-family:monospace">INTEGER_*</span> and
+<span style="font-family:monospace">NATURAL_*</span> values can be assigned to <span style="font-family:monospace">INTEGER_*</span>, <span style="font-family:monospace">NATURAL_*</span>, 
+or <span style="font-family:monospace">REAL_*</span> items, 
+any <span style="font-family:monospace">REAL_*</span> values can be assigned to <span style="font-family:monospace">REAL_*</span> items; 
+the conversion is done along the rules of the <span style="font-style:oblique">C</span> type casting. 
+In all other cases the item is assignable if its type set contains
+the type of the expression in the <span style="font-family:sans-serif">Value</span> field 
+(see Sec.&#XA0;<a href="debug011.html#S%3AdataActions">3.8.2</a> for displaying the typeset of an entity). </p>
+<hr>
+<a href="debug012.html"><img src="previous_motif.gif" alt="Previous"></a>
+<a href="index.html"><img src="contents_motif.gif" alt="Up"></a>
+<a href="debug014.html"><img src="next_motif.gif" alt="Next"></a>
+</body>
+</html>

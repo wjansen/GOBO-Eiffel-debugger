@@ -46,5 +46,7 @@
 	<mount location="${GOBO}/library/string/library.xace"/>
 	<mount location="${GOBO}/library/math/library.xace"/>
 	<mount location="${GOBO}/library/time/library.xace"/>
+	<mount location="${GOBO}/library/introspection/library.xace"/>
+	<mount location="${GOBO}/library/persistence/library.xace"/>
 	<mount location="${GOBO}/library/kernel.xace"/>
 </system>

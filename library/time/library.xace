@@ -12,6 +12,7 @@
 
 	<cluster name="time" location="${GOBO}/library/time">
 		<option name="abstract" value="true"/>
+		<option name="debugger" value="false"/>
 		<cluster name="clock"/>
 		<cluster name="date"/>
 		<cluster name="stopwatch"/>

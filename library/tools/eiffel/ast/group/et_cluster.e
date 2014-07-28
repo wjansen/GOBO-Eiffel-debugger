@@ -239,7 +239,7 @@ feature -- Status report
 		do
 			Result := a_class.is_in_group_recursive (Current) and then not a_class.is_overridden
 		end
-
+	
 feature -- Access
 
 	universe: ET_UNIVERSE
@@ -695,7 +695,7 @@ feature -- Status setting
 		ensure
 			abstract_set: is_abstract = b
 		end
-
+	
 	set_recursive (b: BOOLEAN)
 			-- Set `is_recursive' to `b'.
 		do

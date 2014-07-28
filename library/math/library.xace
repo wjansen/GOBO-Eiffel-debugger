@@ -12,6 +12,7 @@
 
 	<cluster name="math" location="${GOBO}/library/math">
 		<option name="abstract" value="true"/>
+		<option name="debugger" value="false"/>
 		<cluster name="decimal"/>
 	</cluster>
 

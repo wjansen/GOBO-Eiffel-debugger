@@ -12,6 +12,7 @@
 
 	<cluster name="kernel" location="${GOBO}/library/kernel">
 		<option name="abstract" value="true"/>
+		<option name="debugger" value="false"/>
 		<cluster name="basic"/>
 		<cluster name="io"/>
 		<cluster name="misc"/>

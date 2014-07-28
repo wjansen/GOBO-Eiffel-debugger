@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+
+<library name="persistence" prefix="pc_">
+	<description>
+		description: "Xace file for the Gobo Eiffel Persistence Closure Library"
+		library: "Gobo Eiffel Persistence Closure Library"
+		copyright: "Copyright (c) 2001-2009, Eric Bezault and others"
+		license: "MIT License"
+		date: "$Date$"
+		revision: "$Revision$"
+	</description>
+
+	<cluster name="persistence" location="${GOBO}/library/persistence">
+	</cluster>
+
+</library>

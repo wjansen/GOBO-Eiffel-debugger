@@ -26,6 +26,10 @@ libgelint.dll
 gexace
 gexace.exe
 libgexace.dll
+gedb
+gedb.exe
+libgedb.so
+libgedb.dll
 gexmlsplit
 gexmlsplit.exe
 libgexmlsplit.dll

@@ -26,6 +26,8 @@ class ET_MASTER_CLASS
 inherit
 
 	ET_NAMED_CLASS
+		undefine
+			hash_code
 		redefine
 			name,
 			intrinsic_class,

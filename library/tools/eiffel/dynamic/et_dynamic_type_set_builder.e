@@ -120,9 +120,17 @@ feature -- Generation
 		do
 			if not a_type.is_alive then
 				a_type.set_alive
-					-- Make sure that feature 'dispose' is alive for reference types.
 				if not a_type.is_expanded then
+						-- Make sure that feature 'dispose' is alive for reference types.
 					l_seed := current_system.dispose_seed
+					if l_seed > 0 then
+						l_feature := a_type.seeded_dynamic_procedure (l_seed, current_dynamic_system)
+						if l_feature /= Void then
+							l_feature.set_regular (True)
+						end
+					end
+						-- Make sure that feature `make_as_actionable' is alive for reference types.
+					l_seed := current_system.make_as_actionable_seed
 					if l_seed > 0 then
 						l_feature := a_type.seeded_dynamic_procedure (l_seed, current_dynamic_system)
 						if l_feature /= Void then

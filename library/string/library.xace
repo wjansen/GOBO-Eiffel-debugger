@@ -12,6 +12,7 @@
 
 	<cluster name="string" location="${GOBO}/library/string">
 		<option name="abstract" value="true"/>
+		<option name="debugger" value="false"/>
 		<cluster name="collation"/>
 		<cluster name="unicode"/>
 		<cluster name="support"/>

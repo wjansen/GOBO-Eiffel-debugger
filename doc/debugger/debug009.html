@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
+<meta name="generator" content="hevea 2.09">
+<link rel="stylesheet" type="text/css" href="debug.css">
+<title>Console part</title>
+</head>
+<body >
+<a href="debug008.html"><img src="previous_motif.gif" alt="Previous"></a>
+<a href="index.html"><img src="contents_motif.gif" alt="Up"></a>
+<a href="debug010.html"><img src="next_motif.gif" alt="Next"></a>
+<hr>
+Gedb &#X2013; The Gec debugger<h3 id="sec26" class="subsection">3.6&#XA0;&#XA0;Console part</h3>
+<p><a id="S:console"></a>
+The <span style="font-family:sans-serif">Console</span> part is available only if the debugger is used as runtime analyser 
+(otherwise, it stays hidden). 
+</p><p>The <span style="font-family:sans-serif">Console</span> part is a text field of (nearly) black background 
+containing the debuggee&#X2019;s output by <span style="font-family:monospace">io.output</span> (white), 
+<span style="font-family:monospace">io.error</span> (light pink), and the user input read by <span style="font-family:monospace">io.input</span> (light blue). 
+Additionally, the continuation commands (i.e. <span style="font-family:sans-serif">Cont</span> etc., <span style="font-family:sans-serif">Mark</span>, 
+<span style="font-family:sans-serif">Reset</span>) and stop reasons are recorded there
+(the last includes also the output of <span style="font-family:sans-serif">Print</span> fields 
+of the <span style="font-family:sans-serif">Run</span> part or of a matching breakpoint). 
+The colors follow the traffic light metaphor:
+green for activating the debuggee by <span style="font-family:sans-serif">Cont</span> etc., 
+red for the stop reason, 
+and, possibly, yellow for recording <span style="font-family:sans-serif">Mark</span> and <span style="font-family:sans-serif">Reset</span> commands. 
+</p><p>The <span style="font-family:sans-serif">Console</span> part is integrated into the <span style="font-family:sans-serif">Source</span> part 
+for practical reasons only. The default size of the <span style="font-family:sans-serif">Source</span> part is chosen 
+such that as many source code can be shown as is visible in a terminal window.
+The console window has naturally the same size and to save space 
+of the debugger outlay, the <span style="font-family:sans-serif">Console</span> part has been made 
+an alternative &#X201C;source&#X201D;. Its tag name is <span style="font-family:sans-serif">Console</span> and it is always 
+located at the right end of the tag fields bar. 
+The different roles of source code and console are distinguishable 
+by their complementary backgrounds:
+white versus black. Nevertheless, if there is enough space on screen 
+then the <span style="font-family:sans-serif">Console</span> part may be become a separate window: 
+click on the icon of its tag. Pressing the <span style="font-family:sans-serif">Close</span> button of that window 
+puts the <span style="font-family:sans-serif">Console</span> part back into the <span style="font-family:sans-serif">Source</span> part. 
+</p><p>If the <span style="font-family:sans-serif">Console</span> part is not displayed in a separate window 
+then the following show/hide policy applies. 
+The part is shown (i.e. automatically selected among all sources 
+of the <span style="font-family:sans-serif">Source</span> part) as soon as the debuggee requests user input, 
+it is hidden if the debugger regains control. 
+Output to <span style="font-family:monospace">io.output</span> or <span style="font-family:monospace">io.error</span> has no effect on the visibility 
+of the <span style="font-family:sans-serif">Console</span> part. 
+</p>
+<hr>
+<a href="debug008.html"><img src="previous_motif.gif" alt="Previous"></a>
+<a href="index.html"><img src="contents_motif.gif" alt="Up"></a>
+<a href="debug010.html"><img src="next_motif.gif" alt="Next"></a>
+</body>
+</html>

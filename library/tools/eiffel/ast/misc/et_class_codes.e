@@ -152,6 +152,9 @@ feature -- Codes
 	iteration_cursor_class_code: NATURAL_8 = 109
 			-- Code for class "ITERATION_CURSOR"
 
+	actionable_class_code: NATURAL_8 = 110
+			-- Code for class "ACTIONABLE" or "PC_ACTIONABLE"
+
 	codes_by_name: DS_HASH_TABLE [NATURAL_8, ET_CLASS_NAME]
 			-- Class codes indexed by class names
 		once
@@ -185,6 +188,7 @@ feature -- Codes
 			Result.force_last (disposable_class_code, tokens.disposable_class_name)
 			Result.force_last (iterable_class_code, tokens.iterable_class_name)
 			Result.force_last (iteration_cursor_class_code, tokens.iteration_cursor_class_name)
+			Result.force_last (actionable_class_code, tokens.actionable_class_name)
 		ensure
 			codes_by_name_not_void: Result /= Void
 		end

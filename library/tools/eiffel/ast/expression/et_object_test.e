@@ -5,7 +5,7 @@ note
 		"Eiffel object-test expressions"
 
 	library: "Gobo Eiffel Tools Library"
-	copyright: "Copyright (c) 2009, Eric Bezault and others"
+	copyright: "Copyright (c) 2009-2013, Eric Bezault and others"
 	license: "MIT License"
 	date: "$Date$"
 	revision: "$Revision$"
@@ -92,6 +92,12 @@ feature -- Access
 			end
 		end
 
+	first_scope_position: ET_POSITION
+			-- Start position of the scope the object test belongs to.
+	
+	last_scope_position: ET_POSITION
+			-- End position of the scope the object test belongs to.
+	
 	first_leaf: ET_AST_LEAF
 			-- First leaf node in current node
 		do
@@ -120,6 +126,26 @@ feature -- Setting
 			attached_keyword := a_attached
 		ensure
 			attached_keyword_set: attached_keyword = a_attached
+		end
+
+	set_first_scope_position (a_position: ET_POSITION)
+			-- Set `first_scope_position' to `a_position'. 
+		require
+			large_enough: not (a_position < position)
+		do
+			first_scope_position := a_position
+		ensure
+			first_scope_position_set: first_scope_position = a_position
+		end
+
+	set_last_scope_position (a_position: ET_POSITION)
+			-- Set `last_scope_position' to `a_position'. 
+		require
+			large_enough: not (a_position < position)
+		do
+			last_scope_position := a_position
+		ensure
+			last_scope_position_set: last_scope_position = a_position
 		end
 
 feature -- Processing

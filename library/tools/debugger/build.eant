@@ -1,0 +1,44 @@
+<?xml version="1.0"?>
+
+<project name="debugger" default="help">
+
+	<description>
+		description: "Gobo Eiffel debugger"
+		copyright: "Copyright (c) 2014, Wolfgang Jansen and others"
+		license: "MIT License"
+		date: "$Date$"
+		revision: "$Revision$"
+	</description>
+
+	<target name="help">
+		<echo message="usage:"/>
+		<echo message="   geant install"/>
+		<echo message="   geant clean"/>
+		<echo message="   geant clobber"/>
+	</target>
+
+	<target name="install">
+		<description>
+			Install the Gobo Eiffel debugger.
+		</description>
+		<geyacc output="dg_system.e" input="dg_system.y" tokens="DG_TOKENS"/>
+		<gelex output="dg_scanner.e" input="dg_scanner.l"/>
+	</target>
+
+	<target name="clean">
+		<description>
+			Remove intermediary generated files.
+		</description>
+	</target>
+
+	<target name="clobber">
+		<description>
+			Remove all generated files.
+		</description>
+		<geant target="clean"/>
+		<delete file="dg_scanner.e"/>
+		<delete file="dg_system.e"/>
+		<delete file="dg_tokens.e"/>
+	</target>
+
+</project>

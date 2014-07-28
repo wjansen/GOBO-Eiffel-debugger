@@ -12,6 +12,7 @@
 
 	<cluster name="pattern" location="${GOBO}/library/pattern">
 		<option name="abstract" value="true"/>
+		<option name="debugger" value="false"/>
 		<cluster name="bridge"/>
 		<cluster name="command"/>
 	</cluster>

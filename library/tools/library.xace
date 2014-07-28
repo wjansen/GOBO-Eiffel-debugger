@@ -12,6 +12,7 @@
 
 	<cluster name="tools" location="${GOBO}/library/tools">
 		<option name="abstract" value="true"/>
+		<cluster name="debugger" prefix="dg_"/>
 		<cluster name="eiffel" prefix="eiffel_">
 			<option name="abstract" value="true"/>
 			<cluster name="ast">
@@ -31,7 +32,9 @@
 			<cluster name="compilation"/>
 			<cluster name="dynamic"/>
 			<cluster name="error"/>
-			<cluster name="generation"/>
+			<cluster name="generation">
+				<cluster name="introspection"/>
+			</cluster>
 			<cluster name="parser"/>
 			<cluster name="processor"/>
 		</cluster>

@@ -17,8 +17,8 @@
 extern "C" {
 #endif
 
-int GE_argc;
-EIF_NATIVE_CHAR** GE_argv;
+int GE_argc = 0;
+EIF_NATIVE_CHAR** GE_argv = 0;
 
 	/* Clean up function */
 typedef void (* EIF_CLEANUP)(EIF_BOOLEAN);

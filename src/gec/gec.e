@@ -217,7 +217,12 @@ feature {NONE} -- Processing
 			l_command: KL_SHELL_COMMAND
 			l_filename: STRING
 			l_system_name: STRING
+			l_introspection: ET_INTROSPECT_GENERATOR 
+			l_debugger: DG_GENERATOR
+			l_type: ET_DYNAMIC_TYPE
+			l_ast: ET_DECORATED_AST_FACTORY
 			l_file: KL_TEXT_INPUT_FILE
+			l_name: STRING
 			l_type_names: DS_HASH_SET [STRING]
 			s: STRING
 		do
@@ -266,6 +271,12 @@ feature {NONE} -- Processing
 			end
 			create {ET_DYNAMIC_PUSH_TYPE_SET_BUILDER} l_builder.make (l_system)
 			l_system.set_dynamic_type_set_builder (l_builder)
+			if debugger_level > 0 then
+				create l_ast.make
+				l_ast.set_keep_all_breaks (True)
+				a_system.current_system.set_ast_factory (l_ast)
+				a_system.set_debugger_level (debugger_level)
+			end 
 			l_system.compile
 			l_root_type := a_system.root_type
 			if l_root_type = Void then
@@ -280,13 +291,27 @@ feature {NONE} -- Processing
 				if l_system_name = Void then
 					l_system_name := l_root_type.base_class.lower_name
 				end
-				create l_generator.make (l_system)
+				if l_generator = Void then
+					if debugger_level > 0 then
+						create l_debugger.make_debug (l_system, debugger_level = 1)
+						l_generator := l_debugger
+					elseif attached type_of_name ("GEC", l_system) as gec then
+						create l_introspection.make_self (l_system, gec)
+						l_generator := l_introspection
+					elseif attached type_of_name ("IS_RUNTIME_SYSTEM", l_system) as rts then
+						create l_introspection.make_all (l_system, rts)
+						l_generator := l_introspection
+					else
+						create l_generator.make (l_system)
+					end
+				end
 				if gc_option.was_found then
 						-- Override any option that might have been specified
 						-- in the Eiffel config file.
 					l_generator.set_use_boehm_gc (use_boehm_gc)
 				end
 				l_generator.set_finalize_mode (is_finalize)
+				l_generator.set_debugger_level (debugger_level)
 				l_generator.set_split_mode (not no_split)
 				if split_size > 0 then
 					l_generator.set_split_threshold (split_size)
@@ -346,6 +371,9 @@ feature -- Status report
 			-- Compilation with optimizations turned on?
 		do
 			Result := finalize_flag.was_found
+			if not Result and then {x: ET_XACE_SYSTEM} last_system then
+				Result := x.options.finalize_option
+			end
 		end
 
 	is_gelint: BOOLEAN
@@ -386,6 +414,24 @@ feature -- Status report
 
 	split_size: INTEGER
 			-- Size (in bytes) of generated C files in bytes when in split mode
+
+	debugger_level: INTEGER
+			-- Should the application be compiled with the debugger?
+		do
+			if is_finalize then
+				Result := 0	-- none
+			else
+				Result := 1	-- pma
+				if gedb_option.was_found then
+					if gedb_option.parameter = Void 
+						or else STRING_.same_string (gedb_option.parameter, "full") then
+						Result := 2    -- full
+					elseif STRING_.same_string (gedb_option.parameter, "none") then
+						Result := 0
+					end
+				end
+			end
+		end
 
 	use_boehm_gc: BOOLEAN
 			-- Should the application be compiled with the Boehm GC?
@@ -434,9 +480,12 @@ feature -- Argument parsing
 	gc_option: AP_ENUMERATION_OPTION
 			-- Option for '--gc=<no|boehm>'
 
+	gedb_option: AP_ENUMERATION_OPTION
+			-- Option for '--gedb=<no|pma|yes>'
+	
 	new_instance_types_option: AP_STRING_OPTION
 			-- Option for '--new_instance_types=<filename>'
-
+	
 	silent_flag: AP_FLAG
 			-- Flag for '--silent'
 
@@ -504,6 +553,15 @@ feature -- Argument parsing
 			gc_option.extend ("boehm")
 			gc_option.set_parameter_description ("no|boehm")
 			a_parser.options.force_last (gc_option)
+				-- gedb
+			create gedb_option.make_with_long_form ("gedb")
+			gedb_option.set_description ("Which debugging level should be applied? (default: pma, no param: full)")
+			gedb_option.extend ("none")
+			gedb_option.extend ("pma")
+			gedb_option.extend ("full")
+			gedb_option.set_parameter_as_optional
+			gedb_option.set_parameter_description ("none|pma|full")
+			a_parser.options.force_last (gedb_option)
 				-- silent
 			create silent_flag.make_with_long_form ("silent")
 			silent_flag.set_description ("Run gec in silent mode.")
@@ -550,6 +608,27 @@ feature -- Argument parsing
 			gc_option_not_void: gc_option /= Void
 		end
 
+feature {NONE} -- Implementation
+
+	type_of_name (a_name: STRING; a_system: ET_DYNAMIC_SYSTEM): ET_DYNAMIC_TYPE
+			-- Dynamic non-generic type in `a_system' having name `a_name'.
+			-- `Void' if no such type exists.
+		require
+			a_name_not_void: a_name /= Void
+			a_system_not_void: a_system /= Void
+		local
+			n: INTEGER
+		do
+			from n := a_system.dynamic_types.count
+			until Result /= Void or else n = 0 loop
+				Result := a_system.dynamic_types.item (n)
+				if not STRING_.same_string (Result.base_class.upper_name, a_name) then
+					Result := Void
+				end
+				n := n - 1
+			end
+		end
+	
 invariant
 
 	error_handler_not_void: error_handler /= Void

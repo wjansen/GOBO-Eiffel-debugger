@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
+<meta name="generator" content="hevea 2.09">
+<link rel="stylesheet" type="text/css" href="debug.css">
+<title>SQL part</title>
+</head>
+<body >
+<a href="debug011.html"><img src="previous_motif.gif" alt="Previous"></a>
+<a href="index.html"><img src="contents_motif.gif" alt="Up"></a>
+<a href="debug013.html"><img src="next_motif.gif" alt="Next"></a>
+<hr>
+Gedb &#X2013; The Gec debugger<h3 id="sec32" class="subsection">3.9&#XA0;&#XA0;SQL part</h3>
+<p><a id="S:sql"></a>
+</p><blockquote class="figure"><div class="center"><hr style="width:80%;height:2"></div>
+<div class="center"><img src="debug007.png"></div>
+<div class="caption"><table style="border-spacing:6px;border-collapse:separate;" class="cellpading0"><tr><td style="vertical-align:top;text-align:left;" >Figure 7: An <span style="font-family:sans-serif">SQL select</span> part. 
+<span style="font-family:monospace">_1</span>, &#X2026;, <span style="font-family:monospace">_35</span> are object idents 
+while <span style="font-family:monospace">4</span> and <span style="font-family:monospace">0</span> in the last column are the values themselves.</td></tr>
+</table></div>
+<a id="F:sql"></a>
+<div class="center"><hr style="width:80%;height:2"></div></blockquote><p>
+Another data window can be opened 
+from menu <span style="font-family:sans-serif">Window </span>&#X2192;<span style="font-family:sans-serif"> SQL select</span>. 
+Its purpose is to simulate the <span style="font-family:monospace">SELECT</span> command of <span style="font-style:oblique">SQL</span>.
+The debugger maintains for each reference type an <span style="font-style:oblique">SQL</span> table 
+(conceptually, not really). The table columns are the type&#X2019;s attributes, 
+and the table rows are all objects of this type that are reachable 
+from the current routine (i.e. from target, arguments, and local variables) 
+by deep traversal. 
+During the traversal consecutive numbers are assigned 
+to each reference object encountered (starting with &#X201C;1&#X201D; for <span style="font-family:monospace">Current</span>). 
+These numbers (with a leading underscore) are then shown in the window 
+and are at the same time the numbers shown in the main <span style="font-family:sans-serif">Data</span> window 
+when the <span style="font-family:sans-serif">ident</span> formatting is chosen. 
+A special meaning have the idents &#X201C;<span style="font-family:monospace">0</span>&#X201D; and &#X201C;<span style="font-family:monospace">?</span>&#X201D;: 
+&#X201C;<span style="font-family:monospace">0</span>&#X201D; denotes a void reference and &#X201C;<span style="font-family:monospace">?</span>&#X201D; a reference 
+to an object that has no ident but has been created during evaluation 
+of a called function. 
+All non-reference objects are shown in the <span style="font-family:sans-serif">natural</span> format. 
+The idents remain valid as long as the debuggee is not running 
+and the the stack level is not changed. The idents are refreshed 
+after run and stop of the debuggee and when the stack level has been changed. 
+</p><p>Issuing a <span style="font-family:monospace">SELCET</span> command to this table consists of filling 
+one to three entries in the window and then clicking button <span style="font-family:sans-serif">Updata</span> 
+(a separate update action is necessary to inform the debugger 
+that all three input fields have got their values, 
+the click on a single input field may be misleading; 
+input fields <span style="font-family:sans-serif">select</span>, <span style="font-family:sans-serif">where</span> need to be clicked 
+by their own). 
+The entries are: 
+</p><dl class="description"><dt class="dt-description"><span style="font-family:sans-serif">select</span></dt><dd class="dd-description"> (optional) queries of the table&#X2019;s type 
+as expression list, may contain nested detail parts but no range parts 
+(empty means all attributes);
+</dd><dt class="dt-description"><span style="font-family:sans-serif">from</span></dt><dd class="dd-description"> (mandatory) a type name as the table name;
+</dd><dt class="dt-description"><span style="font-family:sans-serif">where</span></dt><dd class="dd-description"> (optional) a boolean expression to be satisfied 
+by the objects of the table (empty means <span style="font-family:monospace">True</span>)
+</dd></dl><p>
+(see Sec.&#XA0;<a href="debug004.html#S%3AspecialFields">3.1.1</a> for entering a type name or expressions).
+In any case, the type name should be entered first to ensure 
+that expression validation of the two other entries can be successful 
+(the arrangement of the entries is for tradition&#X2019;s sake).
+Further, the expression list in the <span style="font-family:sans-serif">select</span> field is always extended 
+by a leading element (i.e. a leading column in the table shown): 
+the ident of the selected object. 
+</p><p>It was not indented to implement a full database, 
+so the debugger&#X2019;s <span style="font-family:monospace">SELECT</span> query is rather poor: 
+only one table is supported (no <span style="font-family:monospace">JOIN</span>), 
+no grouping (no <span style="font-family:monospace">GROUP BY</span>, <span style="font-family:monospace">HAVING</span>), 
+and no explicit sorting (no <span style="font-family:monospace">ORDER BY</span>, 
+but there is implicit sorting by GUI manipulation). </p>
+<hr>
+<a href="debug011.html"><img src="previous_motif.gif" alt="Previous"></a>
+<a href="index.html"><img src="contents_motif.gif" alt="Up"></a>
+<a href="debug013.html"><img src="next_motif.gif" alt="Next"></a>
+</body>
+</html>

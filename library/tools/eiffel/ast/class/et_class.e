@@ -40,6 +40,7 @@ inherit
 			position, break, append_to_string,
 			is_named_type, is_valid_context,
 			debug_output, copy, is_equal,
+			hash_code,
 			append_unaliased_to_string
 		end
 
@@ -337,6 +338,12 @@ feature -- Status report
 			-- Is current class the "DISPOSABLE" class?
 		do
 			Result := class_code = class_codes.disposable_class_code
+		end
+
+	is_actionable_class: BOOLEAN
+			-- Is current class the "ACTIONABLE" class or "PC_ACTIONABLE" class?
+		do
+			Result := class_code = class_codes.actionable_class_code
 		end
 
 	is_function_class: BOOLEAN

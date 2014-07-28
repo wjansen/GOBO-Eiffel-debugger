@@ -1,4 +1,4 @@
-﻿note
+note
 	description: "[
 		Sequences of 8-bit characters, accessible through integer indices
 		in a contiguous range.

@@ -1,0 +1,532 @@
+note 
+	 
+	description: "Data global to several debugger classes." 
+	 
+deferred class DG_GLOBALS 
+	 
+inherit 
+	 
+	DG_CONSTANTS 
+	 
+	IS_BASE 
+		rename 
+			runtime_system as debuggee 
+		undefine 
+			default_create, 
+			copy, is_equal, out
+		redefine 
+			debuggee 
+		end 
+	 
+	ARGUMENTS 
+		rename 
+			command_name as arg0 
+		undefine 
+			default_create, 
+			copy, is_equal, out 
+		end 
+	 
+	EXCEPTIONS 
+		undefine 
+			default_create, 
+			copy, is_equal, out 
+		redefine 
+			raise 
+		end	 
+ 
+feature -- Access 
+ 
+	pma: BOOLEAN 
+		do 
+			Result := c_debug_flag = 1 
+		end 
+	 
+	debuggee: IS_RUNTIME_SYSTEM 
+		once 
+			create Result.make_from_c 
+		end 
+	 
+	home_directory: STRING 
+		local 
+			env: EXECUTION_ENVIRONMENT 
+			path: STRING 
+			n: INTEGER 
+		once 
+			path := argument (0) 
+			n := path.last_index_of (Operating_environment.Directory_separator, path.count) 
+			if n > 0 then 
+				Result := path.substring (1, n-1) 
+			else 
+				create env 
+				Result := env.current_working_directory 
+			end 
+		end 
+	 
+	ui_file: DG_FILE 
+		local 
+#ifdef GUI 
+		once 
+			if pma then 
+				create {DG_CLUI_FILE} Result 
+			else 
+				create {DG_GUI_FILE} Result 
+			end 
+			if Result.is_open then 
+			else
+				create {DG_CLUI_FILE} Result 
+				c_clear_debug_flag 
+			end 
+#else 
+		once 
+			create {DG_CLUI_FILE} Result 
+#endif 
+		end 
+	 
+	parser: DG_PARSER 
+		once 
+			create Result.make (Current)
+		end 
+	 
+	none_type: IS_NORMAL_TYPE
+		once
+			if attached {IS_NORMAL_TYPE} debuggee.type_by_name ("NONE", False) as nt then
+				Result := nt
+			else
+				-- this should not happen:
+				Result := debuggee.any_type
+			end
+		end
+	
+	no_command: detachable TUPLE[code: INTEGER; name: STRING; help_arg, help_line: detachable STRING] 
+	 
+	commands: ARRAYED_LIST[TUPLE[INTEGER, STRING, detachable STRING, detachable STRING]] 
+		once 
+			create Result.make (100) 
+		end 
+	 
+	status_commands: ARRAYED_LIST[TUPLE[INTEGER, STRING, detachable STRING, detachable STRING]] 
+		once 
+			create Result.make (20) 
+		end 
+	 
+	command_by_code (list: like commands; code: INTEGER): like no_command 
+		local 
+			i: INTEGER 
+		do 
+			from 
+				i := list.count 
+			until i = 0 loop 
+				Result := list [i] 
+				if attached Result as r and then r.code = code then 
+					i := 0
+				else
+					Result := Void
+					i := i - 1 
+				end 
+			end 
+		end 
+	 
+	value_stack: DG_VALUE_STACK 
+		once 
+			create Result 
+		end 
+	 
+	command_prompt: STRING = "> " 
+	 
+	error_prompt: STRING = "? " 
+ 
+	continuation_prompt: STRING = "> " 
+ 
+	original_msg: STRING = "" 
+	 
+	msg_at: INTEGER_REF 
+		once 
+			create Result 
+		end 
+	 
+	Alias_prefix: STRING = "_" 
+	Lazy_alias_separator: STRING = "->" 
+	Immediate_alias_separator: STRING = ":=" 
+	Undefine_alias_separator: STRING = "--" 
+	 
+	is_alias_manifest (ex: DG_EXPRESSION): BOOLEAN 
+		do 
+			if attached {DG_MANIFEST} ex.entity as m then 
+				Result := m.has_name (Alias_prefix) 
+			end 
+		end 
+ 
+	alias_separator (ex: DG_EXPRESSION): STRING 
+		do 
+			if is_alias_manifest (ex) then 
+				Result := Immediate_alias_separator 
+			else 
+				Result := Lazy_alias_separator 
+			end 
+		end 
+	 
+	aliases: HASH_TABLE[DG_EXPRESSION,STRING] 
+		once 
+			create Result.make (20) 
+		end 
+	 
+	false_entity: DG_MANIFEST 
+		once 
+			create Result.make ("False", debuggee.boolean_type) 
+		end 
+	 
+	true_entity: DG_MANIFEST 
+		once 
+			create Result.make ("True" ,debuggee.boolean_type) 
+		end 
+	 
+	current_entity: DG_MANIFEST 
+		local
+			at: detachable IS_TYPE
+		once 
+			at := debuggee.any_type
+			check attached at end
+			create Result.make ("Current", at) 
+		end 
+	 
+	void_entity: DG_MANIFEST 
+		once 
+			create Result.make ("Void", none_type) 
+		end 
+	 
+	boolean_entity: DG_MANIFEST 
+		once 
+			create Result.make (" ", debuggee.boolean_type) 
+		end 
+	 
+	character_entity: DG_MANIFEST 
+		once 
+			create Result.make (" ", debuggee.character_type) 
+		end 
+	 
+	integer_entity: DG_MANIFEST 
+		once 
+			create Result.make (" ", debuggee.integer_type) 
+		end 
+	 
+	double_entity: DG_MANIFEST 
+		once 
+			create Result.make (" ", debuggee.double_type) 
+		end 
+	 
+	string_entity: DG_MANIFEST 
+		local
+			at: detachable IS_TYPE
+		once 
+			if attached debuggee.string_type as st then
+				create Result.make (" ", st) 
+			else
+				at := debuggee.any_type
+				check attached at end
+				create Result.make (" ", at) 
+			end
+		end 
+	 
+	equality_entity: DG_MANIFEST 
+		once 
+			create Result.make ("=", debuggee.boolean_type) 
+		end 
+	 
+	create_entity: DG_MANIFEST 
+		local
+			at: detachable IS_TYPE
+		once 
+			at := debuggee.any_type
+			check attached at end
+			create Result.make ("!!", at) 
+		end 
+	 
+	placeholder_entity: DG_MANIFEST 
+		local
+			at: detachable IS_TYPE
+		once 
+			at := debuggee.any_type
+			check attached at end
+			create Result.make ("?", at) 
+		end 
+	 
+	bracket_entity: DG_MANIFEST 
+		once 
+			create Result.make ("[]", debuggee.boolean_type) 
+		end 
+	 
+	range_entity: DG_MANIFEST 
+		local
+			at: detachable IS_TYPE
+		once 
+			at := debuggee.any_type
+			check attached at end
+			create Result.make ("[[]]", at) 
+		end 
+	 
+	all_entity: DG_MANIFEST 
+		once 
+			create Result.make ("all", debuggee.integer_type) 
+		end 
+	 
+	if_entity: DG_MANIFEST 
+		once 
+			create Result.make ("if", debuggee.boolean_type) 
+		end 
+	 
+	count_entity: DG_MANIFEST 
+		once 
+			create Result.make ("`", debuggee.integer_type) 
+		end 
+	 
+	old_entity: DG_MANIFEST 
+		once 
+			create Result.make (" ", debuggee.integer_type) 
+		end 
+	 
+	alias_entity: DG_MANIFEST 
+		once 
+			create Result.make (Alias_prefix, debuggee.integer_type)
+		end 
+	 
+	closure_entity: DG_MANIFEST 
+		local
+			at: detachable IS_TYPE
+		once 
+			at := debuggee.any_type
+			check attached at end
+			create Result.make ("_0_", at) 
+		end 
+	 
+	constant_entity: DG_MANIFEST 
+		local
+			at: detachable IS_TYPE
+		once 
+			at := debuggee.any_type
+			check attached at end
+			create Result.make ("once", at) 
+		end 
+	 
+	details_entity: DG_MANIFEST 
+		local
+			nt: detachable IS_TYPE
+		once 
+			nt := none_type
+			check attached nt end
+			create Result.make ("{}", nt) 
+		end 
+	 
+	breakpoints: ARRAY[detachable DG_BREAKPOINT] 
+		once 
+			create Result.make_empty
+		end 
+	 
+	broken_proc, actual_proc: DG_PROCESSOR 
+	 
+	signal_number: INTEGER 
+		external "C inline" 
+		alias "GE_z_sgn" 
+		end 
+ 
+feature -- String handling 
+	 
+	multiple_extend (trgt: STRING; c: CHARACTER; n: INTEGER) 
+		local 
+			l: INTEGER 
+		do 
+			from 
+				l := n 
+			until l = 0 loop 
+				trgt.extend (c) 
+				l := l - 1 
+			end 
+		end 
+	 
+feature -- Output 
+ 
+	max_lines: INTEGER = 22 
+	 
+	max_closure_ident: NATURAL 
+	 
+	closure_roots: ARRAYED_LIST[TUPLE[ident: ANY; expr: DG_EXPRESSION; max: NATURAL; depth: INTEGER]] 
+		once 
+			create Result.make (10) 
+		end 
+ 
+	closure_root_of_ident (id: NATURAL): like closure_top 
+		local 
+			list: like closure_roots 
+		do 
+			list := closure_roots 
+			from 
+				list.start 
+			until attached Result or else list.off loop 
+				Result:= list.item 
+				if Result.max < id then 
+					Result := Void 
+				end 
+				list.forth 
+			end 
+		end 
+	 
+	closure_top: detachable TUPLE[ident: ANY; expr: DG_EXPRESSION; max: NATURAL; depth: INTEGER] 
+		do 
+		end 
+	 
+	closure_table: PC_ANY_TABLE[NATURAL] 
+		once 
+			create Result.make (100, 0) 
+		end 
+	 
+	types_table: PC_ANY_TABLE[detachable IS_TYPE] 
+		once 
+			create Result.make (100, Void) 
+		end 
+	 
+feature -- Exception handling 
+	 
+	raise (msg: STRING) 
+		do 
+			original_msg.copy (msg) 
+			Precursor (original_msg) 
+		end 
+	 
+	raise_bad_node (node: DG_EXPRESSION; line, msg: STRING) 
+		do 
+			node.append_out_until_bad (tmp_str) 
+			line.prepend (tmp_str) 
+			raise (msg) 
+		end 
+	 
+feature -- Scanning files 
+	 
+	act_file: PLAIN_TEXT_FILE 
+		once 
+			create Result.make ("") 
+		end 
+	 
+	is_source_file_open: BOOLEAN 
+		local 
+			f: like act_file 
+		do 
+			f := act_file 
+			Result :=	f.exists and then f.is_open_read and then not f.end_of_file 
+		end 
+	 
+	class_of_source_file: detachable IS_CLASS_TEXT 
+		local 
+			i: INTEGER 
+		do 
+			if act_file.exists then 
+				from 
+					i := debuggee.type_count 
+				until attached Result or else i = 0 loop 
+					i := i - 1 
+					if debuggee.valid_class (i) then 
+						Result := debuggee.class_at (i) 
+						if not attached Result.path as path or else not path.is_equal (act_file.name) then	 
+							Result := Void 
+						end 
+					end 
+				end 
+			end 
+		end 
+	 
+	open_source (lr: DG_LINE_RANGE) 
+		local 
+			i: INTEGER 
+		do 
+			if is_source_file_open then 
+				act_file.close 
+			end
+			if attached lr.cls as cls then
+	 			if attached cls.path as fn then
+					act_file.make (fn) 
+					if act_file.exists then 
+						act_file.open_read 
+					end 
+				elseif act_file.is_open_read then
+					act_file.close
+				end
+				if not is_source_file_open then 
+					tmp_str.copy (once "Source file of class %"") 
+					tmp_str.append (cls.name) 
+					tmp_str.append (once "%" cannot be opened.") 
+					raise (tmp_str) 
+				else
+					if act_file.date > debuggee.compilation_time // 1000 then 
+						tmp_str.copy (once "Source file of class %"") 
+						tmp_str.append (cls.name) 
+						tmp_str.append (once "%" too new.") 
+						raise (tmp_str) 
+					end 
+					from 
+						i := lr.first_line 
+					until act_file.end_of_file or else i <= 1 loop 
+						act_file.read_line 
+							i := i - 1 
+						end 
+						if act_file.end_of_file then 
+						act_file.close 
+					end 
+				end 
+			end 
+		end 
+	 
+	read_source_line (line: STRING) 
+		-- Appends the next line of `act_file' to `line'. 
+		require 
+			empty: line.is_empty 
+			file_open: is_source_file_open 
+		do 
+			act_file.read_line 
+			line.append (act_file.last_string) 
+		end 
+	 
+feature {NONE} -- Implementation 
+ 
+	tmp_str: STRING = "......................................................" 
+ 
+feature {NONE} -- External implementation 
+ 
+	c_debug_flag: INTEGER 
+		external "C inline" 
+		alias "GE_z_pma" 
+		end 
+	 
+	c_clear_debug_flag 
+		external "C inline" 
+		alias "GE_z_pma = 1" 
+		end 
+	 
+	c_catcall_source: INTEGER
+			-- Type-id of object causing recent catcall.
+		external "C inline" 
+		alias "GE_catcall_source_id" 
+		end 
+	 
+	c_catcall_target: INTEGER
+			-- Static type-id of argument causing recent catcall.
+		external "C inline" 
+		alias "GE_catcall_target_id" 
+		end 
+	 
+	c_errno: INTEGER 
+			-- C `errno'. 
+		external "C inline use <stdio.h>" 
+		alias "errno" 
+		end 
+	 
+	c_print_errno (errno: INTEGER; c_string: POINTER) 
+			-- Print the description of saved C `errno' on `io.error'. 
+		external "C inline use <stdio.h>" 
+		alias "errno=$errno;  perror ($c_string)" 
+		end 
+	 
+invariant 
+ 
+note 
+	 author: "Wolfgang Jansen" 
+	 date: "$Date$" 
+	 revision: "$Revision$" 
+end 

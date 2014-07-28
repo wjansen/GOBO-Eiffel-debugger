@@ -79,6 +79,8 @@ inherit
 			is_root_context
 		end
 
+	HASHABLE
+
 feature -- Initialization
 
 	reset
@@ -353,6 +355,16 @@ feature -- Comparison
 			-- Result := False
 		end
 
+feature -- HASHABLE
+
+	hash_code: INTEGER
+		do
+			if internal_hash_code = 0 then
+				internal_hash_code := upper_name.hash_code
+			end
+			Result := internal_hash_code
+		end 
+	
 feature {ET_TYPE, ET_TYPE_CONTEXT} -- Conformance
 
 	conforms_from_bit_type_with_type_marks (other: ET_BIT_TYPE; other_type_mark: ET_TYPE_MARK; other_context: ET_TYPE_CONTEXT; a_type_mark: ET_TYPE_MARK; a_context: ET_TYPE_CONTEXT): BOOLEAN
@@ -778,6 +790,11 @@ feature {ET_TYPE, ET_TYPE_CONTEXT} -- Type context
 			Result := conforms_from_tuple_type_with_type_marks (other, other_type_mark, other_context, a_type_mark, Current)
 		end
 
+feature {NONE} -- Implementation
+	
+	internal_hash_code: INTEGER
+			-- Fixed hashcode value
+	
 invariant
 
 	is_root_context: is_root_context

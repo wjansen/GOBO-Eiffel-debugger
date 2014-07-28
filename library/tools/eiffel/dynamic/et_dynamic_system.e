@@ -382,11 +382,23 @@ feature {NONE} -- Types
 		local
 			l_base_type: ET_BASE_TYPE
 			l_base_class: ET_CLASS
+			l_parameters: ET_ACTUAL_PARAMETER_LIST
+			l_generic: ET_DYNAMIC_TYPE
+			i: INTEGER
 		do
 			l_base_type := a_type.base_type (a_context)
 			l_base_class := l_base_type.base_class
 			if l_base_type.same_as_base_class then
 				l_base_type := l_base_class
+			end
+			from
+				-- Make sure that any actual generic parameter is created
+				-- as ET_DYNAMIC_TYPE.
+				l_parameters := l_base_type.actual_parameters
+				i := l_base_type.actual_parameter_count
+			until i = 0 loop
+				l_generic := dynamic_type (l_parameters.type (i), a_context)
+				i := i - 1
 			end
 			if l_base_class.is_special_class then
 				Result := new_special_type (l_base_type)

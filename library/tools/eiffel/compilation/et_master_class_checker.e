@@ -24,6 +24,8 @@ inherit
 	ET_SHARED_TOKEN_CONSTANTS
 		export {NONE} all end
 
+		KL_IMPORTED_STRING_ROUTINES
+		
 create
 
 	make

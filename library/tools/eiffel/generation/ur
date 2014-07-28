@@ -1,0 +1,10 @@
+#! /bin/sh
+for f in *.e
+
+do
+  echo $f
+  sed \
+    -e 's/{GEDB}/{GOBO}/g' \
+      $f > $$
+  mv $$ $f
+done

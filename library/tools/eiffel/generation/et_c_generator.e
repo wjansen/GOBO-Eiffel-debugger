@@ -5,7 +5,7 @@ note
 		"C code generators"
 
 	library: "Gobo Eiffel Tools Library"
-	copyright: "Copyright (c) 2004-2014, Eric Bezault and others"
+	copyright: "Copyright (c) 2004-2013, Eric Bezault and others"
 	license: "MIT License"
 	date: "$Date$"
 	revision: "$Revision$"
@@ -158,6 +158,7 @@ feature {NONE} -- Initialization
 			split_mode := True
 			split_threshold := default_split_threshold
 			use_boehm_gc := current_system.use_boehm_gc
+			debugger_level := current_system.debugger_level
 			system_name := "unknown"
 			current_file := null_output_stream
 			header_file := null_output_stream
@@ -310,6 +311,9 @@ feature -- Compilation options
 	use_boehm_gc: BOOLEAN
 			-- Should the application be compiled with the Boehm GC?
 
+	debugger_level: INTEGER
+			-- Level of debugging intensity: one of 0 ("no"), 1 ("pma"), 2 ("full").
+
 feature -- Compilation options setting
 
 	set_finalize_mode (b: BOOLEAN)
@@ -344,6 +348,14 @@ feature -- Compilation options setting
 			use_boehm_gc := b
 		ensure
 			use_boehm_gc_set: use_boehm_gc = b
+		end
+
+	set_debugger_level (l: INTEGER)
+			-- Set `debugger_level' to `l'.
+		do
+			debugger_level := l
+		ensure
+			debugger_level_set: debugger_level = l
 		end
 
 feature -- Generation
@@ -390,12 +402,14 @@ feature {NONE} -- Compilation script generation
 			l_external_object_pathnames: DS_ARRAYED_LIST [STRING]
 			l_includes: STRING
 			l_libs: STRING
+			l_lib: STRING
 			l_pathname: STRING
 			l_cursor: DS_HASH_TABLE_CURSOR [STRING, STRING]
 			l_external_c_filenames: DS_HASH_TABLE [STRING, STRING]
 			l_rc_template: STRING
 			l_rc_filename: STRING
 			l_res_filename: STRING
+			l_exe_name: STRING
 		do
 			l_base_name := a_system_name
 			l_c_config := c_config
@@ -454,7 +468,13 @@ feature {NONE} -- Compilation script generation
 				i := i + 1
 			end
 			l_variables.force (l_libs, "libs")
-			l_variables.force (l_base_name + l_c_config.item ("exe"), "exe")
+			l_exe_name := l_base_name
+			if debugger_level > 1 then
+				l_exe_name := l_c_config.item ("prelib") + l_exe_name + l_c_config.item ("lib")
+			else
+				l_exe_name := l_exe_name + l_c_config.item ("exe")
+			end
+			l_variables.force (l_exe_name, "exe")
 			create l_obj_filenames.make (100)
 			l_obj := l_c_config.item ("obj")
 			l_cursor := c_filenames.new_cursor
@@ -528,11 +548,12 @@ feature {NONE} -- Compilation script generation
 					l_file.put_line (l_command_name)
 					l_cursor.forth
 				end
+				put_tool_files_compilation (l_c_config, l_variables, l_file)
 					-- Resource file.
 				l_c_config.search ("rc")
 				if l_c_config.found then
 					l_rc_template := l_c_config.found_item
-					l_rc_filename :=  l_base_name + rc_file_extension
+					l_rc_filename := l_base_name + rc_file_extension
 					if file_system.file_exists (l_rc_filename) then
 						l_res_filename := l_base_name + res_file_extension
 						l_variables.force (l_rc_filename, "rc_file")
@@ -543,7 +564,17 @@ feature {NONE} -- Compilation script generation
 						l_obj_filenames.append_string (l_res_filename)
 					end
 				end
-				l_link_template := l_c_config.item ("link")
+				inspect debugger_level
+				when 1 then
+					l_lib := l_c_config.item ("prelib") + "gedb" + l_c_config.item ("lib")
+					l_lib := file_system.nested_pathname ("${GOBO}", <<"bin", l_lib>>)
+					l_link_template := l_c_config.item ("link") + " " + l_lib
+				when 2 then
+					l_exe_name := l_c_config.item ("prelib") + l_exe_name + l_c_config.item ("lib")
+					l_link_template := l_c_config.item ("linklib") 
+				else
+					l_link_template := l_c_config.item ("link")
+				end
 				l_command_name := template_expander.expand_from_values (l_link_template, l_variables)
 				l_file.put_line (l_command_name)
 				l_file.close
@@ -597,13 +628,16 @@ feature {NONE} -- Compilation script generation
 				Result.put_new ("link -nologo $lflags -subsystem:console -out:$exe $objs $libs", "link")
 				Result.put_new (".obj", "obj")
 				Result.put_new (".exe", "exe")
+				Result.put_new (".dll", "lib")
+				Result.put_new ("", "prelib")
 				Result.put_new ("", "cflags")
 				Result.put_new ("", "lflags")
 			else
 				Result.put_new ("gcc $cflags $includes -c $c", "cc")
 				Result.put_new ("gcc $lflags -o $exe $objs $libs", "link")
 				Result.put_new (".o", "obj")
-				Result.put_new ("", "exe")
+				Result.put_new (".so", "lib")
+				Result.put_new ("lib", "prelib")
 				Result.put_new ("", "cflags")
 				Result.put_new ("", "lflags")
 			end
@@ -621,6 +655,9 @@ feature {NONE} -- Compilation script generation
 				end
 				if use_boehm_gc then
 					l_c_config_parser.define_value ("True", "EIF_BOEHM_GC")
+				end
+				if debugger_level > 0 then
+					l_c_config_parser.define_value ("True", c_eif_debugger)
 				end
 				if console_application_mode then
 					l_c_config_parser.define_value ("True", "EIF_CONSOLE")
@@ -647,6 +684,7 @@ feature {NONE} -- Compilation script generation
 			link_defined: Result.has ("link")
 			exe_defined: Result.has ("exe")
 			obj_defined: Result.has ("obj")
+			dg_defined: Result.has ("dg")
 		end
 
 	add_external_c_files (a_library_name, a_clib_dirname: STRING; a_external_c_filenames: DS_HASH_TABLE [STRING, STRING])
@@ -808,6 +846,12 @@ feature {NONE} -- C code Generation
 					header_file.put_line (c_eif_boehm_gc)
 					header_file.put_new_line
 				end
+				if debugger_level > 0 then
+					header_file.put_string (c_define)
+					header_file.put_character (' ')
+					header_file.put_line (c_eif_debugger)
+					header_file.put_new_line
+				end
 				include_runtime_header_file ("ge_eiffel.h", True, header_file)
 				header_file.put_new_line
 				include_runtime_header_file ("ge_native_string.h", True, header_file)
@@ -902,6 +946,9 @@ feature {NONE} -- C code Generation
 				flush_to_c_file
 					-- Print 'GE_types' array.
 				print_types_array
+				current_file.put_new_line
+				flush_to_c_file
+				print_extension 
 				current_file.put_new_line
 				flush_to_c_file
 					-- Print 'main' function.
@@ -1463,9 +1510,10 @@ feature {NONE} -- Feature generation
 				--
 			current_file := current_function_body_buffer
 			print_feature_trace_message_call (True)
+			print_routine_entry (a_creation)
 			if l_result_type_set /= Void and then l_result_type_set.is_empty then
 -- TODO: build full dynamic type sets, recursively.
-				print_feature_info_message_call ("Dynamic type set not built for external feature ")
+--				print_feature_info_message_call ("Dynamic type set not built for external feature ")
 					-- Put the body of the feature in a block so that there
 					-- is no C compilation error if some variables are
 					-- declared after this instruction above.
@@ -1667,6 +1715,7 @@ feature {NONE} -- Feature generation
 			else
 print ("**** language not recognized: " + l_language_string + "%N")
 			end
+			print_debug_exit (True)
 			if not l_is_inline and l_result_type /= Void then
 				print_indentation
 				current_file.put_string (c_return)
@@ -4477,6 +4526,7 @@ print ("**** language not recognized: " + l_language_string + "%N")
 			indent
 			current_file := current_function_body_buffer
 			print_feature_trace_message_call (True)
+			print_routine_entry (a_creation)
 			if a_creation then
 				print_malloc_current (a_feature)
 			end
@@ -4491,6 +4541,7 @@ print ("**** language not recognized: " + l_language_string + "%N")
 				current_file.put_character ('{')
 				current_file.put_new_line
 				indent
+				print_debug_exit (False)
 				print_indentation
 				current_file.put_string (c_return)
 				if l_result_type_set /= Void then
@@ -4651,6 +4702,7 @@ print ("**** language not recognized: " + l_language_string + "%N")
 				current_file.put_character ('{')
 				current_file.put_new_line
 				indent
+				print_rescue_position (l_rescue)
 				print_compound (l_rescue)
 				print_indentation
 				current_file.put_string (c_ge_raise)
@@ -4688,6 +4740,7 @@ print ("**** language not recognized: " + l_language_string + "%N")
 				current_file.put_string ("GE_last_rescue = r.previous;")
 				current_file.put_new_line
 			end
+			print_debug_exit (True)
 			if a_result_type /= Void then
 					-- The 'Result' entity is always implicitly read in the body to return its value.
 				l_result_read_in_body := True
@@ -5032,6 +5085,7 @@ print ("ET_C_GENERATOR.print_extended_attribute: initialization not supported ye
 				-- Clean up.
 			call_operands.wipe_out
 			extra_dynamic_type_sets.remove_last
+			print_debug_exit (True)
 				-- Return attribute value.
 			print_indentation
 			current_file.put_string (c_return)
@@ -5644,6 +5698,11 @@ feature {NONE} -- Instruction generation
 					end
 				end
 				fill_call_operands (nb)
+				if an_instruction.creation_call /= Void then
+					print_call_position(an_instruction.creation_call, True)
+				else
+					print_call_position(an_instruction.target, True)
+				end
 				print_indentation
 				print_writable (l_target)
 				current_file.put_character (' ')
@@ -6019,6 +6078,7 @@ print ("ET_C_GENERATOR.print_inspect_instruction - range%N")
 			current_file.put_new_line
 			indent
 			l_expression := an_instruction.until_expression
+			print_until_position (an_instruction.until_conditional)
 			print_operand (l_expression)
 			fill_call_operands (1)
 			print_indentation
@@ -6098,9 +6158,9 @@ print ("ET_C_GENERATOR.print_inspect_instruction - range%N")
 						if l_current_class /= l_class_impl then
 								-- Resolve generic parameters in the context of `current_type'.
 							if not l_current_class.ancestors_built or else l_current_class.has_ancestors_error then
-									-- 'ancestor_builder' should already have been executed
-									-- on `l_current_class' at this stage, and any error
-									-- should already heve been reported.
+										-- 'ancestor_builder' should already have been executed
+										-- on `l_current_class' at this stage, and any error
+										-- should already heve been reported.
 								set_fatal_error
 							else
 								l_ancestor := l_current_class.ancestor (l_parent_type)
@@ -6133,6 +6193,7 @@ print ("ET_C_GENERATOR.print_inspect_instruction - range%N")
 								l_dynamic_precursor.set_generated (True)
 								called_features.force_last (l_dynamic_precursor)
 							end
+							print_call_position(l_procedure, True)
 							print_indentation
 							if l_dynamic_precursor.is_static then
 								print_static_routine_name (l_dynamic_precursor, current_type, current_file)
@@ -6170,8 +6231,8 @@ print ("ET_C_GENERATOR.print_inspect_instruction - range%N")
 						end
 					end
 				end
-				call_operands.wipe_out
 			end
+			call_operands.wipe_out
 		end
 
 	print_qualified_call_instruction (a_call: ET_FEATURE_CALL_INSTRUCTION)
@@ -6437,9 +6498,9 @@ print ("ET_C_GENERATOR.print_inspect_instruction - range%N")
 				l_seed := an_instruction.name.seed
 				l_dynamic_procedure := l_target_type.seeded_dynamic_procedure (l_seed, current_dynamic_system)
 				if l_dynamic_procedure = Void then
-						-- Internal error: there should be a procedure with `l_seed'.
-						-- It has been computed in ET_FEATURE_CHECKER or else an
-						-- error should have already been reported.
+					-- Internal error: there should be a procedure with `l_seed'.
+					-- It has been computed in ET_FEATURE_CHECKER or else an
+					-- error should have already been reported.
 					set_fatal_error
 					error_handler.report_giaaa_error
 				else
@@ -6447,6 +6508,7 @@ print ("ET_C_GENERATOR.print_inspect_instruction - range%N")
 						l_dynamic_procedure.set_generated (True)
 						called_features.force_last (l_dynamic_procedure)
 					end
+					print_call_position(an_instruction, True)
 					print_indentation
 					print_static_routine_name (l_dynamic_procedure, l_target_type, current_file)
 					current_file.put_character ('(')
@@ -6578,6 +6640,9 @@ feature {NONE} -- Procedure call generation
 					set_fatal_error
 					error_handler.report_giaaa_error
 				else
+					if current_type = a_target_type then
+						print_call_position (a_name, True)
+					end
 					print_procedure_call (l_dynamic_feature, a_target_type, a_check_void_target)
 				end
 			end
@@ -7045,6 +7110,7 @@ feature {NONE} -- Expression generation
 			current_file.put_new_line
 			indent
 			print_operand (an_expression.cursor_after_expression)
+			print_until_position (an_expression.iteration_conditional)
 			l_conditional := an_expression.until_conditional
 			if l_conditional /= Void then
 				l_expression := l_conditional.expression
@@ -9894,9 +9960,9 @@ print ("ET_C_GENERATOR.print_old_expression%N")
 				fill_call_operands (nb)
 				l_parent_type := an_expression.parent_type
 				if l_parent_type = Void then
-						-- Internal error: the Precursor construct should already
-						-- have been resolved when flattening the features of the
-						-- implementation class of current feature.
+					-- Internal error: the Precursor construct should already
+					-- have been resolved when flattening the features of the
+					-- implementation class of current feature.
 					set_fatal_error
 					error_handler.report_giaaa_error
 				else
@@ -9906,18 +9972,18 @@ print ("ET_C_GENERATOR.print_old_expression%N")
 						l_current_class := current_type.base_class
 						l_class_impl := current_feature.static_feature.implementation_class
 						if l_current_class /= l_class_impl then
-								-- Resolve generic parameters in the context of `current_type'.
+							-- Resolve generic parameters in the context of `current_type'.
 							l_current_class.process (current_system.ancestor_builder)
 							if not l_current_class.ancestors_built or else l_current_class.has_ancestors_error then
-									-- 'ancestor_builder' should already have been executed
-									-- on `l_current_class' at this stage, and any error
-									-- should already heve been reported.
+								-- 'ancestor_builder' should already have been executed
+								-- on `l_current_class' at this stage, and any error
+								-- should already heve been reported.
 								set_fatal_error
 							else
 								l_ancestor := l_current_class.ancestor (l_parent_type)
 								if l_ancestor = Void then
-										-- Internal error: `l_parent_type' is an ancestor
-										-- of `l_class_impl', and hence of `l_current_class'.
+									-- Internal error: `l_parent_type' is an ancestor
+									-- of `l_class_impl', and hence of `l_current_class'.
 									set_fatal_error
 									error_handler.report_giaaa_error
 								else
@@ -9932,9 +9998,9 @@ print ("ET_C_GENERATOR.print_old_expression%N")
 						l_class := l_parent_type.base_class
 						l_query := l_class.seeded_query (l_precursor_keyword.seed)
 						if l_query = Void then
-								-- Internal error: the Precursor construct should
-								-- already have been resolved when flattening the
-								-- features of `l_class_impl'.
+							-- Internal error: the Precursor construct should
+							-- already have been resolved when flattening the
+							-- features of `l_class_impl'.
 							set_fatal_error
 							error_handler.report_giaaa_error
 						else
@@ -9947,8 +10013,8 @@ print ("ET_C_GENERATOR.print_old_expression%N")
 									l_dynamic_type_set := dynamic_type_set (an_expression)
 									l_dynamic_type := l_dynamic_type_set.static_type
 									l_temp := new_temp_variable (l_dynamic_type)
-										-- We will set the index of `l_temp' later because
-										-- it could still be used in `call_operands'.
+									-- We will set the index of `l_temp' later because
+									-- it could still be used in `call_operands'.
 									l_temp_index := an_expression.index
 									operand_stack.force (l_temp)
 									print_indentation
@@ -10006,8 +10072,8 @@ print ("ET_C_GENERATOR.print_old_expression%N")
 				end
 				call_operands.wipe_out
 				if l_temp_index /= 0 then
-						-- We had to wait until this stage to set the index of `l_temp'
-						-- because it could have still been used in `call_operands'.
+					-- We had to wait until this stage to set the index of `l_temp'
+					-- because it could have still been used in `call_operands'.
 					check l_temp_not_void: l_temp /= Void end
 					l_temp.set_index (l_temp_index)
 				end
@@ -10209,6 +10275,7 @@ print ("ET_C_GENERATOR.print_old_expression%N")
 					nb := nb + 1
 					fill_call_operands (nb)
 				end
+				print_call_position(a_call, False)
 				if in_operand then
 					if l_assignment_target /= Void then
 						operand_stack.force (l_assignment_target)
@@ -10636,8 +10703,8 @@ print ("ET_C_GENERATOR.print_old_expression%N")
 						l_dynamic_type_set := dynamic_type_set (an_expression)
 						l_dynamic_type := l_dynamic_type_set.static_type
 						l_temp := new_temp_variable (l_dynamic_type)
-							-- We will set the index of `l_temp' later because
-							-- it could still be used in `call_operands'.
+						-- We will set the index of `l_temp' later because
+						-- it could still be used in `call_operands'.
 						l_temp_index := an_expression.index
 						operand_stack.force (l_temp)
 						print_indentation
@@ -10652,20 +10719,20 @@ print ("ET_C_GENERATOR.print_old_expression%N")
 				l_seed := an_expression.name.seed
 				l_query := l_target_type.base_class.seeded_query (l_seed)
 				if l_query = Void then
-						-- Internal error: there should be a query with `l_seed'.
-						-- It has been computed in ET_FEATURE_CHECKER or else an
-						-- error should have already been reported.
+					-- Internal error: there should be a query with `l_seed'.
+					-- It has been computed in ET_FEATURE_CHECKER or else an
+					-- error should have already been reported.
 					set_fatal_error
 					error_handler.report_giaaa_error
 				elseif l_query.is_attribute then
-						-- Internal error: no object available.
+					-- Internal error: no object available.
 					set_fatal_error
 					error_handler.report_giaaa_error
 				elseif l_query.is_constant_attribute then
 	-- TODO: make the difference between expanded and reference "constants".
 					l_constant_attribute ?= l_query
 					if l_constant_attribute = Void then
-							-- Internal error.
+						-- Internal error.
 						set_fatal_error
 						error_handler.report_giaaa_error
 					else
@@ -10680,11 +10747,11 @@ print ("ET_C_GENERATOR.print_old_expression%N")
 					l_dynamic_type := l_dynamic_type_set.static_type
 					print_type_cast (l_dynamic_type, current_file)
 					current_file.put_character ('(')
-						-- In the current implementation unique values is based on
-						-- the id of the implementation feature (the feature in the
-						-- class where this unique attribute has been written). For
-						-- synonyms the fetaure id is in the reverse order, hence the
-						-- arithmetic below.
+					-- In the current implementation unique values is based on
+					-- the id of the implementation feature (the feature in the
+					-- class where this unique attribute has been written). For
+					-- synonyms the fetaure id is in the reverse order, hence the
+					-- arithmetic below.
 					current_file.put_integer (current_system.registered_feature_count - l_query.implementation_feature.id + 1)
 					current_file.put_character (')')
 				else
@@ -10720,8 +10787,8 @@ print ("ET_C_GENERATOR.print_old_expression%N")
 				end
 				call_operands.wipe_out
 				if l_temp_index /= 0 then
-						-- We had to wait until this stage to set the index of `l_temp'
-						-- because it could have still been used in `call_operands'.
+					-- We had to wait until this stage to set the index of `l_temp'
+					-- because it could have still been used in `call_operands'.
 					check l_temp_not_void: l_temp /= Void end
 					l_temp.set_index (l_temp_index)
 				end
@@ -11131,6 +11198,7 @@ print ("ET_C_GENERATOR.print_strip_expression%N")
 						nb := nb + 1
 						fill_call_operands (nb)
 					end
+					print_call_position(a_call, False)
 					if in_operand then
 						if l_assignment_target /= Void then
 							operand_stack.force (l_assignment_target)
@@ -13700,6 +13768,7 @@ print ("ET_C_GENERATOR.print_once_procedure_inline_agent: once key %"OBJECT%" no
 			end
 			create l_tuple_type.make (tokens.implicit_attached_type_mark, l_parameters, l_agent_type.base_class.universe.tuple_type.named_base_class)
 			agent_closed_operands_type := current_dynamic_system.dynamic_type (l_tuple_type, current_system.any_type)
+			an_agent.set_closed_operands_tuple (agent_closed_operands_type) 
 				--
 				-- Print function associated with the agent to `current_file'.
 				--
@@ -13718,18 +13787,36 @@ print ("ET_C_GENERATOR.print_once_procedure_inline_agent: once key %"OBJECT%" no
 			current_file.put_character ('*')
 			current_file.put_character ('/')
 			current_file.put_new_line
+			header_file.put_character ('/')
+			header_file.put_character ('*')
+			header_file.put_character (' ')
+			header_file.put_string ("Function for agent #")
+			header_file.put_integer (i)
+			header_file.put_string (" in feature ")
+			header_file.put_string (current_type.base_type.unaliased_to_text)
+			header_file.put_character ('.')
+			header_file.put_string (STRING_.replaced_all_substrings (current_feature.static_feature.lower_name, "*/", "star/"))
+			header_file.put_character (' ')
+			header_file.put_character ('*')
+			header_file.put_character ('/')
+			header_file.put_new_line
 			l_result := an_agent.implicit_result
 			if l_result = Void then
 					-- Procedure.
 				current_file.put_string (c_void)
+				header_file.put_string (c_void)
 			else
 					-- Query or Tuple label.
 				l_result_type := dynamic_type_set (l_result).static_type
 				print_type_declaration (l_result_type, current_file)
+				print_type_declaration (l_result_type, header_file)
 			end
 			current_file.put_character (' ')
+			header_file.put_character (' ')
 			print_agent_function_name (i, current_feature, current_type, current_file)
+			print_agent_function_name (i, current_feature, current_type, header_file)
 			current_file.put_character ('(')
+			header_file.put_character ('(')
 			if exception_trace_mode then
 				current_file.put_string (c_ge_call)
 				current_file.put_character ('*')
@@ -13737,10 +13824,19 @@ print ("ET_C_GENERATOR.print_once_procedure_inline_agent: once key %"OBJECT%" no
 				current_file.put_string (c_ac)
 				current_file.put_character (',')
 				current_file.put_character (' ')
+				header_file.put_string (c_ge_call)
+				header_file.put_character ('*')
+				header_file.put_character (' ')
+				header_file.put_string (c_ac)
+				header_file.put_character (',')
+				header_file.put_character (' ')
 			end
 			print_type_declaration (agent_closed_operands_type, current_file)
+			print_type_declaration (agent_closed_operands_type, header_file)
 			current_file.put_character (' ')
+			header_file.put_character (' ')
 			print_argument_name (formal_argument (1), current_file)
+			print_argument_name (formal_argument (1), header_file)
 			from j := 1 until j > nb_open_operands loop
 				l_open_operand := agent_open_operands.item (j)
 				l_type := dynamic_type_set (l_open_operand).static_type
@@ -13749,10 +13845,17 @@ print ("ET_C_GENERATOR.print_once_procedure_inline_agent: once key %"OBJECT%" no
 				print_type_declaration (l_type, current_file)
 				current_file.put_character (' ')
 				print_agent_open_operand_access (l_open_operand)
+				header_file.put_character (',')
+				header_file.put_character (' ')
+				print_type_declaration (l_type, header_file)
+				header_file.put_character (' ')
 				j := j + 1
 			end
 			current_file.put_character (')')
 			current_file.put_new_line
+			header_file.put_character (')')
+			header_file.put_character (';')
+			header_file.put_new_line
 			current_file.put_character ('{')
 			current_file.put_new_line
 			indent
@@ -14130,6 +14233,7 @@ print ("ET_C_GENERATOR.print_once_procedure_inline_agent: once key %"OBJECT%" no
 		do
 -- TODO: handle case of once-routines
 			print_agent_trace_message_call (an_agent, True)
+			print_inline_agent_entry (an_agent)
 			l_result := an_agent.implicit_result
 			if l_result /= Void then
 				l_result_type_set := dynamic_type_set (l_result)
@@ -28231,6 +28335,63 @@ feature {NONE} -- String generation
 			current_file.put_character ('%'')
 		end
 
+feature {NONE} -- Extended code generation
+	
+	print_call_position(a_node: ET_AST_NODE; as_procedure: BOOLEAN)
+			-- Print position of routine call after computing the arguments.
+			-- Default: do nothing.
+		require
+			a_node_not_void: a_node /= Void
+		do
+		end 
+
+	print_rescue_position(a_rescue: ET_COMPOUND)
+			-- Print routine position after `setjmp'.
+			-- Default: do nothing.
+		do
+		end
+			
+ 	print_routine_entry (as_create: BOOLEAN)
+			-- Print routine initialization.
+			-- `as_create=True' means that the current routine acts
+			-- as a creation routine. 
+		do
+		end
+
+	print_inline_agent_entry (an_agent: ET_INTERNAL_ROUTINE_INLINE_AGENT)
+			-- Print inline agent initialization.
+		require
+			an_agent_not_void: an_agent /= Void
+		do
+		end
+	
+	print_debug_exit (a_last: BOOLEAN)
+			-- Print debugger related stack termination.
+			-- `a_last=False' iff another call to the routine follows in C code
+			-- (e.g. after immediate return from a once routine). 
+		do
+		end
+	
+	print_extension
+			-- Generate C code added by descendant classes
+		do
+		end
+
+	put_tool_files_compilation(a_config_list, a_variable_list: DS_HASH_TABLE [STRING, STRING];
+														 a_script: KL_TEXT_OUTPUT_FILE)
+		-- Put C compile command for compilee dependent tool source files
+		-- (such as the debugger) to the compilation script `a_script'.
+		-- Replace script variables according to `a_variable_list'.
+		require
+			a_variable_list_not_void: a_variable_list /= Void
+			a_file_not_void: a_script /= Void
+		do
+		end
+	
+	print_until_position (a_node: ET_AST_NODE)
+		do
+		end
+
 feature {NONE} -- Indentation
 
 	indentation: INTEGER
@@ -30189,6 +30350,7 @@ feature {NONE} -- Constants
 	c_eif_any: STRING = "EIF_ANY"
 	c_eif_boolean: STRING = "EIF_BOOLEAN"
 	c_eif_boehm_gc: STRING = "EIF_BOEHM_GC"
+	c_eif_debugger: STRING = "EIF_DEBUGGER"
 	c_eif_character: STRING = "EIF_CHARACTER"
 	c_eif_character_8: STRING = "EIF_CHARACTER_8"
 	c_eif_character_32: STRING = "EIF_CHARACTER_32"
@@ -30309,6 +30471,7 @@ feature {NONE} -- Constants
 	c_or_else: STRING = "||"
 	c_return: STRING = "return"
 	c_sizeof: STRING = "sizeof"
+	c_static: STRING = "static"
 	c_stderr: STRING = "stderr"
 	c_struct: STRING = "struct"
 	c_switch: STRING = "switch"

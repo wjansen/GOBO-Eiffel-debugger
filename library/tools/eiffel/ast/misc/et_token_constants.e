@@ -17,6 +17,14 @@ inherit
 	ET_TOKEN_CODES
 
 feature -- Class names
+	
+	actionable_class_name: ET_CLASS_NAME
+			-- "ACTIONABLE" class name
+		once
+			create {ET_IDENTIFIER} Result.make (capitalized_actionable_name)
+		ensure
+			actionable_class_name_not_void: Result /= Void
+		end
 
 	any_class_name: ET_CLASS_NAME
 			-- "ANY" class name
@@ -1594,6 +1602,14 @@ feature -- Feature names
 			create {ET_IDENTIFIER} Result.make (lower_name)
 		ensure
 			lower_feature_name_not_void: Result /= Void
+		end
+
+	make_as_actionable_feature_name: ET_FEATURE_NAME
+			-- 'make_as_actionable' feature name
+		once
+			create {ET_IDENTIFIER} Result.make (make_as_actionable_name)
+		ensure
+			make_as_actionable_feature_name_not_void: Result /= Void
 		end
 
 	make_feature_name: ET_FEATURE_NAME
@@ -3383,6 +3399,7 @@ feature -- Keywords
 
 feature -- Keyword and symbol names
 
+	capitalized_actionable_name: STRING = "PC_ACTIONABLE" -- in future: "ACTIONABLE"
 	capitalized_any_name: STRING = "ANY"
 	capitalized_arguments_32_name: STRING = "ARGUMENTS_32"
 	capitalized_array_name: STRING = "ARRAY"
@@ -3747,6 +3764,9 @@ feature -- Keyword and symbol names
 	make_name: STRING = "make"
 			-- Name of Eiffel feature 'make'
 
+	make_as_actionable_name: STRING = "make_as_actionable"
+			-- Name of Eiffel feature 'make_as_actionable'
+	
 	make_empty_name: STRING = "make_empty"
 			-- Name of Eiffel feature 'make_empty'
 

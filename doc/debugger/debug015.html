@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
+<meta name="generator" content="hevea 2.09">
+<link rel="stylesheet" type="text/css" href="debug.css">
+<title>General objects</title>
+</head>
+<body >
+<a href="debug014.html"><img src="previous_motif.gif" alt="Previous"></a>
+<a href="index.html"><img src="contents_motif.gif" alt="Up"></a>
+<a href="debug016.html"><img src="next_motif.gif" alt="Next"></a>
+<hr>
+Gedb &#X2013; The Gec debugger<h3 id="sec38" class="subsection">4.1&#XA0;&#XA0;General objects</h3>
+<p><a id="S:generalExpression"></a>
+The debugger distinguishes three levels of complexity: <br>
+<span style="font-style:italic">expression</span>, <span style="font-style:italic">detailed_expression</span>,
+and <span style="font-style:italic">expression_list</span>. <br>
+They are related to each other by the Backus-Naur-form given 
+in Sec.&#XA0;<a href="debug016.html#S%3AexpressionList">4.2</a>. 
+</p><p>First, an <span style="font-style:italic">expression</span> is, with a few restrictions and additions, 
+any <span style="font-style:oblique">Eiffel</span> expression. 
+</p><blockquote class="quote">
+<div class="center"><span style="font-weight:bold">Restriction</span></div>
+<span style="font-family:monospace">create</span>, <span style="font-family:monospace">agent</span>, <span style="font-family:monospace">Precursor</span>, address <span style="font-family:monospace">$</span>, 
+and object test expressions are not supported. 
+</blockquote><p>An expression is written as follows: a (un-)qualified expression 
+like <span style="font-family:sans-serif">x</span> or <span style="font-family:sans-serif">x.y.z</span>, 
+or the composition of of calls to infix and prefix operators 
+where the target is a (un-)qualified expression either. 
+Expressions may include function calls
+(the arguments are, recursively, <span style="font-style:italic">expression</span>s as well). 
+The first item of a qualified expression (or the expression itself
+if not qualified) may be one of 
+</p><ul class="itemize"><li class="li-itemize">a query of the current class;
+</li><li class="li-itemize">an argument or local variable of the routine at the chosen stack level; 
+</li><li class="li-itemize">the predefined entities <span style="font-family:monospace">Current</span>, <span style="font-family:monospace">Result</span>, <span style="font-family:monospace">Void</span>, 
+<span style="font-family:monospace">True</span>, <span style="font-family:monospace">False</span>; 
+</li><li class="li-itemize">a manifest constant of <span style="font-family:monospace">BOOLEAN</span>, <span style="font-family:monospace">INTEGER</span>, <span style="font-family:monospace">REAL</span>,
+<span style="font-family:monospace">CHARACTER</span>, or <span style="font-family:monospace">STRING</span> (more precisely, 
+a numerical manifest is first of type <span style="font-family:monospace">REAL_64</span> 
+if it contains a decimal point, 
+if not then it is <span style="font-family:monospace">INTEGER_64</span> if negative and <span style="font-family:monospace">NATURAL_64</span> else,
+then the manifest is turned into the expected type 
+when used as an routine argument), 
+manifest numericals may not include underscore characters, 
+integers/naturals may be decimal or hexadecimal, reals decimal only;
+</li><li class="li-itemize">a <span style="font-family:monospace">TUPLE</span> manifest provided that instances of the type can be created; 
+</li><li class="li-itemize">an already initialised once function or a constant definition 
+written as <span style="font-family:sans-serif">{</span><span style="font-style:italic">CLASS_NAME</span><span style="font-family:sans-serif">}</span>.<span style="font-style:italic">feature_name</span>; 
+</li><li class="li-itemize">an alias name (see Sec.&#XA0;<a href="debug018.html#S%3Aalias">4.4</a>); 
+</li><li class="li-itemize">in specific contexts: a question mark <span style="font-family:monospace">?</span> or an exclamation mark <span style="font-family:monospace">!</span>. 
+</li></ul><blockquote class="quote">
+<div class="center"><span style="font-weight:bold">Restriction</span></div>
+Evaluation of functions and creation of objects 
+(here, <span style="font-family:monospace">STRING</span> and <span style="font-family:monospace">TUPLE</span> objects) 
+uses the corresponding routines in the generated <span style="font-style:oblique">C</span> code, 
+similarly evaluation of attributes uses the entries of <span style="font-style:oblique">C</span> <span style="font-family:monospace">struct</span>s 
+corresponding to <span style="font-style:oblique">Eiffel</span> types. 
+Since the <span style="font-style:oblique">Gec</span> does a good job in dead code removal, 
+many routines and even some attributes do not occur in the <span style="font-style:oblique">C</span> code. 
+If an expression relies on removed routines etc. 
+then they are indicated as &#X201C;unknown&#X201D; the same way as routines etc. 
+not occurring in the <span style="font-style:oblique">Eiffel</span> code. <p>By contrast, arithmetical operations, logical operations, and comparisons 
+of basic expanded types (i.e. the standard operators of these types) 
+are available even if the <span style="font-style:oblique">Gec</span> compiler did not generate 
+<span style="font-style:oblique">C</span> code for them because the debugger uses its own routines. 
+Thus, the debugger may be used as a pocket computer. 
+</p></blockquote><p>Each following item of a qualified expression 
+has to be a query of the (static or dynamic) type of its left neighbour. 
+In particular, if the left neighbour is of a <span style="font-family:monospace">TUPLE</span> type 
+then its fields are <span style="font-family:monospace">item_1</span>, <span style="font-family:monospace">item_2</span> etc., 
+but the labels are also accepted if the left neighbour&#X2019;s declaration 
+specifies <span style="font-family:monospace">TUPLE</span> labels. If the left neighbour is an agent object 
+then the fields are the closed operands 
+and their names are those of the corresponding routine arguments. 
+</p><p>In general, the evaluation starts at <span style="font-family:monospace">Current</span> of the shown stack level 
+but in case of immediate evaluation (see Sec.&#XA0;<a href="debug019.html#S%3Avalidation">4.5</a>)
+it is also possible to start at a stack level above. 
+To this end, the first item of a (un-)qualified expression 
+is to be preceded by one or more <span style="font-family:sans-serif">^</span> characters 
+(or by <span style="font-family:sans-serif">^</span><span style="font-style:italic">n</span><span style="font-family:sans-serif">^</span> meaning <span style="font-style:italic">n</span> <span style="font-family:sans-serif">^</span> characters): 
+the evaluation starts <span style="font-style:italic">n</span> stack levels above the shown one. 
+This way, an expression may combine variables from different stack levels. </p>
+<hr>
+<a href="debug014.html"><img src="previous_motif.gif" alt="Previous"></a>
+<a href="index.html"><img src="contents_motif.gif" alt="Up"></a>
+<a href="debug016.html"><img src="next_motif.gif" alt="Next"></a>
+</body>
+</html>

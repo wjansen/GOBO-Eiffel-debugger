@@ -12,6 +12,7 @@
 
 	<cluster name="free_elks" location="${GOBO}/library/free_elks">
 		<option name="abstract" value="true"/>
+		<option name="debugger" value="false"/>
 		<cluster name="fake"/>
 		<cluster name="kernel">
 			<cluster name="string"/>

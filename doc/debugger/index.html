@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
+<meta name="generator" content="hevea 2.09">
+<title>A debugger for the GOBO Eiffel compiler 
+--- User's guide --- 
+Version: 2.0
+
+</title>
+<link rel="stylesheet" type="text/css" href="debug.css">
+</head>
+<body >
+<!--HEVEA command line is: /usr/bin/hevea -fix debug -->
+<!--HACHA command line is: /usr/bin/hacha debug.html -->
+Gedb &#X2013; The Gec debugger<table class="title"><tr><td style="padding:1ex"><h1 class="titlemain">A debugger for the GOBO Eiffel compiler<br>
+&#X2014; User&#X2019;s guide &#X2014;<br>
+<span style="font-size:large">Version: 2.0
+</span></h1><h3 class="titlerest"><span style="font-size:large">Wolfgang Jansen</span></h3></td></tr>
+</table><h2 id="sec1" class="section">Contents</h2>
+<ul class="toc"><li class="li-toc">
+<a href="#sec2">1&#XA0;&#XA0;Introduction</a>
+</li><li class="li-toc"><a href="#sec3">2&#XA0;&#XA0;Installation and Usage</a>
+<ul class="toc"><li class="li-toc">
+<a href="debug001.html#sec4">2.1&#XA0;&#XA0;Prerequisites</a>
+</li><li class="li-toc"><a href="debug002.html#sec5">2.2&#XA0;&#XA0;Installation</a>
+</li><li class="li-toc"><a href="debug003.html#sec6">2.3&#XA0;&#XA0;Usage</a>
+</li></ul>
+</li><li class="li-toc"><a href="#sec7">3&#XA0;&#XA0;GUI</a>
+<ul class="toc"><li class="li-toc">
+<a href="debug004.html#sec8">3.1&#XA0;&#XA0;Overview</a>
+<ul class="toc"><li class="li-toc">
+<a href="debug004.html#sec9">3.1.1&#XA0;&#XA0;Specialized fields</a>
+</li></ul>
+</li><li class="li-toc"><a href="debug005.html#sec12">3.2&#XA0;&#XA0;Menu bar</a>
+</li><li class="li-toc"><a href="debug006.html#sec13">3.3&#XA0;&#XA0;Run part</a>
+<ul class="toc"><li class="li-toc">
+<a href="debug006.html#sec14">3.3.1&#XA0;&#XA0;Stop-and-go behaviour</a>
+</li><li class="li-toc"><a href="debug006.html#sec15">3.3.2&#XA0;&#XA0;Mark and reset</a>
+</li></ul>
+</li><li class="li-toc"><a href="debug007.html#sec16">3.4&#XA0;&#XA0;Breakpoints part</a>
+<ul class="toc"><li class="li-toc">
+<a href="debug007.html#sec17">3.4.1&#XA0;&#XA0;Breakpoints table</a>
+</li><li class="li-toc"><a href="debug007.html#sec18">3.4.2&#XA0;&#XA0;Editing</a>
+</li><li class="li-toc"><a href="debug007.html#sec19">3.4.3&#XA0;&#XA0;Create and remove</a>
+</li></ul>
+</li><li class="li-toc"><a href="debug008.html#sec20">3.5&#XA0;&#XA0;Source part</a>
+<ul class="toc"><li class="li-toc">
+<a href="debug008.html#sec21">3.5.1&#XA0;&#XA0;Highlighted text</a>
+</li><li class="li-toc"><a href="debug008.html#sec22">3.5.2&#XA0;&#XA0;Class selection</a>
+</li><li class="li-toc"><a href="debug008.html#sec23">3.5.3&#XA0;&#XA0;Cursor movement</a>
+</li><li class="li-toc"><a href="debug008.html#sec24">3.5.4&#XA0;&#XA0;Searching</a>
+</li><li class="li-toc"><a href="debug008.html#sec25">3.5.5&#XA0;&#XA0;Other actions</a>
+</li></ul>
+</li><li class="li-toc"><a href="debug009.html#sec26">3.6&#XA0;&#XA0;Console part</a>
+</li><li class="li-toc"><a href="debug010.html#sec27">3.7&#XA0;&#XA0;Stack part</a>
+</li><li class="li-toc"><a href="debug011.html#sec28">3.8&#XA0;&#XA0;Data part</a>
+<ul class="toc"><li class="li-toc">
+<a href="debug011.html#sec29">3.8.1&#XA0;&#XA0;Data representation</a>
+</li><li class="li-toc"><a href="debug011.html#sec30">3.8.2&#XA0;&#XA0;Actions</a>
+</li><li class="li-toc"><a href="debug011.html#sec31">3.8.3&#XA0;&#XA0;More data windows</a>
+</li></ul>
+</li><li class="li-toc"><a href="debug012.html#sec32">3.9&#XA0;&#XA0;SQL part</a>
+</li><li class="li-toc"><a href="debug013.html#sec33">3.10&#XA0;&#XA0;Evaluation part</a>
+<ul class="toc"><li class="li-toc">
+<a href="debug013.html#sec34">3.10.1&#XA0;&#XA0;Evaluation</a>
+</li><li class="li-toc"><a href="debug013.html#sec35">3.10.2&#XA0;&#XA0;Assignment</a>
+</li></ul>
+</li><li class="li-toc"><a href="debug014.html#sec36">3.11&#XA0;&#XA0;Status bar</a>
+</li></ul>
+</li><li class="li-toc"><a href="#sec37">4&#XA0;&#XA0;Expressions</a>
+<ul class="toc"><li class="li-toc">
+<a href="debug015.html#sec38">4.1&#XA0;&#XA0;General objects</a>
+</li><li class="li-toc"><a href="debug016.html#sec39">4.2&#XA0;&#XA0;Expression lists</a>
+</li><li class="li-toc"><a href="debug017.html#sec40">4.3&#XA0;&#XA0;<span style="font-family:monospace">SPECIAL</span> objects</a>
+</li><li class="li-toc"><a href="debug018.html#sec41">4.4&#XA0;&#XA0;Alias names</a>
+</li><li class="li-toc"><a href="debug019.html#sec42">4.5&#XA0;&#XA0;Validation</a>
+</li></ul>
+</li></ul>
+<h2 id="sec2" class="section">1&#XA0;&#XA0;Introduction</h2>
+<p><a id="S:intro"></a>
+This manual describes a graphical debugger for the <span style="font-style:oblique">Gec</span> compiler. 
+The debugger has two levels of functionality. 
+First, a reduced version of the debugger 
+(called the <U>post mortem analyser</U>)
+is added to a system if it is compiled 
+not in finalized mode and without the proper debugger 
+(which will be called <U>runtime analyser</U> in the following 
+while <U>debugger</U> means both, post mortem analyser and runtime analyser). 
+The effect is that the post mortem analyser 
+gets invoked if the program crashes for some reason. 
+This way, the call stack as well as data on stack and heap can be analysed. 
+The post mortem analyser provides functionality for the following topics: 
+</p><ul class="itemize"><li class="li-itemize">moving up and down the call stack 
+(see Sec.&#XA0;<a href="debug010.html#S%3Astack">3.7</a>); 
+</li><li class="li-itemize">computing and displaying data 
+(see Secs.&#XA0;<a href="debug011.html#S%3Adata">3.8</a>, <a href="debug013.html#S%3Aeval">3.10</a> except <a href="debug013.html#S%3Aassign">3.10.2</a>); 
+</li><li class="li-itemize">listing source code (see Sec.&#XA0;<a href="debug008.html#S%3Asource">3.5</a>). 
+</li></ul><p>
+Additionally, the runtime analyser provides functionality for 
+</p><ul class="itemize"><li class="li-itemize">defining and manipulating breakpoints (see Sec.&#XA0;<a href="debug007.html#S%3Abreakpoints">3.4</a>); 
+</li><li class="li-itemize">running the program in a stop-and-go manner 
+(see Sec.&#XA0;<a href="debug006.html#S%3Arun">3.3</a>); 
+</li><li class="li-itemize">assigning values to variables (see Sec.&#XA0;<a href="debug013.html#S%3Aassign">3.10.2</a>). 
+</li></ul><p>In contrast to debuggers like <span style="font-style:oblique">gdb</span> that run debugger and debuggee 
+in two different processes, 
+the <span style="font-style:oblique">Gedb</span> follows a poor man&#X2019;s approach: 
+at many instructions of the generated <span style="font-style:oblique">C</span> code 
+calls to the debugger are inserted during compilation to check 
+whether the debugger should become active, 
+in particular checking for breakpoints. 
+The more intelligent approach of <span style="font-style:oblique">dbx</span>, <span style="font-style:oblique">gdb</span> and the like 
+which run the debuggee between breakpoints at full speed is not possible. 
+This approach required, among others, 
+that information about the generated machine code 
+(precisely, the correspondence of machine addresses and program lines) 
+is provided by the compiler to be known to the debugger. 
+But this is not the case here, 
+since the <span style="font-style:oblique">Gec</span> compiles to <span style="font-style:oblique">C</span> code, not to machine code. 
+The chosen technique increases dramatically the run time between breakpoints 
+The post mortem analyser does not slow down the computation so much: 
+at the places in <span style="font-style:oblique">C</span> code where the runtime analyser would be called 
+it simply sets a local variable to the program position. 
+Together, with the meta-information linked into the debuggee 
+this is sufficient for the <span style="font-style:oblique">Gedb</span> to do its job after crash.
+The chosen approach also determines 
+the master/slave relation of debugger and debuggee. 
+In case of the post mortem analyser the debuggee contains the main routine 
+and is the master while the debuggee is merely a library to be linked to 
+and that is called at the dramatic end of the debuggee&#X2019;s run. 
+By contrast, the runtime analyser is the master that drives the debuggee 
+by user interactions, here, the debuggee is a library 
+(a <span style="font-family:monospace">.dll</span> in case of <span style="font-style:oblique">Windows</span>, 
+a <span style="font-family:monospace">.so</span> in case of <span style="font-style:oblique">Posix</span> compliant systems) 
+to be linked to the debugger on request. 
+</p><p>To integrate the debugger into the <span style="font-style:oblique">Gec</span> compiler 
+the compiler had to be modified. But this concerns the code generation 
+and command line analysis only, 
+so the compiler&#X2019;s integrity is preserved. 
+The debuggee&#X2019;s integrity is preseved as well since only additions 
+to the <span style="font-style:oblique">C</span> code are made that do not modify the behaviour 
+of the normally generated code 
+(surely, the additions cause the longer runtime).
+</p><p>The debugger uses the <span style="font-style:oblique">GTK+</span> graphics library 
+for the graphical user interface (GUI for short). 
+<span style="font-style:oblique">GTK+</span> and related libraries as <span style="font-style:oblique">GLib</span> etc.
+are written in <span style="font-style:oblique">C</span> and are intended to be used from <span style="font-style:oblique">C</span> programs. 
+This is a hard job for an <span style="font-style:oblique">Eiffel</span> programmer. 
+But there is the OO programming language <span style="font-style:oblique">Vala</span> 
+that is a shell for <span style="font-style:oblique">GLib</span> and <span style="font-style:oblique">GTK+</span>, 
+so the debugger has been written in <span style="font-style:oblique">Vala</span>. 
+</p><p>So far has been described what the debugger is and what it does. 
+Another question is what the debugger does not. 
+On the lower end, some traditional debuggers like the <span style="font-style:oblique">gdb</span> 
+allow for low level debugging on the level of assembler code. 
+This is not possible here since the <span style="font-style:oblique">Gec</span> compiles to <span style="font-style:oblique">C</span> code,
+not to assembler code, and the necessary meta-information is not available. 
+In the middle, the debugger does not support debugging of multi-threaded 
+<span style="font-style:oblique">Eiffel</span> systems: each thread has its own stack 
+and it is not yet possible from the debugger&#X2019;s side 
+to distinguish between the stacks. 
+On the upper end, the <span style="font-style:oblique">Gedb</span> is not an <span style="font-style:oblique">IDE</span>, 
+i.e. it does not include an editor, nor the <span style="font-style:oblique">Gec</span>, nor any kind 
+of project management. 
+</p><p>The debugger should help, as the name indicates, to find bugs 
+in an <span style="font-style:oblique">Eiffel</span> system, but itself must be bug free. 
+This is the ideal, not the reality. 
+Several debugger errors are caught by exception handling: 
+execution of the actual command is cancelled and an error message is issued. 
+It may happen that even this emergency break does not work and 
+the debugger crashes during command execution. 
+In such a case, please send a bug report to <br>
+</p><div class="center"><span style="font-family:monospace">mailto:wo.jansen@kabelmail.de</span></div>
+<h2 id="sec3" class="section">2&#XA0;&#XA0;Installation and Usage</h2>
+<p><a id="S:installtionUsage"></a>
+</p>
+<ul>
+<li><a href="debug001.html">Prerequisites</a>
+</li><li><a href="debug002.html">Installation</a>
+</li><li><a href="debug003.html">Usage</a>
+</li></ul>
+<h2 id="sec7" class="section">3&#XA0;&#XA0;GUI</h2>
+<p><a id="S:gui"></a>
+</p>
+<ul>
+<li><a href="debug004.html">Overview</a>
+<ul>
+<li><a href="debug004.html#sec9">Specialized fields</a>
+</li></ul>
+</li><li><a href="debug005.html">Menu bar</a>
+</li><li><a href="debug006.html">Run part</a>
+<ul>
+<li><a href="debug006.html#sec14">Stop-and-go behaviour</a>
+</li><li><a href="debug006.html#sec15">Mark and reset</a>
+</li></ul>
+</li><li><a href="debug007.html">Breakpoints part</a>
+<ul>
+<li><a href="debug007.html#sec17">Breakpoints table</a>
+</li><li><a href="debug007.html#sec18">Editing</a>
+</li><li><a href="debug007.html#sec19">Create and remove</a>
+</li></ul>
+</li><li><a href="debug008.html">Source part</a>
+<ul>
+<li><a href="debug008.html#sec21">Highlighted text</a>
+</li><li><a href="debug008.html#sec22">Class selection</a>
+</li><li><a href="debug008.html#sec23">Cursor movement</a>
+</li><li><a href="debug008.html#sec24">Searching</a>
+</li><li><a href="debug008.html#sec25">Other actions</a>
+</li></ul>
+</li><li><a href="debug009.html">Console part</a>
+</li><li><a href="debug010.html">Stack part</a>
+</li><li><a href="debug011.html">Data part</a>
+<ul>
+<li><a href="debug011.html#sec29">Data representation</a>
+</li><li><a href="debug011.html#sec30">Actions</a>
+</li><li><a href="debug011.html#sec31">More data windows</a>
+</li></ul>
+</li><li><a href="debug012.html">SQL part</a>
+</li><li><a href="debug013.html">Evaluation part</a>
+<ul>
+<li><a href="debug013.html#sec34">Evaluation</a>
+</li><li><a href="debug013.html#sec35">Assignment</a>
+</li></ul>
+</li><li><a href="debug014.html">Status bar</a>
+</li></ul>
+<h2 id="sec37" class="section">4&#XA0;&#XA0;Expressions</h2>
+<p><a id="S:expression"></a>
+<span style="font-style:oblique">Eiffel</span> expressions have to be entered in several debugger fields. 
+The expressions can be rather complex 
+and are in any case the most complex keyboard inputs required,
+so they may need a special explanation.
+The first section describes their general format, the following one describes 
+how to format <span style="font-family:monospace">SPECIAL</span> objects or to select entries. 
+</p>
+<ul>
+<li><a href="debug015.html">General objects</a>
+</li><li><a href="debug016.html">Expression lists</a>
+</li><li><a href="debug017.html"><span style="font-family:monospace">SPECIAL</span> objects</a>
+</li><li><a href="debug018.html">Alias names</a>
+</li><li><a href="debug019.html">Validation</a>
+</li></ul>
+<!--FOOTER-->
+<hr style="height:2"><blockquote class="quote"><em>This document was translated from L<sup>A</sup>T<sub>E</sub>X by
+</em><a href="http://hevea.inria.fr/index.html"><em>H</em><em><span style="font-size:small"><sup>E</sup></span></em><em>V</em><em><span style="font-size:small"><sup>E</sup></span></em><em>A</em></a><em>.</em></blockquote></body>
+</html>

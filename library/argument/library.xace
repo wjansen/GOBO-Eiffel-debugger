@@ -10,7 +10,9 @@
 		revision: "$Revision$"
 	</description>
 
-	<cluster name="argument" location="${GOBO}/library/argument"/>
+	<cluster name="argument" location="${GOBO}/library/argument">
+		<option name="debugger" value="false"/>
+	</cluster>
 
 
 	<mount location="${GOBO}/library/kernel.xace"/>
