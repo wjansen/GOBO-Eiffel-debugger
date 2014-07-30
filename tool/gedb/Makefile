@@ -1,9 +1,9 @@
 GLIB = `pkg-config --libs --cflags gtk+-3.0 gtksourceview-3.0 gee-0.8 gmodule-2.0`
 CC = gcc
-CFLAGS ?= -g -w -fPIC -Ihome -Ieval -Isrc -w $(GLIB) 
+CFLAGS ?= $(DG) -w -fPIC -Ihome -Ieval -Isrc -w $(GLIB) 
 LIBFLAGS ?= -shared -fPIC -Wl,-rpath,$(GOBO)/bin 
 LDFLAGS ?= -fPIC -Wl,-rpath,$(GOBO)/bin 
-VFLAGS = -g --save-temps --disable-warnings -X -I. -X -Ihome -X -Ieval -X -Isrc -X -w -X -fPIC 
+VFLAGS = $(DG) --save-temps --disable-warnings -X -I. -X -Ihome -X -Ieval -X -Isrc -X -w -X -fPIC 
 PKG = --pkg=gtk+-3.0 --pkg=gee-0.8 --pkg=gtksourceview-3.0 --pkg=gmodule-2.0 --target-glib=2.32 
 # Define extensions
 o=.o
@@ -21,11 +21,12 @@ OBJ := $(VALA:%.vala=%.o) help_part$o
 C := $(OBJ:%$o=%.c)
 H := $(OBJ:%$o=%.h)
 EXTLIB = \
-  -L./home -Wl,-rpath,$(PWD)/home -lhome_parser \
-  -L./eval -Wl,-rpath,$(PWD)/eval -leval_parser \
-  -L./src -Wl,-rpath,$(PWD)/src -lsrc_scanner
+  home/home_parser.o home/_GedbParserParser.o \
+  eval/eval_parser.o eval/_EvalParserParser.o \
+  src/src_scanner.o src/_GedbScannerParser.o
 DLL = $(GOBO)/bin/$(prelib)gedb$l
 EXE = $(GOBO)/bin/gedb
+VLE = vle/vala-lemon-extractor
 
 .PHONY: all
 .PHONY: home
@@ -34,7 +35,10 @@ EXE = $(GOBO)/bin/gedb
 
 # ----------
 
-all: $(EXE) $(DLL)
+all: $(VLE) $(EXE) $(DLL)
+
+$(VLE): vle/vala-lemon-extractor.c
+	cd vle && $(MAKE)
 
 $(EXE): $(DLL) main$o 
 	$(CC) -o $@ main$o $(LDFLAGS) $(DLL) $(GLIB) -ldl
@@ -42,13 +46,13 @@ $(EXE): $(DLL) main$o
 $(DLL): $(OBJ) 
 	$(CC) -o $@ $(OBJ) $(LIBFLAGS) $(LDFLAGS) $(EXTLIB) $(GLIB) -lm
 
-src:
+src: $(VLE)
 	cd src && $(MAKE)
 
-home:
+home: $(VLE)
 	cd home && $(MAKE)
 
-eval: extern.vapi inspect.vapi misc.vapi expression.vapi breakpoint.vapi
+eval: $(VLE) extern.vapi inspect.vapi misc.vapi expression.vapi breakpoint.vapi
 	cd eval && $(MAKE)
 
 extern$o: extern.vala

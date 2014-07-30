@@ -1,8 +1,8 @@
 *~
 *.vapi
 [a-hj-z]*.h
-info.h
-*.c
+info_part.h
+[A-Za-uw-z]*.c
 *.o
 *.a
 *.so

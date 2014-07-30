@@ -282,6 +282,12 @@ internal class Menus : GLib.Object {
 		return fn!=null ? FileStream.open(fn, save ? "w" : "r") : null;
 	}
 
+	private bool do_check_exe(FileFilterInfo ffi) {
+		string fn = ffi.filename;
+		string mime = GLib.ContentType.from_mime_type(ffi.mime_type);
+		return mime.index_of("sharedlib")>=0;
+	}
+
 	private void do_load(Gtk.Action a) {
 		var title = compose_title("Debuggee", null);
 		string? fn = null;
@@ -291,12 +297,12 @@ internal class Menus : GLib.Object {
 								  "_Open", ResponseType.ACCEPT);
 		dialog.select_multiple = false;
 		var filter = new FileFilter();
-		filter.set_filter_name ("Libraries");
-		filter.add_pattern ("*.so");
+		filter.set_filter_name("Loadable Libs");
+		filter.add_pattern(".so");	// or ".dll"
 		dialog.add_filter(filter);
 		filter = new FileFilter();
-		filter.set_filter_name ("All files");
-		filter.add_pattern ("*");
+		filter.set_filter_name("All files");
+		filter.add_pattern("*");
 		dialog.add_filter(filter);
 		if (dialog.run () == ResponseType.ACCEPT) {
 			fn = dialog.get_filename();
