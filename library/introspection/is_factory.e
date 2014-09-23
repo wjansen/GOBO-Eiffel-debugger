@@ -293,23 +293,29 @@ feature {IS_TYPE,IS_FIELD} -- Factory
 			end
 		end
 
-	operand_name (tid, i: INTEGER): READABLE_STRING_8
+	operand_name (tid, fid, oid: INTEGER): READABLE_STRING_8
+		note
+			return: "Name of agent's operand."
+			tid: "agent's type ident"
+			fid: "index within closed operands array"
+			oid: "index of routine operand"
 		require
-			i_not_negative: i >= 0
+			fid_not_negative: fid >= 0
+			oid_large_enough: oid >= fid
 		local
 			str: STRING
 		do
-			if operand_names.upper < i then
-				operand_names.conservative_resize (operand_names.lower, i)
+			if operand_names.upper < oid then
+				operand_names.conservative_resize (operand_names.lower, oid)
 			end
-			if attached operand_names [i] as nm
+			if attached operand_names [oid] as nm
 				and then not STRING_.same_string(nm, no_name) then
 				Result := nm
 			else
 				create str.make (8)
 				str.append (once "op_")
-				str.append_integer (i)
-				operand_names.force (str, i)
+				str.append_integer (oid)
+				operand_names.force (str, oid)
 				Result := str
 			end
 		end

@@ -22,7 +22,7 @@ create
 	
 feature -- Basic operation
 	
-	save_system (a_target_system: IS_SYSTEM; with_c_names: BOOLEAN)
+	save_system (a_target_system: IS_SYSTEM)
 		local
 			id: INTEGER
 		do

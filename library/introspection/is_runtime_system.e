@@ -438,9 +438,9 @@ feature {} -- Factory
 			end
 		end
 
-	operand_name (id, i: INTEGER): READABLE_STRING_8
+	operand_name (tid, fid, oid: INTEGER): READABLE_STRING_8
 		do
-			Result := field_name (id, i)
+			Result := field_name (tid, fid)
 		end
 	
 	routine_call (tid, i: INTEGER): POINTER

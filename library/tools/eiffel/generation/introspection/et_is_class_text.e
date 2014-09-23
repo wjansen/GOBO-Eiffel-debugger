@@ -82,19 +82,12 @@ feature -- Initialization
 		note
 			action: "Fill parent list."
 		local
-			i: INTEGER
+			p_i: like parent_at
+			f_ij: like feature_at
+			i, j: INTEGER
 		do
 			if not defined then
 				defined := True
-				if attached parents as ps then
-					ps.default_sort
-					from
-						i := ps.count
-					until i = 0 loop
-						i := i - 1
-						ps [i].define (s)
-					end
-				end
 				if attached features as ff then
 					ff.default_sort
 					from
@@ -102,6 +95,25 @@ feature -- Initialization
 					until i = 0 loop
 						i := i - 1
 						ff [i].define (s)
+					end
+				end
+				if attached parents as ps then
+					ps.default_sort
+					from
+						i := ps.count
+					until i = 0 loop
+						i := i - 1
+						p_i := ps [i]
+						p_i.define (s)
+						from 
+							j := p_i.feature_count
+						until j = 0 loop
+							j := j - 1
+							f_ij := p_i.features [j]
+							if feature_by_name (f_ij.fast_name) = Void then
+								features.add (f_ij)
+							end
+						end
 					end
 				end
 			end

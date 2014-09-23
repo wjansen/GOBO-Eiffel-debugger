@@ -84,9 +84,11 @@ public class ExpressionChecker : Expander {
 
 	public Eval.Parser? parser;// {get; private set; }
 
-	public bool check_syntax(string query, System* s) {
+	public bool check_syntax(string query, 
+							 Gee.Map<string,Expression> list, System* s) {
 		as_static = true;
 		parser.init_syntax(s);
+		parser.set_aliases(list);
 		return check(query, parser, false);
 	}
 
@@ -158,9 +160,9 @@ public class ExpressionChecker : Expander {
 			head = parser.not_unique ? "<i>Ambigous " : "<i>Unknown ";
 			switch (err) {
 			case Eval.ErrorCode.UNKNOWN:
-				if (val!=null && val.expr!=null) { 
+				if (val!=null && val.expr!=null) 
 					ct = val.expr.base_class();
-				} else {
+				if (ct==null) {
 					ct = parser.base_class;
 					rt = parser.act_text;
 				}
@@ -253,4 +255,3 @@ public class ExpressionChecker : Expander {
 	public delegate bool TypeFilter(Gedb.Type* t);
 
 } /* ExpressionChecker */
-

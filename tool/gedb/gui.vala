@@ -223,14 +223,28 @@ internal class Menus : GLib.Object {
 
 	private void dialog_close(Dialog d) { d.destroy(); }
 
+	private static int alias_less(string a, string b, 
+								  Gee.HashMap<string,Expression> list) {
+		Expression ex = list[a];
+		if (ex.uses_alias("_"+b)) return 1;
+		ex = list[b];
+		if (ex.uses_alias("_"+a)) return -1;
+		return a.ascii_casecmp(b);
+	}
+
 	private void store(FileStream fs) {
-		Breakpoint bp;
+		Gee.ArrayList<string> al = new Gee.ArrayList<string>();
 		string str;
 		for (var iter=gui.alias_list.map_iterator(); iter.next();) {
-			var name = iter.get_key();
-			var ex = iter.get_value(); 
-			fs.printf("alias %s -> %s\n", name, ex.append_name());			
+			str = iter.get_key();
+			al.insert(0, str);
 		}
+		al.sort((a,b) => { return alias_less(a,b,gui.alias_list); });
+		foreach (var nm in al) {
+			var ex = gui.alias_list[nm];
+			fs.printf("alias %s -> %s\n", nm, ex.append_name());			
+		}
+		Breakpoint bp;
 		var rts = gui.ld.rts;
 		var list = gui.brk.breakpoints(true);
 		for (var iter=list.list_iterator(); iter.next();) {
@@ -498,7 +512,8 @@ internal class AliasDef : Window {
 	private void do_pre_edit(CellRenderer cell, CellEditable editor,
 							 string path_string) {
 		var entry = editor as Entry;
-		entry.select_region(0,0);
+		string text = entry.get_text();
+		if (text==bullet) entry.set_text("");
 	}
 
 	private void do_post_edit(CellRendererText cell, string path_string,
@@ -512,7 +527,7 @@ internal class AliasDef : Window {
 		unichar c = 0;
 		string old;
 		bool ok, bad;
-		Expression? ex;
+		Expression ex;
 		store.@get(iter, Item.NAME, out old, Item.EXPR, out ex, 
 				   Item.BAD_NAME, out bad, -1);
 		switch (col) {
@@ -540,15 +555,22 @@ internal class AliasDef : Window {
 			}
 			break;
 		case Item.VALUE:
-			ok = l>0 && checker.check_syntax(val, gui.ld.rts);
 			if (l==0) val = bullet;
+			ok = l>0 && checker.check_syntax(val, list, gui.ld.rts);
 			ex = checker.parsed;
+			var cycle = new Gee.ArrayList<string>();
+			if (ok && AliasExpression.is_cyclic(ex, "_"+old, cycle)) {
+				string msg = @"<span foreground='red'>$old</span>";
+				cycle.@foreach((c) => { msg += @" -> $c "; return true; });
+				checker.show_message("Cyclic alias name definition:", msg);
+				ok = false;
+			}
+			var nm = ex.append_name();
 			store.@set(iter, Item.EXPR, ex, 
 					   Item.VALUE, ok ? ex.append_name() : val, 
 					   Item.BAD_VALUE, !ok,
 					   -1);
-			if (ok && !bad) list.@set(old, ex);
-			else list.@remove(old);
+			list.@set(old, ex);
 			break;
 		}
 	}
@@ -598,6 +620,7 @@ internal class AliasDef : Window {
 		this.gui = gui;
 		this.list = list;
 		checker = new ExpressionChecker();
+		checker.parser.set_aliases(list);
 		set_title(compose_title("Alias definition", gui.ld.rts));
 		var vbox = new Box(Orientation.VERTICAL, 0);
 		add(vbox);
@@ -666,7 +689,7 @@ internal class AliasDef : Window {
 
 		var buttons = new ButtonBox(Orientation.HORIZONTAL);
 		buttons.set_layout(ButtonBoxStyle.START);
-		vbox.pack_end(buttons, true, true, 0);
+		vbox.pack_end(buttons, false, false, 0);
 		
 		var create = new Button.with_label("New");
 		buttons.@add(create);
@@ -692,8 +715,8 @@ internal class AliasDef : Window {
 			ex = iter.get_value();
 			store.append(out at);
 			store.@set(at, Item.NAME, name, Item.BAD_NAME, false,
-					   Item.VALUE, ex.append_name(), Item.BAD_VALUE, false,
-					   Item.EXPR, ex, -1);
+					   Item.VALUE, ex.append_name(), 
+					   Item.BAD_VALUE, false, Item.EXPR, ex, -1);
 		}		   
 		TreeIter iter;
 		store.append(out iter);
@@ -788,11 +811,6 @@ public class GUI : Window {
 			type_list.@set(at, TypeEnum.TYPE_IDENT, table.@get(name),
 						   TypeEnum.TYPE_NAME, name, -1);
 		}
-	}
-
-	internal void update_alias_def() {
-		if (alias_def!=null) 
-			alias_def.update(alias_list);
 	}
 
 	private Frame new_frame(string name) {
@@ -946,6 +964,7 @@ public class GUI : Window {
 			line = line.strip();
 			if (line.length==0)  continue;
 			parser = new Eval.Parser.as_command(ld.rts);
+			parser.set_aliases(alias_list);
 			parser.add_string(line);
 			parser.end();
 			al = parser.al;
@@ -957,7 +976,8 @@ public class GUI : Window {
 				alias_list.@set(al.name, al.expr);
 			}
 		}
-		update_alias_def();
+		if (alias_def!=null) 
+			alias_def.update(alias_list);
 	}
 
 	internal void set_tooltip(bool yes) {

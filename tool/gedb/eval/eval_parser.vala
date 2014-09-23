@@ -79,15 +79,17 @@ namespace Eval {
 					System* s, bool compute_now) 
 		requires (s!=null) {
 			system = s;
+			base_class = ct;
+			act_text = rt;
 			if (t!=null) {
 				root_type = t;
 				if (rt!=null) {
 					var name = rt._feature._name.fast_name;
 					act_routine = t.routine_by_name(name, false);
+					rt = act_routine.text;
 				}
+				if (t.is_normal()) ct = ((NormalType*)t).base_class;
 			}
-			base_class = ct;
-			act_text = rt;
 			reset();
 			syntax_only = false;
 			now = compute_now;
@@ -166,12 +168,44 @@ namespace Eval {
 		public ClassText* base_class;
 		public RoutineText* act_text;
 		
+		internal string query;
 		internal bool syntax_only;
 		internal bool now;
 
-		internal void register(Nonterm v) requires (v.expr!=null) {
-			values.@set(v.expr, v);
+		internal void register(Nonterm v, 
+							   bool to_compute=false, bool in_object=false) 
+		requires (v.expr!=null) {
+			var ex = (!) v.expr;
+			values.@set(ex, v);
 			last_value = v;
+			if (to_compute && !syntax_only) {
+				if (ex is AliasExpression) 
+					ex = (ex as AliasExpression).alias.top();
+				if (now) {
+					try {
+						if (frame!=null && !in_object) {
+							ex.compute_in_stack(frame, system); 
+						} else  {
+							Expression? p = ex.parent;
+							uint8* pa = p!=null ? p.address() : null;
+							if (pa==null) return;
+							var t = system.type_of_any(pa, p.dynamic_type);
+							ex.compute_in_object(pa, t, system, frame, null);
+						}
+					} catch (ExpressionError err) {
+						error = ErrorCode.NOT_COMPUTED;
+						last_token = v.token;
+						is_match = false;
+					}
+				} else if (!syntax_only) {
+					ClassText* ct = base_class;
+					is_match &= ex.static_check(base_class, system, frame);
+					if (!is_match) {
+						error = ErrorCode.UNKNOWN;
+						last_token = v.token;
+					}
+				}
+			}
 		}
 
 		internal Nonterm? nonterm_of(Expression ex) { return values.@get(ex); }
@@ -208,21 +242,6 @@ namespace Eval {
 
 		internal Gee.Map<string,Expression>? aliases;
 
-		internal void compute(Expression ex, StackFrame* f, bool in_object) 
-		throws ExpressionError 
-		requires(!in_object || ex.parent!=null) {
-			if (!now) return;
-			if (f!=null && !in_object) {
-				ex.compute_in_stack(f, system); 
-			} else  {
-				Expression? p = ex.parent;
-				uint8* pa = p!=null ? p.address() : null;
-				if (pa==null) return;
-				var t = system.type_of_any(pa, p.dynamic_type);
-				ex.compute_in_object(pa, t, system, f, null);
-			}
-		}
-
 		Gee.HashMap<void*,uint> known_objects;
 		private Gee.HashMap<Expression,Nonterm> values;
 		private Object? data;
@@ -238,18 +257,21 @@ namespace Eval {
 		
 		[Flex(state="CMD", pattern="alias")]
 		public void alias_cmd(string value, int len) {
+			syntax_only = true;
 			token = new Token(token_code, value, n_chars_read, len);
 			pop_state();
 		}
 		
 		[Flex(state="CMD", pattern="break")]
 		public void break_cmd(string value, int len) {
+			syntax_only = false;
 			token = new Token(token_code, value, n_chars_read, len);
 			pop_state();
 		}
 		
 		[Flex(state="CMD", pattern="debug")]
 		public void debug_cmd(string value, int len) {
+			syntax_only = false;
 			token = new Token(token_code, value, n_chars_read, len);
 			pop_state();
 		}
@@ -555,7 +577,9 @@ namespace Eval {
 			token = new Token(token_code, value, n_chars_read, len);		
 		}
 		
-		[Flex(pattern="[a-zA-Z][a-zA-Z0-9_]*")]
+		[Flex(pattern="[a-zA-Z][a-zA-Z0-9_]*",
+			  token="CURRENT", token="RESULT", 
+			  token="FALSE", token="TRUE", token="VOID")]
 		public void identifier(string value, int len) {
 			token_code = process_identifier(value);
 			token = new Token(token_code, value, n_chars_read, len);
@@ -719,6 +743,12 @@ namespace Eval {
 				keywords.insert("not", TokenCode.NOT);
 				keywords.insert("or", TokenCode.OR);
 				keywords.insert("then", TokenCode.THEN);
+
+				keywords.insert("current", TokenCode.CURRENT);
+				keywords.insert("result", TokenCode.RESULT);
+				keywords.insert("false", TokenCode.FALSE);
+				keywords.insert("true", TokenCode.TRUE);
+				keywords.insert("void", TokenCode.VOID);
 			}
 			int val = keywords.lookup(str);
 			if (val!=0) {
@@ -776,8 +806,8 @@ namespace Eval {
 		[Lemon(pattern="ALIAS_CMD IDENTIFIER(i) ARROW Detailed(d)")]
 		public Alias._1(Parser h, Token i, Detailed d) {
 			base();
-			name = i.name;
 			expr = d.expr;
+			name = i.name;
 		}
 	}
 	
@@ -1032,14 +1062,11 @@ namespace Eval {
 		protected void set_down(Parser h, Nonterm d) {
 			if (!h.is_match) return;
 			string name = d.token.name;
-			Expression? dex = null;
+			Expression? dex = d.expr;
 			var ex = expr.bottom();
 			var u = d as Unqualified;
 			var args = u!=null && u.args!=null ? u.args.expr : null;
-			var aex = u!=null ? u.expr as AliasExpression : null;
-			if (aex!=null) {
-				dex = aex.expanded(ex, h.places,
-								   h.root_type, h.base_class, h.frame);
+			if (dex!=null) {
 			} else if (h.syntax_only) {
 				dex = Expression.new_named(ex, name, args);
 			} else {
@@ -1092,15 +1119,7 @@ namespace Eval {
 			}
 			ex.set_child(ex.Child.DOWN, dex);
 			d.expr = dex;
-			if (dex!=null) {
-				try {
-					h.compute(dex, null, true);
-					h.register(d);
-				} catch (ExpressionError err) {
-					dex = null;
-					h.error = ErrorCode.NOT_COMPUTED;
-				}
-			}
+			if (dex!=null) h.register(d, true, true);
 			if (dex==null) {
 				h.last_token = d.token;
 				if (h.error==0) h.error = ErrorCode.UNKNOWN;
@@ -1114,16 +1133,11 @@ namespace Eval {
 			var ct = h.base_class;
 			string name = token.name;
 			uint n = 0;	
-			Expression? ex = null;
+			Expression? ex = u!=null ? u.expr : null;
 			var a = u.args!=null ? u.args.expr : null;
-			var aex = u!=null ? u.expr as AliasExpression : null;
+			var aex = u.expr as AliasExpression;
 			if (aex!=null) {
-				ex = h.places.size>0 ? h.places[0] : null;
-				if (ex!=null) {
-					ct = ex.base_class();
-					tp = ex.dynamic_type;
-				}
-				ex = aex.expanded(ex, h.places, tp, ct, f);
+				ex = aex;
 			} else if (h.syntax_only) {
 				ex = Expression.new_named(null, name, a);
 			} else {
@@ -1190,18 +1204,17 @@ namespace Eval {
 			}
 			if (ex!=null) {
 				try {
-					h.compute(ex, f, false);
 					if (expr!=null && ex!=expr) 
 						ex.set_child(ex.Child.NEXT, expr.next);
 					expr = ex;
-					h.register(this);
+					h.register(this, true, false);
 				} catch (Error e) {
 					ex = null;
 				}
 			}
 			if (ex==null && h.is_match) {
 				h.last_token = u.token;
-				h.last_value = null;
+				h.last_value = null; 
 				h.not_unique = n>0;
 				if (h.error==0) h.error = ErrorCode.UNKNOWN;
 				h.is_match = false;
@@ -1229,29 +1242,36 @@ namespace Eval {
 				expr = new ManifestExpression(tp, value);
 			else if (tp.is_string())
 				expr = new ManifestExpression.string(tp, value);
+			else
+				expr = new ManifestExpression.typed(tp, value);
 			h.register(this);
 		}
 		
 		protected Nonterm.from_alias(Parser h, Token t) { 
 			this.from_token(h, t);
 			Expression? ex = null;
+			AliasExpression? aex = null;
 			int id = 0;
+			bool is_id = false;
 			if (t.name[1].isdigit()) {
+				is_id = true;
 				id = int.parse(t.name.substring(1));
 				ex = h.number_alias(id);
+				if (ex!=null) 
+					aex = new AliasExpression(t.name, ex.bottom());
 			} else if (h.aliases!=null) {
 				string name = t.name[1:t.name.length];
 				ex = h.aliases[name];
-				if (ex==null) 
-					h.error = ErrorCode.NO_ALIAS;
+				if (ex!=null)
+					aex = new AliasExpression(t.name, ex, h.places);
 			}
-			if (ex!=null) {
-				expr = new AliasExpression(t.name, ex.bottom());
+			if (aex!=null) {
+				expr = aex;
 				h.register(this);
 			} else {
 				h.last_token = t;
 				h.missing_ident = id;
-				if (h.error==ErrorCode.OK) h.error = ErrorCode.NO_IDENT;
+				h.error = is_id ? ErrorCode.NO_IDENT : ErrorCode.NO_ALIAS;
 				h.is_match = false;
 			}
 		}
@@ -1443,7 +1463,6 @@ namespace Eval {
 			uint n = 0;
 			if (h.syntax_only) {
 				ex = Expression.new_named(exb, name, b.expr);
-				exb.set_child(exb.Child.DOWN, ex);
 			} else {
 				var tp = exb.dynamic_type;
 				if (tp!=null) {
@@ -1459,35 +1478,23 @@ namespace Eval {
 					var ct = expr.base_class();
 					FeatureText* ft = ct.query_by_name(out n, name, false);
 					if (n!=1) ft = null;
-					if (ft!=null) {
+					if (ft!=null) 
 						ex = Expression.new_text(exb, ft, b.expr);
-					}
 				}
-				if (ex!=null) {
-					try {
-						exb.set_child(exb.Child.DOWN, ex);
-						h.compute(ex, h.frame, true);
-					} catch (ExpressionError err) {
-						ex = null;
-						exb.set_child(exb.Child.DOWN, null);
-						h.error = ErrorCode.NOT_COMPUTED;
-					} 
-				} else {
-					h.error = ErrorCode.UNKNOWN;
-				}		
 			}
 			if (ex!=null) {
+				exb.set_child(exb.Child.DOWN, ex);
 				b.expr = ex;
-				h.register(b);
 			} else if (h.is_match) {
 				h.not_unique = n>1;
 				h.last_token = b.token;
+				h.error = ErrorCode.UNKNOWN;
 				h.is_match = false;
 			}
 		}
-	
-	[Lemon(pattern="LPAREN(l) Single(s) RPAREN(r)")]
-	public Left._4(Parser h, Token l, Single s, Token r) {
+		
+		[Lemon(pattern="LPAREN(l) Single(s) RPAREN(r)")]
+		public Left._4(Parser h, Token l, Single s, Token r) {
 			this.copy(h, s);
 			at = l.at;
 			end_by(r);
@@ -1510,7 +1517,7 @@ namespace Eval {
 			}
 			return tt;
 		}
-	
+		
 		[Lemon(pattern="LBRACKET(l) RBRACKET(r)")]
 		public Left._5(Parser h, Token l, Token r) { 
 			base.from_token(h, l, r, "[...]");
@@ -1518,13 +1525,9 @@ namespace Eval {
 			var tt = get_tt(h, null);
 			if (tt==null) return;
 			expr = new TupleExpression(null, tt, ct);
-			try {
-				h.compute(expr, h.frame, false);
-				h.register(this);
-			} catch (ExpressionError err) {
-			}		
+			h.register(this, true, false);
 		}
-	
+		
 		[Lemon(pattern="Brackets(b)")]
 		public Left._6(Parser h, Brackets b) {
 			base.from_token(h, b.token);
@@ -1533,11 +1536,7 @@ namespace Eval {
 			if (tt==null) return;
 			expr = new TupleExpression(b.expr, tt, ct);
 			expr.set_child(expr.Child.ARG, b.expr);
-			try {
-				h.compute(expr, h.frame, false);
-				h.register(this);
-			} catch (ExpressionError err) {
-			}
+			h.register(this, true, false);
 		}
 		
 		[Lemon(pattern="ClassSpecifier(c) DOT Unqualified(u)")]
@@ -1557,7 +1556,7 @@ namespace Eval {
 						expr = new OnceExpression(o);
 				} else {
 					expr = new ConstantExpression((Constant*)g);
-					h.register(this);
+					h.register(this, true);
 				}
 			}
 			if (expr==old) {
@@ -1569,7 +1568,10 @@ namespace Eval {
 		}
 		
 		[Lemon(pattern="HEAPVAR(hv)")]
-		public Left._8(Parser h, Token hv) { this.from_alias(h, hv); }
+		public Left._8(Parser h, Token hv) { 
+			this.from_alias(h, hv); 
+			h.register(this, true);
+		}
 		
 		[Lemon(pattern="PLACEHOLDER(p)")]
 		public Left._10(Parser h, Token p) {
@@ -1594,15 +1596,14 @@ namespace Eval {
 			} else {
 				var pl = h.get_place(pn-1);
 				expr = pl.range!=null
-					? new RangePlaceholder(pl.range, p.name)
-					: new Placeholder(pl, p.name, it);
+				? new RangePlaceholder(pl.range, p.name)
+				: new Placeholder(pl, p.name, it);
 			}
-			h.register(this);
+			h.register(this, true);
 		}
 		
-		
 	}
-
+	
 	public class ClassSpecifier : Nonterm {
 		
 		private ClassSpecifier(Parser h, Nonterm v) { this.copy(h, v); }
@@ -1835,14 +1836,7 @@ namespace Eval {
 					}
 					var e = t.query_by_name(out n, nm, rhs==null);
 					if (n!=1) e = null;
-					if (e!=null) {
-						try {
-							ex = Expression.new_typed(b, e, rhs);
-							h.compute(ex, h.frame, true);
-						} catch (ExpressionError err) {
-							ex = null;
-						}
-					}
+					if (e!=null) ex = Expression.new_typed(b, e, rhs);
 				} else {
 					var c = b.base_class();
 					var ft = c.query_by_name(out n, nm, rhs==null);
@@ -1853,7 +1847,7 @@ namespace Eval {
 			}
 			if (ex!=null) {
 				v.expr = ex;
-				h.register(v);
+				h.register(v, true, true);
 			} else {
 				h.not_unique = n>0;
 				h.last_token = op;
@@ -1867,12 +1861,7 @@ namespace Eval {
 			var bex = expr.bottom();
 			Gedb.Type* bt = h.system.type_at(TypeIdent.BOOLEAN);
 			v.expr = new EqualityExpression(bex, eq.name, r.expr, bt);
-			if (h.now)
-				try {
-					h.compute(v.expr, h.frame, true);
-				} catch (ExpressionError err) {
-				}
-			h.register(v);
+			h.register(v, true, true);
 		}
 		
 	}
@@ -1950,6 +1939,31 @@ namespace Eval {
 		[Lemon(pattern="REAL(r)")]
 		public Manifest._6(Parser h, Token r) { 
 			base.from_manifest(h, r, r.name, TypeIdent.REAL_64); 
+		}
+		
+		[Lemon(pattern="CURRENT(c)")]
+		public Manifest._7(Parser h, Token c) { 
+			base.from_manifest(h, c, c.name, TypeIdent.ANY); 
+		}
+		
+		[Lemon(pattern="RESULT(r)")]
+		public Manifest._8(Parser h, Token r) { 
+			base.from_manifest(h, r, r.name, TypeIdent.REAL_64); 
+		}
+		
+		[Lemon(pattern="FALSE(f)")]
+		public Manifest._9(Parser h, Token f) { 
+			base.from_manifest(h, f, f.name, TypeIdent.BOOLEAN); 
+		}
+		
+		[Lemon(pattern="TRUE(t)")]
+		public Manifest._10(Parser h, Token t) { 
+			base.from_manifest(h, t, t.name, TypeIdent.BOOLEAN); 
+		}
+		
+		[Lemon(pattern="VOID(v)")]
+		public Manifest._11(Parser h, Token v) { 
+			base.from_manifest(h, v, v.name, TypeIdent.NONE); 
 		}
 		
 	}

@@ -122,7 +122,7 @@ feature {IS_FACTORY} -- Initialization
 					end
 					co := field_at (i)
 					if not attached co.fast_name as conm or else conm.is_empty then
-						co.set_name (f.operand_name (ident, j))
+						co.set_name (f.operand_name (ident, i, j))
 					end
 					j := j + 1
 					i := i + 1
@@ -130,7 +130,7 @@ feature {IS_FACTORY} -- Initialization
 				if field_count > n then
 					co := field_at (n)
 					if not attached co.fast_name as conm or else conm.is_empty then
-						co.set_name (f.operand_name (ident, j))
+						co.set_name (f.operand_name (ident, i, j))
 					end
 				end
 			end

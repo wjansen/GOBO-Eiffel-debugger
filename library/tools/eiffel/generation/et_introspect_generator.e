@@ -254,7 +254,7 @@ feature {} -- Feature generation
 			header_file.flush
 			flush_to_c_file
 			create {ET_TABLE_EXTENSION} l_extension.make (Current, compilee, import)
-			l_extension.save_system (compilee, False)	
+			l_extension.save_system (compilee)	
 			header_file.flush
 			flush_to_c_file
 		end

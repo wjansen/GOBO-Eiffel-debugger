@@ -1,9 +1,9 @@
 CC ?= cc
-CFLAGS ?= -w `pkg-config --cflags glib-2.0 gobject-2.0 gio-2.0 gee-0.8 gtk+-3.0`
+CFLAGS ?= $(DG) -w `pkg-config --cflags glib-2.0 gobject-2.0 gio-2.0 gee-0.8 gtk+-3.0`
 LIBS ?= `pkg-config --libs glib-2.0 gobject-2.0 gtk+-3.0 gio-2.0 gee-0.8`
 LEX ?= lex
 LEMON ?= lemon
-CFLAGS_VALA ?= -X -I.
+CFLAGS_VALA ?= $(DG) -X -I.
 SOBJECT = home_parser.o _GedbParserParser.o
 
 all : ${SOBJECT} home_parser.vapi

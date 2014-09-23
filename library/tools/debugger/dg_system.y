@@ -158,7 +158,7 @@ feature {} -- Initialization
 				any_type := a
 			end
 			max_type_id := max_type_id.max (20)	-- type ident of NONE
-			create type_enums.make_equal (99)
+			create type_enums.make_equal (199)
 			int64 := type_at(Int64_ident)
 			make_with_file (f)
 		end 

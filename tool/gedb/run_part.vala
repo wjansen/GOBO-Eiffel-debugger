@@ -329,7 +329,8 @@ public class RunPart : Box {
 	}
 	
 	public RunPart(Driver dg, StackPart s, ConsolePart? c, 
-				   Status i, AccelGroup accel, Gee.Map<string,Expression> list) {
+				   Status i, AccelGroup accel, 
+				   Gee.Map<string,Expression> list) {
 		this.dg = dg;
 		stack = s;
 		console = c;

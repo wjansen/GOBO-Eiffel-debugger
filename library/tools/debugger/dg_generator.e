@@ -101,7 +101,7 @@ feature {} -- Initialization
 			l_type: IS_TYPE
 			n: INTEGER
 		do
---			c0 := c_clock
+			c0 := c_clock
 			supports_marking := not as_pmd
 			create signature_pool.make_with_equality_testers
 				(100, Void, string_equality_tester)
@@ -157,10 +157,10 @@ feature {} -- Initialization
 			l_type := debugger.type_by_name("TYPE", True)
 			field_declaration.append (l_type.c_name)
 			field_declaration.append ("* e = 0;%N")
---			c1 := c_clock
---			io.error.put_string("Compile time: ")
---			io.error.put_double((c1-c0)/c_factor)
---			io.error.put_new_line
+			c1 := c_clock
+			io.error.put_string("Compile time: ")
+			io.error.put_double((c1-c0)/c_factor)
+			io.error.put_new_line
 		end
 
 feature -- Access 
@@ -282,16 +282,16 @@ feature {} -- Feature generation
 			included_runtime_c_files.force ("eif_memory.c")
 			create l_import
 			create l_intro_ext.make (Current, debuggee, l_import)
-			l_intro_ext.save_system (debuggee, False)
-			if attached {IS_SYSTEM} debugger as rts then
+			l_intro_ext.save_system (debuggee)
+			if attached {DG_SYSTEM} debugger as rts then
 				create import
 				create l_extension.make (Current, debuggee, import)
---				c0 := c_clock
-				l_extension.save_system (rts, True)
---				c1 := c_clock
---				io.error.put_string("Store DG time:   ")
---				io.error.put_double((c1-c0)/c_factor)
---				io.error.put_new_line
+				c0 := c_clock
+				l_extension.save_system (rts)
+				c1 := c_clock
+				io.error.put_string("Store DG time:   ")
+				io.error.put_double((c1-c0)/c_factor)
+				io.error.put_new_line
 			end
 		end
 

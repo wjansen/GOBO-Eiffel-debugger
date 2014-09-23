@@ -34,7 +34,7 @@ feature -- Access
 		once
 			create Result
 		end
-	
+
 feature -- Printing 
 
 	print_name (a_file: KI_TEXT_OUTPUT_STREAM; a_generator: ET_C_GENERATOR)

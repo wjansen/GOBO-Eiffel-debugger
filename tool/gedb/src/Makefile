@@ -1,8 +1,8 @@
 CC ?= cc
-CFLAGS ?= `pkg-config --cflags glib-2.0 gobject-2.0`
+CFLAGS ?= $(DG) `pkg-config --cflags glib-2.0 gobject-2.0`
 LIBS ?= `pkg-config --libs glib-2.0 gobject-2.0`
 LEX ?= lex
-CFLAGS_VALA ?= -X -I.
+CFLAGS_VALA ?= $(DG) -X -I.
 SOBJECT = src_scanner.o _GedbScannerParser.o
 
 all : ${SOBJECT} src_scanner.vapi

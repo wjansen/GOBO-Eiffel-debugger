@@ -19,7 +19,7 @@ To this end, menu <span style="font-family:sans-serif">Window</span> &#X2192; <s
 opens a window containing an editable table 
 in the style of key/value pairs.
 The table holds a row for each alias name definiton 
-where column <span style="font-family:sans-serif">Name</span> contain the alias names and column <span style="font-family:sans-serif">Expression</span> 
+where column <span style="font-family:sans-serif">Name</span> contains the alias names and column <span style="font-family:sans-serif">Expression</span> 
 holds the <span style="font-style:italic">expression</span> the row&#X2019;s name stands for. 
 A new alias name is created (i.e. a new row is added to the table) 
 by clicking button <span style="font-family:sans-serif">New</span> of the window, 
@@ -28,8 +28,10 @@ An alias definition is discarded (and the row will be removed from the table)
 by setting its name to the empty string. 
 An alias name is valid if it is a valid <span style="font-style:oblique">Eiffel</span> identifier, 
 an expression is valid if it is a <span style="font-style:italic">detailed</span>_<span style="font-style:italic">expression</span> 
-(i.e. it may contain an <span style="font-style:italic">index</span>_<span style="font-style:italic">range</span> and <span style="font-style:italic">details</span>, 
+(i.e. it may contain an <span style="font-style:italic">index</span>_<span style="font-style:italic">range</span> and <span style="font-style:italic">details</span> 
 but there is merely a syntax check). 
+Alias name definitions may refer to other alias names 
+but cyclic dependencies are not allowed. 
 If an invalid name or expression has been entered 
 then it will be indicated by striking it through. 
 In particular, the bullets of a newly created alias definition are invalid 
@@ -42,14 +44,10 @@ the expression.
 They are resolved when the alias name is used within an expression, 
 i.e. this expression must have sufficiently many nested details 
 in front of the alias name. 
-</blockquote><blockquote class="quote">
-<div class="center"><span style="font-weight:bold">Restriction</span></div> 
-To avoid cyclic dependencies, 
-an alias expression must not contain alias names. 
 </blockquote><p>An alias definition may be used when composing a <span style="font-style:italic">detailed_expression</span>: 
 the alias name is to be prefixed by an underscore; 
 the leading underscore ensures that the alias name cannot be misunderstood 
-as the feature name of a class. 
+as the feature or variable name . 
 Within the <span style="font-style:italic">detailed_expression</span> to be composed the alias name 
 is replaced by a copy of its associated <span style="font-style:italic">detailed_expression</span>. 
 The resulting <span style="font-style:italic">detailed_expression</span> is in fact an <span style="font-style:italic">expression</span> 
@@ -63,7 +61,7 @@ in the given context.
 <div class="center"><span style="font-weight:bold">Example</span></div> (continuation of example in Sec.&#XA0;<a href="debug017.html#X.%20range">4.3</a>): 
 Define the alias name <span style="font-family:monospace">pairs</span> as 
 <pre class="verbatim">  ?.keys [[if ? /= Void]] { ??.content[!] }
-</pre>and assume that variable <span style="font-family:monospace">table</span> is of a <span style="font-family:monospace">HASH_TABLE</span> type 
+</pre>and suppose that variable <span style="font-family:monospace">table</span> is of a <span style="font-family:monospace">HASH_TABLE</span> type 
 whose keys are of a reference type. 
 Then expression <code>table { _pairs }</code> expands to 
 <pre class="verbatim">  table { ?.keys [[if ? /= Void]] { ??.content[!] } }

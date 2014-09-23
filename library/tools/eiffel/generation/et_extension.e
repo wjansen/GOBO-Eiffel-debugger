@@ -32,11 +32,10 @@ feature -- Access
 	
 feature -- Basic operation 
 	
-	save_system (a_target_system: IS_SYSTEM; with_c_names: BOOLEAN)
+	save_system (a_target_system: IS_SYSTEM)
 		note
 			action: "Store `compilee' as C code to file `c-file'."
 			a_target_system: "description of the storing system"
-			with_c_names: ""
 		deferred
 		end
          

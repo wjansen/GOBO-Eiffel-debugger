@@ -565,6 +565,7 @@ public class SingleSource : Box {
 		case ScannerParser.TokenCode.REAL:
 		case ScannerParser.TokenCode.CHARACTER:
 		case ScannerParser.TokenCode.STRING:
+		case ScannerParser.TokenCode.MANIFEST:
 			buf.insert_with_tags_by_name(end, match, -1, "literal", null);
 			break;
 		case ScannerParser.TokenCode.DOT:

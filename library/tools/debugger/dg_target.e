@@ -42,23 +42,15 @@ create
 feature {} -- Initialization 
 
 	make (a_file: like c_file;
-				a_type_prefix, a_value_prefix: STRING;
-				a_name: detachable STRING;
-				a_generator: like c_generator; 
-				a_source: like source;
-				with_c_names: BOOLEAN)
+				a_type_prefix, a_value_prefix, a_name: STRING;
+				a_system: like system)
 		note
-			action:
-				"[
-				 Create object for storing the system description. 
-				 Write address definition of top object to the C file
-				 like `void *a_name=&(void*)...;'.
-				 ]"
+			action: "Create object for storing the system description."
 			a_file: "C file"
 			a_type_prefix: "type name prefix"
 			a_value_prefix: "object name prefix"
-			a_name: "name of top object"
-			a_name_table: "type names to be used; use default C names if `Void'"
+			a_name: "C system name"
+			a_system: ""
 		require
 			c_open: a_file.is_open_write
 			type_prefix_not_empty: not type_prefix.is_empty
@@ -69,14 +61,9 @@ feature {} -- Initialization
 			name_prefix := a_value_prefix
 			create extra_type_names.make (199)
 			create capacities.make (20)
-			c_generator := a_generator
 			c_name := a_name
-			source := a_source
-			if attached {like system} source.remote_system as s then
-				system := s
-			end
-			selective_cast := with_c_names
-			create type_names.make_filled (Void, 0, c_generator.debuggee.type_count)
+			system := a_system
+			create type_names.make_filled (Void, 0, 20)
 			if attached pointer_home then
 				-- Fill typeset of `pointer_home':
 				pointer_home := system.any_type
@@ -86,8 +73,7 @@ feature {} -- Initialization
 			end
 		ensure
 			c_file_set: c_file = a_file
-			c_generator_set: c_generator = a_generator
-			source_set: source = a_source
+			system_set: system = a_system
 		end
 
 feature {PC_BASE} -- Initialization 
@@ -111,11 +97,7 @@ feature {PC_DRIVER} -- Termination
 		do
 			id := top.ident
 			if attached c_name as cn and then id /= void_ident then
-				if selective_cast then
-					tn := c_type_name (top.type)
-				else
-					tn := "T0"
-				end
+				tn := c_type_name (top.type)
 				c_file.put_string (tn)
 				c_file.put_character (' ')
 				c_file.put_character ('*')
@@ -143,8 +125,6 @@ feature -- Access
 	must_expand_strings: BOOLEAN
 		do      
 		end
-
-	c_generator: DG_GENERATOR
 	
 	source: DG_SOURCE
 
@@ -154,18 +134,16 @@ feature {PC_DRIVER} -- Pre and post handling of data
 
 	pre_object (t: IS_TYPE; id: NATURAL)
 		local
-			obj: detachable ANY
 			ready: BOOLEAN
 		do
-			obj := source.last_ident
 			if id /= void_ident then
 				declare (t, 0, id)
 				c_file.put_string (declaration)
 				length := length + declaration.count + 1
-				if t.is_string and then attached {STRING_8} obj as s then
+				if t.is_string then
 					c_file.put_string (string_decl)
 					ready := True
-				elseif t.is_unicode and then attached {STRING_32} obj as u then
+				elseif t.is_unicode then
 					c_file.put_string (string_decl)
 					ready := True
 				else
@@ -374,7 +352,7 @@ feature {PC_DRIVER} -- Handling of elementary data
 			n: INTEGER
 		do
 			n := i
-			if field.has_name(once "_id") then
+			if field.has_name(id_name) then
 				n := home_ident
 			end
 			tmp_str.wipe_out
@@ -503,19 +481,15 @@ feature {PC_DRIVER} -- Handling of elementary data
 			end
 			if not skip then
 				tmp_str.wipe_out
-				if selective_cast then
-					stat := field_type
-					if t /= stat or else t.is_special then
-						tmp_str.extend ('(')
-						tmp_str.append (c_type_name (stat))
+				stat := field_type
+				if t /= stat or else t.is_special then
+					tmp_str.extend ('(')
+					tmp_str.append (c_type_name (stat))
+					tmp_str.extend ('*')
+					if t.is_special and then not t.generic_at (0).is_subobject then
 						tmp_str.extend ('*')
-						if t.is_special and then not t.generic_at (0).is_subobject then
-							tmp_str.extend ('*')
-						end
-						tmp_str.extend (')')
 					end
-				else
-					tmp_str.append (any_cast)
+					tmp_str.extend (')')
 				end
 				if t.is_string or else t.is_unicode then
 				else
@@ -606,12 +580,7 @@ feature  {} -- Implementation
 					else
 						declaration.append (once "struct {int id; int32_t a1; int32_t a2; ")
 						g := td.generic_at (0)
-						if selective_cast or else g.is_basic then
-							declaration.append (c_type_name (g))
-						else
-							declaration.extend ('T')
-							declaration.extend ('0')
-						end
+						declaration.append (c_type_name (g))
 						if not g.is_subobject then
 							declaration.extend ('*')
 						end
@@ -770,8 +739,8 @@ feature {} -- Implementation
 	
 	void_cast: STRING = "(void*)"
 
-	selective_cast: BOOLEAN
-	
+	id_name: STRING = "_id"
+
 invariant
 
 note

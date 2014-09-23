@@ -184,6 +184,8 @@ namespace Gedb {
 				n = 1;
 				return x;
 			} else if (x.has_prefix(name)) {
+				if (name.data[0]=='t' && x.has_prefix("to"))
+					stderr.printf("\n");
 				l0 = x.fast_name.length;
 				if (l0<l) {
 					l = l0;
@@ -2022,8 +2024,7 @@ other value means `other' is a parent class.
 			if (within!=null) {
 				var ag = within.inline_agent;
 				if (ag==null) {
-					for (i=within.vars.length; i-->1;) {
-						if (i==within.argument_count) continue;
+					for (i=within.vars.length; i-->0;) {
 						e = (Entity*)within.vars[i];
 						if (e!=null)  list += (Name*)e;
 					}
@@ -2045,6 +2046,8 @@ other value means `other' is a parent class.
 				for (i=fields.length; i-->0;) {
 					e = (Entity*)fields[i];
 					string fn = e._name.fast_name;
+					if (name.data[0]=='t' && ((Name*)e).has_prefix("to"))
+						stderr.printf("%d: %s\n", list.length, fn);
 					if (e.text==null) 
 						if (fn=="[]" || (is_special() && fn=="item")) {
 							n = 1;

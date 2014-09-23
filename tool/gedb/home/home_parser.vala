@@ -122,6 +122,7 @@ namespace Gedb {
 		XOR
 		TUPLE
 		PRECURSOR
+		MANIFEST
 		"
 		)]
 		public override void on_default_token(string value, int value_len) {
@@ -336,14 +337,6 @@ namespace Gedb {
 			token = new Token(value, n_chars_read);
 		}
 		
-		/* Eiffel identifiers */
-		
-		[Flex(pattern="[a-zA-Z][a-zA-Z0-9_]*")]
-		public void identifier(string value, int value_len) {
-			token_code = process_identifier(value);
-			token = new Token(value, n_chars_read);
-		}
-		
 		/* Reserved words */
 		
 		[Flex(pattern="[oO][nN][cC][eE][ \\t]*/[\"{]")] 
@@ -354,6 +347,32 @@ namespace Gedb {
 		[Flex(pattern="[dD][eE][bB][uU][gG][ \\t]*/\\(")]
 		public void debug_lparen(string value, int value_len) {
 			token = new Token(value, n_chars_read);		
+		}
+		
+		[Flex(pattern="[Ff][Aa][Ll][Ss][Ee]")]
+		public void false_manifest(string value, int value_len) {
+			token_code = TokenCode.MANIFEST;
+			token = new Token(value, n_chars_read);		
+		}
+		
+		[Flex(pattern="[Tt][Rr][Uu][Ee]")]
+		public void true_manifest(string value, int value_len) {
+			token_code = TokenCode.MANIFEST;
+			token = new Token(value, n_chars_read);		
+		}
+		
+		[Flex(pattern="[Vv][Oo][Ii][Dd]")]
+		public void void_manifest(string value, int value_len) {
+			token_code = TokenCode.MANIFEST;
+			token = new Token(value, n_chars_read);		
+		}
+		
+		/* Eiffel identifiers */
+		
+		[Flex(pattern="[a-zA-Z][a-zA-Z0-9_]*")]
+		public void identifier(string value, int value_len) {
+			token_code = process_identifier(value);
+			token = new Token(value, n_chars_read);
 		}
 		
 		/* Eiffel integers */
@@ -1826,17 +1845,20 @@ namespace Gedb {
 		
 		private Manifest(Token t) { base(t.name, t.at, t.size); }
 		
+		[Lemon(pattern="MANIFEST(m)")]
+		public Manifest._1(Parser h, Token m) { this(m); }
+
 		[Lemon(pattern="CHARACTER(c)")]
-		public Manifest._1(Parser h, Token c) { this(c); }
+		public Manifest._3(Parser h, Token c) { this(c); }
 
 		[Lemon(pattern="STRING(s)")]
-		public Manifest._2(Parser h, Token s) { this(s); }
+		public Manifest._4(Parser h, Token s) { this(s); }
 
 		[Lemon(pattern="INTEGER(i)")]
-		public Manifest._3(Parser h, Token i) { this(i); }
+		public Manifest._5(Parser h, Token i) { this(i); }
 
 		[Lemon(pattern="REAL(r)")]
-		public Manifest._4(Parser h, Token r) { this(r); }
+		public Manifest._6(Parser h, Token r) { this(r); }
 	}
 	
 } /* namespace*/

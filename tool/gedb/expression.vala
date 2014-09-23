@@ -20,7 +20,7 @@ public enum ConstCode {
 
 public enum RangeCode { interval, dollar, all, iff }
 
-public const string  bullet = "⚫"; // '●' '⚫' '•'
+public const string  bullet = "⚫"; // "●" "⚫" "•"
 
 
 public void copy_value(uint8* left, uint8* right, size_t size) {
@@ -793,7 +793,7 @@ public abstract class Expression : Object {
    Make `this' a clone of `ex'.
    
    Copy fields of `ex' to fields of `this' but do not clone children. 
-   `parent' has already been set. 
+   Suppose that `parent' has already been set. 
 
    @ex pattern to be copied
 */
@@ -805,7 +805,10 @@ public abstract class Expression : Object {
 			uint n = r.length;
 			result = new uint8[n];
 			copy_value(result, r, n);
+		} else {
+			result = null;
 		}
+
 	}
 	
 	protected Expression? get_place(ref int n) requires (n>0) {
@@ -972,7 +975,7 @@ public abstract class Expression : Object {
 		return parent!=null ? parent.root() : this;
 	}
 	
-	public Expression top() {
+	public weak Expression top() {
 		return is_down() ? parent.top() : this;
 	}
 	
@@ -1230,7 +1233,7 @@ public abstract class Expression : Object {
 		}
 		if (d!=null) {
 			more = d.append_name(null, fmt);
-			if (more.length>0)  here += " {" + more + "}";
+			if (more.length>0)  here += " { " + more + " }";
 		}
 		if (next!=null) {
 			more = next.append_name(null, fmt);
@@ -1260,7 +1263,6 @@ public abstract class Expression : Object {
 		Gedb.Type* t = dynamic_type;
 		string str = (fmt & Format.WITH_NAME)!=0 ? 
 			top().append_qualified_name(null, this, fmt) + " = " : "";
-		var c = this as ConstantExpression;
 		str += format_value(addr, 0, false, t, FormatStyle.ADDRESS);
 		if ((fmt & Format.WITH_TYPE)!=0 && addr!=null) {
 			FeatureText* ft = null;
@@ -1357,33 +1359,53 @@ public abstract class Expression : Object {
 
 	protected static EiffelObjects results;
 
-	protected virtual Expression resolve_alias() { return this; }
+	internal virtual Expression? resolve_alias() { return this; }
 
-	public Expression expanded(Expression? p,
-		Gee.List<Expression> pl,
-		Gedb.Type* t, ClassText* ct, StackFrame* f) 
-	requires (p!=null || t!=null || ct!=null || f!=null) {
-		var ex = resolved(p, pl, t, ct, f);
-		if (ex==null) return null;
-		Expression? exp = null;
+	public bool uses_alias(string name) {
+		var ci = this as AliasExpression;
+		string cnm = ci!=null ? ci.name() : null;
+		if (cnm==name) return true;
 		for (uint i=0; i<Child.COUNT; ++i) {
-			var ci = children[i];
+			ci = children[i] as AliasExpression;
+			if (ci==null) continue;
+			cnm = ci.name();
+			if (cnm==name) return true;
+		}
+		return false;
+	}
+
+	internal Expression expanded(Expression? p, Gee.List<Expression> pl) {
+		var ex = resolved(p, pl);
+		if (ex==null) return null;
+		Expression? ci, cx;
+		int n = pl.size;
+		for (uint i=0; i<Child.COUNT; ++i) {
+			ci = children[i];
 			if (ci!=null) {
 				switch (i) {
-				case Child.ARG:
-				case Child.DOWN:
 				case Child.RANGE:
+					pl.insert(n, ex);
+					break;
 				case Child.DETAIL:
-					exp = ex;
+					if (!is_range()) {
+						pl.insert(n, ex);
+					}
 					break;
 				}
-				if (exp!=null) {
-					t = exp.dynamic_type;
-					ct = exp.base_class();
+				cx = ci.expanded(ex, pl);
+				ex.set_child(i, cx);
+				switch (i) {
+				case Child.RANGE:
+					pl.remove_at(n);
+					break;
+				case Child.DETAIL:
+					if (!is_range()) {
+						pl.remove_at(n);
+					}
+					break;
 				}
-				ex.set_child(i, ci.expanded(exp, pl, t, ct, f));
 			}
-		}		
+		}
 		return ex;
 	}
 
@@ -1399,15 +1421,41 @@ public abstract class Expression : Object {
    @f `StackFrame' to resolve the name  
    @return new `Expression' if name was resolved, `null' else 
  */
-	protected virtual Expression? resolved(Expression? p, 
-		Gee.List<Expression> pl,
-		Gedb.Type* tp, ClassText* ct, StackFrame* f) 
-	ensures (result.parent==p) {
+	protected virtual Expression resolved(Expression? p, 
+		Gee.List<Expression> pl) 
+//	ensures (result==null || result.parent==p) 
+	{	// workaround
 		var t = get_type();
 		var ex = @new(t) as Expression;
 		ex.parent = p;
 		ex.copy(this);
 		return ex;
+	}
+
+	public bool static_check(ClassText* ct, System* s, StackFrame* f) 
+//	requires (ct!=null || (f!=null && s!=null)) {
+	{ // workaround
+		RoutineText* rt = null;
+		uint n = 0;
+		bool ok = true;
+		if (is_down()) {
+			ct = parent.base_class();
+		} else {
+			if (f!=null) {
+				ct = s.class_at(f.class_id);
+				rt = f.routine.text;
+			}
+		}
+		ct.query_by_name(out n, name(), arg!=null, rt);
+		if (n!=1) return false;
+		Expression? ci;
+		for (uint i=0; i<Child.COUNT; ++i) {
+			ci = children[i] as AliasExpression;
+			if (ci==null) continue;
+			ok = ci.static_check(ct, s, f);
+			if (!ok) return false;
+		}
+		return ok;
 	}
 
  /**
@@ -1458,10 +1506,7 @@ public abstract class Expression : Object {
 		uint8* addr = object;
 		Routine* r = f!=null ? f.routine : null;
 		var aex = this as AliasExpression;
-		if (aex!=null) {
-			addr = address();
-			t = dynamic_type;
-		} else if (object==null) {
+		if (object==null) {
 			if (env!=null) {
 				addr = env;
 				t = s.type_of_any(env);
@@ -1472,39 +1517,28 @@ public abstract class Expression : Object {
 		} else {
 			if (!t.is_subobject()) t = s.type_of_any(object);
 		}
-		try {
-			bool ok = set_dyn_type(t, f, env);
-			if (!ok) throw new ExpressionError.UNKNOWN 
-						("Unknown feature "+name());
-			compute(addr, f, s);
-			addr = address();
-			if (addr!=null) {
-				dynamic_type = s.type_of_any(addr, dynamic_type);
-				if (down!=null) {
-					if (addr!=null || dynamic_type.is_subobject()) {
-						if (t.is_agent()) {
-							var ag = (AgentType*)dynamic_type;
-							addr = ag.closed_operands(addr);
-						}
-						down.compute_in_object(addr, dynamic_type, s, f, env);
+		bool ok = aex!=null || set_dyn_type(t, f, env);
+		if (!ok) throw new ExpressionError.UNKNOWN 
+			("Unknown feature `"+name()+"'");
+		compute(addr, f, s);
+		addr = address();
+		if (addr!=null) {
+			dynamic_type = s.type_of_any(addr, dynamic_type);
+			if (down!=null) {
+				if (addr!=null || dynamic_type.is_subobject()) {
+					if (t.is_agent()) {
+						var ag = (AgentType*)dynamic_type;
+						addr = ag.closed_operands(addr);
 					}
-				}
-				if (range!=null) {
-					range.compute_in_object(addr, dynamic_type, s, f, env);
-				}
-				if (detail!=null) {
-					detail.compute_in_object(addr, dynamic_type, s, f, env);
+					down.compute_in_object(addr, dynamic_type, s, f, env);
 				}
 			}
-		} catch (ExpressionError e) { 
- /*
-			if (is_down()) parent.down = null;
-			else if (is_range()) parent.range = null;
-			else if (is_detail()) parent.detail = null;
-			else if (is_next()) parent.next = next;
-			else if (is_arg()) throw new ExpressionError.INVALID_ARGUMENTS ("");
-			else error = e;
- */
+			if (range!=null) {
+				range.compute_in_object(addr, dynamic_type, s, f, env);
+			}
+			if (detail!=null) {
+				detail.compute_in_object(addr, dynamic_type, s, f, env);
+			}
 		}
 		if (next!=null) {
 			next.compute_in_object(null, t, s, f, env);
@@ -1595,33 +1629,6 @@ public abstract class Expression : Object {
 		work_name = tex.work_name;
 	}
 
-	public override Expression? resolved(Expression? p, 
-		Gee.List<Expression> pl,
-		Gedb.Type* t, ClassText* ct, StackFrame* f) {
-		Entity* e;
-		Routine* r = f!=null ? f.routine : null;
-		Expression? ex = null;
-		uint n = 0;
-		bool pref = arg==null;
-		var a = arg;
-		if (t!=null) {
-			e = t.query_by_name(out n, work_name, pref, r);
-			if (n==1 && e!=null) ex = new_typed(p, e, a);				
-		} else if (ct!=null) {
-			FeatureText* ft = ct.query_by_name(out n, work_name, pref);
-			if (n==1 && ft!=null) ex = new_text(p, ft, a);
-		} else if (f!=null) {
-			e = f.target_type().query_by_name(out n, work_name, pref, r);
-			if (n==1 && e!=null) ex = new_typed(p, e, a);
-		}
-		if (ex!=null) {
-			ex.parent = p;
-			ex.set_child(Child.ARG, null);	// will be set later
-			set_child(Child.ARG, a);		// restore own `arg'
-		}
-		return ex;
-	}
-
 	protected virtual void adjust_to_parent() {
 		ClassText* ct = null;
 		var p = parent as TextExpression;
@@ -1655,7 +1662,8 @@ public abstract class Expression : Object {
 
 	protected override bool set_dyn_type(Gedb.Type* pt, StackFrame* f,
 										uint8* env=null) {
-		string name = text._name.fast_name;
+		string name = text!=null ? text._name.fast_name : work_name;
+		name = name.down();
 		uint n;
 		Entity* e;
 		for (uint i=upframe_count; i-->0;) {
@@ -1741,7 +1749,9 @@ public abstract class Expression : Object {
 	}
 
 	public override string name() { 
-		return _text!=null ? _text._name.fast_name : work_name;
+		return entity!=null 
+			? entity._name.fast_name 
+			: (_text!=null ? _text._name.fast_name : work_name);
 	}
 
 	public override string dynamic_name() { 
@@ -1767,9 +1777,9 @@ public abstract class Expression : Object {
 		var pt = parent!=null ? parent.dynamic_type : null;
 		if (is_down() && pt!=null) {
 			if (pt.is_tuple()) {
-				var tp = parent.resolve_alias() as TextExpression;
-				if (tp!=null) {
-					var labels = tp.text.tuple_labels;
+				var tex = parent.resolve_alias() as TextExpression;
+				if (tex!=null) {
+					var labels = tex.text.tuple_labels;
 					if (labels!=null) {
 						// remove prefix "item_":
 						nm = txt._name.fast_name.substring(5);	
@@ -2213,9 +2223,10 @@ public abstract class Expression : Object {
 	protected override void copy(Expression ex) {
 		base.copy(ex);
 		var qex = ex as EqualityExpression;
-		_name = qex.name();
+		_name = qex._name;
 		_op_code = qex.op_code;
 		_prec = qex.prec;
+		ok = qex.ok;
 	}
 
 	protected override void compute(uint8* obj, StackFrame* f, System* s) 
@@ -2324,16 +2335,6 @@ public abstract class Expression : Object {
 		_index = iex.index;
 	}
 
-	public override Expression? resolved(Expression? p, 
-		Gee.List<Expression> pl,
-		Gedb.Type* tp, ClassText* ct, StackFrame* f) {
-		var t = get_type();
-		var ex = @new(t) as Expression;
-		ex.parent = p;
-		ex.copy(this);
-		return ex;
-	}
-
 	protected void set_type_and_class() {
 		var old = special_type;
 		special_type = (SpecialType*)special.dynamic_type;
@@ -2410,7 +2411,7 @@ public abstract class Expression : Object {
 
 	public override string append_single_name(string? to, uint fmt=0) {
 		string here = to!=null ? to : "";
-		if ((fmt&Format.INDEX_VALUE)!=0) {
+		if ((fmt&Format.INDEX_VALUE)!=0 || arg==null) {
 			here = @"$index";
 		} else {
 			here = arg.append_qualified_name(null, null, fmt);
@@ -2421,7 +2422,9 @@ public abstract class Expression : Object {
 		return here;
 	}
 
-	public int index { get; protected set; }
+	public int index { 
+		get; 
+		protected set; }
 
 	public SpecialType* special_type { get; private set; }
 
@@ -2452,10 +2455,9 @@ public abstract class Expression : Object {
 		_code = rex._code;
 	}
 
-	public override Expression? resolved(Expression? p, 
-		Gee.List<Expression> pl,
-		Gedb.Type* tp, ClassText* ct, StackFrame* f) {
-		var rex = base.resolved(p, pl, tp, ct, f) as RangeExpression;
+	public override Expression resolved(Expression? p, 
+		Gee.List<Expression> pl) {
+		var rex = base.resolved(p, pl) as RangeExpression;
 		rex.set_type_and_class();
 		return rex;
 	}
@@ -2527,7 +2529,8 @@ public abstract class Expression : Object {
 	}
 
 	public void traverse_range(RangeFunc func, StackFrame* f, 
-							 uint8* env=null, bool new_item=false) {
+							 uint8* env=null, bool new_item=false) 
+	throws ExpressionError {
 		item_count = 0;
 		uint8* addr = parent.address();
 		if (addr==null) return;
@@ -2617,7 +2620,7 @@ public abstract class Expression : Object {
 		l = 0;
 	}
 
-	internal ManifestExpression.typed(Gedb.Type* t, string value) {
+	public ManifestExpression.typed(Gedb.Type* t, string value) {
 		base((uint)sizeof(void*));
 		dynamic_type = t;
 		_name = value;
@@ -2700,31 +2703,40 @@ public abstract class Expression : Object {
  public class AliasExpression : Expression { 
 
 	protected string _name;
-	protected Expression? alias_top { get; set; }
+	protected Expression? alias_top { get; private set; }
 
 	protected override void copy(Expression ex) {
 		base.copy(ex);
 		var aex = ex as AliasExpression;
 		_name = aex.name();
-		alias_top = aex.alias_top.clone();
-		alias = alias_top.bottom();
+		if (alias_top!=null) {
+			alias_top = aex.alias_top.clone();
+			alias = alias_top.bottom();
+		}
 	}
 
-	public override Expression? resolved(Expression? p, 
-		Gee.List<Expression> pl,
-		Gedb.Type* tp, ClassText* ct, StackFrame* f) {
-		var t = get_type();
-		var aex = @new(t) as AliasExpression;
+	public override Expression resolved(Expression? p, 
+		Gee.List<Expression> pl) {
+		var aex = base.resolved(p, pl) as AliasExpression;
 		aex.parent = p;
 		aex._name = _name;
-		var top = alias_top.expanded(null, pl, tp, ct, f);
-		aex.alias = top.bottom();
+		if (alias==null) return aex;
+		Expression ex;
+		int i=0, n=0;
+		for (ex=alias_top.bottom(); alias_top!=ex; ex=ex.parent) {
+			++n;
+			if (i==0 && ex!=alias) ++i;
+		}
+		var top = alias_top.expanded(p, pl);
+		for (ex=top.bottom(); i-->0;) ex = ex.parent;
+		aex.alias = ex;
 		return aex;
 	}
 
 	protected override bool set_dyn_type(Gedb.Type* pt, StackFrame* f,
 										uint8* env=null) {
-		return true; 
+		dynamic_type = alias.dynamic_type;
+		return dynamic_type!=null; 
 	}
 
 	protected override void compute(uint8* obj, StackFrame* f, System* s) 
@@ -2734,10 +2746,18 @@ public abstract class Expression : Object {
 			alias_top.compute_in_object(p.address(), p.dynamic_type, s, f); 
 		else
 			alias_top.compute_in_stack(f, s);
+		dynamic_type = alias.dynamic_type;
 	}
 
-	protected override Expression resolve_alias() { 
-		return alias.resolve_alias();
+	internal override Expression? resolve_alias() { 
+		return alias!=null ? alias.resolve_alias() : null;
+	}
+
+	public AliasExpression(string name, Expression? ex, 
+						   Gee.List<Expression>? pl=null) { 
+		base(0);
+		alias = pl!=null ? ex.expanded(null, pl) : ex;
+		_name = name;
 	}
 
 	private Expression? _alias;
@@ -2746,7 +2766,7 @@ public abstract class Expression : Object {
 		protected set {
 			if (value!=null) {
 				_alias_top = value.top();
-				_alias = value;
+				_alias = _alias_top.bottom();
 				dynamic_type = value.dynamic_type;
 			} else {
 				_alias_top = null;
@@ -2756,26 +2776,36 @@ public abstract class Expression : Object {
 		}
 	}
 
-	public AliasExpression(string name, Expression? ex) { 
-		base(0);
-		alias = ex;
-		_name = name;
+	public Gee.ArrayList<AliasExpression> depends;
+
+	public static bool is_cyclic(Expression ex, string name,
+								 Gee.ArrayList<string>? cycle=null) {
+		AliasExpression? ci;
+		string cnm;
+		for (uint i=0; i<Child.COUNT; ++i) {
+			ci = ex.children[i] as AliasExpression;
+			if (ci==null) continue;
+			cnm = ci.name();
+			if (cnm==name || is_cyclic(ci.alias_top, name, cycle)) {
+				if (cycle!=null) 
+					cycle.insert(0, cnm[1:cnm.length]);
+				return true;
+			}
+		}
+		return false;
 	}
 
 	public override string name() { return _name; }
 	public override ClassText* base_class() { return alias.base_class(); }
-	public override uint8* address() {
-		return alias.address(); }
+	public override uint8* address() { return alias.address(); }
 
 	public override string append_single_name(string? to, uint fmt=0) {
 		string here = to!=null ? to : "";
 		if (is_down()) here += ".";
 		if ((fmt&Format.EXPAND_ALIAS)!=0) 
-			here = alias_top.append_qualified_name(here, alias, fmt);
-		else if (to!=null)
-			here += _name;
+			here += alias_top.append_qualified_name(here, null, fmt);
 		else 
-			here = _name;
+			here += _name;
 		return here;
 	}
 
@@ -2793,23 +2823,18 @@ public abstract class Expression : Object {
 		dynamic_type = ex.dynamic_type;
 	}
 
-	public override Expression? resolved(Expression? p, 
-		Gee.List<Expression> pl, 
-		Gedb.Type* tp, ClassText* ct, StackFrame* f) {
+	public override Expression resolved(Expression? p, 
+		Gee.List<Expression> pl) {
+		int n = pl.size;
+		int l = _name.length;
 		var t = get_type();
 		var ph = @new(t) as Placeholder;
-		ph.parent = p;
 		ph._name = _name;
-		int n = _name.length;
-		ph.alias = ph.get_place(ref n);	
-		if (n>0) ph.alias = pl[n-1];
-		ph.dynamic_type = ph.alias.dynamic_type;
+		if (l==0) return null;
+		ph.alias = pl[n-l];
 		return ph;
 	}
 	
-	protected override bool set_dyn_type(Gedb.Type* pt, StackFrame* f,
-										 uint8* env=null) { return true; }
-
 	protected override void compute(uint8* obj, StackFrame* f, System* s) 
 	throws ExpressionError {}	// origin is already computed
 
@@ -2851,10 +2876,9 @@ public class RangePlaceholder : Placeholder {
 		idx = rp.idx;
 	}
 
-	public override Expression? resolved(Expression? p, 
-		Gee.List<Expression> pl, 
-		Gedb.Type* tp, ClassText* ct, StackFrame* f) {
-		var rp = base.resolved(p, pl, tp, ct, f) as RangePlaceholder;
+	public override Expression resolved(Expression? p, 
+		Gee.List<Expression> pl) {
+		var rp = base.resolved(p, pl) as RangePlaceholder;
 		rp.int_type = int_type;
 		rp.idx = idx;
 		if (is_index()) rp.dynamic_type = (Gedb.Type*)int_type;
@@ -2888,6 +2912,6 @@ public class RangePlaceholder : Placeholder {
 		return base.append_single_name(to, fmt);
 	}
 
-	public uint index() { return (alias as ItemExpression).index; }
+	public uint index() { return (alias.range as ItemExpression).index; }
 
 }

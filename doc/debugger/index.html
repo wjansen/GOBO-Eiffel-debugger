@@ -165,7 +165,12 @@ of project management.
 </p><p>The debugger should help, as the name indicates, to find bugs 
 in an <span style="font-style:oblique">Eiffel</span> system, but itself must be bug free. 
 This is the ideal, not the reality. 
-Several debugger errors are caught by exception handling: 
+One deficiency is already known and cannot be solved in the given framework: 
+the debugging session may fail if the debuggee uses 
+(via <span style="font-family:monospace">external</span> routines) the <span style="font-style:oblique">GTK+</span> graphics library 
+as does the debugger. The calls of both programs to this library 
+may interfere in an uncontrolled way causing a crash. 
+Several other debugger errors are caught by exception handling: 
 execution of the actual command is cancelled and an error message is issued. 
 It may happen that even this emergency break does not work and 
 the debugger crashes during command execution. 

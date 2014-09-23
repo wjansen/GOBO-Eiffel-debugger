@@ -162,6 +162,10 @@ public class DataCore : Box {
 				}
 			}
 			for (; i<n_old; ++i) {
+				store.iter_nth_child(out child, iter, (int)n);
+				store.@remove(ref child);
+			}
+			for (; i<n_old; ++i) {
 				store.iter_nth_child(out child, iter, i);
 				store.@remove(ref child);
 			}
@@ -355,6 +359,7 @@ public class DataCore : Box {
 				   ItemFlag.TYPE_ID, out tid, 
 				   ItemFlag.EXPR, out ex,
 				   -1);
+		if (addr==null && ex!=null) addr = ex.address();
 		assert (addr!=null);
 		mode = DataMode.FIELD;
 		t = dg.rts.type_at(tid);
@@ -419,14 +424,13 @@ public class DataCore : Box {
 		TreePath path;
 		TreeIter child;
 		int n = store.iter_n_children(iter);
-		store.iter_nth_child(out child, iter, n-1);
-		path = store.get_path(child);
-		view.scroll_to_cell(path, null, false, 1.0F, 0.0F);
+		if (n>1) {
+			store.iter_nth_child(out child, iter, n-1);
+			path = store.get_path(child);
+			view.scroll_to_cell(path, null, false, 1.0F, 0.0F);
+		}
 		path = store.get_path(iter);
 		view.scroll_to_cell(path, null, false, 0.5F, 0.0F);
-		
-		Gdk.Rectangle rect;
-		view.get_cell_area(path, null, out rect);
 	}
 
 	private void add_item(TreeIter iter, Entity*e, uint8* addr, DataMode mode,
@@ -763,7 +767,7 @@ public class DataCore : Box {
 			var pex = id2expr(p);
 			if (pex!=null) {
 				pex.bottom().set_child(pex.Child.DOWN,  
-					pex.new_typed(p.expr, f, null) as TextExpression);
+					pex.new_typed(p.expr, f, null));
 				return pex;
 			}
 		} 
@@ -778,19 +782,26 @@ public class DataCore : Box {
 		if (id>=_deep_info.length) return null;
 		var info = _deep_info[id];
 		if (info==null) return null;
-		var ex = id2expr(info).top() as TextExpression;
-		if (ex==null) return null;
-		var e = ex.entity;
-		if (e!=null && e.is_once()) {
-			var o = (Gedb.Once*)e;
-			var addr = o.value_address;
-			var t = ((Entity*)o).type;
-			addr = t.dereference(addr);
-			ex.compute_in_object(addr, t, dg.rts, frame);
-		} else {
-			ex.compute_in_stack(frame, dg.rts);
+		var iex = id2expr(info);
+		if (iex==null) return null;
+		var tex = iex.top() as TextExpression;
+		if (tex!=null) {
+			var e = tex.entity;
+			try {
+				if (e!=null && e.is_once()) {
+					var o = (Gedb.Once*)e;
+					var addr = o.value_address;
+					var t = ((Entity*)o).type;
+					addr = t.dereference(addr);
+					tex.compute_in_object(addr, t, dg.rts, frame);
+				} else {
+					tex.compute_in_stack(frame, dg.rts);
+				}
+			} catch (ExpressionError e) {
+				return null;
+			}
 		}
-		return ex;
+		return tex;
 	}
 
 	public signal void item_selected(DataItem? item);
@@ -1032,7 +1043,8 @@ in print commands.""");
 		update_subtree(lhs.iter, left);
 	}
 
-	internal void add_expression(Expression expr, TreeIter? at=null) {
+	internal void add_expression(Expression expr, TreeIter? at=null,
+		bool expand=false) {
 		if (main!=null)  return;
 		Gedb.Type* t;
 		Entity* e = null;
@@ -1044,15 +1056,13 @@ in print commands.""");
 		AliasExpression? exa = null;
 		RangeExpression? exr = null;		
 		uint8* addr;
+		TreePath path;
 		TreeIter iter;
 		string name, val, type;
 		char c = DataMode.EXTERN;
 		FormatStyle style = format_style();
 		uint fmt = expr.Format.INDEX_VALUE;
-		bool ok, done;
 		for (ex=expr; ex!=null; ex=ex.next) {
-			ok = false;
-			done = false;
 			exb = ex.bottom();
 			exa = exb as AliasExpression;
 			if (exa!=null) exb = exa.alias;
@@ -1071,16 +1081,26 @@ in print commands.""");
 			exr = exb.range;
 			exd = exb.detail;
 			if (exr!=null) {
-				exr.traverse_range((r) => 
-					{ add_expression(r, iter); }, frame, null, true);
+				try {
+					view.expand_row(store.get_path(at), false);
+					exr.traverse_range(
+						(r) => { add_expression(r, iter, true); }, 
+						frame, null, true);
+				} catch (Error e) {
+					stderr.printf("Error !!\n");
+				}
 			} else if (exd!=null) {
-				add_expression(exd, iter);
-				view.expand_row(store.get_path(iter), true);
+				add_expression(exd, iter, true);
 			} else if (exu!=null && exu.arg!=null) {
 				add_expression(exu.arg, iter); 
 			} else { 
 				add_dummy_item(iter, t);
 			}
+		}
+		if (at!=null) {
+			path = store.get_path(at);
+			if (expand) view.expand_row(path, false);
+			view.scroll_to_cell(path, null, false, 0.5F, 0.0F);
 		}
 	}
 
@@ -1956,7 +1976,7 @@ public class EvalPart : Grid {
 		data = d;
 		checker = new ExpressionChecker();
 
-		label = new Label("Value");
+		label = new Label("Value ");
 		attach(label, 0, 0, 1, 1);
 		label.hexpand = false;
 		label.halign = Align.START;

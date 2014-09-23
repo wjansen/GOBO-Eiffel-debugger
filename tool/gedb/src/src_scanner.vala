@@ -17,7 +17,7 @@ namespace Gedb {
 		 */
 		public bool in_note;
 
-		[Flex(token="OPERATOR IDENTIFIER KEYWORD")]
+		[Flex(token="OPERATOR IDENTIFIER KEYWORD MANIFEST")]
 		public override void on_default_token(string value, int value_len) {
 			token_code = TokenCode.NO_ADD_TOKEN;
 			scanned(value);
@@ -90,7 +90,25 @@ namespace Gedb {
 		}
 		
 		/* Eiffel identifiers */
+/* // Experimantal:
+		[Flex(pattern="[Ff][Aa][Ll][Ss][Ee]")]
+		public void false_manifest(string value, int value_len) {
+			token_code = TokenCode.MANIFEST;
+			scanned(value);
+		}
 		
+		[Flex(pattern="[Tt][Rr][Uu][Ee]")]
+		public void true_manifest(string value, int value_len) {
+			token_code = TokenCode.MANIFEST;
+			scanned(value);
+		}
+		
+		[Flex(pattern="[Vv][Oo][Ii][Dd]")]
+		public void void_manifest(string value, int value_len) {
+			token_code = TokenCode.MANIFEST;
+			scanned(value);
+		}
+*/		
 		[Flex(pattern="[a-zA-Z][a-zA-Z0-9_]*/[ \\t\\r\\n]*\\(")]
 		public void identifier2(string value, int value_len) {
 			token_code = process_identifier(value);

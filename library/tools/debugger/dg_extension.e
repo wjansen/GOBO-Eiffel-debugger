@@ -35,11 +35,10 @@ feature -- Access
 	
 feature -- Basic operation 
 	
-	save_system (a_target_system: IS_SYSTEM; with_c_names: BOOLEAN)
+	save_system (a_target_system: DG_SYSTEM)
 		note
 			action: "Store `a_compilee' as C code to file `c-file'."
 			a_target_system: "description of the storing system"
-			a_target: "formatter to be used; use a default format if `Void'"
 		local
 			l_table: PC_ANY_TABLE [PC_TYPED_IDENT [NATURAL]]
 			l_source: DG_SOURCE
@@ -57,8 +56,7 @@ feature -- Basic operation
 														c_generator, compilee)
 			l_source.set_actionable (True)
 			create l_target.make (c_file, "", l_value_name,
-														c_names.c_rts_name, c_generator, l_source,
-														with_c_names)
+														c_names.c_rts_name, a_target_system)
 			create l_table.make (997)
 			create l_driver.make (l_target, l_source, l_table)
 			l_driver.traverse (compilee)

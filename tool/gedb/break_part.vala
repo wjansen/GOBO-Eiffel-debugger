@@ -218,7 +218,7 @@ public class BreakPart : Box {
 
 	private void do_check_expression(Entry entry, uint col, TreeIter iter) {
 		checker.reset();
-		string str = entry.get_text();
+		string str = entry.get_text(); 
 		if (str.strip().length==0) {
 			entry.editing_done();
 			return;
@@ -419,8 +419,8 @@ public class BreakPart : Box {
 		set_deep_sensitive(this, !is_running);
 	}
 
-	public BreakPart(Driver dg, DataPart d, Status st, 
-					 ListStore types, Gee.Map<string,Expression> aliases) {
+	public BreakPart(Driver dg, DataPart d, Status st, ListStore types, 
+					 Gee.Map<string,Expression> aliases) {
 		this.dg = dg;
 		data = d;
 		status = st;
