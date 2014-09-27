@@ -267,10 +267,10 @@ feature {NONE} -- Semantic actions
 					--|#line 114 "dg_system.y"
 				yy_do_action_21
 			when 22 then
-					--|#line 118 "dg_system.y"
+					--|#line 117 "dg_system.y"
 				yy_do_action_22
 			when 23 then
-					--|#line 121 "dg_system.y"
+					--|#line 120 "dg_system.y"
 				yy_do_action_23
 			else
 				debug ("GEYACC")
@@ -527,9 +527,9 @@ debug ("GEYACC")
 end
 
 yyval3 := yyvs3.item (yyvsp3)
-		    treat_enum (yyvs3.item (yyvsp3))
-		    enum_val := enum_val + 1
-		  
+	      treat_enum (yyvs3.item (yyvsp3))
+	      enum_val := enum_val + 1
+	    
 if yy_parsing_status >= yyContinue then
 	yyssp := yyssp - 1
 	yyspecial_routines3.force (yyvs3, yyval3, yyvsp3)
@@ -547,10 +547,10 @@ debug ("GEYACC")
 end
 
 yyval3 := yyvs3.item (yyvsp3)
-		    enum_val := last_integer_value
-		    treat_enum (yyvs3.item (yyvsp3))
-		    enum_val := enum_val+1
-		  
+	      enum_val := last_integer_value
+	      treat_enum (yyvs3.item (yyvsp3))
+	      enum_val := enum_val+1
+	    
 if yy_parsing_status >= yyContinue then
 	yyssp := yyssp - 3
 	yyvsp1 := yyvsp1 -1
@@ -569,9 +569,9 @@ debug ("GEYACC")
 	std.error.put_line ("Executing parser user-code from file 'dg_system.y' at line 92")
 end
 
-yyval4 := type_of_name (as_struct_name (yyvs3.item (yyvsp3)), yyvs3.item (yyvsp3)) 
-		    yyval4.set_fields(yyvs6.item (yyvsp6)) 
-		  
+yyval4 := type_of_name (as_struct_name (yyvs3.item (yyvsp3)), yyvs3.item (yyvsp3))
+	      yyval4.set_fields(yyvs6.item (yyvsp6))
+	    
 if yy_parsing_status >= yyContinue then
 	yyssp := yyssp - 5
 	yyvsp4 := yyvsp4 + 1
@@ -700,7 +700,7 @@ debug ("GEYACC")
 	std.error.put_line ("Executing parser user-code from file 'dg_system.y' at line 110")
 end
 
-yyval6 := yyvs6.item (yyvsp6) ;  yyval6.add (yyvs5.item (yyvsp5)) 
+yyval6 := yyvs6.item (yyvsp6) ; yyval6.add (yyvs5.item (yyvsp5)) 
 if yy_parsing_status >= yyContinue then
 	yyssp := yyssp - 2
 	yyvsp5 := yyvsp5 -1
@@ -718,9 +718,8 @@ debug ("GEYACC")
 	std.error.put_line ("Executing parser user-code from file 'dg_system.y' at line 114")
 end
 
-create yyval5.make (yyvs3.item (yyvsp3), expanded_type (as_class_name(yyvs3.item (yyvsp3 - 1)), yyvs3.item (yyvsp3 - 1)), Void, Void) 
-		    yyval5.set_as_subobject 
-		  
+create yyval5.make (yyvs3.item (yyvsp3), expanded_type (as_class_name(yyvs3.item (yyvsp3 - 1)), yyvs3.item (yyvsp3 - 1)), Void, Void)
+	    
 if yy_parsing_status >= yyContinue then
 	yyssp := yyssp - 3
 	yyvsp5 := yyvsp5 + 1
@@ -738,17 +737,17 @@ end
 		end
 
 	yy_do_action_22
-			--|#line 118 "dg_system.y"
+			--|#line 117 "dg_system.y"
 		local
 			yyval5: IS_FIELD
 		do
---|#line 118 "dg_system.y"
+--|#line 117 "dg_system.y"
 debug ("GEYACC")
-	std.error.put_line ("Executing parser user-code from file 'dg_system.y' at line 118")
+	std.error.put_line ("Executing parser user-code from file 'dg_system.y' at line 117")
 end
 
 create yyval5.make (yyvs3.item (yyvsp3), type_of_name (as_type_name(yyvs3.item (yyvsp3 - 1)), yyvs3.item (yyvsp3 - 1)), Void, Void) 
-		  
+	    
 if yy_parsing_status >= yyContinue then
 	yyssp := yyssp - 3
 	yyvsp5 := yyvsp5 + 1
@@ -766,19 +765,19 @@ end
 		end
 
 	yy_do_action_23
-			--|#line 121 "dg_system.y"
+			--|#line 120 "dg_system.y"
 		local
 			yyval5: IS_FIELD
 		do
---|#line 121 "dg_system.y"
+--|#line 120 "dg_system.y"
 debug ("GEYACC")
-	std.error.put_line ("Executing parser user-code from file 'dg_system.y' at line 121")
+	std.error.put_line ("Executing parser user-code from file 'dg_system.y' at line 120")
 end
 
 create yyval5.make (yyvs3.item (yyvsp3 - 2), new_special_type 
-				    (type_of_name (as_type_name(yyvs3.item (yyvsp3 - 3)), yyvs3.item (yyvsp3 - 3))), 
-				    Void, Void) 
-		  
+			      (type_of_name (as_type_name(yyvs3.item (yyvsp3 - 3)), yyvs3.item (yyvsp3 - 3))), 
+			      Void, Void) 
+	    
 if yy_parsing_status >= yyContinue then
 	yyssp := yyssp - 7
 	yyvsp5 := yyvsp5 + 1

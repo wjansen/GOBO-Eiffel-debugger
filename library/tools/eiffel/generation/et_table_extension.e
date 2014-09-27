@@ -9,7 +9,8 @@ inherit
 
 	ET_EXTENSION
 		redefine
-			print_defines
+			print_defines,
+			print_typedefs
 		end
 
 	EXCEPTIONS
@@ -28,8 +29,6 @@ feature -- Basic operation
 		do
 			print_extension
 			h_file.put_string ("#define GE_ZTABLES%N")
-			print_forward_variable (True, "T0", c_names.c_rts_name, "0")
-			print_typedefs
 			put_class_table 
 			put_names_table
 			put_typeset_table 
@@ -327,7 +326,6 @@ feature {} -- Print C structs
 			i, nt, na: INTEGER
 			boxed: BOOLEAN
 		do
-			print_typedefs
 			nt := compilee.type_count
 			from
 				i := 1

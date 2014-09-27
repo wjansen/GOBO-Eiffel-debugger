@@ -8,6 +8,7 @@ deferred class ET_EXTENSION
 inherit
 	
 	PC_BASE
+
 	
 feature {} -- Initialization
 	
@@ -42,9 +43,8 @@ feature -- Basic operation
 feature {} -- Extension parts
          
 	print_extension 
-		local
-			id: INTEGER
 		do
+			print_typedefs
 			print_defines
 			print_callbacks
 		end
@@ -52,14 +52,17 @@ feature {} -- Extension parts
 	print_defines
 		do
 			h_file.put_string ("#ifndef GE_ZINTRO%N#define GE_ZINTRO%N#endif%N")
-			print_forward_variable (True, "T0", c_names.c_rts_name, Void)
+		end
+	
+	print_typedefs
+		do
 		end
 	
 	print_callbacks
 		do
 		end
-	
-feature {NONE} -- Elementary IO 
+
+feature {} -- Elementary IO 
 	
 	put_global_integer (n: INTEGER_64; name: STRING; long: BOOLEAN)
 		note
@@ -384,22 +387,6 @@ feature {} -- Implementation
 	void_address: STRING = "(void*)&"
 	
 	tmp_str: STRING = "                                                  "
-	
-	c_0_file: KL_TEXT_OUTPUT_FILE	
-		local
-			nm, fn: READABLE_STRING_8
-		once
-			nm := c_generator.compilee.name
-			fn := nm + "0"
-			create Result.make (fn + ".c")
-			Result.open_write
-			Result.put_string ("#include <float.h>%N")
-			Result.put_string ("#include %"")
-			Result.put_string (nm)
-			Result.put_string (".h%"%N%N")
-			Result.close
-			c_generator.c_filenames.force_last (".c", fn)
-		end
 	
 invariant
 	

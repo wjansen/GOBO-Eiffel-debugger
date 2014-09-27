@@ -22,7 +22,7 @@ create
 	default_create
 	
 feature {} -- Initialization
-
+	
 	default_create
 		local
 			i, n: INTEGER

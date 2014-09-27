@@ -62,7 +62,7 @@ feature {} -- Initialization
 				s.force_type(o.result_type_set.static_type)
 				type := s.last_type
 			end
-			s.force_class (static.implementation_class)--o.target_type.base_class)
+			s.force_class (static.implementation_class)
 			in_class := s.last_class
 			if attached static.alias_name as anm then
 				nm := anm.alias_string.value
@@ -408,7 +408,7 @@ feature {} -- Implementation
 				local_count := 1
 			end
 			if s.needs_locals then
-				-- Build local variables, scope variables, and old values (in future).
+				-- Build local variables, scope variables, and (in future) old values.
 				if attached closure.locals as ls then
 					from
 						n := ls.count
@@ -416,19 +416,21 @@ feature {} -- Implementation
 					until i = n loop
 						i := i + 1
 						dynamic := Void
-						if ls.local_variable (i).is_used then
-							lcl := ls.local_variable (i)
+						lcl := ls.local_variable (i)
+						if lcl.is_used then
 							id := lcl.name.identifier
-							dynamic := df.dynamic_type_set (lcl.name.identifier).static_type
+							if attached df.dynamic_type_set (id) as dyn then
+								dynamic := dyn.static_type
+							end
 						end
-						if attached dynamic as dyn then
+						if dynamic /= Void then
 							if s.needs_feature_texts then
 								create vt.declare_from_declaration
 									(lcl, id.lower_name, lcl.declared_type, in_class, s)
 							else
 								vt := Void
 							end
-							create var.declare (lcl.name, Void, dyn, Current, vt, s)
+							create var.declare (lcl.name, Void, dynamic, Current, vt, s)
 							buffer.push (var)
 							local_count := local_count + 1
 						end

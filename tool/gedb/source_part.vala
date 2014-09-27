@@ -538,6 +538,7 @@ Shortcut: <span><i>&lt;CTRL&gt;L</i></span>""");
 } /* class SourcePart */
 
 internal SourcePart the_source;
+
 public static void gedb_init_stdin() { the_source.init_input(); }
 
 public class SingleSource : Box {

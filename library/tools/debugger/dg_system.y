@@ -54,75 +54,74 @@ create
  
 %% 
 
-header	:	-- ignore 
-	|	header typedef
-	|	header struct
-	|	header enum
-	|	header delegate
+header	: -- ignore 
+	|  header typedef
+	|  header struct
+	|  header enum
+	|  header delegate
 	;
 
-typedef	:	BEGIN_TYPEDEF BEGIN_STRUCT STRUCT_NAME CLASS_NAME END_TYPEDEF
-		  { $$ := type_of_name (as_class_name ($4), $4) }
-	|	BEGIN_TYPEDEF IDENTIFIER CLASS_NAME END_TYPEDEF
-		  { $$ := type_of_name (as_class_name ($3), $3) }
-	|	BEGIN_TYPEDEF error END_TYPEDEF
+typedef :  BEGIN_TYPEDEF BEGIN_STRUCT STRUCT_NAME CLASS_NAME END_TYPEDEF
+	    { $$ := type_of_name (as_class_name ($4), $4) }
+	|  BEGIN_TYPEDEF IDENTIFIER CLASS_NAME END_TYPEDEF
+	    { $$ := type_of_name (as_class_name ($3), $3) }
+	|  BEGIN_TYPEDEF error END_TYPEDEF
 	;
 
-enum	:	BEGIN_TYPEDEF BEGIN_ENUM '{' entries '}' CLASS_NAME END_ENUM
-		  { enum_val := 0 }
+enum	: BEGIN_TYPEDEF BEGIN_ENUM '{' entries '}' CLASS_NAME END_ENUM
+		    { enum_val := 0 }
 	;
 
-entries	:	entry 
-	|	entries ',' entry 
+entries	: entry 
+	|  entries ',' entry 
 	;
 
-entry	:	ENUM_NAME
-		  { $$ := $1
-		    treat_enum ($1)
-		    enum_val := enum_val + 1
-		  }
-	|	ENUM_NAME '=' INTEGER
-		  { $$ := $1
-		    enum_val := last_integer_value
-		    treat_enum ($1)
-		    enum_val := enum_val+1
-		  }
-;
-
-struct	:	BEGIN_STRUCT STRUCT_NAME '{' fields END_STRUCT
-		  { $$ := type_of_name (as_struct_name ($2), $2) 
-		    $$.set_fields($4) 
-		  }
+entry	: ENUM_NAME
+	    { $$ := $1
+	      treat_enum ($1)
+	      enum_val := enum_val + 1
+	    }
+	|  ENUM_NAME '=' INTEGER
+	    { $$ := $1
+	      enum_val := last_integer_value
+	      treat_enum ($1)
+	      enum_val := enum_val+1
+	    }
 	;
 
-delegate:	BEGIN_TYPEDEF TYPE_NAME '(' '*' CLASS_NAME ')' '(' args ')' END_TYPEDEF
+struct  : BEGIN_STRUCT STRUCT_NAME '{' fields END_STRUCT
+	    { $$ := type_of_name (as_struct_name ($2), $2)
+	      $$.set_fields($4)
+	    }
 	;
 
-args	:	arg
-	|	args ',' arg
+delegate: BEGIN_TYPEDEF TYPE_NAME '(' '*' CLASS_NAME ')' '(' args ')' END_TYPEDEF
 	;
 
-arg	:	TYPE_NAME IDENTIFIER
+args	: arg
+	|  args ',' arg
 	;
 
-fields	:	field
-		  { create $$.make_1 ($1) }
-	|	fields field
-		  { $$ := $1 ;  $$.add ($2) }
+arg	: TYPE_NAME IDENTIFIER
 	;
 
-field	:	CLASS_NAME IDENTIFIER ';'
-		  { create $$.make ($2, expanded_type (as_class_name($1), $1), Void, Void) 
-		    $$.set_as_subobject 
-		  }
-	|	TYPE_NAME IDENTIFIER ';'
-		  { create $$.make ($2, type_of_name (as_type_name($1), $1), Void, Void) 
-		  }
-	|	TYPE_NAME '*' IDENTIFIER ';' TYPE_NAME IDENTIFIER ';'
-		  { create $$.make ($3, new_special_type 
-				    (type_of_name (as_type_name($1), $1)), 
-				    Void, Void) 
-		  }
+fields	: field
+	    { create $$.make_1 ($1) }
+	|  fields field
+	    { $$ := $1 ; $$.add ($2) }
+	;
+
+field	: CLASS_NAME IDENTIFIER ';' 
+	    { create $$.make ($2, expanded_type (as_class_name($1), $1), Void, Void)
+	    }
+	|  TYPE_NAME IDENTIFIER ';'
+	    { create $$.make ($2, type_of_name (as_type_name($1), $1), Void, Void) 
+	    }
+	|  TYPE_NAME '*' IDENTIFIER ';' TYPE_NAME IDENTIFIER ';'
+	    { create $$.make ($3, new_special_type 
+			      (type_of_name (as_type_name($1), $1)), 
+			      Void, Void) 
+	    }
 	;
 
 %% 

@@ -269,8 +269,10 @@ feature {} -- Feature generation
 					until j = 0 loop
 						j := j - 1
 						l_routine := t.routines [j]
-						k := signature_index (l_routine)
-						l_routine.set_wrap (k)
+						if l_routine.in_class.is_debug_enabled then
+							k := signature_index (l_routine)
+							l_routine.set_wrap (k)
+						end
 					end
 				end
 			end
@@ -286,11 +288,11 @@ feature {} -- Feature generation
 			if attached {DG_SYSTEM} debugger as rts then
 				create import
 				create l_extension.make (Current, debuggee, import)
-				c0 := c_clock
-				l_extension.save_system (rts)
 				c1 := c_clock
+				l_extension.save_system (rts)
+				c2 := c_clock
 				io.error.put_string("Store DG time:   ")
-				io.error.put_double((c1-c0)/c_factor)
+				io.error.put_double((c2-c1)/c_factor)
 				io.error.put_new_line
 			end
 		end
@@ -920,6 +922,14 @@ feature {} -- Debugging code
 					for_instruction := False
 				else
 				end
+				l := line_of_position (pos)
+				if l > max_line_number then
+					max_line_number := l
+				end
+				c := column_of_position (pos)
+				if c > max_column_number then
+					max_column_number := c
+				end
 				tmp_str.clear_all
 				if pure_pos then
 					tmp_str.append (import.c_skip_name)
@@ -929,9 +939,9 @@ feature {} -- Debugging code
 					tmp_str.append (import.c_pos_name)
 				end
 				tmp_str.extend ('(')
-				tmp_str.append_integer (line_of_position (pos))
+				tmp_str.append_integer (l)
 				tmp_str.extend (',')
-				tmp_str.append_integer (column_of_position (pos))
+				tmp_str.append_integer (c)
 				if not pure_pos then
 					tmp_str.extend (',')
 					tmp_str.append_integer (code)
@@ -970,6 +980,8 @@ feature {} -- Debugging code
 
 	open_parentheses: INTEGER
 
+	max_line_number, max_column_number: INTEGER
+	
 	actual_position: NATURAL
 			-- Last written position. 
 

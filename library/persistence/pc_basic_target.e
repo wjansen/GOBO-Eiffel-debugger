@@ -45,18 +45,20 @@ feature {} -- Initialization
 
 	default_create
 		do
-			make_filled_area (0, 4096)
+			make_filled_area (0, buffer_capacity)
 			reset
+			create buffer_pointer.make (0)
 		end
 
 feature -- Initialization 
 
 	reset
 		note
-			action: "Clear table of known objects."
+			action: "Clear counters and set `file' to `io.output'."
 		do
 			Precursor
-			set_file (Void)
+			file := io.output
+			medium := file
 			buffer_count := 0
 			flushed_count := 0
 		end
@@ -83,24 +85,25 @@ feature -- Status setting
 
 	set_file (m: detachable like medium)
 		require
-			is_open: attached m as m_ implies m_.is_open_write
+			is_open: m /= Void implies m.is_open_write
 		do
-			if attached m then
+			file := Void
+			flushed_count := 0
+			buffer_count := 0
+			if m /= Void then
 				medium := m
 			else
 				medium := io.output
 			end
 			if attached {like file} medium as f then
 				file := f
-				flushed_count := f.position
-			else
-				file := Void
-				flushed_count := 0
+				if not attached {CONSOLE} f then
+					flushed_count := f.position
+				end
 			end
-			buffer_count := 0
 			start_position := position
 		ensure
-			when_not_void: attached m implies medium = m
+			when_not_void: m /= Void implies medium = m
 		end
 
 	set_options (opts: INTEGER)
@@ -119,7 +122,6 @@ feature -- Duplication and Compatison
 		end
 	
 	is_equal (other: like Current): BOOLEAN
-		local
 		do
 			Result := Precursor {PC_ABSTRACT_TARGET} (other)
 				and Precursor {TO_SPECIAL} (other)
@@ -129,11 +131,9 @@ feature {PC_DRIVER} -- Pre and post handling of data
 
 	finish (top: PC_TYPED_IDENT [NATURAL])
 		do
-			top_ident := top.ident
-			put_known_ident (top_ident, Void)
-			if attached file then
-				file.put_data ($area, buffer_count)
-				file.flush
+			put_known_ident (top.ident, Void)
+			if file /= Void then
+				buffer_flush
 			end
 		end
 
@@ -290,7 +290,6 @@ feature {} -- Implementation
 			b: NATURAL_8
 			neg: BOOLEAN
 		do
-			check_buffer(5)
 			neg := i < 0
 			if neg then
 					-- apply one's complement 
@@ -306,23 +305,21 @@ feature {} -- Implementation
 			until k = 0 loop
 					-- put continuation bit 
 				b := b + 0x80
-				area.put(b, buffer_count)
-				buffer_count := buffer_count + 1
+				write_byte (b)
 					-- get next 7 bits 
 				b := (k \\ 0x80).to_natural_8
 					-- shift 7 bits to the right 
 				k := k // 0x80
 			end
 			if b >= 0x40 then
-				area.put(b + 0x80, buffer_count)
-				buffer_count := buffer_count + 1
+				b := b + 0x80
+				write_byte (b)
 				b := 0
 			end
 			if neg then
 				b := b + 0x40
 			end
-			area.put(b, buffer_count)
-			buffer_count := buffer_count + 1
+			write_byte (b)
 		end
 
 	write_uint (n: NATURAL_32)
@@ -334,7 +331,6 @@ feature {} -- Implementation
 			k: NATURAL_64
 			b: NATURAL_8
 		do
-			check_buffer(5)
 			k := n
 				-- get 7 lowest bits 
 			b := (k \\ 0x80).to_natural_8
@@ -344,15 +340,13 @@ feature {} -- Implementation
 			until k = 0 loop
 					-- put continuation bit 
 				b := b + 0x80
-				area.put(b, buffer_count)
-				buffer_count := buffer_count + 1
+				write_byte (b)
 					-- get next 7 bits 
 				b := (k \\ 0x80).to_natural_8
 					-- shift 7 bits to the right 
 				k := k // 0x80
 			end
-			area.put(b, buffer_count)
-			buffer_count := buffer_count + 1
+			write_byte (b)
 		end
 
 	write_int64 (i: INTEGER_64)
@@ -365,7 +359,6 @@ feature {} -- Implementation
 			b: NATURAL_8
 			neg: BOOLEAN
 		do
-			check_buffer(10)
 			neg := i < 0
 			if neg then
 					-- apply one's complement 
@@ -382,22 +375,20 @@ feature {} -- Implementation
 					-- put continuation bit 
 				b := b + 0x80
 				area.put(b, buffer_count)
-				buffer_count := buffer_count + 1
 					-- get next 7 bits 
 				b := (k \\ 0x80).to_natural_8
 					-- shift 7 bits to the right 
 				k := k // 0x80
 			end
 			if b >= 0x40 then
-				area.put(b + 0x80, buffer_count)
-				buffer_count := buffer_count + 1
+				b := b + 0x80
+				write_byte (b)
 				b := 0
 			end
 			if neg then
 				b := b + 0x40
 			end
-			area.put(b, buffer_count)
-			buffer_count := buffer_count + 1
+			write_byte (b)
 		end
 
 	write_uint64 (n: NATURAL_64)
@@ -409,7 +400,6 @@ feature {} -- Implementation
 			k: NATURAL_64
 			b: NATURAL_8
 		do
-			check_buffer(10)
 			k := n
 				-- get 7 lowest bits 
 			b := (k \\ 0x80).to_natural_8
@@ -419,15 +409,13 @@ feature {} -- Implementation
 			until k = 0 loop
 					-- put continuation bit 
 				b := b + 0x80
-				area.put(b, buffer_count)
-				buffer_count := buffer_count + 1
+				write_byte (b)
 					-- get next 7 bits 
 				b := (k \\ 0x80).to_natural_8
 					-- shift 7 bits to the right 
 				k := k // 0x80
 			end
-			area.put(b, buffer_count)
-			buffer_count := buffer_count + 1
+			write_byte (b)
 		end
 
 	write_mantissa (m: NATURAL_64; neg: BOOLEAN)
@@ -438,7 +426,6 @@ feature {} -- Implementation
 			n: NATURAL_64
 			b: NATURAL_8
 		do
-			check_buffer(10)
 			n := m
 			b := (n |>> 58).to_natural_8
 			if neg then
@@ -449,8 +436,7 @@ feature {} -- Implementation
 			if n /= 0 then
 				b := b | 0x80
 			end
-			area.put(b, buffer_count)
-			buffer_count := buffer_count + 1
+			write_byte (b)
 			from
 			until n = 0 loop
 				b := (n |>> 57).to_natural_8
@@ -459,8 +445,7 @@ feature {} -- Implementation
 				if n /= 0 then
 					b := b | 0x80
 				end
-				area.put(b, buffer_count)
-				buffer_count := buffer_count + 1
+				write_byte (b)
 			end
 		end
 
@@ -470,18 +455,14 @@ feature {} -- Implementation
 		require
 			is_open: medium.is_open_write
 		local
-			i, n: INTEGER
+			a: SPECIAL[CHARACTER]
+			n: INTEGER
 		do
 			if attached str as s then
 				n := s.count
 				write_int (n)
-				if attached file then
-					file.put_data ($area, buffer_count)
-					flushed_count := flushed_count + buffer_count
-					buffer_count := 0
-				end
-				medium.put_string (s)
-				flushed_count := flushed_count + n
+				a := s.area
+				buffer_add($a, n)
 			else
 				write_int (0)
 			end
@@ -493,9 +474,11 @@ feature {} -- Implementation
 		require
 			is_open: medium.is_open_write
 		do
-			if attached file then
-				check_buffer (1)
-				area.put(i, buffer_count)
+			if file /= Void then
+				if buffer_count >= buffer_capacity then
+					buffer_flush
+				end
+				area [buffer_count] := i
 				buffer_count := buffer_count + 1
 			else
 				medium.put_natural_8 (i)
@@ -504,30 +487,47 @@ feature {} -- Implementation
 
 feature {} -- Implementation 
 
-	file: detachable RAW_FILE
+	file: detachable FILE
 
 	start_position: INTEGER
 
 	buffer_count: INTEGER
 
 	flushed_count: INTEGER
+
+	buffer_capacity: INTEGER = 4096
+
+	buffer_pointer: MANAGED_POINTER
 	
-	check_buffer (n: INTEGER)
+	buffer_add (p: POINTER; n: INTEGER)
 		require
 			medium_is_file: attached file
 		local
-			m: INTEGER
+			k, l, m: INTEGER
 		do
-			m := area.count
-			if buffer_count + n >= m then
-				file.put_data ($area, buffer_count)
-				file.flush
-				flushed_count := flushed_count + buffer_count
-				buffer_count := 0
-				if n > m then
-					make_empty_area (2 * n)
+			from
+				k := n
+			until k <= 0 loop
+				m := k.min (buffer_capacity - buffer_count)
+				c_copy ($area + buffer_count, p + l, m)
+				buffer_count := buffer_count + m
+				if buffer_count = buffer_capacity then
+					buffer_flush
 				end
+				l := l + m
+				k := k - m
 			end
+		end
+
+	buffer_flush
+		do
+			buffer_pointer.set_from_pointer ($area, buffer_count)
+			file.put_managed_pointer (buffer_pointer, 0, buffer_count)
+			file.flush
+			flushed_count := flushed_count + buffer_count
+			buffer_count := 0
+		ensure
+			buffer_cleared: buffer_count = 0
 		end
 	
 	next_ident
@@ -559,9 +559,17 @@ feature {} -- External implementation
 			"((union { EIF_REAL_64 f;  EIF_INTEGER_64 i;}*)&$d)->i"
 		end
 
+	c_copy (dest, src: POINTER; n: INTEGER)
+		external
+			"C inline"
+		alias
+			"memcpy($dest,$src,$n)"
+		end
+	
 invariant
 
 	when_file: attached file as f implies f = medium
+	area_count: area.count = buffer_capacity
 
 note
 
