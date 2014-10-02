@@ -169,7 +169,7 @@ feature {IS_TYPE,IS_FIELD} -- Factory
 				until i = n loop
 					gid := generic (id, i)
 					new_type (gid, False)
-					if to_fill and then attached last_type as tg then
+					if to_fill and then attached {like type_at} last_type as tg then
 						if not attached ta then
 							create ta.make (n, tg)
 						end

@@ -163,7 +163,11 @@ that information about the generated machine code
 is provided by the compiler to be known to the debugger. 
 But this is not the case here, 
 since the <span style="font-style:oblique">Gec</span> compiles to <span style="font-style:oblique">C</span> code, not to machine code. 
-The chosen technique increases dramatically the run time between breakpoints 
+The chosen technique increases dramatically the run time between breakpoints, 
+the relation 1:1200 or worse is often observed 
+(but does not detectable slow down the debuggee 
+when progressing the system step by step 
+since then most time is consumed by user interactions). 
 The post mortem analyser does not slow down the computation so much: 
 at the places in <span style="font-style:oblique">C</span> code where the runtime analyser would be called 
 it simply sets a local variable to the program position. 
@@ -195,7 +199,7 @@ This is a hard job for an <span style="font-style:oblique">Eiffel</span> program
 But there is the OO programming language <span style="font-style:oblique">Vala</span> 
 that is a shell for <span style="font-style:oblique">GLib</span> and <span style="font-style:oblique">GTK+</span>, 
 so the debugger has been written in <span style="font-style:oblique">Vala</span>. 
-</p><p>So far has been described what the debugger is and what it does. 
+</p><p>So far it has been described what the debugger is and what it does. 
 Another question is what the debugger does not. 
 On the lower end, some traditional debuggers like the <span style="font-style:oblique">gdb</span> 
 allow for low level debugging on the level of assembler code. 
@@ -343,13 +347,13 @@ options like the following have to be added to the <span style="font-family:mono
 For each class the class specific option (if set) 
 or that of the narrowest enclosing cluster (if any) is applied, 
 settings in wider clusters have no effect on the class, 
-and if no option has set at all then the default value <span style="font-family:monospace">true</span> applies. 
+and if no option has been set at all then the default value <span style="font-family:monospace">true</span> applies. 
 If debugging code is not generated for a class 
 then meta-information about its variable attributes 
 and local variables of its routines 
 (including routine arguments and object test variables) 
-is not generated, the class looks very poor. 
-Apart from that, the class is treated in the manner 
+is generated as usually, i.e. the may be examined. 
+But the class is treated in the manner 
 of the post mortem analyser: breakpoints cannot be set 
 and the system does not stop within routines of the class 
 (but it can be stopped in routines called from the class). 

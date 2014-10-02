@@ -45,7 +45,7 @@ feature -- Basic operation
 			end
 			put_global_integer (compilee.compilation_time, c_names.c_time_name, True)
 			put_global_string (compilee.name, c_names.c_system_name)
-			c_file.put_new_line
+			c_generator.flush_to_c_file
 		end
 	
 feature {} -- Extension parts

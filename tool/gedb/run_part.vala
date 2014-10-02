@@ -31,11 +31,11 @@ public class RunPart : Box {
   	private string[] arg_list;
 	private bool at_end;
 
-	private void issue_command(int cmd, int mode, int rep) {
+	private void issue_command(int cmd, int mode, int rep, string comment) {
 		uint id;
 		id = status.get_context_id("stop-reason");
 		status.remove_all(id);
-		status.push (id, "Program is running");
+		status.push (id, comment);
 		status_changed(dg.ProgramState.Running, null, null);
 		dg.target_go(cmd, mode, rep);
 	}
@@ -84,16 +84,16 @@ public class RunPart : Box {
 		if (cmd==dg.RunCommand.stop) 
 			Process.raise(ProcessSignal.INT);
 		else 
-			issue_command(cmd, mode, rep);
+			issue_command(cmd, mode, rep, "Program is running");
 	}
 
 	private void add_mark(StackFrame* f) requires (f!=null) {
 		Routine* r = f.routine;
 		var list = marks.get_model() as ListStore;
 		string str;
-		RoutineText* rt = r.text;
-		str = "%s.%s:%u:%u".printf(rt._feature.home._name.fast_name, 
-								   rt._feature._name.fast_name,
+		FeatureText* ft = ((Entity*)r).text;
+		str = "%s.%s:%u:%u".printf(((Gedb.Name*)ft.home).fast_name, 
+								   ((Gedb.Name*)ft).fast_name,
 								   f.line(), f.column());
 		marks.prepend_text(str);
 		marks.set_active(-1);
@@ -108,7 +108,7 @@ public class RunPart : Box {
 	private void do_mark() {
 		string cmd = "Mark\n";
 		if (console!=null) console.put_log_info(cmd, Log.INFO);
-		issue_command(dg.RunCommand.mark, 0, 0);
+		issue_command(dg.RunCommand.mark, 0, 0, "Saving program state");
 		add_mark(stack.top);
 	}
 
@@ -118,7 +118,7 @@ public class RunPart : Box {
 		if (rep<0) return;
 		string cmd = "Reset %d\n".printf(repeat);
 		if (console!=null) console.put_log_info(cmd, Log.INFO);
-		issue_command(dg.RunCommand.reset, 0, n-1-rep);
+		issue_command(dg.RunCommand.reset, 0, n-1-rep, "Restoring program state");
 		at_end = false;
 		set_deep_sensitive(buttons, true, null, invert_list);
 		marks.active = -1;
@@ -129,7 +129,7 @@ public class RunPart : Box {
 	private void do_restart(Button b) {
 		at_end = false;
 		dg.args = arg_list[0:arg_list.length];
-		issue_command(dg.RunCommand.restart, 0, 0);
+		issue_command(dg.RunCommand.restart, 0, 0, "");
 		set_deep_sensitive(buttons, true, null, invert_list);
 	}
 
@@ -207,14 +207,13 @@ public class RunPart : Box {
 		return true;
 	}
 
-	private void do_new_exe(Loader ld) {
+	private void do_new_exe(Debuggee dg) {
 		assert (dg is Driver);
-		var dg = ld as Driver;
-		this.dg = dg;
+		this.dg = dg as Driver;
 		total_list.clear();
 		arg_history.clear();
 		string aa = "";
-		arg_list = dg.args;
+		arg_list = this.dg.args;
 		for (int j=1; j<arg_list.length; ++j) aa += arg_list[j] + " ";
 		do_set_args(aa);
 		at_end = false;
@@ -225,9 +224,10 @@ public class RunPart : Box {
 		update_markers(mc);
 		switch (reason) {
 		case dg.ProgramState.Running:
-		case dg.ProgramState.Still_waiting:
 			return;
-			break;
+		case dg.ProgramState.Still_waiting: 
+			status.pop(status.get_context_id("stop-reason"));
+			return;
 		}
 		status_changed(reason, frame, match);
 
@@ -237,7 +237,7 @@ public class RunPart : Box {
 		string name, comment;
 		uint pos;
 		cls = dg.rts.class_at(frame.class_id);
-		name = cls._name.fast_name;
+		name = ((Gedb.Name*)cls).fast_name;
 		pos = frame.pos;
 		comment = "Stop at %s:%u:%u\n".printf(name, pos/256, pos%256);
 		switch(reason) {
@@ -498,7 +498,7 @@ Click right mouse button to show parsed argument list.""");
 	}
 
 	public void simple_cont(bool hard) {
-		issue_command(dg.RunCommand.cont, hard ? silent : mode, 1);
+		issue_command(dg.RunCommand.cont, hard ? silent : mode, 1, "");
 	}
 
 	public void do_set_sensitive(bool is_running) { 

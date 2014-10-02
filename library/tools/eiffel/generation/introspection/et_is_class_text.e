@@ -13,17 +13,6 @@ inherit
 		end
 
 	ET_IS_ORIGIN [ET_CLASS, IS_CLASS_TEXT]
-
-	PC_ACTIONABLE
-		undefine
-			default_create,
-			copy,
-			is_equal,
-			out
-		redefine
-			pre_store,
-			post_store
-		end
 	
 	KL_IMPORTED_STRING_ROUTINES
 		undefine
@@ -280,21 +269,6 @@ feature -- ET_IS_ORIGIN
 		do
 		end
 
-feature {} -- PC_ACTIONABLE
-
-	pre_store
-		do
-			preserve
-			if not is_debug_enabled then
-				features := Void
-			end
-		end
-	
-	post_store
-		do
-			restore
-		end
-	
 feature {} -- Implementation 
 
 	compute_flags (s: ET_IS_SYSTEM): INTEGER

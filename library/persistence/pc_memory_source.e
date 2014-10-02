@@ -333,11 +333,11 @@ feature {} -- Implementation
 			last_ident := void_ident
 			last_dynamic_type := Void
 			last_count := 0
-			if id /= void_ident and then attached id as si then
-				last_ident := si
-				if attached field as f and then f.type.is_subobject then
+			if id /= void_ident then
+				last_ident := id
+				if field /= Void and then field.type.is_subobject then
 					last_dynamic_type := field.type
-				elseif attached system.type_of_any (si, field_type) as t then
+				elseif attached system.type_of_any (id, field_type) as t then
 					last_dynamic_type := t
 					if t.is_special and then attached {IS_SPECIAL_TYPE} t as s then
 						last_count := system.special_count (id, s)

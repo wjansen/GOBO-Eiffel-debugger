@@ -11,7 +11,7 @@ public class SourcePart : Box, ClassPosition {
 	internal Label feature_class;
 	internal Label feature_lines;
 
-	internal Loader ld;
+	internal Debuggee dg;
 
 	internal RunPart? run;
 	internal BreakPart? brk;
@@ -169,8 +169,8 @@ public class SourcePart : Box, ClassPosition {
 	}
 
 	internal void do_actual(StackFrame* f, uint id, uint pos) {
-		ClassText* cls = null;
-		ClassText* cls_new = ld.rts.class_at(id);
+ 		ClassText* cls = null;
+		ClassText* cls_new = dg.rts.class_at(id);
 		StackFrame* sf;
 		FullSource? src = null;
 		int i;
@@ -201,8 +201,8 @@ public class SourcePart : Box, ClassPosition {
 		}
 		if (cls==null) {
 			++i;
-			cls = ld.rts.class_at(id);
-			src = new FullSource(ld, this);
+			cls = dg.rts.class_at(id);
+			src = new FullSource(dg, this);
 			src.show_main_class(cls);
 			var name = cls._name.fast_name;
 			var box = new Box(Orientation.HORIZONTAL,5);
@@ -259,15 +259,15 @@ public class SourcePart : Box, ClassPosition {
 		the_console = console;
 	}
 
-	private void do_new_exe(Loader ld) {
+	private void do_new_exe(Debuggee dg) {
 		for (int n=pages.get_n_pages()-1; n-->0;) pages.remove_page(n);
-		feature_window.title = compose_title("Feature text", ld.rts);
+		feature_window.title = compose_title("Feature text", dg.rts);
 	}
 
 	private void do_to_main(Widget top) {
 		top.hide();
 		string c_name = feature_class.get_text();
-		ClassText* cls = ld.rts.class_by_name(c_name);
+		ClassText* cls = dg.rts.class_by_name(c_name);
 		if (cls==null)  return;
 		string[] l_names = feature_lines.get_text().split(" -");
 		int first = int.parse(l_names[0]);
@@ -346,12 +346,12 @@ public class SourcePart : Box, ClassPosition {
 			var menu = new Label("Console");
 			menu.xalign = 0.0F;
 			pages.append_page_menu(console, cb, menu);
-			ld.notify["is-running"].connect(
-				(g,p) => { do_set_sensitive(ld.is_running); });
+			dg.notify["is-running"].connect(
+				(g,p) => { do_set_sensitive(dg.is_running); });
 			var sw = new Window();
 			var sb = new Box(Orientation.VERTICAL, 0);
 			sw.@add(sb);
-			sw.set_title(compose_title("Console", ld.rts));
+			sw.set_title(compose_title("Console", dg.rts));
 			sw.set_border_width(5);
 			separate_console = new ConsolePart.as_separate(console);
 			sb.pack_start(separate_console, true, true, 3);
@@ -374,7 +374,7 @@ back to source window.""");
 
 	private Window new_feature_window() {
 		var w = new Window();
-		w.title = compose_title("Feature text", ld.rts);
+		w.title = compose_title("Feature text", dg.rts);
 		var box = new Box(Orientation.VERTICAL, 3);
 		w.@add(box);
 		Grid grid = new Grid();
@@ -411,10 +411,10 @@ and close feature window.""");
 		return w;
 	}
 
-	public SourcePart(Loader ld, 
+	public SourcePart(Debuggee dg, 
 					  BreakPart? b, RunPart? r, DataPart d, ConsolePart? c, 
 					  StackPart s, Status status, ListStore classes) {
-		this.ld = ld;
+		this.dg = dg;
 		run = r;
 		brk = b;
 		stack = s;
@@ -485,7 +485,7 @@ Shortcut: <span><i>&lt;CTRL&gt;L</i></span>""");
 		search.activate.connect(() => { do_search(); });
 		precise.clicked.connect(() => { do_toggle(precise); });
 		go_to.activate.connect(() => { do_goto(go_to); });
-		if (ld!=null) ld.new_executable.connect(do_new_exe);
+		if (dg!=null) dg.new_executable.connect(do_new_exe);
 		stack.level_selected.connect((s,f,i,p) => { do_actual(f,i,p); });
 		pages.switch_page.connect((s,w,i) => { do_switch(w as FullSource); });
 
@@ -539,7 +539,7 @@ Shortcut: <span><i>&lt;CTRL&gt;L</i></span>""");
 
 internal SourcePart the_source;
 
-public static void gedb_init_stdin() { the_source.init_input(); }
+public static void GE_zinit_stdin() { the_source.init_input(); }
 
 public class SingleSource : Box {
 	
@@ -646,7 +646,7 @@ public class SingleSource : Box {
 		parenths = new Gee.HashMap<int,int>();
 	}
 
-	public ClassText* current_class() { return source.ld.rts.class_at(cid); }
+	public ClassText* current_class() { return source.dg.rts.class_at(cid); }
 
 } /* class SingleSource */
 
@@ -916,7 +916,7 @@ public class FullSource : SingleSource {
 	
 	void highlight_breakpoint(uint class_id, int pos) {
 		if (class_id==0 || class_id!=cid) return;
-		ClassText* cls = source.ld.rts.class_at(class_id);
+		ClassText* cls = source.dg.rts.class_at(class_id);
 		var text = text_view.get_buffer() as SourceBuffer;
 		var tags = text.get_tag_table();
 		var tag = tags.lookup("break");
@@ -932,7 +932,7 @@ public class FullSource : SingleSource {
 	
 	void lowlight_breakpoint(uint class_id, int pos) {
 		if (class_id==0 || class_id!=cid) return;
-		ClassText* cls = source.ld.rts.class_at(class_id);
+		ClassText* cls = source.dg.rts.class_at(class_id);
 		var text = text_view.get_buffer() as SourceBuffer;
 		var tags = text.get_tag_table();
 		TextIter start, end;
@@ -991,7 +991,7 @@ public class FullSource : SingleSource {
 	
 	private bool do_motion (Gdk.EventMotion ev, SourcePart s) {
 		if ((int)cid<0)  return false;
-		ClassText* cls = source.ld.rts.class_at(cid);
+		ClassText* cls = source.dg.rts.class_at(cid);
 		FeatureText* ft = null;
 		int[] pos;
 		if (!text_view.has_focus) return false;
@@ -1042,16 +1042,14 @@ public class FullSource : SingleSource {
 			if (ft.home!=cls) 
 				name += "Class " + ft.home._name.fast_name;
 			Expression? ex = null;
-			if (ft._name.fast_name.down()=="any") 
-				stderr.printf("%s\n", ft._name.fast_name);
 			if (s.active && frame!=null && ft.result_text!=null) {
-				RoutineText* rt = frame.routine.text;
+				RoutineText* rt = frame.routine.routine_text();
 				if (rt.has_position(line, col)) {
 					text.apply_tag(comp, start, end);
 					ex = simple_value(q);
 					if (ex!=null) {
 						try {
-							ex.compute_in_stack(frame, source.ld.rts);
+							ex.compute_in_stack(frame, source.dg.rts);
 							if (name.length>0) name += "  ;  ";
 							name += ex.format_one_value
 							(ex.Format.WITH_NAME | ex.Format.WITH_TYPE);
@@ -1133,8 +1131,8 @@ public class FullSource : SingleSource {
 	}
 
 	private void set_once_breakpoint(uint class_id, uint pos, bool hard) {
-		if (source.brk==null || source.run==null || source.ld==null) return;
-		RoutineText* rt = frame!=null ? frame.routine.text : null;
+		if (source.brk==null || source.run==null || source.dg==null) return;
+		RoutineText* rt = frame!=null ? frame.routine.routine_text() : null;
 		if (rt==null || !rt.has_position(pos/256, pos%256)) {
 			// TODO: Error message
 			// stderr.printf("Error: routine not active\n");
@@ -1145,9 +1143,9 @@ public class FullSource : SingleSource {
 		bp.enabled = true;
 		Gee.List<Breakpoint> list = source.brk.breakpoints(false);
 		list.insert(0, bp);
-		var dg = source.ld as Driver;
-		if (dg!=null) {
-			dg.update_breakpoints(list);
+		var dr = source.dg as Driver;
+		if (dr!=null) {
+			dr.update_breakpoints(list);
 			source.run.simple_cont(hard);
 		}
 	}
@@ -1353,7 +1351,7 @@ public class FullSource : SingleSource {
 		return true;
 	}
 	
-	public FullSource(Loader ld, SourcePart s) {
+	public FullSource(Debuggee dg, SourcePart s) {
 		base(s);
 		TextIter iter;
 		Label label;
@@ -1456,7 +1454,7 @@ public class FullSource : SingleSource {
 			iter.set_line(line);
 			iter.forward_chars(len);
 			block = text.get_text(before, iter, false);
-			var parser = new Parser(ft, source.ld.rts);
+			var parser = new Parser(ft, source.dg.rts);
 			parser.ident_matched.connect((v) => { highlight_feature(ft,v); });
 			parser.class_matched.connect((v) => { highlight_feature(ft,v); });
 			parser.add_string(block); 
@@ -1482,7 +1480,7 @@ public class FullSource : SingleSource {
 		int level = f!=null ? f.depth : -1;
 		if (level>=0) {
 			uint old = cid;
-			ClassText* cls = source.ld.rts.class_at(f.class_id);
+			ClassText* cls = source.dg.rts.class_at(f.class_id);
 			show_main_class(cls);
 			line = (int)(pos/256-1);
 			col = (int)(pos%256-1);

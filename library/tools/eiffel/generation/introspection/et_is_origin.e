@@ -6,9 +6,11 @@ deferred class ET_IS_ORIGIN [O_, S_ -> IS_NAME]
 
 inherit
 	
-	ANY
+	PC_ACTIONABLE
 		undefine
 			default_create,
+			pre_store,
+			post_store,
 			copy,
 			is_equal,
 			out
@@ -43,7 +45,21 @@ feature -- Printing
 		deferred
 		end
 
-feature -- Implementation
+feature {} -- PC_ACTIONABLE
+
+	pre_store
+		local
+			o0: O_
+		do
+				origin := o0
+		end
+
+	post_store
+		do
+			restore
+		end
+	
+feature {} -- Implementation
 
 note
 

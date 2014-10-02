@@ -90,7 +90,7 @@ feature -- Access
 			Result := (flags & Debugger_flag) /= 0
 		end
 
-	assertion_check: INTEGER
+	assertion_check: NATURAL
 			-- Degree of assertion checking. 
 
 	class_count: INTEGER

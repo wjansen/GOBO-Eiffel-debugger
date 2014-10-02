@@ -219,6 +219,15 @@ feature -- Status setting
 			no_path: not attached path
 		end
 
+feature {IS_SYSTEM} -- Status setting 
+
+	set_features (ff: like features)
+		do
+			features := ff
+		ensure
+			features_set: features = ff
+		end
+	
 feature -- Comparison 
 
 	is_less alias "<" (other: IS_CLASS_TEXT): BOOLEAN

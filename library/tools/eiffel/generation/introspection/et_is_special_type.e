@@ -31,8 +31,7 @@ inherit
 			declare,
 			declare_from_pattern,
 			define,
-			generics,
-			origin
+			generics
 		end
 
 	IS_SPECIAL_TYPE
@@ -68,7 +67,9 @@ feature {} -- Initialization
 			if origin.queries.count = 0 then
 				flags := 0
 			end
-			s.force_type (o.item_type_set.static_type)
+			if attached {ET_DYNAMIC_SPECIAL_TYPE} o as osp then
+				s.force_type (osp.item_type_set.static_type)
+			end
 			it := s.last_type
 			create generics.make_1 (it)
 			if o.is_alive then
@@ -115,16 +116,14 @@ feature -- Initialization
 		do
 			if not defined then
 				Precursor (s)
-				if s.needs_typeset and then attached origin as o
-				 and then attached item_0 as i0 then
+				if s.needs_typeset
+					and then attached {ET_DYNAMIC_SPECIAL_TYPE} origin as o
+					and then attached item_0 as i0
+				 then
 					i0.set_type_set (s.type_set (item_type, o.item_type_set, i0.is_attached))
 				end				
 			end
 		end
-	
-feature -- Access 
-
-	origin: ET_DYNAMIC_SPECIAL_TYPE
 
 feature -- ET_IS_ORIGIN 
 

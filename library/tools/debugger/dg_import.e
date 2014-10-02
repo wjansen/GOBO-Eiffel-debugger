@@ -13,7 +13,6 @@ inherit
 	
 	ET_IMPORT
 		redefine
-			default_create,
 			make_c_names
 		end
 	
@@ -21,17 +20,6 @@ create
 
 	default_create
 	
-feature {} -- Initialization
-	
-	default_create
-		local
-			i, n: INTEGER
-		do
-			gec_prefix.copy("gedb_")
-			struct_prefix.copy("Gedb")
-			make_c_names ("_")
-		end
-
 feature -- Access
 
 	c_frame_name: STRING
@@ -54,11 +42,15 @@ feature -- Access
 
 	c_jump_name: STRING
 
+	c_step_name: STRING
+	
 	c_errno_name: STRING
 	
 	c_object_name: STRING
 
 	c_debugger_name: STRING
+
+	c_set_offsets: STRING
 
 	c_set_field: STRING
 
@@ -106,6 +98,8 @@ feature -- Access
 			c_signal_name.append ("sgn")
 			c_wrapper_name := gec_prefix.twin
 			c_wrapper_name.append ("wrap")
+			c_set_offsets := gec_prefix.twin
+			c_set_offsets.append ("offsets")
 			c_set_field := gec_prefix.twin
 			c_set_field.append ("field")
 			c_field_offset_name := gec_prefix.twin
@@ -125,6 +119,8 @@ feature -- Access
 			c_pos_name.append ("pos")
 			c_jump_name := gec_prefix.twin
 			c_jump_name.append ("jump")
+			c_step_name := gec_prefix.twin
+			c_step_name.append ("step")
 			c_errno_name := gec_prefix.twin
 			c_errno_name.append ("errno")
 			c_debugger_name := gec_prefix.twin
@@ -140,7 +136,7 @@ feature -- Access
 			c_results_name := gec_prefix.twin
 			c_results_name.append ("results")
 			c_init_name := gec_prefix.twin
-			c_init_name.append ("make")
+			c_init_name.append ("make_gedb")
 		end
 	
 invariant

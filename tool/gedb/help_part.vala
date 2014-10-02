@@ -9,9 +9,9 @@ public class HelpPart {
 	
 	public void help_system(Window main, System* s) {
 		if (s==null) return;
-		NormalType* root = s.root_type;
-		ClassText* cls = root.base_class;
-		Routine* routine = s.root_creation_procedure;
+		var root = s.root_type;
+		var cls = root.base_class;
+		var routine = s.root_creation_procedure;
 		DateTime dt = new DateTime.from_unix_utc((int64)s.compilation_time/1000);
 		dt = dt.to_local();
 		Pango.FontDescription font 
@@ -34,9 +34,9 @@ public class HelpPart {
 
 <span><tt>Compiler          : %s</tt></span>
 <span><tt>Compilation time  : %s</tt></span>""",
-				s._name.fast_name,
-				cls._name.fast_name,
-				routine._entity._name.fast_name,
+				((Gedb.Name*)s).fast_name,
+				((Gedb.Name*)cls).fast_name,
+				((Gedb.Name*)routine).fast_name,
 				"Void target",
 				(s.flags & SystemFlag.NO_GC)==0 ? "yes" : "no",
 				s.compiler,

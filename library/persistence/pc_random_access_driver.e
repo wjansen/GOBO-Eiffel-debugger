@@ -30,7 +30,13 @@ feature {} -- Initialization
 			action: ""
 			t: "traversal target"
 			s: "traversal source"
-			opts: "options"
+			ord: 
+				"[
+				 traversal ordering:
+				 one of `Fifo_flag', `Lifo_flag', `Deep_flag', `Forward_flag'
+				 ]"
+			opts: "ORing of non-traversal options"
+			oo: "auxiliary storage"
 		require
 			valid_flags: valid_flags (opts)
 			when_target_expands_strings: t.must_expand_strings implies s.can_expand_strings
@@ -38,18 +44,18 @@ feature {} -- Initialization
 		local
 			n: INTEGER
 		do
+			common_make (t, s, ord | opts, oo)
 			if deep then
 				-- Create only a dummy dispenser:
 				n := 1
 			else
-				n := 100
+				n := 199
 			end
 			if ord & Lifo_flag = Lifo_flag then
 				create {ARRAYED_STACK [SI_]} todo_objects.make (n)
 			else
 				create {ARRAYED_QUEUE [SI_]} todo_objects.make (n)
 			end
-			common_make (t, s, opts, oo)
 		ensure
 			taget_set: target = t
 			source_set: source = s

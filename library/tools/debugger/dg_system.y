@@ -47,7 +47,7 @@ create
 
 %type <STRING> header enum entries entry delegate args arg
 %type <IS_TYPE> typedef struct 
-%type <IS_FIELD> field
+%type <IS_FIELD> field 
 %type <IS_SEQUENCE[IS_FIELD]> fields
 
 %start header
@@ -89,7 +89,7 @@ entry	: ENUM_NAME
 	    }
 	;
 
-struct  : BEGIN_STRUCT STRUCT_NAME '{' fields END_STRUCT
+struct  :  BEGIN_STRUCT STRUCT_NAME '{' fields END_STRUCT
 	    { $$ := type_of_name (as_struct_name ($2), $2)
 	      $$.set_fields($4)
 	    }
@@ -106,13 +106,16 @@ arg	: TYPE_NAME IDENTIFIER
 	;
 
 fields	: field
-	    { create $$.make_1 ($1) }
+	    { create $$.make_1 ($1) 
+	    }
 	|  fields field
-	    { $$ := $1 ; $$.add ($2) }
+	    { $$ := $1 ; $$.add ($2) 
+	    }
 	;
 
 field	: CLASS_NAME IDENTIFIER ';' 
 	    { create $$.make ($2, expanded_type (as_class_name($1), $1), Void, Void)
+	      $$.set_as_subobject
 	    }
 	|  TYPE_NAME IDENTIFIER ';'
 	    { create $$.make ($2, type_of_name (as_type_name($1), $1), Void, Void) 
@@ -267,10 +270,14 @@ feature {} -- Implementation
 
 	enum_val: INTEGER
 
+	underscore: STRING = "_"
+
+	id_name: STRING = "_id"
+
 	int64: IS_TYPE
 
 	origin: IS_SYSTEM
-									
+
 	as_class_name (cn: STRING): STRING
 		do
 			Result := cn.twin
@@ -348,38 +355,34 @@ feature {} -- Implementation
 
 	expanded_type (nm, cn: STRING): IS_EXPANDED_TYPE
 		local
-			cls: IS_CLASS_TEXT
-			pp: IS_SEQUENCE[IS_CLASS_TEXT]
 			base, ft: IS_TYPE
 			f: IS_FIELD
 			ff: IS_SEQUENCE[IS_FIELD]
-			nn: STRING
 			id, i, n: INTEGER
 		do
-			max_class_id := max_class_id + 1
-			nn :=  "GE_Z_" + max_class_id.out
-			create pp.make_1 (class_by_name (nm))
-			create cls.make (max_class_id, nn, 0, Void, Void, pp)
 			base := type_of_name (nm, cn)
-	       		max_type_id := max_type_id + 1
-			id := max_type_id
-		    	from
-				n := base.field_count
-				create ff.make (n, Void)
-			until i = n loop
-		    		f := base.field_at(i)
-				ft := f.type
-				if f.name_has_prefix (once "_") and then not f.has_name (once "_id") then
-					ft := expanded_type (as_class_name (ft.c_name), ft.c_name)
-				else
+			if not base.is_subobject 
+				and then attached {IS_NORMAL_TYPE} base as nt 
+			 then
+				max_type_id := max_type_id + 1
+				id := max_type_id
+				from
+					n := base.field_count
+					create ff.make (n, Void)
+				until i = n loop
+					f := base.field_at(i)
+					ft := f.type
+					if f.name_has_prefix (underscore) and then not f.has_name (id_name) then
+						ft := expanded_type (as_class_name (ft.c_name), ft.c_name)
+					end
+					create f.make (f.fast_name, ft, Void, Void)
+					ff.add (f)
+					i := i + 1
 				end
-				create f.make (f.fast_name, ft, Void, Void)
-				ff.add (f)
-				i := i + 1
+				create Result.make (id, nt.base_class, 
+					Subobject_flag, Void, Void, ff, Void, Void)
+				Result.set_c_name (cn)
 			end
-			create Result.make (id, cls, 
-				Subobject_flag, Void, Void, ff, Void, Void)
-			Result.set_c_name (cn)
 		end
 
 	treat_enum (nm: STRING)

@@ -43,7 +43,7 @@ namespace Gedb {
 		ROUTINE,
 		SCOPE_VARIABLE,
 		ONCE,
-		SYSTEM
+ 		SYSTEM
 	}
 
 	public enum SystemFlag {
@@ -184,8 +184,6 @@ namespace Gedb {
 				n = 1;
 				return x;
 			} else if (x.has_prefix(name)) {
-				if (name.data[0]=='t' && x.has_prefix("to"))
-					stderr.printf("\n");
 				l0 = x.fast_name.length;
 				if (l0<l) {
 					l = l0;
@@ -1058,7 +1056,14 @@ namespace Gedb {
  **/
 		public AgentType* inline_agent;
 
-		public RoutineText* text;
+/**
+   Convenience method: turn `text' into a `RoutineText'.
+ */
+		public RoutineText* routine_text() ensures (result!=null) {
+			Routine* r = &this;
+			FeatureText* ft = ((Entity*)r).text;
+			return ft.is_routine_text() ? (RoutineText*)ft : null;			
+		}
 
 /**
    @return Does `this' describe a procedure?
@@ -1340,7 +1345,7 @@ namespace Gedb {
 /**
    String value of the constant.
  **/
-		public void* eif_ms;
+		public void* ms;
 
 	} /* struct Constant */
 	
@@ -1759,7 +1764,7 @@ other value means `other' is a parent class.
 		public bool valid_field (uint i) { return i<field_count(); }
 
 /**
-   @return: The `i'-th field.
+   @return: The `i'-th fiedg.
  **/		
 		public Field* field_at (uint i) requires (valid_field(i)) {
 			return fields[i];
@@ -1952,7 +1957,7 @@ other value means `other' is a parent class.
 /**
    @return Comparison by ident.
  **/
-		public bool is_less(Type? other) {
+		public bool is_less(Type* other) {
 			return other!=null ? ident < other.ident : true;
 		}
 
@@ -2046,8 +2051,6 @@ other value means `other' is a parent class.
 				for (i=fields.length; i-->0;) {
 					e = (Entity*)fields[i];
 					string fn = e._name.fast_name;
-					if (name.data[0]=='t' && ((Name*)e).has_prefix("to"))
-						stderr.printf("%d: %s\n", list.length, fn);
 					if (e.text==null) 
 						if (fn=="[]" || (is_special() && fn=="item")) {
 							n = 1;

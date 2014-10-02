@@ -6,7 +6,7 @@ public class DataCore : Box {
 	protected StackPart stack;
 	protected Status status;
 	public DataPart? main;
-	public Loader dg;
+	public Debuggee dg;
 
 	protected TreeStore store;
 	protected TreeView view {get; protected set; }
@@ -614,7 +614,7 @@ public class DataCore : Box {
 		}
 	}
 	
-	internal DataCore(Loader dg, StackPart stack, Status state, 
+	internal DataCore(Debuggee dg, StackPart stack, Status state, 
 					  bool as_main) {
 		this.dg = dg;
 		this.stack = stack;
@@ -752,7 +752,7 @@ public class DataCore : Box {
 	public void refill_known_objects() {
 		if (main!=null || known_objects!=null) return;
 		deep_info = new DeepInfo[99];
-		var d = new Gedb.Driver<uint,void*>();
+		var d = new Persistence<uint,void*>();
 		deep_source = new DeepSource(frame, dg.rts, this, d);
 		d.when_new.connect((od,id,t,n) => { add_deep_info(od,id); });
 		d.when_known.connect((od,id,t,n) => { improve_deep_info(od,id); });
@@ -848,7 +848,7 @@ public class DataPart : DataCore {
 			addr.active ? FormatStyle.ADDRESS : FormatStyle.IDENT;
 	}
 
-	public DataPart(Loader dg, StackPart sp, Status state,
+	public DataPart(Debuggee dg, StackPart sp, Status state,
 					Gee.Map<string,Expression> aliases) {
 		base(dg, sp, state, true);
 		main = null;
@@ -1082,7 +1082,8 @@ in print commands.""");
 			exd = exb.detail;
 			if (exr!=null) {
 				try {
-					view.expand_row(store.get_path(at), false);
+					if (at!=null) iter = at;
+					view.expand_row(store.get_path(iter), false);
 					exr.traverse_range(
 						(r) => { add_expression(r, iter, true); }, 
 						frame, null, true);
@@ -1124,7 +1125,7 @@ public class ExtraData : DataCore {
 		view.sensitive = true;
 	}
 
-	public ExtraData(Loader dg, DataPart main, StackPart own) {
+	public ExtraData(Debuggee dg, DataPart main, StackPart own) {
 		base(dg, own, main.status, false);
 		this.main = main;
 		++part_count;
@@ -1147,7 +1148,7 @@ public class MoreDataPart : Window {
 	}
 
 
-	public MoreDataPart(Loader dg, DataPart d, StackPart s) {
+	public MoreDataPart(Debuggee dg, DataPart d, StackPart s) {
 		destroy_with_parent = true;
 		Box box = new Box(Orientation.VERTICAL, 3);
 		add(box);
@@ -1365,7 +1366,7 @@ public class FixedPart : DataCore {
 		return true;
 	}
 
-	public FixedPart(Loader dg, StackPart stack, DataPart data, 
+	public FixedPart(Debuggee dg, StackPart stack, DataPart data, 
 					  Status status, ListStore types) {
 		base(dg, stack, status, false);
 		main = data;
@@ -1451,7 +1452,7 @@ public class FixedPart : DataCore {
 				if (t.is_basic()) 
 					addr = (uint8*)(&c.basic);
 				else 
-					addr = *(void**)c.eif_ms;
+					addr = *(void**)c.ms;
 				value = format_value(addr, 0, false, t, 0);
 				type = t._name.fast_name;
 				fresh = false;
@@ -1570,10 +1571,10 @@ public class DeepInfo {
 public class DeepSource : MemorySource {
 
 	private DataCore data;
-	private Gedb.Driver<uint,void*> driver;
+	private Persistence<uint,void*> driver;
 
 	public DeepSource(StackFrame* f, System* s, 
-					  DataCore d, Gedb.Driver<uint,void*> io) { 
+					  DataCore d, Persistence<uint,void*> io) { 
 		base(f, s); 
 		data = d;
 		driver = io;
@@ -1965,11 +1966,11 @@ public class EvalPart : Grid {
 		sensitive = !is_running;
 	}
 
-	private void do_new_exe(Loader dg) {
+	private void do_new_exe(Debuggee dg) {
 		history.clear();
 	}
 
-	public EvalPart(Loader dg, DataPart d) {
+	public EvalPart(Debuggee dg, DataPart d) {
 		Label label;
 		
 		aliases = d.aliases;

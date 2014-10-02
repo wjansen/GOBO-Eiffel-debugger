@@ -117,9 +117,6 @@ public class ExpressionChecker : Expander {
 								  Gee.Map<string,Expression> list,
 								  Eval.IdentToExpression? func=null, 
 								  Object? data=null) {
-		Gedb.Type* t = frame.target_type();
-		ClassText* ct = s.class_at(frame.class_id);
-		RoutineText* rt = frame.routine.text;
 		parser.init_stack(frame, s);
 		parser.set_aliases(list);
 		parser.set_idents(func, data);

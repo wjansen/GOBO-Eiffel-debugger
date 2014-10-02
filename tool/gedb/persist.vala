@@ -1,14 +1,17 @@
-/*
+/**
    author: "Wolfgang Jansen"
    date: "$Date$"
    revision: "$Revision$"
 */
 
+internal int dp;
+internal int max_dp;
+
 namespace Gedb {
 
-	public class Driver<O,I> {
+	public class Persistence<O,I> {
 		
-		public Driver() {
+		public Persistence() {
 			known_objects = new Gee.HashMap<I,O>();
 		}
 
@@ -60,11 +63,11 @@ namespace Gedb {
 					if (l!=null) {
 						source.set_local(l, f);
 						target.set_local(l, f);
-						if (source.last_scope_var)  process_entity((Entity*)l);
+						if (source.last_scope_var) process_entity((Entity*)l);
 					}
 				}
 			}
-			if (!with_onces)  return;
+			if (!with_onces) return;
 			Once* o;
 			bool init;
 			for (i=0, n=s.once_count(); i<n; ++i) {
@@ -72,10 +75,10 @@ namespace Gedb {
 				source.set_once(o);
 				init = source.last_once_init;
 				target.set_once(o, init);
-				if (o._routine.is_function() && init) {
+				if (((Routine*)o).is_function() && init) {
 					process_entity((Entity*)o);
 				}
-			}
+			}	
 		}
 
 		public signal void when_new(O od, I id, Gedb.Type* t, uint n);
@@ -89,29 +92,33 @@ namespace Gedb {
 				id = source.last_ident;
 				ready = id==source_void_ident; 
 				if (!ready) {
-					if (id1==source_void_ident)  id1 = id;
+					if (id1==source_void_ident) id1 = id;
 					if (!known_objects.contains(id)) {
 						process_announcement(id, true);
 					} else if (source.is_reread(id)) {
 						source.reread();
 						ready = id==id1;
-						if (!ready)  process_data(id, source.last_dynamic_type);
+						if (!ready) process_data(id, source.last_dynamic_type);
 					} else {
 					}
 				}
 			} while (!ready);
 		}
 
-		protected virtual void process_announcement(I id, bool to_reread) {
+		protected void process_announcement(I id, bool to_reread) {
 			source.read_context(id);
 			Gedb.Type* t = source.last_dynamic_type;
 			uint n = source.last_cap;
-			if (to_reread)  source.to_reread(id);
+			if (to_reread) source.to_reread(id);
+			string str;
 			if (t!=null) {
-				if (t.is_special()) 
+				if (t.is_special()) {
+					str = @"[$n] ";
 					target.put_new_special((SpecialType*)t, n);
-				else
+				} else {
+					str = "%s".printf(((Gedb.Name*)t).fast_name);
 					target.put_new_object(t);
+				}
 				O od = target.last_ident;
 				known_objects[id] = od;
 				when_new(od, id, t, n);
@@ -177,12 +184,11 @@ namespace Gedb {
 		}
 			
 		protected void process_special(SpecialType* st, uint cap, I id, O od) {
-			Gedb.Type* t = (Gedb.Type*)st;
 			Gedb.Type* it = st.item_type();
 			Entity* f = (Entity*)st.item_0();
 			source.pre_special(st, cap, id);
 			target.pre_special(st, cap, od);
-			switch (st.item_type().ident) {
+			switch (it.ident) {
 			case 3:
 				source.read_chars(cap);
 				target.put_chars(od, source.last_chars, cap, st);
@@ -207,9 +213,9 @@ namespace Gedb {
 			target.post_special(st, od);
 		}
 		
-		public virtual void process_entity(Entity* f) {
+		public void process_entity(Entity* f) {
 			Gedb.Type* t = f.type;
-			if (t==null)  return;
+			if (t==null) return;
 			if (t.is_basic()) {
 				process_basic_field(t);
 			} else if (t.is_subobject()) {
@@ -304,7 +310,7 @@ namespace Gedb {
 
 		public Gee.HashMap<I,O> known_objects { get; set; }
 
-	} /* class Driver */
+	} /* class Persistence */
 
 	public abstract class Source<I> {
 
@@ -693,7 +699,7 @@ namespace Gedb {
 
 		public override void set_once(Once* o) {
 			last_once_init = o.is_initialized();
-			if (last_once_init && o._routine.is_function()) {
+			if (last_once_init && ((Routine*)o).is_function()) {
 				field = (Entity*)o; 
 				offsets = new OffsetStack();
 				offsets.push_offset(o.value_address);
@@ -715,12 +721,11 @@ namespace Gedb {
 		public override void read_next_ident() {
 			contexts.next_ident();
 			void* id = contexts.ident;
-			if (id==null)  id = top;
-			process_ident(id);
+			if (id==null) id = top;
 		}
 
 		public override void read_field_ident() {
-		Gedb.Type* t = field_type();
+			Gedb.Type* t = field_type();
 			process_ident(offsets.actual_object(t));
 		}
 
@@ -729,7 +734,7 @@ namespace Gedb {
 		}		
 
 		public override void pre_object(Gedb.Type* t, bool as_ref, void* id) {
-			if (as_ref)  offsets.push_offset(id);
+			if (as_ref) offsets.push_offset(id);
 			else  offsets.push_expanded_offset();
 		}
 
@@ -738,8 +743,7 @@ namespace Gedb {
 		}
 
 		public override void pre_agent(AgentType* at, void* id) {
-			void* obj = at.closed_operands((uint8*)id);
-			obj = ((Gedb.Type*)at.closed_operands_tuple).dereference(obj);
+			void* obj = *(void**)at.closed_operands((uint8*)id);
 			offsets.push_offset(obj);
 		}
 
@@ -832,11 +836,11 @@ namespace Gedb {
 			last_ident = void_ident;
 			last_dynamic_type = null;
 			last_cap = 0;
-			if (id==null)  return;
+			if (id==null) return;
 			Gedb.Type* t = system.type_of_any(id, any);
 			if (t==null) return;
-			last_dynamic_type = t;
 			last_ident = id;
+			last_dynamic_type = t;
 			if (t.is_special()) 
 				last_cap = ((SpecialType*)t).special_count(id);
 		}
@@ -872,7 +876,8 @@ namespace Gedb {
 			size_t n = (sizeof(void*))*(object_index+1);
 			unowned void*[] oo = (void*[])realloc_func(*objects, n);
 			*objects = oo;
-			oo[object_index] = id;
+			var obj = *(void**)at.closed_operands((uint8*)id);
+			oo[object_index] = obj;
 		}
 
 		public override void pre_special(SpecialType* st, uint cap, void* id) {
@@ -1011,7 +1016,7 @@ namespace Gedb {
 		
 		public override void put_chars(uint id, char[] cc, uint cap,
 										 SpecialType* st) {
-			for (uint i=0; i<cap; ++i)  put_char(cc[i]);
+			for (uint i=0; i<cap; ++i) put_char(cc[i]);
 		}
 
 		public override void finish(uint top, Gedb.Type* t) {}
@@ -1036,12 +1041,12 @@ namespace Gedb {
 
 		public override void put_int32s(uint id, int32[] ii, uint cap,
 										   SpecialType* st) {
-			for (uint i=0; i<cap; ++i)  put_int32(ii[i]);
+			for (uint i=0; i<cap; ++i) put_int32(ii[i]);
 		}
 
 		public override void put_doubles(uint id, double[] dd, uint cap,
 										   SpecialType* st) {
-			for (uint i=0; i<cap; ++i)  put_double(dd[i]);
+			for (uint i=0; i<cap; ++i) put_double(dd[i]);
 		}
 
 		protected void next_ident() {
@@ -1069,7 +1074,7 @@ namespace Gedb {
 			file.flush();
 		}
 		
-		public override void post_agent(Gedb.Type* t, uint id) { 
+		public override void post_agent(AgentType* t, uint id) { 
 			file.flush();
 		}
 		
@@ -1092,7 +1097,7 @@ namespace Gedb {
 		public override void put_new_special(SpecialType* st, uint cap) {
 			next_ident();
 			write_int((int)last_ident);
-			write_int((int)st._type.ident);
+			write_int((int)((Gedb.Type*)st).ident);
 			write_int((int)cap);
 		}
 
@@ -1203,7 +1208,7 @@ namespace Gedb {
 		public void* top_object { get; protected set; }
 
 		public override void pre_object(Gedb.Type* t, bool as_ref, void* id) {
-			if (as_ref)  offsets.push_offset(id);
+			if (as_ref) offsets.push_offset(id);
 			else  offsets.push_expanded_offset();
 		}
 
@@ -1212,9 +1217,9 @@ namespace Gedb {
 		}
 
 		public override void pre_agent(AgentType* at, void* id) {
-			void* obj = at.closed_operands((uint8*)id);
-			obj = ((Gedb.Type*)at.closed_operands_tuple).dereference(obj);
+			void* obj = *(void**)at.closed_operands((uint8*)id);
 			offsets.push_offset(obj);
+			put_new_object((Gedb.Type*)at.closed_operands_tuple);
 		}
 
 		public override void post_agent(AgentType* at, void* id) {
@@ -1347,7 +1352,7 @@ namespace Gedb {
 
 		public override void set_once(Once* o, bool init) {
 			if (init) {
-				if (o._routine.is_function()) {
+				if (((Routine*)o).is_function()) {
 					field = (Entity*)o; 
 					offsets = new OffsetStack();
 					offsets.push_offset(o.value_address);

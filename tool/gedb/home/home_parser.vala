@@ -57,7 +57,7 @@ namespace Gedb {
 		public override void on_syntax_error() {
 //		public override void on_parse_failed() {
 			stderr.printf("Syntax: `%s'\t%s:%u, off=%d\n", 
-						  token.name, ft.home._name.fast_name,
+						  token.name, ((Gedb.Name*)ft.home).fast_name,
 						  ft.first_pos/256, n_chars_read-line_count);
 		}
 		
@@ -860,10 +860,10 @@ namespace Gedb {
 		public ResultTyp._1(Parser h) {}
 
 		[Lemon(pattern="COLON Typ(t)")]
-		public ResultTyp._2(Parser h, Type t) {}
+		public ResultTyp._2(Parser h, Typ t) {}
 
 		[Lemon(pattern="COLON Typ(t) ASSIGN Identifier(i)")]
-		public ResultTyp._3(Parser h, Type t, Identifier i) {}
+		public ResultTyp._3(Parser h, Typ t, Identifier i) {}
 
 	}
 
@@ -1392,7 +1392,8 @@ namespace Gedb {
 			} else if (ft!=null) {
 				uint n;
 				home = ft.home;
-				RoutineText* rt = ft.is_routine_text() ? (RoutineText*)ft : null; 
+				RoutineText* rt = ft.is_routine_text() ? 
+					(RoutineText*)ft : null; 
 				q.ft = home.query_by_name(out n, name, arg==null, rt);
 				if (n==1 && q.ft==null)
 					q.ft = home.feature_by_name(name, true);

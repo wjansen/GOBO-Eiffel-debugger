@@ -29,8 +29,7 @@ inherit
 		redefine
 			declare,
 			declare_from_pattern,
-			define,
-			origin
+			define
 		end
 
 	IS_TUPLE_TYPE
@@ -62,7 +61,9 @@ feature {} -- Initialization
 		do
 			Precursor (o, id, s)
 			s.set_tuple_class (base_class)
-			sets := origin.item_type_sets
+			if attached {ET_DYNAMIC_TUPLE_TYPE} o as ot then
+				sets := ot.item_type_sets
+			end
 			n := sets.count
 			if n > 0 then
 				from
@@ -135,8 +136,10 @@ feature -- Initialization
 		do
 			if not defined then
 				Precursor (s)
-				if s.needs_typeset then
-					sets := origin.item_type_sets
+				if s.needs_typeset
+					and then attached {ET_DYNAMIC_TUPLE_TYPE} origin as ot 
+				 then
+					sets := ot.item_type_sets
 					from
 						i := field_count
 					until i = 0 loop
@@ -149,10 +152,6 @@ feature -- Initialization
 				end
 			end
 		end
-	
-feature -- Access 
-
-	origin: ET_DYNAMIC_TUPLE_TYPE
 
 feature -- ET_IS_ORIGIN 
 

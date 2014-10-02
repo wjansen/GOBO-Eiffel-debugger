@@ -58,13 +58,13 @@ options like the following have to be added to the <span style="font-family:mono
 For each class the class specific option (if set) 
 or that of the narrowest enclosing cluster (if any) is applied, 
 settings in wider clusters have no effect on the class, 
-and if no option has set at all then the default value <span style="font-family:monospace">true</span> applies. 
+and if no option has been set at all then the default value <span style="font-family:monospace">true</span> applies. 
 If debugging code is not generated for a class 
 then meta-information about its variable attributes 
 and local variables of its routines 
 (including routine arguments and object test variables) 
-is not generated, the class looks very poor. 
-Apart from that, the class is treated in the manner 
+is generated as usually, i.e. the may be examined. 
+But the class is treated in the manner 
 of the post mortem analyser: breakpoints cannot be set 
 and the system does not stop within routines of the class 
 (but it can be stopped in routines called from the class). 

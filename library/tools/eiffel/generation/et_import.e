@@ -124,8 +124,6 @@ feature -- Access
 
 	c_active_name: STRING
 
-	c_step_name: STRING
-
 	c_rts_name: STRING
 
 	c_set_attribute: STRING
@@ -227,8 +225,6 @@ feature {} -- Implementation
 			c_typeset_count_name.append ("tsc")
 			c_active_name := gec_prefix.twin
 			c_active_name.append ("act")
-			c_step_name := gec_prefix.twin
-			c_step_name.append ("step")
 			c_rts_name := gec_prefix.twin
 			c_rts_name.append ("rts")
 			c_set_attribute := gec_prefix.twin

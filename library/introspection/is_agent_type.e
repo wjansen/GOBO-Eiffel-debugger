@@ -107,8 +107,8 @@ feature {IS_FACTORY} -- Initialization
 			i, j, n: INTEGER
 		do
 			f.set_agent_base (Current)
-			if f.to_fill then
-				base := f.last_type
+			if f.to_fill and then attached {like base} f.last_type as ft then
+				base := ft
 			end
 			f.set_fields_of_type (Current)
 			if f.to_fill and then attached {like fields} f.last_fields as ff then

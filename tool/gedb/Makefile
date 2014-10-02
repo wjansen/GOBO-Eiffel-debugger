@@ -11,9 +11,8 @@ l=.so
 e=
 prelib=lib
 
-VALA := extern.vala inspect.vala persist.vala \
-  misc.vala expression.vala breakpoint.vala driver.vala \
-  checker.vala info_part.vala console_part.vala \
+VALA := inspect.vala misc.vala expression.vala breakpoint.vala \
+  checker.vala persist.vala driver.vala info_part.vala console_part.vala \
   stack_part.vala data_part.vala sql_part.vala \
   run_part.vala break_part.vala source_part.vala gui.vala 
 VAPI := $(VALA:%.vala=%.vapi) 
@@ -52,42 +51,38 @@ src: $(VLE)
 home: $(VLE)
 	cd home && $(MAKE)
 
-eval: $(VLE) extern.vapi inspect.vapi misc.vapi expression.vapi breakpoint.vapi
+eval: $(VLE) inspect.vapi misc.vapi expression.vapi breakpoint.vapi
 	cd eval && $(MAKE)
 
-extern$o: extern.vala
-	valac -c $(VFLAGS) --vapi=extern.vapi -h extern.h $(PKG) extern.vala
-extern.vapi: extern.vala
-
-inspect$o: inspect.vala extern.vapi
+inspect$o: inspect.vala
 	valac -c $(VFLAGS) --vapi=inspect.vapi -h inspect.h $(PKG) $^
 inspect.h: inspect.vapi
 inspect.vapi: inspect.vala
 
-persist$o: persist.vala inspect.vapi extern.vapi
-	valac -c $(VFLAGS) --vapi=persist.vapi -h persist.h $(PKG) $^
-persist.vapi: persist.vala
-
-expression$o: expression.vala extern.vapi inspect.vapi misc.vapi
-	valac -c $(VFLAGS) --vapi=expression.vapi -h expression.h $(PKG) --pkg=posix $^
-expression.h: expression.vapi
-expression.vapi: expression.vala
-
-misc$o: misc.vala extern.vapi inspect.vapi 
+misc$o: misc.vala inspect.vapi 
 	valac -c $(VFLAGS) --vapi=misc.vapi $(PKG) -h misc.h $^
 misc.h: misc.vapi
 misc.vapi: misc.vala
 
-breakpoint$o: breakpoint.vala extern.vapi inspect.vapi misc.vapi expression.vapi
+expression$o: expression.vala inspect.vapi misc.vapi
+	valac -c $(VFLAGS) --vapi=expression.vapi -h expression.h $(PKG) --pkg=posix $^
+expression.h: expression.vapi
+expression.vapi: expression.vala
+
+breakpoint$o: breakpoint.vala inspect.vapi misc.vapi expression.vapi
 	valac -c $(VFLAGS) --vapi=breakpoint.vapi -h breakpoint.h $(PKG) $^
 breakpoint.vapi: breakpoint.vala
 
-driver$o: driver.vala breakpoint.vapi inspect.vapi persist.vapi extern.vapi \
- misc.vapi expression.vapi 
+persist$o: persist.vala inspect.vapi misc.vapi
+	valac -c $(VFLAGS) --vapi=persist.vapi -h persist.h $(PKG) $^
+persist.vapi: persist.vala
+
+driver$o: driver.vala inspect.vapi misc.vapi breakpoint.vapi persist.vapi \
+ expression.vapi 
 	valac -c $(VFLAGS) --vapi=driver.vapi -h driver.h $(PKG) $^
 driver.vapi: driver.vala
 
-checker$o: checker.vala extern.vapi inspect.vapi extern.vapi misc.vapi \
+checker$o: checker.vala inspect.vapi misc.vapi \
  expression.vapi breakpoint.vapi misc.vapi \
  eval/eval_parser.vapi eval/_EvalParserParser.vapi 
 	valac -c $(VFLAGS) --vapi=checker.vapi -h checker.h $(PKG) $^
@@ -101,40 +96,40 @@ console_part$o: console_part.vala
 	valac -c $(VFLAGS) --vapi=console_part.vapi -h console_part.h $(PKG) --pkg=posix $^
 console_part.vapi: console_part.vala
 
-stack_part$o: stack_part.vala extern.vapi inspect.vapi misc.vapi \
+stack_part$o: stack_part.vala inspect.vapi misc.vapi \
  expression.vapi breakpoint.vapi driver.vapi info_part.vapi 
 	valac -c $(VFLAGS) --vapi=stack_part.vapi -h stack_part.h $(PKG) $^
 stack_part.vapi: stack_part.vala
 
-data_part$o: data_part.vala extern.vapi inspect.vapi extern.vapi persist.vapi \
+data_part$o: data_part.vala inspect.vapi persist.vapi \
  misc.vapi expression.vapi breakpoint.vapi \
  driver.vapi info_part.vapi stack_part.vapi checker.vapi \
  eval/eval_parser.vapi eval/_EvalParserParser.vapi 
 	valac -c $(VFLAGS) --vapi=data_part.vapi -h data_part.h $(PKG) $^
 data_part.vapi: data_part.vala
 
-sql_part$o: sql_part.vala inspect.vapi persist.vapi extern.vapi misc.vapi \
+sql_part$o: sql_part.vala inspect.vapi persist.vapi misc.vapi \
  expression.vapi breakpoint.vapi driver.vapi checker.vapi \
  info_part.vapi stack_part.vapi data_part.vapi \
  eval/eval_parser.vapi eval/_EvalParserParser.vapi 
 	valac -c $(VFLAGS) --vapi=sql_part.vapi -h sql_part.h $(PKG) $^
 sql_part.vapi: sql_part.vala
 
-run_part$o: run_part.vala inspect.vapi extern.vapi misc.vapi expression.vapi \
+run_part$o: run_part.vala inspect.vapi misc.vapi expression.vapi \
  breakpoint.vapi driver.vapi checker.vapi info_part.vapi \
  console_part.vapi stack_part.vapi \
  eval/eval_parser.vapi eval/_EvalParserParser.vapi 
 	valac -c $(VFLAGS) -D POSIX --vapi=run_part.vapi -h run_part.h $(PKG) --pkg=posix $^
 run_part.vapi: run_part.vala
 
-break_part$o: break_part.vala inspect.vapi extern.vapi persist.vapi misc.vapi \
+break_part$o: break_part.vala inspect.vapi persist.vapi misc.vapi \
  expression.vapi breakpoint.vapi driver.vapi checker.vapi \
  info_part.vapi stack_part.vapi data_part.vapi \
  eval/eval_parser.vapi eval/_EvalParserParser.vapi 
 	valac -c $(VFLAGS) --vapi=break_part.vapi -h break_part.h $(PKG) $^
 break_part.vapi: break_part.vala
 
-source_part$o: source_part.vala inspect.vapi extern.vapi persist.vapi \
+source_part$o: source_part.vala inspect.vapi persist.vapi \
  misc.vapi expression.vapi breakpoint.vapi driver.vapi info_part.vapi \
  console_part.vapi stack_part.vapi data_part.vapi run_part.vapi \
  break_part.vapi \
@@ -143,7 +138,7 @@ source_part$o: source_part.vala inspect.vapi extern.vapi persist.vapi \
 	valac -c $(VFLAGS) --vapi=source_part.vapi -h source_part.h $(PKG) $^
 source_part.vapi: source_part.vala
 
-gui$o help_part$o: gui.vala help_part.vala inspect.vapi extern.vapi misc.vapi \
+gui$o help_part$o: gui.vala help_part.vala inspect.vapi misc.vapi \
  persist.vapi expression.vapi breakpoint.vapi driver.vapi info_part.vapi \
  console_part.vapi stack_part.vapi data_part.vapi sql_part.vapi checker.vapi \
  run_part.vapi break_part.vapi source_part.vapi \
@@ -154,7 +149,7 @@ gui$o help_part$o: gui.vala help_part.vala inspect.vapi extern.vapi misc.vapi \
 gui.vapi: gui.vala eval
 #help_part.vapi: help_part.vala
 
-main$o: main.vala gui.vapi inspect.vapi extern.vapi persist.vapi misc.vapi \
+main$o: main.vala gui.vapi inspect.vapi persist.vapi misc.vapi \
  expression.vapi breakpoint.vapi driver.vapi \
  info_part.vapi console_part.vapi stack_part.vapi data_part.vapi \
  sql_part.vapi checker.vapi run_part.vapi break_part.vapi source_part.vapi \

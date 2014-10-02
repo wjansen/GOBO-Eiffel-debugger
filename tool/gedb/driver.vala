@@ -1,13 +1,14 @@
 using Gedb;
-
 public delegate int MainFunc(int argc, char **argv);
 public delegate void RaiseFunc(int code);
 internal delegate void* JumpBufferFunc();
 internal delegate void* LongjmpFunc(void* buf, int val);
+public delegate void OffsetFunc();
 
 internal JumpBufferFunc jump_buffer_func;
 internal LongjmpFunc longjmp_func;
 internal RaiseFunc raise_func; 	
+internal OffsetFunc offset_func;
 public void** eif_markers;
 	
 internal class QueueMember : Object {
@@ -64,15 +65,15 @@ internal struct Marker {
 		++count;
 		if (count>cap) {
 			cap = 2*count+1;
-			markers = (Marker*[])realloc_func(*eif_markers, cap*sizeof(Marker*));
+			markers = (Marker*[])realloc_func(markers, cap*sizeof(Marker*));
+			*eif_markers = markers;
 		}
-		*eif_markers = markers;
 		markers[n] = m;
-		string fn = "%s.m%u".printf(s._name.fast_name, n);
+		string fn = "%s.m%u".printf(((Gedb.Name*)s).fast_name, n);
 		m.path = Path.build_filename(GLib.Environment.get_tmp_dir(), fn);
 		SaveMemorySource src = new SaveMemorySource(f, s, &m.objects);
 		StreamTarget tgt = new StreamTarget(m.path, s);
-		var d = new Gedb.Driver<uint,void*>();
+		var d = new Persistence<uint,void*>();
 		d.traverse_stack(tgt, src, f, s, true);
 		return m;
 	}
@@ -89,6 +90,7 @@ internal struct Marker {
 		if (count==0 && cap>0) {
 			free_func(markers);
 			markers = null;
+			*eif_markers = null;
 			cap = 0;
 		}
 	}
@@ -109,6 +111,7 @@ internal struct Marker {
 		if (count==0 && cap>0) {
 			free_func(markers);
 			markers = null;
+			*eif_markers = null;
 			cap = 0;
 		}
 	}
@@ -118,7 +121,7 @@ internal struct Marker {
 		if (path!=null) {
 			StreamSource source = new StreamSource(path, s);
 			MemoryTarget target = new MemoryTarget(s, objects);
-			var driver = new Gedb.Driver<void*,uint>();
+			var driver = new Persistence<void*,uint>();
 			driver.traverse_stack(target, source, frame, s, true);
 		} else {
 			for (uint n=s.once_count(); n-->0;) {
@@ -153,24 +156,6 @@ internal struct Marker {
 	private static uint cap;
 	private static Marker m0;
 }
-
-extern void* gedb_longjmp;
-extern void* gedb_jmp_buffer;
-extern void* gedb_realloc;
-extern void* gedb_free;
-extern void* gedb_wrap;
-extern void* gedb_chars;
-extern void* gedb_unichars;
-extern void* gedb_t;
-extern void* gedb_o;
-extern void* gedb_ov;
-extern void* gedb_ms;
-extern void* gedb_results;
-extern void* gedb_markers;
-extern void* gedb_rts;
-extern void* gedb_top;
-extern void* GE_argv;
-extern int* GE_argc;
 
 protected struct GE_ZF {
 	void* def;
@@ -210,193 +195,35 @@ internal struct GE_ZA {
 		void* call;
 }
 
-public class Loader : Object {
-
-	protected GE_ZT** zt;
-	protected void** zo;
-	protected void** zov;
-	protected void** zms;
-	protected void* argv;
-	protected int* argc;
-
-	protected void set_offsets() {
-		Field* f;
-		Routine* r;
-		Gedb.Type* t, dt;
-		Gedb.Once* o;
-		Constant* c;
-		void** addr;
-		GE_ZT* ext;
-		GE_ZF* ext_f;
-		size_t off;
-		uint i, j, n=rts.all_types.length;
-		for (i=0; i<n; ++i) {
-			t = rts.all_types[i];
-			if (t==null || !t.is_alive()) continue;
-			addr = zt+i;
-			ext = *(GE_ZT**)addr;
-			t.instance_bytes = ext.size;
-			if (t.is_subobject()) {
-				GE_ZTb* b = (GE_ZTb*)ext;
-				ExpandedType* et = (ExpandedType*)t;
-				et.boxed_bytes = b.boxed_size;
-				off = (size_t)b.subobject - (size_t)b.boxed_def;
-				et.boxed_offset = (int)off;
-			}
-			if (t.is_agent()) { 
-				GE_ZA* a = (GE_ZA*)ext;
-				AgentType* at = (AgentType*)t;
-				Gedb.Type* cot = (Gedb.Type*)at.closed_operands_tuple;
-				if (t.field_count()>0) {
-					j = cot.field_count();
-					if (j<t.field_count()) {
-						dt = (Gedb.Type*)at.declared_type;				
-						off = dt.fields[2].offset;
-						f = t.field_at(j);
-						f.offset = (int)off;
-					}
-					for (j=cot.field_count(); j-->0;) {
-						f = t.field_at(j);
-						off = cot.fields[j].offset;
-						f.offset = (int)off;
-					}
-				}
-				off = (size_t)a.call_field - (size_t)ext.def;
-				at.function_offset = (int)off;
-				at.call_function = a.call;
-			} else {
-				for (j=t.field_count(); j-->0;) {
-					ext_f = &(ext.fields[j]);
-					f = t.field_at(j);
-					off = (size_t)ext_f.def - (size_t)ext.def;
-					f.offset = (int)off;
-				}
-				if (t.is_normal()) {
-					for (j=t.routine_count(); j-->0;) {
-						r = t.routine_at (j);
-						r.call = ext.routines[j];
-					}
-				}
-			}
-			if (t.class_name==null) {
-				if (t.is_agent()) {
-					t.class_name = "AGENT";
-				} else {
-					string name = t._name.fast_name;
-					int l = name.index_of_char('[');
-					if (l>=0) name = name.substring(0, l).strip();
-					t.class_name = name;
-				}
-			}
-		}
-		for (i=rts.once_count(); i-->0;) {
-			o = rts.all_onces[i];
-			addr = zo+i;
-			o.init_address = *(uint8**)addr;
-			addr = zov+i;
-			o.value_address = addr!=null ? *(uint8**)addr : null;
-		}
-		for (i=rts.constant_count(); i-->0;) {
-			c = rts.all_constants[i];
-			if (c._entity.type.is_basic()) continue;
-			addr = zms+i;
-			c.eif_ms = addr!=null ? *(uint8**)addr : null;
-		}
-	}
+public class Debuggee : Object {
 
 	protected StackFrame** top0;
-	protected GLib.Module module;
 
 	public string[] args { get; set; }
 	public bool is_running { get; protected set; }
 
 	public string home;
 
-	public Loader(string[] args) { this.args = args; }
+	public Debuggee.with_args(string[] args) { this.args = args; }
 
-	public virtual bool load(string? libname) {
-		void* addr;
-		string lib = null;
-		bool ok = true;
-		module = GLib.Module.open(libname, 0);//ModuleFlags.BIND_LOCAL);
-		if (module==null) return false;
-		lib = module.name();
-
-		ok &= module.symbol("gedb_longjmp", out addr);
-		addr = *(void**)addr;
-		longjmp_func = (LongjmpFunc)addr;
-		ok &= module.symbol("gedb_jmp_buffer", out addr);
-		addr = *(void**)addr;
-		jump_buffer_func = (JumpBufferFunc)addr;
-		ok &= module.symbol("gedb_realloc", out addr);
-		addr = *(void**)addr;
-		realloc_func = (ReallocFunc)addr;
-		ok &= module.symbol("gedb_free", out addr);
-		addr = *(void**)addr;
-		free_func = (FreeFunc)addr;
-		ok &= module.symbol("gedb_wrap", out addr);
-		addr = *(void**)addr;
-		wrap_func = (WrapFunc)addr;
-		ok &= module.symbol("gedb_chars", out addr);
-		addr = *(void**)addr;
-		chars_func = (CharsFunc)addr;
-		ok &= module.symbol("gedb_unichars", out addr);
-		addr = *(void**)addr;
-		unichars_func = (UnicharsFunc)addr;
-		ok &= module.symbol("gedb_results", out addr);
-		eif_results = (void**)addr;
-		gedb_results = addr;
-		ok &= module.symbol("gedb_markers", out addr);
-		eif_markers = (void**)addr;
-		gedb_markers = addr;
-		ok &= module.symbol("gedb_rts", out addr);
-		if (addr!=null) rts = *(System**)addr;
-		ok &= module.symbol("gedb_top", out addr);
-		top0 = (StackFrame**)addr;
-		ok &= module.symbol("gedb_t", out addr);
-		addr = *(void**)addr;
-		zt = (void**)addr;
-		ok &= module.symbol("gedb_o", out addr);
-		addr = *(void**)addr;
-		zo = (void**)addr;
-		ok &= module.symbol("gedb_ov", out addr);
-		addr = *(void**)addr;
-		zov = (void**)addr;
-		ok &= module.symbol("gedb_ms", out addr);
-		addr = *(void**)addr;
-		zms = (void**)addr;
-		ok &= module.symbol("GE_argc", out addr);
-		argc = (int*)addr;
-		ok &= module.symbol("GE_argv", out addr);
-		argv = addr;
-		if (!ok) {
-			// Guru section:
- 			// force some global names to be included into the library.
-			gedb_longjmp = null;
-			gedb_jmp_buffer = null;
-			gedb_realloc = null;
-			gedb_free = null;
-			gedb_wrap = null;
-			gedb_chars = null;
-			gedb_unichars = null;
-			gedb_results = null;
-			gedb_markers = null;
-			gedb_rts = null;
-			gedb_top = null;
-			gedb_t = null;
-			gedb_o = null;
-			gedb_ov = null;
-			gedb_ms = null;
-			GE_argc = null;
-			GE_argv = null;
-			return false;
-		}
-		set_offsets(); 
-		if (libname!=null) home = Path.get_dirname(libname);
-		return ok;
+	public Debuggee(string[] args, void* rts, void* top, void* res, 
+					void* set_offs, void* alloc, void* free,
+					void* chars, void* uncodes) { 
+		this.with_args(args);
+		this.rts = (System*)rts;
+		top0 = (StackFrame**)top;
+		EiffelObjects.eif_results = res;
+		realloc_func = (ReallocFunc)alloc;
+		free_func = (FreeFunc)free;
+		chars_func = (CharsFunc)chars;
+		unichars_func = (UnicharsFunc)chars;
+		offset_func = (OffsetFunc)set_offs;
+		offset_func();
 	}
 
 	public System* rts;
+
+	public StackFrame* frame() { return top0!=null ? *top0 : null; }
 
 	public void crash_response() {
 		is_running = false;
@@ -408,7 +235,7 @@ public class Loader : Object {
 								Gedb.StackFrame* f, uint mc);
 }
 
-public class Driver : Loader {
+public class Driver : Debuggee {
 
 	public enum RunCommand {
 		cont = 1, 
@@ -448,6 +275,7 @@ public class Driver : Loader {
 	private QueueSource queue_source;
 
 	private Thread<int> th;
+	protected GLib.Module module;
 
 	private uint cmd;
 	private uint run_mode;
@@ -468,6 +296,11 @@ public class Driver : Loader {
 	private int stop_code;
 	private int os_signal;
 	private uint timeout;
+
+	private int* step;
+
+	private void* argv;
+	private int* argc;
 
 	private SourceFunc cb = null;
 
@@ -525,7 +358,7 @@ public class Driver : Loader {
 
 	public void* check(int reason) {
 		if (intern) return null;
-		top = gedb_top; //*(StackFrame**)top0;
+		top = *(StackFrame**)top0;
 		StackFrame* rescue = null;
 		Marker* m;
 		interactive = just_marked;
@@ -556,8 +389,10 @@ public class Driver : Loader {
 		case After_mark_break:
 			just_marked = true;
 			interactive = true;
-			if (stop_code!=ProgramState.Program_start) 
+			if (stop_code!=ProgramState.Program_start) {
 				stop_code = ProgramState.Still_waiting;
+				response(stop_code, null, top, Marker.count);
+			}
 			break;
 		case After_reset_break:
 			just_marked = true;
@@ -632,6 +467,7 @@ public class Driver : Loader {
 					GLib.Source.@remove(timeout);
 					timeout = 0;
 				}
+				*step = cmd==RunCommand.step ? 1 : 0;
 				target_to_gui.push(qm);
 				qm = gui_to_target.pop();
 			}
@@ -688,7 +524,7 @@ public class Driver : Loader {
 				break;
 			case RunCommand.exit:
 				intern = false;
-				Marker.keep(1);
+				Marker.keep(0);
 				th.exit(0);
 				break;
 			}
@@ -705,7 +541,8 @@ public class Driver : Loader {
 		for (rescue=frame; rescue!=null; rescue=rescue.caller) {
 			r = rescue.routine;
 			if (r==null) break;
-			if (r.text.rescue_pos!=0) break; 
+			RoutineText* rt = r.routine_text();
+			if (rt.rescue_pos!=0) break; 
 		}
 		if (rescue==null) {
 			interactive = true;
@@ -771,7 +608,7 @@ public class Driver : Loader {
 			if (n>0) {
 				Routine* r = frame.routine;
 				Local* l = r.vars[0];
-				uint rid = l._entity.type.ident;
+				uint rid = ((Entity*)l).type.ident;
 				if (n!=rid) continue;
 				if (found==null) found = new Breakpoint.with_ident(bp.id);
 				found.tid = rid;
@@ -812,8 +649,9 @@ public class Driver : Loader {
 			break;
 		case RunCommand.step:
 			--repeat;
+			FeatureText* ft = ((Entity*)top.routine).text;
 			interactive = (repeat<=0 && 
-				(top.routine.text._feature.home.flags&ClassFlag.DEBUGGER)!=0);
+						   (ft.home.flags & ClassFlag.DEBUGGER)!=0);
 			break;
 		case RunCommand.next:
 			if (ss<=target_depth && reason!=Step_into_break) --repeat;
@@ -841,7 +679,7 @@ public class Driver : Loader {
 	~Driver() { Marker.clear_to_depth(0); }
 
 	public Driver(string[] args) {
-		base(args);
+		base.with_args(args);
 		the_dg = this;
 		pma = false;
 		stop_code = ProgramState.Program_start;
@@ -877,7 +715,7 @@ public class Driver : Loader {
 
 	public StackFrame* top { get; private set; }
 
-	public override bool load(string? libname) {
+	public bool load(string? libname) {
 		stop();
 		if (module!=null) {
 			jump_buffer_func = null;
@@ -888,87 +726,71 @@ public class Driver : Loader {
 			chars_func = null;
 			unichars_func = null;
 			raise_func = null;
-			zt = null;
-			zo = null;
-			zov = null;
-			zms = null;
-			eif_results = null;
-			eif_markers = null;
+			*eif_markers = null;
 			rts = null;
 			top = null;
 			module = null;
 		}
  		void* addr;
-		string lib = null;
 		bool ok = true;
 		module = GLib.Module.open(libname, 0);
+		string err = GLib.Module.error();
 		if (module==null) return false;
-		lib = module.name();
+		string lib = module.name();
 
-		ok &= module.symbol("gedb_longjmp", out addr);
-		addr = *(void**)addr;
+		ok &= module.symbol("GE_zlongjmp", out addr);
+		if (ok) addr = *(void**)addr;
 		longjmp_func = (LongjmpFunc)addr;
-		gedb_longjmp = addr;
 
-		ok &= module.symbol("gedb_jmp_buffer", out addr);
-		addr = *(void**)addr;
+		ok &= module.symbol("GE_zjmp_buffer", out addr);
+		if (ok) addr = *(void**)addr;
 		jump_buffer_func = (JumpBufferFunc)addr;
-		gedb_jmp_buffer = addr;
 
-		ok &= module.symbol("gedb_realloc", out addr);
-		addr = *(void**)addr;
+		ok &= module.symbol("GE_zrealloc", out addr);
+		if (ok) addr = *(void**)addr;
 		realloc_func = (ReallocFunc)addr;
-		gedb_realloc = addr;
 
-		ok &= module.symbol("gedb_free", out addr);
-		addr = *(void**)addr;
+		ok &= module.symbol("GE_zfree", out addr);
+		if (ok) addr = *(void**)addr;
 		free_func = (FreeFunc)addr;
-		gedb_free = addr;
 
-		ok &= module.symbol("gedb_wrap", out addr);
-		addr = *(void**)addr;
+		ok &= module.symbol("GE_zwrap", out addr);
+		if (ok) addr = *(void**)addr;
 		wrap_func = (WrapFunc)addr;
-		gedb_wrap = addr;
 
-		ok &= module.symbol("gedb_chars", out addr);
-		addr = *(void**)addr;
+		ok &= module.symbol("GE_zset_offsets", out addr);
+		if (ok) addr = *(void**)addr;
+		offset_func = (OffsetFunc)addr;
+
+		ok &= module.symbol("GE_zchars", out addr);
+		if (ok) addr = *(void**)addr;
 		chars_func = (CharsFunc)addr;
-		gedb_chars = addr;
 
-		ok &= module.symbol("gedb_unichars", out addr);
-		addr = *(void**)addr;
+		ok &= module.symbol("GE_zunichars", out addr);
+		if (ok) addr = *(void**)addr;
 		unichars_func = (UnicharsFunc)addr;
-		gedb_unichars = addr;
 
-		ok &= module.symbol("gedb_t", out addr);
-		addr = *(void**)addr;
-		zt = (void**)addr;
-		ok &= module.symbol("gedb_o", out addr);
-		addr = *(void**)addr;
-		zo = (void**)addr;
-		ok &= module.symbol("gedb_ov", out addr);
-		addr = *(void**)addr;
-		zov = (void**)addr;
-		ok &= module.symbol("gedb_ms", out addr);
-		addr = *(void**)addr;
-		zms = (void**)addr;
 		ok &= module.symbol("GE_argc", out addr);
 		argc = (int*)addr;
 		ok &= module.symbol("GE_argv", out addr);
 		argv = addr;
-		ok &= module.symbol("gedb_results", out addr);
-		eif_results = addr;
-		*eif_results = null;
-		ok &= module.symbol("gedb_markers", out addr);
-		eif_markers = addr;	
-		*eif_markers = null;
-		ok &= module.symbol("gedb_rts", out addr);
+
+		ok &= module.symbol("GE_zresults", out addr);
+		EiffelObjects.eif_results = addr;
+
+		ok &= module.symbol("GE_zmarkers", out addr);
+		eif_markers = addr;
+
+		ok &= module.symbol("GE_zrts", out addr);
 		if (addr!=null) rts = *(System**)addr;
-		gedb_rts = rts;
-		ok &= module.symbol("gedb_top", out addr);
+
+		ok &= module.symbol("GE_ztop", out addr);
 		top0 = (StackFrame**)addr;
-		gedb_top = *(void**)top0;
-		set_offsets(); 
+
+		ok &= module.symbol("GE_zstep", out addr);
+		step = (int*)addr;
+
+		offset_func();
 		if (libname!=null) {
 			ok &= module.symbol("GE_raise", out addr);
 			var raise = (RaiseFunc)addr;
@@ -998,6 +820,7 @@ public class Driver : Loader {
 			th.join();
 			th = null;
 		}
+		Marker.clear_to_depth(0);
 	}
 
 }

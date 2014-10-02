@@ -54,10 +54,7 @@ namespace Eval {
 		   left="NOT", left="DOT")]
 	public class Parser : ParserParser {
 
-	    override ~Parser() {
-			// stderr.printf("Release Parser\n");
-			values = null;
-		}
+	    override ~Parser() { values = null; }
 
 		public Parser() {}
 
@@ -69,7 +66,8 @@ namespace Eval {
 
 		public void init_stack(StackFrame* f, System* s) 
 		requires (s!=null) requires (f!=null) {
-			init_typed(f.target_type(), s.class_at(f.class_id), f.routine.text, 
+			RoutineText* rt = f.routine.routine_text();
+			init_typed(f.target_type(), s.class_at(f.class_id), rt, 
 					   s, true);
 			frame = f;
 			syntax_only = false;
@@ -84,9 +82,8 @@ namespace Eval {
 			if (t!=null) {
 				root_type = t;
 				if (rt!=null) {
-					var name = rt._feature._name.fast_name;
+					var name = ((Gedb.Name*)rt).fast_name;
 					act_routine = t.routine_by_name(name, false);
-					rt = act_routine.text;
 				}
 				if (t.is_normal()) ct = ((NormalType*)t).base_class;
 			}

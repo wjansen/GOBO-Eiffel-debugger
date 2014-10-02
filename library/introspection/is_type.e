@@ -438,13 +438,20 @@ feature -- Status
 			end
 		end
 
-feature {IS_BASE} -- Status setting
+feature {IS_SYSTEM} -- Status setting
 
-	set_fields (aa: IS_SEQUENCE [IS_FIELD])
+	set_fields (ff: like fields)
 		do
-			fields := aa
+			fields := ff
 		ensure
-			fields_set: fields = aa
+			fields_set: fields = ff
+		end
+
+	set_routines (rr: like routines)
+		do
+			routines := rr
+		ensure
+			fields_set: routines = rr
 		end
 
 	set_c_name (c: like c_name)

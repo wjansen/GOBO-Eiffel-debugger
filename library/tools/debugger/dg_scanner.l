@@ -86,12 +86,12 @@ inherit
 }
 
 <STRUCT> {
-"{"|";"|"*"	{
-		last_token := text[1].code 
-	}
 "};"	{
 		last_token := END_STRUCT
 		set_start_condition(INITIAL)
+}
+"{"|";"|"*"	{
+		last_token := text[1].code 
 	}
 }
 

@@ -589,6 +589,135 @@ public errordomain ExpressionError {
 
 /* -------------------------------------------------------------------- */
 
+/**
+   Hashmap whose data are Eiffel objects which will be protected
+   against memory reclamation by Eiffel's garbage collection.
+   The keys' class must `H' must be hashable. 
+ */
+public class EiffelObjects : Object {
+
+	private unowned void*[] data;
+	private uint[] counts;
+	private uint last_code;
+
+	~EiffelObjects() { free_func(data); }
+
+	private void resize(uint n) {
+		if (n<=counts.length) return;
+		void* d;
+		uint h, i;
+		uint old_size = size;
+		uint old_last_code = last_code;
+		var old_data = data;
+		var old_counts = counts;
+		data = (void*[])realloc_func(null, n*sizeof(void*));
+		*eif_results = data;
+		counts = new uint[n];
+		for (i=0; i<n; ++i) data[i] = null;
+		for (i=0; i<old_size; ++i) {
+			d = old_data[i];
+			if (d==null) continue;
+			h = (uint)d;
+			data[h] = old_data[i];
+			counts[h] = old_counts[i];
+			if (i==old_last_code) last_code = h;
+		}
+	}
+
+	internal uint size { get; set; }
+
+	internal EiffelObjects(uint n=0) { clear(n); }
+
+/**
+   Does the table Eiffel object `obj'?
+   Caution: the function has side effects on private fields:
+   `last_code' is set to the found values (or to the next free slot).
+ */
+	internal bool contains(void* obj) {
+		if (obj==null) return false;
+		void* d;
+		uint cap = counts.length;
+		uint h = ((uint)obj) % cap;
+		last_code = h;
+		for (d=data[h]; d!=null; ) {
+			if (d==obj) {
+				return true;
+			} else {
+				h = (h+1) % cap;
+				d = data[h];
+				last_code = h;
+			}
+		}
+		return false;
+	}
+
+/**
+   Insert `obj'.
+ */
+	internal void add(void* obj) {
+		uint cap = counts.length;
+		bool ok = contains(obj);
+		uint h = last_code;
+		if (ok) {
+			counts[h] = counts[h]+1;
+		} else {
+			if (2*size>cap) {
+				cap = 3*size + 1;
+				resize(cap);
+				contains(obj);	// adjust `last_code'
+				h = last_code;
+			}
+			data[h] = obj;
+			counts[h] = 1;
+			size = size+1;
+		}
+	}
+
+/**
+   Remove `obj'.
+ */
+	internal void remove(void* obj) {
+		if (!contains(obj)) return;
+		uint h0 = last_code;
+		counts[h0] = counts[h0]-1;
+		if (counts[h0]>0) return;
+		void* d = null;
+		uint cap = counts.length;
+		for (uint h=(h0+1)%cap; d!=null && h!=h0; h=(h+1)%cap) {
+			d = data[h];
+			if (d!=null && ((uint)d)%cap==h0) {
+				data[h0] = data[h];
+				counts[h0] = counts[h];
+				h0 = h;
+			}
+		} 
+		data[h0] = null;
+		counts[h0] = 0;
+		size = size-1;
+		last_code = h0;
+	}
+
+	/**
+	   Remove all data.
+	   @n minimum capacity to preserve.
+	 */
+	internal void clear(uint n=10) ensures (size==0) {
+		if (n<10) n = 10;
+		n = 2*n+1;
+		data = (void*[])realloc_func(null, n*sizeof(void*));
+		*eif_results = data;
+		counts = new uint[n];
+		for (uint i=0; i<n; ++i) data[i] = null;
+		last_code = 0;
+		size = 0;
+	}
+
+	public static void** eif_results;
+
+} /* class EiffelObjects */
+
+/* -------------------------------------------------------------------- */
+
 public abstract class Expression : Object { 
 	
 	public enum Format { 
@@ -1443,7 +1572,7 @@ public abstract class Expression : Object {
 		} else {
 			if (f!=null) {
 				ct = s.class_at(f.class_id);
-				rt = f.routine.text;
+				rt = f.routine.routine_text();
 			}
 		}
 		ct.query_by_name(out n, name(), arg!=null, rt);
@@ -2303,7 +2432,7 @@ public abstract class Expression : Object {
 	public override uint8* address() { 
 		var c = (Constant*)entity;
 		void* addr = dynamic_type.is_basic() ?
-			&c.basic : dynamic_type.dereference(c.eif_ms);
+			&c.basic : dynamic_type.dereference(c.ms);
 		return (uint8*)addr;
 	}
 

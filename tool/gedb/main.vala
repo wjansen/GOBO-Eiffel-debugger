@@ -18,21 +18,3 @@ public static int main(string[] args) {
 	Gtk.main();
 	return 0;
 }
-
-public void* gedb_longjmp = null;
-public void* gedb_jmp_buffer = null;
-public void* gedb_realloc = null;
-public void* gedb_free = null;
-public void* gedb_wrap = null;
-public void* gedb_chars = null;
-public void* gedb_unichars = null;
-public void* gedb_results = null;
-public void* gedb_markers = null;
-public void* gedb_rts = null;
-public void* gedb_top = null;
-public void* gedb_t;
-public void* gedb_o;
-public void* gedb_ov;
-public void* gedb_ms;
-public void* GE_argv;
-public int* GE_argc;

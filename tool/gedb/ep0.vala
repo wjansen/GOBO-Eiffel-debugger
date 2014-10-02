@@ -6,11 +6,11 @@ public class EvaluationEntry0 : ExpressionEntry {
 	private GedbEval.Valued? act_value;
 	private GedbEval.Valued? extendable;
 
-	private void fill_completion(ListStore store, uint tid, Routine* r) {
+	private void fill_completion(ListStore store, uint tid, Routine r) {
 		if (rts==null)  return;
-		Gedb.Type* t = rts.type_at(tid);
-		Field* field;
-		Local* loc;
+		Gedb.Type t = rts.type_at(tid);
+		Field field;
+		Local loc;
 		string name;
 		TreeIter iter;
 		uint i, n;
@@ -23,7 +23,7 @@ public class EvaluationEntry0 : ExpressionEntry {
 		} else {
 			for (i=0, n=t.fields.length; i<n; ++i) {
 				field = t.fields[i];
-				name = field._entity._name.fast_name;
+				name = fiedg._entity.fast_name;
 				store.append(out iter);
 				store.@set(iter, Query.NAME, name, Query.ENTITY, field, 
 								   Query.KIND, 'A', -1);
@@ -33,7 +33,7 @@ public class EvaluationEntry0 : ExpressionEntry {
 			for (i=1, n=r.vars.length; i<n; ++i) {
 				loc = r.vars[i];
 				if (loc!=null) {
-					name = loc._entity._name.fast_name;
+					name = loc._entity.fast_name;
 					store.append(out iter);
 					store.@set(iter, Query.NAME, name,  Query.ENTITY, loc,
 									   Query.KIND, 'L', -1);
@@ -48,7 +48,7 @@ public class EvaluationEntry0 : ExpressionEntry {
 		int pos;
 		tid = to.entity.type.ident;
 		if (tid!=0 && to.address()==null)  tid = 0;
-		if (tid==0 && to.text._name._id==0) {   //placeholder
+		if (tid==0 && to.text._id==0) {   //placeholder
 			// !!
 		}
 		old = compl_tid;
@@ -68,7 +68,7 @@ public class EvaluationEntry0 : ExpressionEntry {
 	
 	private bool do_select_query(TreeModel model, TreeIter iter,
 		DataPart data) {
-		Entity* entity;
+		Entity entity;
 		string name;
 		model.@get(iter, Query.NAME, out name, Query.ENTITY, out entity, -1);
 		// !! extendable.expr.text = entity;
@@ -81,9 +81,9 @@ public class EvaluationEntry0 : ExpressionEntry {
 		return;
 		// !!
 		Expression basic;
-		Routine* routine;
-		Local* loc;
-		Gedb.Type* t;
+		Routine routine;
+		Local loc;
+		Gedb.Type t;
 		EntryCompletion compl = get_completion();
 		ListStore store = (ListStore)compl.get_model();
 		TreeIter iter;
@@ -144,7 +144,7 @@ public class EvaluationEntry0 : ExpressionEntry {
 		return false;
 	}
 
-	public EvaluationEntry0(System* s, DataPart d) {
+	public EvaluationEntry0(System s, DataPart d) {
 		base(s);
 		store = new ListStore(Query.NUM_COLS, typeof(string), typeof(string),
 							  typeof(void*), typeof(char));

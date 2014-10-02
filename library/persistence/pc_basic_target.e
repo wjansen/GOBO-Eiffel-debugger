@@ -374,7 +374,7 @@ feature {} -- Implementation
 			until k = 0 loop
 					-- put continuation bit 
 				b := b + 0x80
-				area.put(b, buffer_count)
+				write_byte (b)
 					-- get next 7 bits 
 				b := (k \\ 0x80).to_natural_8
 					-- shift 7 bits to the right 

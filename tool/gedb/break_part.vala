@@ -327,7 +327,8 @@ public class BreakPart : Box {
 			if (text[0].tolower()=='s') {
 				source.get_position(out n, out pos);
 				ClassText* cls = dg.rts.class_at(n);
-				value = "%s:%u:%u".printf(cls._name.fast_name, pos/256, pos%256);
+				value = "%s:%u:%u".printf(((Gedb.Name*)cls).fast_name,
+										  pos/256, pos%256);
 			} else {
 				value = "";
 				n = 0;
@@ -727,7 +728,7 @@ treated as breakpoints?""");
 	
 	public Gee.ArrayList<Breakpoint> breakpoints(bool all) {
 		var list = new Gee.ArrayList<Breakpoint>();
-		store.foreach((m,p,i) => { return fill_bp_in_list(m,i,all,list); });
+		store.@foreach((m,p,i) => { return fill_bp_in_list(m,i,all,list); });
 		return list;
 	}
 	
@@ -754,12 +755,12 @@ treated as breakpoints?""");
 		string at, type;
 		if (bp.pos>0) {
 			cls = dg.rts.class_at(bp.cid);
-			at = cls._name.fast_name;
+			at = ((Gedb.Name*)cls).fast_name;
 			at = "%s:%d:%d".printf(at, (int)(bp.pos/256), (int)(bp.pos%256));
 		} else {
 			at = "";
 		}
-		type = bp.tid>0 ? dg.rts.type_at(bp.tid)._name.fast_name : "";
+		type = bp.tid>0 ? ((Gedb.Name*)dg.rts.type_at(bp.tid)).fast_name : "";
 		store.@set(iter,
 				   Item.ID, bp.id,
 				   Item.CATCH, bp.exc,

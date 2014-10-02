@@ -144,7 +144,7 @@ internal class Appearance : Dialog {
 
 	internal Appearance(GUI gui) {
 		this.gui = gui;
-		title = compose_title("Appearance", gui.ld.rts);
+		title = compose_title("Appearance", gui.dg.rts);
 		add_button(Gtk.Stock.APPLY, ResponseType.APPLY);
 		add_button(Gtk.Stock.CLOSE, ResponseType.CLOSE);
 		transient_for = gui;
@@ -245,7 +245,7 @@ internal class Menus : GLib.Object {
 			fs.printf("alias %s -> %s\n", nm, ex.append_name());			
 		}
 		Breakpoint bp;
-		var rts = gui.ld.rts;
+		var rts = gui.dg.rts;
 		var list = gui.brk.breakpoints(true);
 		for (var iter=list.list_iterator(); iter.next();) {
 			bp = iter.@get();
@@ -254,12 +254,12 @@ internal class Menus : GLib.Object {
 			if (bp.exc>0) 
 				str += " catch " + bp.catch_to_short_string();
 			if (bp.cid>0) 
-				str += " at %s:%u:%u".printf(rts.class_at(bp.cid)._name.fast_name, 
+				str += " at %s:%u:%u".printf(((Gedb.Name*)rts.class_at(bp.cid)).fast_name, 
 											 bp.pos/256, bp.pos%256);
 			if (bp.depth>0)
 				str += " depth %u".printf(bp.depth);
 			if (bp.tid>0)  
-				str += " type %s".printf(rts.type_at(bp.tid)._name.fast_name);
+				str += " type %s".printf(((Gedb.Name*)rts.type_at(bp.tid)).fast_name);
 			if (bp.iff!=null)
 				str = bp.iff.append_name(str + " if ");
 			if (bp.print!=null)
@@ -272,7 +272,7 @@ internal class Menus : GLib.Object {
 	}
 
 	private FileStream? compose_file(bool save) {
-		var title = compose_title("Store file", gui.ld.rts);
+		var title = compose_title("Store file", gui.dg.rts);
 		string? fn = null;
 		FileChooserAction mode = save 
 			? FileChooserAction.SAVE 
@@ -320,7 +320,7 @@ internal class Menus : GLib.Object {
 		dialog.add_filter(filter);
 		if (dialog.run () == ResponseType.ACCEPT) {
 			fn = dialog.get_filename();
-			gui.ld.load(fn);
+			((Driver)gui.dg).load(fn);
 		}
 		dialog.close();
 	}
@@ -347,7 +347,7 @@ internal class Menus : GLib.Object {
 	}	
 
 	private void do_stack_data(Gtk.Action a) {
-		Window extra = new MoreDataPart(gui.ld, gui.data, gui.stack);
+		Window extra = new MoreDataPart(gui.dg, gui.data, gui.stack);
 		extra.show_all();
 	}
 
@@ -377,7 +377,7 @@ internal class Menus : GLib.Object {
 		}
 	}
 	private void help_colors(Gtk.Action a) { help.help_colors(gui); }
-	private void help_system(Gtk.Action a) { help.help_system(gui, gui.ld.rts); }
+	private void help_system(Gtk.Action a) { help.help_system(gui, gui.dg.rts); }
 	private void help_about(Gtk.Action a) { help.help_about(gui); }
 
 	private const Gtk.ActionEntry[] entries = {
@@ -479,9 +479,9 @@ internal class Menus : GLib.Object {
 		preserve_list.@add(ui.get_widget("/Menubar/FileMenu/Quit"));
 		preserve_list.@add(ui.get_widget("/Menubar/PreferenceMenu"));
 		preserve_list.@add(ui.get_widget("/Menubar/HelpMenu"));
-		if (gui.ld!=null)
-			gui.ld.notify["is-running"].connect(
-				(g,p) => { do_set_sensitive(menubar, gui.ld.is_running); });
+		if (gui.dg!=null)
+			gui.dg.notify["is-running"].connect(
+				(g,p) => { do_set_sensitive(menubar, gui.dg.is_running); });
 	}
 
 	public Gtk.AccelGroup accel { get; private set; }
@@ -556,7 +556,7 @@ internal class AliasDef : Window {
 			break;
 		case Item.VALUE:
 			if (l==0) val = bullet;
-			ok = l>0 && checker.check_syntax(val, list, gui.ld.rts);
+			ok = l>0 && checker.check_syntax(val, list, gui.dg.rts);
 			ex = checker.parsed;
 			var cycle = new Gee.ArrayList<string>();
 			if (ok && AliasExpression.is_cyclic(ex, "_"+old, cycle)) {
@@ -621,7 +621,7 @@ internal class AliasDef : Window {
 		this.list = list;
 		checker = new ExpressionChecker();
 		checker.parser.set_aliases(list);
-		set_title(compose_title("Alias definition", gui.ld.rts));
+		set_title(compose_title("Alias definition", gui.dg.rts));
 		var vbox = new Box(Orientation.VERTICAL, 0);
 		add(vbox);
 
@@ -740,18 +740,18 @@ public class GUI : Window {
 	private string pwd;
 
 	internal string command;
-	internal Loader ld;
+	internal Debuggee dg;
 	internal bool pma;
 	
 	public void show_global() {
 		if (fixed==null) 
-			fixed = new FixedPart(ld, stack, data, status, type_list);
+			fixed = new FixedPart(dg, stack, data, status, type_list);
 		fixed.show();
 	}
 
 	public void show_sql() { 
 		if (sql==null) 
-			sql = new SqlPart(ld, stack, data, status, type_list, alias_list);
+			sql = new SqlPart(dg, stack, data, status, type_list, alias_list);
 		sql.show_all();
 	}
 
@@ -762,8 +762,8 @@ public class GUI : Window {
 	}
 
 	private static int class_less(ClassText* cls1, ClassText* cls2) {
-		string n1 = cls1._name.fast_name;
-		string n2 = cls2._name.fast_name;
+		string n1 = ((Gedb.Name*)cls1).fast_name;
+		string n2 = ((Gedb.Name*)cls2).fast_name;
 		return n1.ascii_casecmp(n2);
 	}
 
@@ -784,7 +784,7 @@ public class GUI : Window {
 			cls = citer.@get();
 			class_list.append(out at);
 			class_list.@set(at, ClassEnum.CLASS_IDENT, cls.ident,
-						   ClassEnum.CLASS_NAME, cls._name.fast_name, -1);
+							ClassEnum.CLASS_NAME, ((Gedb.Name*)cls).fast_name, -1);
 		}
 	}
 
@@ -797,7 +797,7 @@ public class GUI : Window {
 		for (n=s.type_count(); n-->0;) {
 			t = s.type_at(n);
 			if (t==null || !t.is_alive() || t.is_agent())  continue;
-			name = t._name.fast_name;
+			name = ((Gedb.Name*)t).fast_name;
 			list.@add(name);
 			table.@set(name, t.ident);
 		}
@@ -839,9 +839,9 @@ public class GUI : Window {
 				});
 		}
 		sql = null;
-		fill_class_list(ld.rts);
-		fill_type_list(ld.rts);
-		string fn = ld.rts._name.fast_name;
+		fill_class_list(dg.rts);
+		fill_type_list(dg.rts);
+		string fn = ((Gedb.Name*)dg.rts).fast_name;
 		command = Path.build_filename(pwd, fn);
 		fn = command + ".edg";
 		var fs = FileStream.open(fn, "r");
@@ -849,13 +849,13 @@ public class GUI : Window {
 		title = compose_title(null, null);
 	}
 		
-	public GUI(Loader ld) {
+	public GUI(Debuggee dg) {
 		Frame frame;
 		Label label;
-		this.ld = ld;
+		this.dg = dg;
 		the_gui = this;
-		Driver? dg = ld as Driver;
-		pma = dg==null;
+		Driver? dr = dg as Driver;
+		pma = dr==null;
 
 		gedb = Environment.get_variable("GOBO");
 		home = Environment.get_variable("HOME");
@@ -883,15 +883,15 @@ public class GUI : Window {
 		accel = menus.accel;
 		add_accel_group(accel);
 		status = new Status();
-		stack = new StackPart(ld, status);
-		data = new DataPart(ld, stack, status, alias_list);
+		stack = new StackPart(dg, status);
+		data = new DataPart(dg, stack, status, alias_list);
 		eval = data.eval;
-		if (dg!=null) {
+		if (dr!=null) {
 			console = new ConsolePart();
-			run = new RunPart(dg, stack, console, status, accel, alias_list);
-			brk = new BreakPart(dg, data, status, type_list, alias_list);
+			run = new RunPart(dr, stack, console, status, accel, alias_list);
+			brk = new BreakPart(dr, data, status, type_list, alias_list);
 		}
-		source = new SourcePart(ld, brk, run, data, console, stack,
+		source = new SourcePart(dg, brk, run, data, console, stack,
 								status, class_list);
 		history = new History(this);
 		appearance = new Appearance(this);
@@ -934,7 +934,7 @@ public class GUI : Window {
 		box.pack_start(frame, false, false, 0);
 		right.add2(box);
 		has_resize_grip = true;
-		ld.new_executable.connect(() => { new_exe(); });
+		dg.new_executable.connect(() => { new_exe(); });
 		destroy.connect(main_quit);
 	}
 
@@ -963,7 +963,7 @@ public class GUI : Window {
 			if (l>=0)  line = line.substring(0, l);
 			line = line.strip();
 			if (line.length==0)  continue;
-			parser = new Eval.Parser.as_command(ld.rts);
+			parser = new Eval.Parser.as_command(dg.rts);
 			parser.set_aliases(alias_list);
 			parser.add_string(line);
 			parser.end();
@@ -990,21 +990,22 @@ public class GUI : Window {
 
 internal GUI the_gui;
 
-public void* gedb_make(string[] args, bool pma) {
-	if (pma) {
-		Gtk.init(ref args);
-		var ld = new Loader(args);
-		the_gui = new GUI(ld);
-		bool ok = ld.load(null);
-		if (!ok) return null;
-		ld.new_executable();
-	}
-	return the_gui.ld;
+public void* GE_zmake_gedb() { return the_gui.dg; }
+
+public void* GE_zmake_pma(string[] args, void* rts, void* top, void* res, 
+						  void* set_offs, void* alloc, void* free, 
+						  void* chars, void* unicodes) {
+	Gtk.init(ref args);
+	var dg = new Debuggee(args, rts, top, res, 
+						  set_offs, alloc, free, chars, unicodes);
+	the_gui = new GUI(dg);
+	dg.new_executable();
+	return the_gui.dg;
 }
 
-public void* gedb_debug(Loader ld, int reason) { 
-	var dg = ld as Driver;
-	if (dg!=null) return dg.check(reason);
+public void* GE_zdebug(Debuggee dg, int reason) { 
+	var dr = dg as Driver;
+	if (dr!=null) return dr.check(reason);
 	var bp = new Breakpoint();
 	bp.exc = reason;
 	string msg = bp.catch_to_string();
@@ -1012,7 +1013,7 @@ public void* gedb_debug(Loader ld, int reason) {
 	var str = "Program crashed: ";
 	the_gui.status.push(id, str+msg);
 	str = "Eiffel system <span><b>";
-	str += ld.rts._name.fast_name;
+	str += ((Gedb.Name*)dg.rts).fast_name;
 	str += "</b></span> has crashed.";
 	var dialog = new MessageDialog(the_gui, DialogFlags.MODAL,
 								   MessageType.ERROR,
@@ -1022,13 +1023,13 @@ public void* gedb_debug(Loader ld, int reason) {
 	dialog.secondary_text =
 	"Reason: <span foreground='red'>" + msg + "</span>"
 		+ "\n\nYoy may now run the Post Mortem Anal yser:  ";
-	dialog.title = compose_title("Crash", ld.rts);
+	dialog.title = compose_title("Crash", dg.rts);
 	dialog.response.connect((ans) => { 
 			dialog.destroy(); 
 			if (ans==Gtk.ResponseType.NO) GLib.Process.exit(0);
 		});
 	dialog.run();
-	ld.crash_response();
+	dg.crash_response();
 	the_gui.show_all();
 	Gtk.main();
 	GLib.Process.exit(0);

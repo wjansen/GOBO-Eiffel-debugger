@@ -261,16 +261,16 @@ feature {NONE} -- Semantic actions
 					--|#line 108 "dg_system.y"
 				yy_do_action_19
 			when 20 then
-					--|#line 110 "dg_system.y"
+					--|#line 111 "dg_system.y"
 				yy_do_action_20
 			when 21 then
-					--|#line 114 "dg_system.y"
+					--|#line 116 "dg_system.y"
 				yy_do_action_21
 			when 22 then
-					--|#line 117 "dg_system.y"
+					--|#line 120 "dg_system.y"
 				yy_do_action_22
 			when 23 then
-					--|#line 120 "dg_system.y"
+					--|#line 123 "dg_system.y"
 				yy_do_action_23
 			else
 				debug ("GEYACC")
@@ -675,6 +675,7 @@ debug ("GEYACC")
 end
 
 create yyval6.make_1 (yyvs5.item (yyvsp5)) 
+	    
 if yy_parsing_status >= yyContinue then
 	yyssp := yyssp - 1
 	yyvsp6 := yyvsp6 + 1
@@ -691,16 +692,17 @@ end
 		end
 
 	yy_do_action_20
-			--|#line 110 "dg_system.y"
+			--|#line 111 "dg_system.y"
 		local
 			yyval6: IS_SEQUENCE [IS_FIELD]
 		do
---|#line 110 "dg_system.y"
+--|#line 111 "dg_system.y"
 debug ("GEYACC")
-	std.error.put_line ("Executing parser user-code from file 'dg_system.y' at line 110")
+	std.error.put_line ("Executing parser user-code from file 'dg_system.y' at line 111")
 end
 
 yyval6 := yyvs6.item (yyvsp6) ; yyval6.add (yyvs5.item (yyvsp5)) 
+	    
 if yy_parsing_status >= yyContinue then
 	yyssp := yyssp - 2
 	yyvsp5 := yyvsp5 -1
@@ -709,16 +711,17 @@ end
 		end
 
 	yy_do_action_21
-			--|#line 114 "dg_system.y"
+			--|#line 116 "dg_system.y"
 		local
 			yyval5: IS_FIELD
 		do
---|#line 114 "dg_system.y"
+--|#line 116 "dg_system.y"
 debug ("GEYACC")
-	std.error.put_line ("Executing parser user-code from file 'dg_system.y' at line 114")
+	std.error.put_line ("Executing parser user-code from file 'dg_system.y' at line 116")
 end
 
 create yyval5.make (yyvs3.item (yyvsp3), expanded_type (as_class_name(yyvs3.item (yyvsp3 - 1)), yyvs3.item (yyvsp3 - 1)), Void, Void)
+	      yyval5.set_as_subobject
 	    
 if yy_parsing_status >= yyContinue then
 	yyssp := yyssp - 3
@@ -737,13 +740,13 @@ end
 		end
 
 	yy_do_action_22
-			--|#line 117 "dg_system.y"
+			--|#line 120 "dg_system.y"
 		local
 			yyval5: IS_FIELD
 		do
---|#line 117 "dg_system.y"
+--|#line 120 "dg_system.y"
 debug ("GEYACC")
-	std.error.put_line ("Executing parser user-code from file 'dg_system.y' at line 117")
+	std.error.put_line ("Executing parser user-code from file 'dg_system.y' at line 120")
 end
 
 create yyval5.make (yyvs3.item (yyvsp3), type_of_name (as_type_name(yyvs3.item (yyvsp3 - 1)), yyvs3.item (yyvsp3 - 1)), Void, Void) 
@@ -765,13 +768,13 @@ end
 		end
 
 	yy_do_action_23
-			--|#line 120 "dg_system.y"
+			--|#line 123 "dg_system.y"
 		local
 			yyval5: IS_FIELD
 		do
---|#line 120 "dg_system.y"
+--|#line 123 "dg_system.y"
 debug ("GEYACC")
-	std.error.put_line ("Executing parser user-code from file 'dg_system.y' at line 120")
+	std.error.put_line ("Executing parser user-code from file 'dg_system.y' at line 123")
 end
 
 create yyval5.make (yyvs3.item (yyvsp3 - 2), new_special_type 
@@ -1186,10 +1189,14 @@ feature {} -- Implementation
 
 	enum_val: INTEGER
 
+	underscore: STRING = "_"
+
+	id_name: STRING = "_id"
+
 	int64: IS_TYPE
 
 	origin: IS_SYSTEM
-									
+
 	as_class_name (cn: STRING): STRING
 		do
 			Result := cn.twin
@@ -1267,38 +1274,34 @@ feature {} -- Implementation
 
 	expanded_type (nm, cn: STRING): IS_EXPANDED_TYPE
 		local
-			cls: IS_CLASS_TEXT
-			pp: IS_SEQUENCE[IS_CLASS_TEXT]
 			base, ft: IS_TYPE
 			f: IS_FIELD
 			ff: IS_SEQUENCE[IS_FIELD]
-			nn: STRING
 			id, i, n: INTEGER
 		do
-			max_class_id := max_class_id + 1
-			nn :=  "GE_Z_" + max_class_id.out
-			create pp.make_1 (class_by_name (nm))
-			create cls.make (max_class_id, nn, 0, Void, Void, pp)
 			base := type_of_name (nm, cn)
-	       		max_type_id := max_type_id + 1
-			id := max_type_id
-		    	from
-				n := base.field_count
-				create ff.make (n, Void)
-			until i = n loop
-		    		f := base.field_at(i)
-				ft := f.type
-				if f.name_has_prefix (once "_") and then not f.has_name (once "_id") then
-					ft := expanded_type (as_class_name (ft.c_name), ft.c_name)
-				else
+			if not base.is_subobject 
+				and then attached {IS_NORMAL_TYPE} base as nt 
+			 then
+				max_type_id := max_type_id + 1
+				id := max_type_id
+				from
+					n := base.field_count
+					create ff.make (n, Void)
+				until i = n loop
+					f := base.field_at(i)
+					ft := f.type
+					if f.name_has_prefix (underscore) and then not f.has_name (id_name) then
+						ft := expanded_type (as_class_name (ft.c_name), ft.c_name)
+					end
+					create f.make (f.fast_name, ft, Void, Void)
+					ff.add (f)
+					i := i + 1
 				end
-				create f.make (f.fast_name, ft, Void, Void)
-				ff.add (f)
-				i := i + 1
+				create Result.make (id, nt.base_class, 
+					Subobject_flag, Void, Void, ff, Void, Void)
+				Result.set_c_name (cn)
 			end
-			create Result.make (id, cls, 
-				Subobject_flag, Void, Void, ff, Void, Void)
-			Result.set_c_name (cn)
 		end
 
 	treat_enum (nm: STRING)

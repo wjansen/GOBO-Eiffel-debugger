@@ -45,9 +45,6 @@ typedef struct _GedbClassText GedbClassText;
 typedef struct _GedbFeatureText GedbFeatureText;
 typedef struct _GedbEntity GedbEntity;
 
-#define GEDB_TYPE_ROUTINE_TEXT (gedb_routine_text_get_type ())
-typedef struct _GedbRoutineText GedbRoutineText;
-
 #define GEDB_TYPE_LOCAL (gedb_local_get_type ())
 typedef struct _GedbLocal GedbLocal;
 typedef struct _GedbRoutine GedbRoutine;
@@ -75,6 +72,9 @@ typedef struct _GedbSpecialType GedbSpecialType;
 
 #define GEDB_TYPE_SCOPE_VARIABLE (gedb_scope_variable_get_type ())
 typedef struct _GedbScopeVariable GedbScopeVariable;
+
+#define GEDB_TYPE_ROUTINE_TEXT (gedb_routine_text_get_type ())
+typedef struct _GedbRoutineText GedbRoutineText;
 
 #define GEDB_TYPE_EXPANDED_TYPE (gedb_expanded_type_get_type ())
 typedef struct _GedbExpandedType GedbExpandedType;
@@ -229,22 +229,6 @@ struct _GedbEntity {
 	gchar* alias_name;
 };
 
-struct _GedbRoutineText {
-	GedbFeatureText _feature;
-	guint entry_pos;
-	guint rescue_pos;
-	guint exit_pos;
-	GedbFeatureText** vars;
-	gint vars_length1;
-	gint argument_count;
-	gint local_count;
-	gint scope_var_count;
-	GedbRoutineText** inline_texts;
-	gint inline_texts_length1;
-	guint* instruction_positions;
-	gint instruction_positions_length1;
-};
-
 struct _GedbLocal {
 	GedbEntity _entity;
 	gint offset;
@@ -255,7 +239,6 @@ struct _GedbRoutine {
 	guint flags;
 	GedbType* target;
 	GedbAgentType* inline_agent;
-	GedbRoutineText* text;
 	guint argument_count;
 	guint local_count;
 	guint scope_var_count;
@@ -279,7 +262,7 @@ struct _GedbConstant {
 	guint flags;
 	GedbClassText* home;
 	guint64 basic;
-	void* eif_ms;
+	void* ms;
 };
 
 struct _GedbType {
@@ -369,6 +352,22 @@ struct _GedbScopeVariable {
 	gint upper_scope_limit;
 };
 
+struct _GedbRoutineText {
+	GedbFeatureText _feature;
+	guint entry_pos;
+	guint rescue_pos;
+	guint exit_pos;
+	GedbFeatureText** vars;
+	gint vars_length1;
+	gint argument_count;
+	gint local_count;
+	gint scope_var_count;
+	GedbRoutineText** inline_texts;
+	gint inline_texts_length1;
+	guint* instruction_positions;
+	gint instruction_positions_length1;
+};
+
 struct _GedbExpandedType {
 	GedbNormalType _normal;
 	guint boxed_bytes;
@@ -453,11 +452,6 @@ GedbEntity* gedb_entity_dup (const GedbEntity* self);
 void gedb_entity_free (GedbEntity* self);
 void gedb_entity_copy (const GedbEntity* self, GedbEntity* dest);
 void gedb_entity_destroy (GedbEntity* self);
-GType gedb_routine_text_get_type (void) G_GNUC_CONST;
-GedbRoutineText* gedb_routine_text_dup (const GedbRoutineText* self);
-void gedb_routine_text_free (GedbRoutineText* self);
-void gedb_routine_text_copy (const GedbRoutineText* self, GedbRoutineText* dest);
-void gedb_routine_text_destroy (GedbRoutineText* self);
 GType gedb_local_get_type (void) G_GNUC_CONST;
 GedbLocal* gedb_local_dup (const GedbLocal* self);
 void gedb_local_free (GedbLocal* self);
@@ -563,6 +557,12 @@ void gedb_scope_variable_destroy (GedbScopeVariable* self);
 gboolean gedb_scope_variable_in_scope (GedbScopeVariable *self, guint line, guint col);
 void gedb_scope_variable_set_lower_scope_limit (GedbScopeVariable *self, gint l);
 void gedb_scope_variable_set_upper_scope_limit (GedbScopeVariable *self, gint l);
+GType gedb_routine_text_get_type (void) G_GNUC_CONST;
+GedbRoutineText* gedb_routine_text_dup (const GedbRoutineText* self);
+void gedb_routine_text_free (GedbRoutineText* self);
+void gedb_routine_text_copy (const GedbRoutineText* self, GedbRoutineText* dest);
+void gedb_routine_text_destroy (GedbRoutineText* self);
+GedbRoutineText* gedb_routine_routine_text (GedbRoutine *self);
 gboolean gedb_routine_is_procedure (GedbRoutine *self);
 gboolean gedb_routine_is_function (GedbRoutine *self);
 gboolean gedb_routine_is_operator (GedbRoutine *self);

@@ -18,12 +18,12 @@ _GedbParserParser.c _GedbParserParser.h : _GedbParserParser.lemon
 	! ${LEMON} -c _GedbParserParser.lemon 2>&1 | grep -v conflict | grep '.'
 
 home_parser.vapi home_parser.c _HomeParser.h : home_parser.vala _GedbParserParser.vapi \
-../extern.vapi ../inspect.vapi
+../inspect.vapi
 	valac ${CFLAGS_VALA} \
 	--vapidir=. --vapi=home_parser.vapi \
 	--disable-warnings -C -H _HomeParser.h -X -I.. \
 	--pkg=gtk+-3.0 --pkg=gee-0.8 _GedbParserParser.vapi \
-	../extern.vapi ../inspect.vapi \
+	../inspect.vapi \
 	home_parser.vala
 
 _GedbParserParser.o : _HomeParser.h _GedbParserLexer.c _GedbParserParser.c _GedbParserParser.h

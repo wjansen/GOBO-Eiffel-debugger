@@ -874,13 +874,7 @@ feature {} -- Debugging code
 				current_file.put_string (import.c_debugger_name)
 				current_file.put_string (" = ")
 				current_file.put_string (import.c_init_name)
-				current_file.put_string ("(GE_argv,GE_argc,")
-				if pma_only then
-					current_file.put_integer (1)
-				else
-					current_file.put_integer (0)
-				end
-				current_file.put_string (");%N")
+				current_file.put_string ("();%N")
 				print_position_handling(de, Start_program_break)
 				dedent
 				print_indentation
@@ -916,8 +910,10 @@ feature {} -- Debugging code
 				inspect code
 				when Call_break then
 					pos := (pos - 1).max (1)
-				when Step_into_break, End_program_break then
+				when Step_into_break then
 					for_instruction := False
+				when End_program_break then
+					for_instruction := True
 				when End_scope_break then
 					for_instruction := False
 				else

@@ -40,10 +40,22 @@ public enum DataMode {
 
 public string compose_title(string? addendum, System* rts) {
 	string title = "Gedb";
-	if (rts!=null)  title += ": " + rts._name.fast_name;
+	if (rts!=null)  title += ": " + ((Gedb.Name*)rts).fast_name;
 	if (addendum!=null)  title += " -- " + addendum;
 	return title;
 }
+
+public delegate void* ReallocFunc(void* orig, size_t n);
+public delegate void FreeFunc(void* orig);
+public delegate void WrapFunc(uint i, void *call, void* C, void** args, void* R);
+public delegate weak unichar[] UnicharsFunc(void* obj, int *nc);
+public delegate weak uint8[] CharsFunc(void* obj, int *nc);
+
+public ReallocFunc realloc_func;
+public FreeFunc free_func;
+public WrapFunc wrap_func;
+public CharsFunc chars_func;
+public UnicharsFunc unichars_func;
 
 private Gdk.Cursor watch_cursor; 
 
@@ -432,13 +444,13 @@ public string format_type(uint8* addr, int off, bool is_home_addr,
 	string str;
 	uint n;
 	if (addr==null)  return "";
-	str = t._name.fast_name;
+	str = ((Gedb.Name*)t).fast_name;
 	if (!t.is_subobject()) {
 		addr = is_home_addr && addr!=null ? *(void**)(addr+off) : addr;
 		if (t.is_special()) {
 			var st = (SpecialType*)t;
 			n = st.special_count(addr);
-			str = st.item_type()._name.fast_name;
+			str = ((Gedb.Name*)st.item_type()).fast_name;
 			str = "[%d] %s".printf((int)n, str);
 		} else if (t.is_tuple() && ft!=null) {
 			var tl = ft.tuple_labels;
@@ -450,9 +462,9 @@ public string format_type(uint8* addr, int off, bool is_home_addr,
 					tli = tl[i];
 					if (tli==null) break;
 					str += i==0 ? "[" : "; ";
-					str += tli._name.fast_name;
+					str += ((Gedb.Name*)tli).fast_name;
 					str += ": ";
-					str += t.generics[i]._name.fast_name;
+					str += ((Gedb.Name*)t.generics[i]).fast_name;
 				}
 				str += "]";
 			}
@@ -498,127 +510,3 @@ public class DataItem {
 			new DataItem(model, p) : null;
 	}
 }
-
-/**
-   Hashmap whose data are Eiffel objects which will be protected
-   against memory reclamation by Eiffel's garbage collection.
-   The keys' class must `H' must be hashable. 
- */
-public class EiffelObjects : Object {
-
-	private unowned void*[] data;
-	private uint[] counts;
-	private uint last_code;
-
-	~EiffelObjects() { free_func(data); }
-
-	private void resize(uint n) {
-		if (n<=counts.length) return;
-		void* d;
-		uint h, i;
-		uint old_size = size;
-		var old_data = data;
-		var old_counts = counts;
-		data = (void*[])realloc_func(*eif_results, n*sizeof(void*));
-		*eif_results = data;
-		counts = new uint[n];
-		for (i=0; i<n; ++i) data[i] = null;
-		for (i=0; i<old_size; ++i) {
-			d = old_data[i];
-			if (d==null) continue;
-			h = (uint)d;
-			data[h] = old_data[i];
-			counts[i] = old_counts[i];
-			if (i==last_code) last_code = h;
-		}
-	}
-
-	public uint size { get; set; }
-
-	public EiffelObjects(uint n=0) { clear(n); }
-
-/**
-   Does the table Eiffel object `obj'?
-   Caution: the function has side effects on private fields:
-   `last_code' is set to the found values (or to the next free slot).
- */
-	public bool contains(void* obj) {
-		if (obj==null) return false;
-		void* d;
-		uint cap = counts.length;
-		uint h = ((uint)obj) % cap;
-		last_code = h;
-		for (d=data[h]; d!=null; ) {
-			if (d==obj) {
-				return true;
-			} else {
-				h = (h+1) % cap;
-				d = data[h];
-				last_code = h;
-			}
-		}
-		return false;
-	}
-
-/**
-   Insert `obj'.
- */
-	public void add(void* obj) {
-		uint cap = counts.length;
-		bool ok = contains(obj);
-		uint h = last_code;
-		if (ok) {
-			counts[h] = counts[h]+1;
-		} else {
-			if (2*size>cap) {
-				cap = 3*size + 1;
-				resize(cap);
-				contains(obj);	// adjust `last_code'
-				h = last_code;
-			}
-			data[h] = obj;
-			counts[h] = 1;
-			size = size+1;
-		}
-	}
-
-/**
-   Remove `obj'.
- */
-	public void remove(void* obj) {
-		if (!contains(obj)) return;
-		uint h0 = last_code;
-		counts[h0] = counts[h0]-1;
-		if (counts[h0]>0) return;
-		void* d = null;
-		uint cap = counts.length;
-		for (uint h=(h0+1)%cap; d!=null && h!=h0; h=(h+1)%cap) {
-			d = data[h];
-			if (d!=null && ((uint)d)%cap==h0) {
-				data[h0] = data[h];
-				counts[h0] = counts[h];
-				h0 = h;
-			}
-		} 
-		data[h0] = null;
-		counts[h0] = 0;
-		size = size-1;
-		last_code = h0;
-	}
-
-	/**
-	   Remove all data.
-	   @n minimum capacity to preserve.
-	 */
-	public void clear(uint n=10) ensures (size==0) {
-		if (n<10) n = 10;
-		n = 2*n+1;
-		data = (void*[])realloc_func(null, n*sizeof(void*));
-		*eif_results = data;
-		counts = new uint[n];
-		for (uint i=0; i<n; ++i) data[i] = null;
-		last_code = 0;
-		size = 0;
-	}
-
-} /* class EiffelObjects */

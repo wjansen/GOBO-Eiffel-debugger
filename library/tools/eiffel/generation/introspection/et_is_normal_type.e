@@ -14,8 +14,6 @@ inherit
 			declare,
 			base_class,
 			compute_flags,
-			pre_store,
-			post_store
 		end
 
 	IS_NORMAL_TYPE
@@ -78,23 +76,6 @@ feature -- Access
 
 	base_class: ET_IS_CLASS_TEXT
 
-feature {} -- PC_ACTIONABLE
-
-	pre_store
-		do
-			preserve
-			if flags & Agent_expression_flag = 0
-				and then not base_class.is_debug_enabled 
-			 then
-				fields := Void
-			end
-		end
-	
-	post_store
-		do
-			restore
-		end
-	
 feature {} -- Implementation 
 
 	declare_constants (s: ET_IS_SYSTEM)

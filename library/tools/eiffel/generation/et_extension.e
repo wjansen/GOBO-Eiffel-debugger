@@ -47,6 +47,8 @@ feature {} -- Extension parts
 			print_typedefs
 			print_defines
 			print_callbacks
+			h_file.flush
+			c_generator.flush_to_c_file
 		end
 	
 	print_defines
@@ -166,13 +168,14 @@ feature {} -- Elementary IO
 			 Print declaration of a global C variable.
 			 If `c_file=Void' then only the `extern' declaration is printed.
 			 ]"
+			as_address: "whether to add an asterisc to the C type"
 			a_type: "C type"
 			a_name: "C variable name"
 			a_value:
-		"[
-		 C initial value, `Void' means declaration only,
-		 empty means print C definition except value and closing semicolon.
-		 ]"
+			"[
+			 C initial value, `Void' means declaration only,
+			 empty means print C definition except value and closing semicolon.
+			 ]"
 		require
 			type_not_empty: not a_type.is_empty
 			name_not_empty: not a_name.is_empty

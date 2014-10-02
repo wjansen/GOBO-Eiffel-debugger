@@ -286,8 +286,8 @@ static int rt_utime(EIF_FILENAME path, struct utimbuf *times)
  * Swallow next character if it is a new line.
  */
 static void rt_swallow_nl(FILE *f) {
-#if ( GedbD > 1)
-	if (f == stdin) gedb_init_stdin();
+#if ( GE_ZD > 1)
+	if (f == stdin) GE_zinit_stdin();
 #endif
 
 		/* getc() cannot be used as it doesn't set the EOF flag */
@@ -596,8 +596,8 @@ EIF_INTEGER eif_file_fd(FILE *f) {
  */
 EIF_CHARACTER_8 eif_file_gc(FILE *f) {
 	int c;
-#if ( GedbD > 1)
-	if (f == stdin) gedb_init_stdin();
+#if ( GE_ZD > 1)
+	if (f == stdin) GE_zinit_stdin();
 #endif
 	errno = 0;
 	c = getc(f);
@@ -617,8 +617,8 @@ EIF_INTEGER eif_file_gs(FILE *f, char *s, EIF_INTEGER bound, EIF_INTEGER start) 
 	int c = '\0';
 	EIF_INTEGER read;
 
-#if ( GedbD > 1)
-	if (f == stdin) gedb_init_stdin();
+#if ( GE_ZD > 1)
+	if (f == stdin) GE_zinit_stdin();
 #endif
 	amount = bound - start;
 	s += start;
@@ -673,8 +673,8 @@ EIF_INTEGER eif_file_gw(FILE* f, char* s, EIF_INTEGER bound, EIF_INTEGER start) 
 	EIF_INTEGER amount;	/* Amount of bytes to be read */
 	int c = 0;			/* Last char read */
 
-#if ( GedbD > 1)
-	if (f == stdin) gedb_init_stdin();
+#if ( GE_ZD > 1)
+	if (f == stdin) GE_zinit_stdin();
 #endif
 	amount = bound - start;		/* Characters to be read */
 	s += start;					/* Where read characters are written */
@@ -724,8 +724,8 @@ EIF_INTEGER eif_file_gw(FILE* f, char* s, EIF_INTEGER bound, EIF_INTEGER start) 
 EIF_CHARACTER_8 eif_file_lh(FILE *f) {
 	int c;
 
-#if ( GedbD > 1)
-	if (f == stdin) gedb_init_stdin();
+#if ( GE_ZD > 1)
+	if (f == stdin) GE_zinit_stdin();
 #endif
 	errno = 0;
 	c = getc(f);
@@ -760,8 +760,8 @@ EIF_INTEGER eif_file_size(FILE *fp) {
 void eif_file_tnil(FILE *f) {
 	int c;
 
-#if ( GedbD > 1)
-	if (f == stdin) gedb_init_stdin();
+#if ( GE_ZD > 1)
+	if (f == stdin) GE_zinit_stdin();
 #endif
 	errno = 0;
 	while ((c = getc(f)) != '\n' && c != EOF)

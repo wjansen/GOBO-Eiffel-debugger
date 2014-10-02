@@ -5,7 +5,7 @@ public class SqlPart : Window {
 
 	private ListStore type_list;
 
-	private Loader dg;
+	private Debuggee dg;
 	private DataPart data;
 
 	private Entry select;
@@ -56,11 +56,11 @@ public class SqlPart : Window {
 			view.remove_column(col);
 		}
 		if (expr==null) {
-			n = type._type.field_count();
+			n = ((Gedb.Type*)type).field_count();
 			TextExpression next;
 			Expression? last = null;
 			for (i=0; i<n; ++i) {
-				f = (Entity*)type._type.field_at(i);
+				f = (Entity*)((Gedb.Type*)type).field_at(i);
 				next = new TextExpression.typed(f);
 				if (expr==null) expr = next;
 				else last.set_child(last.Child.NEXT, next);
@@ -99,7 +99,7 @@ public class SqlPart : Window {
 		uint n = t.field_count();
 		for (uint i=0; i<n; ++i) {
 			f = t.fields[i];
-			name = prefix + f._entity._name.fast_name;
+			name = prefix + ((Gedb.Name*)f).fast_name;
 			sub = new AliasExpression(prefix, ex);
 			sub.set_child(sub.Child.DOWN,
 						  new TextExpression.typed((Entity*)f));
@@ -277,7 +277,7 @@ public class SqlPart : Window {
 		Gedb.Type* t = dg.rts.type_at(tid);
 		ok = t!=null && t.is_normal() && !t.is_subobject();
 		if (ok)  type = (NormalType*) t;
-		from.set_text(ok ? type._type._name.fast_name : "");
+		from.set_text(ok ? ((Gedb.Name*)type).fast_name : "");
 		obsolete |= type!=old;
 		return true;
 	}
@@ -289,8 +289,8 @@ public class SqlPart : Window {
 		string str = e.get_text();
 		if (str.strip().length==0) return; 
 		bool ok = checker.check_static(str, 
-									   type._type.ident, type.base_class.ident, 
-									   0, aliases, dg.rts, as_cond);
+			((Gedb.Type*)type).ident, type.base_class.ident, 
+			0, aliases, dg.rts, as_cond);
 		if (!ok) return;
 		var ex = (!) checker.parsed;
 		if (as_cond) cond = ex;
@@ -509,12 +509,12 @@ public class SqlPart : Window {
 		return id<=0 ? "" : data.dotted_name(data.deep_info[id]);
 	}
 
-	private void do_new_exe(Loader ld) {
+	private void do_new_exe(Debuggee dg) {
 		where_history.clear();
 		select_history.clear();
 	}
 	
-	public SqlPart(Loader dg, StackPart stack, DataPart data, Status status,
+	public SqlPart(Debuggee dg, StackPart stack, DataPart data, Status status,
 				   ListStore types, Gee.Map<string,Expression> list) {
 		this.dg = dg;
 		this.data = data;

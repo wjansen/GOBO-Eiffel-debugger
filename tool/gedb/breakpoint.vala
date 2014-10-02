@@ -96,8 +96,8 @@ public class WatchInfo  : GLib.Object {
 		entity = data.field;
 		_type = s.type_at(data.tid);
 		uint size = _type.field_bytes();
-		int off = entity.is_local() ? 
-			((Local*)entity).offset : ((Field*)entity).offset; 
+		int off = entity.is_local() ?
+			((Local*)entity).offset : ((Field*)entity).offset;
 		address = data.home!=null ? data.home : (uint8*)f;
 		address += off;
 		if (data.idx>=0)  address += data.idx*size;

@@ -19,7 +19,7 @@ public class StackPart : Box {
 	
 	private static const string rescue_arrow = "↳";	//"►";
 
-	private Loader ld;
+	private Debuggee dg;
 	private StackPart* main;
 	private Label depth_label;
 	private ComboBox? combo;
@@ -31,8 +31,8 @@ public class StackPart : Box {
 
 	private void set_row(TreeIter iter, int level, uint cid, 
 						 string rout, bool rescue, int line, int col) {
-		ClassText* cls = ld.rts.class_at(cid);
-		string name = cls._name.fast_name;
+		ClassText* cls = dg.rts.class_at(cid);
+		string name = ((Gedb.Name*)cls).fast_name;
 		string str = "%d  %s.%s:%d:%d".printf(level, name, rout, line, col);
 		bool poor = cls!=null ? !cls.is_debug_enabled() : true;
 		store.@set(iter,
@@ -71,17 +71,17 @@ public class StackPart : Box {
 		for (i=0, store.get_iter_first(out iter);
 			 i<min; 
 			 ++i, frame=frame.caller, store.iter_next(ref iter)) {
-			cls = ld.rts.class_at(frame.class_id);
-			rt = frame.routine.text;
-			name = rt._feature._name.fast_name;
+			cls = dg.rts.class_at(frame.class_id);
+			rt = frame.routine.routine_text();
+			name = ((Gedb.Name*)rt).fast_name;
 			pos = frame.pos;
 			set_row(iter, i, cls.ident, name, rt.rescue_pos>0,
 					(int)pos/256, (int)pos%256);
 		}
 		for (; i<new_depth; ++i, frame=frame.caller) {
-			cls = ld.rts.class_at(frame.class_id);
-			rt = frame.routine.text;
-			name = rt._feature._name.fast_name;
+			cls = dg.rts.class_at(frame.class_id);
+			rt = frame.routine.routine_text();
+			name = ((Gedb.Name*)rt).fast_name;
 			store.append(out iter);
 			pos = frame.pos;
 			set_row(iter, i, cls.ident, name, rt.rescue_pos>0,
@@ -227,12 +227,12 @@ public class StackPart : Box {
 		}
 	}
 
-	private void do_new_exe(Loader ld) {
+	private void do_new_exe(Debuggee dg) {
 		top = null;
 		level = 0;
 	}
 
-	private void core_part(Loader ld) {
+	private void core_part(Debuggee dg) {
 		orientation = Orientation.VERTICAL;
 		store = new ListStore(Column.NUM_COLS, 
 							  typeof(uint),		// level
@@ -244,18 +244,18 @@ public class StackPart : Box {
 							  typeof(uint),		// col
 							  typeof(string),	// verbose
 							  typeof(bool));	// poor
-		this.ld = ld;
-		ld.new_executable.connect(do_new_exe);
-		ld.response.connect((ld,r,m,f,mc) => { do_refresh(ld,r,f); });
-		ld.notify["is-running"].connect(
-			(g,p) => { do_set_sensitive(ld.is_running); });
+		this.dg = dg;
+		dg.new_executable.connect(do_new_exe);
+		dg.response.connect((dg,r,m,f,mc) => { do_refresh(dg,r,f); });
+		dg.notify["is-running"].connect(
+			(g,p) => { do_set_sensitive(dg.is_running); });
 	}
 
-	public StackPart.additionally(Loader ld, StackPart main) { 
+	public StackPart.additionally(Debuggee dg, StackPart main) { 
 		this.main = main;
 		status = main.status;
 		view = null;
-		core_part(ld);
+		core_part(dg);
 		var box = new Box(Orientation.HORIZONTAL, 5);
 		depth_label = new Label("");
 		depth_label.width_chars = 5;
@@ -277,7 +277,7 @@ public class StackPart : Box {
 		add(box);
 	}
 	
-	public StackPart(Loader ld, Status s) { 
+	public StackPart(Debuggee dg, Status s) { 
 		status = s;
 		main = null;
 		combo = null;
@@ -286,7 +286,7 @@ public class StackPart : Box {
 		hbox.pack_start(new Label("Depth: "), false, false, 0);
 		depth_label = new Label("");
 		hbox.pack_start(depth_label, false, false, 0);
-		core_part(ld);
+		core_part(dg);
 		pack_start(new_list_stack(), true, true, 0);
 	}
 
@@ -317,24 +317,21 @@ public class StackPart : Box {
 		automatic = active;
 	}
 
-	private void do_refresh(Loader ld, int reason, StackFrame* f) {
+	private void do_refresh(Debuggee dg, int reason, StackFrame* f) {
 		if (main!=null && !automatic)  return;
-		Driver? dg = ld as Driver;
-		if (dg==null) {
-			refresh(f);
-			level_selected(f, f.class_id, f.pos);
-		} else {
+		Driver? dr = dg as Driver;
+		if (dr!=null) {
 			switch (reason) {
-			case dg.ProgramState.Program_start:
+			case dr.ProgramState.Program_start:
 				refresh(f);
 				level_selected(f, f.class_id, f.pos);
 				return;
-			case dg.ProgramState.Running:
-			case dg.ProgramState.Still_waiting:
+			case dr.ProgramState.Running:
+			case dr.ProgramState.Still_waiting:
 				return;
 			}
-			refresh(f);
 		}
+		refresh(f);
 	}
 	
 	public bool has_frame(StackFrame* f) {

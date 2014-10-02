@@ -19,17 +19,6 @@ inherit
 		end
 
 	ET_IS_ORIGIN [detachable ET_DYNAMIC_FEATURE, IS_ROUTINE]
-
-	PC_ACTIONABLE
-		undefine
-			default_create,
-			copy,
-			is_equal,
-			out
-		redefine
-			pre_store,
-			post_store
-		end
 	
 create
 
@@ -267,26 +256,6 @@ feature -- ET_IS_ORIGIN
 			end
 		end
 
-feature {} -- PC_ACTIONABLE
-
-	pre_store
-		do
-			preserve
-			if not target.base_class.is_debug_enabled then
-				vars.remove (vars.count - 1)
-				argument_count := 1
-				local_count := 0
-				old_value_count := 0
-				scope_var_count := 0
-				temp_var_count := 0
-			end
-		end
-	
-	post_store
-		do
-			restore
-		end
-	
 feature {} -- Implementation 
 
 	var_buffer: IS_STACK [ET_IS_LOCAL]

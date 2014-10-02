@@ -36,9 +36,7 @@ inherit
 		redefine
 			declare_from_pattern,
 			define,
-			declare_fields,
-			pre_store,
-			post_store
+			declare_fields
 		end
 
 	IS_AGENT_TYPE
@@ -213,21 +211,6 @@ feature -- Basic operation
 			end
 		end
 
-feature {} -- PC_ACTIONABLE
-
-	pre_store
-		do
-			preserve
-			if not home.is_debug_enabled  then
-				fields := Void
-			end
-		end
-	
-	post_store
-		do
-			restore
-		end
-	
 feature {} -- Implementation 
 
 	current_id (s: ET_IS_SYSTEM): ET_IDENTIFIER

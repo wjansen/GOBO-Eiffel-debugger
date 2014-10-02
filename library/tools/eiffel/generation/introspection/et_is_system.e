@@ -17,6 +17,10 @@ inherit
 		end
 
 	ET_IS_ORIGIN [ET_DYNAMIC_SYSTEM, IS_SYSTEM]
+		redefine
+			pre_store,
+			post_store
+		end
 	
 	IS_SET [ET_IS_TYPE]
 		rename
@@ -34,17 +38,6 @@ inherit
 			out
 		end
 
-	PC_ACTIONABLE
-		undefine
-			default_create,
-			copy,
-			is_equal,
-			out
-		redefine
-			pre_store,
-			post_store
-		end
-			
 	KL_EQUALITY_TESTER [IS_SET [ET_IS_TYPE]]
 		rename
 			test as test_effectors
@@ -71,7 +64,8 @@ create
 
 feature {} -- Initialization 
 
-	declare (o: like origin; fl, a: INTEGER; needs: like needed_categories)
+	declare (o: like origin; fl: INTEGER; a: NATURAL;
+			needs: like needed_categories)
 		note
 			action: "Create object corresponding to `o'."
 			fl: "flags"

@@ -20,15 +20,7 @@ inherit
 			is_equal
 		end
 
-	ET_IS_ORIGIN [ET_DYNAMIC_TYPE, IS_TYPE]
-	
-	PC_ACTIONABLE
-		undefine
-			default_create,
-			copy,
-			is_equal,
-			out
-		end
+	ET_IS_ORIGIN [ET_DYNAMIC_TYPE, IS_TYPE]	
 			
 	KL_IMPORTED_STRING_ROUTINES
 		export
