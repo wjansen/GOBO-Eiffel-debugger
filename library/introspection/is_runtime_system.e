@@ -657,7 +657,7 @@ feature {} -- Guru section
 			flags := No_gc_flag
 			assertion_check := 8
 			fast_name := ""
-			create f.make (no_name, no_name, 1, 2)
+			create f.make (no_name, no_name, 2, 1, 2)
 			create sf.make_1 (f)
 			create sr.make_1 (rf)
 			create qc
@@ -667,7 +667,7 @@ feature {} -- Guru section
 			create all_classes.make_1 (c)
 			i := all_classes.count
 			qc.add (c)
-			create rf.make (no_name, no_name, 2, 3, sf, 2, 3, 1, sr)
+			create rf.make (no_name, no_name, Routine_flag, 2, 3, sf, 2, 3, 1, sr)
 			f := rf
 			f.set_tuple_labels (sf)
 			f.set_home (c)
@@ -687,9 +687,9 @@ feature {} -- Guru section
 			create o.make (no_name, no_name, g, 0, t, 1, 2, 3, 4, 5, al, rf)
 			create b.make (0, c, 0, qt, st, sa, sc, se)
 			qt.add (b)
-			create u.make (0, 0, qt, st, sa, se)
+			create u.make (0, 0, c, qt, st, sa, se)
 			qt.add (u)
-			create s.make (0, 0, n, sa, st, se)
+			create s.make (0, 0, c, n, sa, st, se)
 			create g.make (0, n, u.fields, no_name, r)
 			t := b
 			t := s

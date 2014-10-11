@@ -540,32 +540,30 @@ internal class AliasDef : Window {
 				ok = true;
 				for (i=0; ok && i<l; i++) {
 					c = val.get_char(i);
-					ok = (i>0 && c=='_') || c.isalnum();
+					ok = i==0 ? c.isalpha() : (c=='_' || c.isalnum());
 				}
 				store.@set(iter, col, val, Item.BAD_NAME, !ok, -1);
 				if (ok) {
 					checker.clear_message();
 					if (ex!=null) list.@set(val, ex);
 				} else {
-					string msg = val[0:i-1];
-					msg += @"<span foreground='red'>$c</span>";
-					if (i<l) msg += val[i:l];
-					checker.show_message("Invalid alias name", msg);
+					checker.show_message("Invalid alias name:",
+										 val[0:i-1], @"$c", val[i:l]);
 				}
 			}
 			break;
 		case Item.VALUE:
 			if (l==0) val = bullet;
-			ok = l>0 && checker.check_syntax(val, list, gui.dg.rts);
+			ok = l>0 && checker.check_syntax(val, gui.dg.rts, list);
 			ex = checker.parsed;
 			var cycle = new Gee.ArrayList<string>();
 			if (ok && AliasExpression.is_cyclic(ex, "_"+old, cycle)) {
-				string msg = @"<span foreground='red'>$old</span>";
+				string msg = "";
 				cycle.@foreach((c) => { msg += @" -> $c "; return true; });
-				checker.show_message("Cyclic alias name definition:", msg);
+				checker.show_message("Cyclic alias name definition:", 
+									 "", @"$old", msg);
 				ok = false;
 			}
-			var nm = ex.append_name();
 			store.@set(iter, Item.EXPR, ex, 
 					   Item.VALUE, ok ? ex.append_name() : val, 
 					   Item.BAD_VALUE, !ok,
@@ -702,6 +700,7 @@ internal class AliasDef : Window {
 		delete_event.connect((e) => { do_close(); return true; });
 		
 		update(list);
+		show_all();
 	}
 
 	internal void update(Gee.Map<string,Expression> list) {
@@ -731,8 +730,6 @@ public class GUI : Window {
 	private AliasDef alias_def;
 	private Paned panel;
 
-	private Gtk.ListStore class_list;
-	private Gtk.ListStore type_list;
 	private GLib.Module module;
 
 	private string gedb;
@@ -745,72 +742,20 @@ public class GUI : Window {
 	
 	public void show_global() {
 		if (fixed==null) 
-			fixed = new FixedPart(dg, stack, data, status, type_list);
-		fixed.show();
+			fixed = new FixedPart(dg, stack, data, status);
+		((Gtk.Window)fixed.get_toplevel()).present();
 	}
 
 	public void show_sql() { 
 		if (sql==null) 
-			sql = new SqlPart(dg, stack, data, status, type_list, alias_list);
-		sql.show_all();
+			sql = new SqlPart(dg, stack, data, status, alias_list);
+		sql.present();
 	}
 
 	public void show_alias() {
 		if (alias_def==null)
 			alias_def = new AliasDef(this, alias_list);
-		alias_def.show_all();
-	}
-
-	private static int class_less(ClassText* cls1, ClassText* cls2) {
-		string n1 = ((Gedb.Name*)cls1).fast_name;
-		string n2 = ((Gedb.Name*)cls2).fast_name;
-		return n1.ascii_casecmp(n2);
-	}
-
-	private void fill_class_list(System* s) {
-		TreeIter at;
-		uint n;
-		Gee.ArrayList<ClassText*> list;
-		list = new Gee.ArrayList<ClassText*>();
-		ClassText* cls;
-		for (n=s.class_count(); n-->0;) {
-			cls = s.class_at(n);
-			if (cls!=null && cls.ident>0)  list.@add(cls);
-		}
-		list.sort(class_less);
-		class_list.clear();
-		Gee.Iterator<ClassText*> citer;
-		for (citer=list.iterator(); citer.next(); ) {
-			cls = citer.@get();
-			class_list.append(out at);
-			class_list.@set(at, ClassEnum.CLASS_IDENT, cls.ident,
-							ClassEnum.CLASS_NAME, ((Gedb.Name*)cls).fast_name, -1);
-		}
-	}
-
-	private void fill_type_list(System* s) {
-		Gedb.Type* t;
-		string name;
-		uint n;
-		Gee.ArrayList<string> list = new Gee.ArrayList<string>();
-		Gee.HashMap<string,uint> table = new Gee.HashMap<string,uint>();
-		for (n=s.type_count(); n-->0;) {
-			t = s.type_at(n);
-			if (t==null || !t.is_alive() || t.is_agent())  continue;
-			name = ((Gedb.Name*)t).fast_name;
-			list.@add(name);
-			table.@set(name, t.ident);
-		}
-		list.sort();
-		Gee.Iterator<string> titer;
-		TreeIter at;
-		type_list.clear();
-		for (titer=list.iterator(); titer.next(); ) {
-			name = titer.@get();
-			type_list.append(out at);
-			type_list.@set(at, TypeEnum.TYPE_IDENT, table.@get(name),
-						   TypeEnum.TYPE_NAME, name, -1);
-		}
+		alias_def.present();
 	}
 
 	private Frame new_frame(string name) {
@@ -830,17 +775,29 @@ public class GUI : Window {
 					return false;
 				});
 		}
-		fixed = null;
+		if (fixed!=null) {
+			GLib.Idle.@add(() => { 
+					fixed.get_toplevel().destroy(); 
+					return false;
+				});
+			fixed = null;
+		}
 		if (sql!=null) {
 // Delay closing `sql' until all events have been served:
 			GLib.Idle.@add(() => { 
 					sql.get_toplevel().destroy(); 
 					return false;
 				});
+			sql = null;
 		}
-		sql = null;
-		fill_class_list(dg.rts);
-		fill_type_list(dg.rts);
+		if (alias_def!=null) {
+// Delay closing `sql' until all events have been served:
+			GLib.Idle.@add(() => { 
+					alias_def.get_toplevel().destroy(); 
+					return false;
+				});
+			alias_def = null;
+		}
 		string fn = ((Gedb.Name*)dg.rts).fast_name;
 		command = Path.build_filename(pwd, fn);
 		fn = command + ".edg";
@@ -868,8 +825,6 @@ public class GUI : Window {
 		} catch (GLib.Error e) {
 		}
 
-		class_list = new ListStore(2, typeof(uint), typeof(string));
-		type_list = new ListStore(2, typeof(uint), typeof(string));
 		alias_list = new Gee.HashMap<string,Expression>();
 
 		title = compose_title(null, null);
@@ -889,10 +844,9 @@ public class GUI : Window {
 		if (dr!=null) {
 			console = new ConsolePart();
 			run = new RunPart(dr, stack, console, status, accel, alias_list);
-			brk = new BreakPart(dr, data, status, type_list, alias_list);
+			brk = new BreakPart(dr, data, status, alias_list);
 		}
-		source = new SourcePart(dg, brk, run, data, console, stack,
-								status, class_list);
+		source = new SourcePart(dg, brk, run, data, console, stack, status);
 		history = new History(this);
 		appearance = new Appearance(this);
 		// Set part members which could not be set during construction
@@ -934,6 +888,7 @@ public class GUI : Window {
 		box.pack_start(frame, false, false, 0);
 		right.add2(box);
 		has_resize_grip = true;
+		set_default_size(1080,800);
 		dg.new_executable.connect(() => { new_exe(); });
 		destroy.connect(main_quit);
 	}

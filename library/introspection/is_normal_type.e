@@ -80,16 +80,6 @@ feature {IS_FACTORY} -- Initialization
 			end
 		end
 
-feature -- Access 
-
-	base_class: IS_CLASS_TEXT
-			-- Type descriptor of base type.
-
-	class_name: READABLE_STRING_8
-		do
-			Result := base_class.fast_name
-		end
-
 feature -- Status 
 
 	is_normal: BOOLEAN = True

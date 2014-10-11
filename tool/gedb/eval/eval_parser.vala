@@ -59,44 +59,46 @@ namespace Eval {
 		public Parser() {}
 
 		public void init_syntax(System* s) {
-			reset();
+			reset(true);
 			system = s;
 			syntax_only = true;
 		}
 
-		public void init_stack(StackFrame* f, System* s) 
-		requires (s!=null) requires (f!=null) {
-			RoutineText* rt = f.routine.routine_text();
-			init_typed(f.target_type(), s.class_at(f.class_id), rt, 
-					   s, true);
-			frame = f;
-			syntax_only = false;
-		}
-		
-		public void init_typed(Gedb.Type* t, ClassText* ct, RoutineText* rt,
-					System* s, bool compute_now) 
+		public void init_text(ClassText* ct, RoutineText* rt, System* s) 
 		requires (s!=null) {
+			reset(true);
 			system = s;
 			base_class = ct;
 			act_text = rt;
+			syntax_only = false;
+		}
+
+		public void init_typed(Gedb.Type* t, StackFrame* f, System* s, 
+							   bool compute_now) 
+		requires (t!=null || f!=null) requires (s!=null) {
+			reset(true);
+			frame = f;
+			system = s;
 			if (t!=null) {
 				root_type = t;
-				if (rt!=null) {
-					var name = ((Gedb.Name*)rt).fast_name;
-					act_routine = t.routine_by_name(name, false);
-				}
-				if (t.is_normal()) ct = ((NormalType*)t).base_class;
+				base_class = root_type.base_class;
+			} else if (f!=null) {
+				root_type = f.target_type();
+				base_class = system.class_at(f.class_id);
+				act_routine = f.routine;
 			}
-			reset();
+			if (f!=null) {
+				act_routine = f.routine;
+				act_text = act_routine.routine_text();
+			}
 			syntax_only = false;
 			now = compute_now;
 		}
 
-		public void reset() {
+		public void reset(bool totally=false) {
 			values = new Gee.HashMap<Expression,Nonterm>();
 			places = new Gee.LinkedList<Expression>(); 
 			result = null;
-			aliases = null;
 			is_match = true;
 			n_chars_read = 0;
 			n_tokens_matched = 0;
@@ -108,10 +110,22 @@ namespace Eval {
 			missing_ident = 0;
 			error = ErrorCode.OK;
 			syntax_only = true;
+			if (totally) {
+				system = null;
+				frame = null;
+				root_type = null;
+				act_routine = null;
+				base_class = null;
+				act_text = null;
+				act_routine = null;
+				set_aliases(null);
+				set_idents(null);
+				set_prefix(null);
+			}
 		}
 
 		public Parser.as_command(System* s) requires (s!=null) {
-			init_typed(null, null, null, s, false);
+			init_text(null, null, s);
 			as_cmd = true;
 			push_state(State.CMD);
 		}
@@ -125,15 +139,21 @@ namespace Eval {
 			// stderr.printf("Syntax: at %d after matching `%s'\n", n_chars_read, last_token.name);
 		}
 		
-		public void set_aliases(Gee.Map<string,Expression> al) {
+		public void set_aliases(Gee.Map<string,Expression>? al) {
 			aliases = al;
 		}
 		
-		public void set_idents(IdentToExpression? id2expr, Object? data) {
+		public void set_idents(IdentToExpression? id2expr, Object? data=null) {
 			this.id2expr = id2expr;
 			this.data = data;
 		}
 		
+		public void set_prefix(Gee.List<Expression>? pref) {
+			prefix = pref;
+			prefix_ph = pref!=null ? pref.size : 0;
+		}
+		
+
 		private Nonterm? _result;
 		public Nonterm? result { 
 			get { return is_match ? _result : null; }
@@ -173,11 +193,13 @@ namespace Eval {
 							   bool to_compute=false, bool in_object=false) 
 		requires (v.expr!=null) {
 			var ex = (!) v.expr;
-			values.@set(ex, v);
+			values[ex] = v;
 			last_value = v;
 			if (to_compute && !syntax_only) {
-				if (ex is AliasExpression) 
-					ex = (ex as AliasExpression).alias.top();
+				if (ex is AliasExpression) {
+					var aex = ex as AliasExpression;
+					if (aex.alias!=null) return; //ex = aex.alias.top();
+				}
 				if (now) {
 					try {
 						if (frame!=null && !in_object) {
@@ -195,8 +217,9 @@ namespace Eval {
 						is_match = false;
 					}
 				} else if (!syntax_only) {
-					ClassText* ct = base_class;
-					is_match &= ex.static_check(base_class, system, frame);
+					var ct = ex.is_down() ?
+						ex.parent.base_class() : base_class;
+					is_match &= ex.static_check(ct, act_text, system, frame);
 					if (!is_match) {
 						error = ErrorCode.UNKNOWN;
 						last_token = v.token;
@@ -214,7 +237,7 @@ namespace Eval {
 			if (last_range!=null) 
 				pl = last_range;
 			else 
-				pl = ex; //new Place(ex, range);
+				pl = ex;
 			places.insert(0, pl);
 		}
 		
@@ -224,13 +247,15 @@ namespace Eval {
 			places.remove_at(0);
 		}
 		
-		internal int places_size() { return places.size; }
+		internal uint places_size() { return places.size + prefix_ph; }
 
 		internal Expression last_range;
 
 		internal Expression get_place(uint i) 
-		requires (places.size>i) { 
-			return places.@get((int)i); 
+		requires (places.size+prefix_ph>i) { 
+			int n = places.size;
+			int j = (int)i;
+			return j<n? places.@get(j) : prefix.@get(j-n); 
 		}
 
 		internal Expression? number_alias(uint id) { 
@@ -241,8 +266,10 @@ namespace Eval {
 
 		Gee.HashMap<void*,uint> known_objects;
 		private Gee.HashMap<Expression,Nonterm> values;
-		private Object? data;
+		private Gee.List<Expression> prefix;
 		private IdentToExpression? id2expr;
+		private Object? data;
+		private uint prefix_ph;
 		private bool as_cmd;
 		
 /* ------------------- Scanner ------------------- */
@@ -854,7 +881,7 @@ namespace Eval {
 				cid = cls.ident;
 				pos = 256*ln + cn;
 			ft = cls.feature_by_line(ln);
-			if (ft!=null && ft.is_routine_text()) {
+			if (ft!=null && ft.is_routine()) {
 				h.base_class = cls;
 				h.act_text = (RoutineText*)ft;
 			}
@@ -1131,6 +1158,8 @@ namespace Eval {
 			string name = token.name;
 			uint n = 0;	
 			Expression? ex = u!=null ? u.expr : null;
+			FeatureText* ft;
+			Entity* e;
 			var a = u.args!=null ? u.args.expr : null;
 			var aex = u.expr as AliasExpression;
 			if (aex!=null) {
@@ -1138,8 +1167,6 @@ namespace Eval {
 			} else if (h.syntax_only) {
 				ex = Expression.new_named(null, name, a);
 			} else {
-				FeatureText* ft;
-				Entity* e;
 				var r = h.act_routine;
 				uint nu = up!=null ? up.count : 0;
 				for (uint i=nu; i-->0;) {
@@ -1377,10 +1404,11 @@ namespace Eval {
 			var cls = sb.base_class();
 			bool ok = cls !=null ? cls._name.fast_name=="SPECIAL" : false;
 			rng = h.syntax_only
-				? new RangeExpression.named(sb, h.system)
-				: (ok ? new RangeExpression(sb, h.system) : null);
+				? new RangeExpression.named(sb)
+				: (ok ? new RangeExpression(sb) : null);
 			if (rng!=null) {
 				h.push_place(sb, rng);
+				h.register(this);
 			} else {
 				h.last_token = l;
 				h.error = ErrorCode.NO_RANGE;
@@ -1482,6 +1510,7 @@ namespace Eval {
 			if (ex!=null) {
 				exb.set_child(exb.Child.DOWN, ex);
 				b.expr = ex;
+				h.register(b);
 			} else if (h.is_match) {
 				h.not_unique = n>1;
 				h.last_token = b.token;
@@ -1567,14 +1596,14 @@ namespace Eval {
 		[Lemon(pattern="HEAPVAR(hv)")]
 		public Left._8(Parser h, Token hv) { 
 			this.from_alias(h, hv); 
-			h.register(this, true);
+			if (h.is_match) h.register(this, true); 
 		}
 		
 		[Lemon(pattern="PLACEHOLDER(p)")]
 		public Left._10(Parser h, Token p) {
 			base.from_token(h, p);
-			int sn = h.places_size();
-			int pn = p.name.length;
+			uint sn = h.places_size();
+			uint pn = p.name.length;
 			if (h.syntax_only) {
 			} else if (sn==0) {
 				h.last_token = p;
@@ -1593,7 +1622,7 @@ namespace Eval {
 			} else {
 				var pl = h.get_place(pn-1);
 				expr = pl.range!=null
-				? new RangePlaceholder(pl.range, p.name)
+				? new RangePlaceholder(pl.range, p.name, it)
 				: new Placeholder(pl, p.name, it);
 			}
 			h.register(this, true);
@@ -1838,7 +1867,7 @@ namespace Eval {
 					var c = b.base_class();
 					var ft = c.query_by_name(out n, nm, rhs==null);
 					if (n!=1) ft = null;
-					if (ft!=null && ft.is_routine_text()) 
+					if (ft!=null && ft.is_routine()) 
 						ex = Expression.new_text(b, ft, rhs);
 				}
 			}

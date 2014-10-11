@@ -81,6 +81,7 @@ feature {} -- Initialization
 							]"
 		local
 			cls: ET_CLASS
+			ocr: ET_DYNAMIC_FEATURE
 			i, n: INTEGER
 		do
 			compilation_time := actual_time_as_integer
@@ -119,7 +120,7 @@ feature {} -- Initialization
 						force_class (cls)
 						actionable_class := last_class
 						actionable_class.add_flag (Actionable_flag)
-						i := 0
+						i := 0 
 					else
 						i := i - 1
 					end
@@ -128,8 +129,13 @@ feature {} -- Initialization
 			if needs & With_root_creation /= 0 then
 				force_type (o.root_type)
 				root_type := last_type
-				root_type.force_routine (o.root_creation_procedure, True, Current)
-				root_creation_procedure := root_type.last_routine
+				ocr := o.root_creation_procedure
+				if attached root_type.routine_by_origin (ocr, Current) as r then
+					root_creation_procedure := r
+				else
+					root_type.force_routine (ocr, True, Current)
+					root_creation_procedure := root_type.last_routine
+				end
 			else
 				needed_categories := 0
 				force_type (o.root_type)
@@ -343,6 +349,9 @@ feature -- Access
 	last_agent: detachable ET_IS_AGENT_TYPE
 			-- Agent type provided by `force_agent'. 
 
+	last_once: detachable like once_at
+			-- Once routine provided by `force once'
+	
 	max_class_ident: INTEGER
 			-- Maiximum of class idents. 
 
@@ -409,13 +418,6 @@ feature -- Status setting
 				no_ident_types.force (t)
 			end
 			all_types.force (t, id)
-		end
-
-	add_once (o: like once_at)
-		do
-			all_onces.add (o)
-		ensure
-			once_set: all_onces.has(o)
 		end
 
 	add_constant (c: like constant_at)
@@ -622,8 +624,12 @@ feature -- Factory
 		do
 			force_type (root)
 			root_type := last_type
-			if attached proc as p then
-				create root_creation_procedure.declare (p, root_type, True, Current)
+			if proc /= Void then
+				if attached root_type.routine_by_origin (proc, Current) as p then 
+					root_creation_procedure := p
+				else
+					create root_creation_procedure.declare (proc, root_type, Current)
+				end
 			end
 		ensure
 			root_type_not_void: attached root_type
@@ -722,14 +728,14 @@ feature -- Factory
 			type_stack.pop (ng)
 		end
 			
-	force_routine (f: ET_DYNAMIC_FEATURE; h: ET_IS_TYPE; locals, as_create: BOOLEAN)
+	force_routine (f: ET_DYNAMIC_FEATURE; t: ET_IS_TYPE; locals, as_create: BOOLEAN)
 		note
 			action: "{
 			Search routine corresponding to `f' in `h'.
 			Create it if not found and add it to `h''s routines.
 			}"
 			f: "original routine"
-			h: "home type"
+			t: "home type"
 			locals: "set temporarily `with_locals' to true"
 		require
 			is_routine: f.static_feature.is_function
@@ -737,12 +743,32 @@ feature -- Factory
 		local
 			old_needs: like needed_categories
 		do
-			old_needs := needed_categories
-			if locals then
-				needed_categories := needed_categories | with_locals
+			if origin_table.has (f) then
+
+			else
+				old_needs := needed_categories
+				if locals then
+					needed_categories := needed_categories | with_locals
+				end
+				t.force_routine (f, as_create, Current)
+				needed_categories := old_needs
 			end
-			h.force_routine (f, as_create, Current)
-			needed_categories := old_needs
+		end
+
+	force_once (o: ET_DYNAMIC_FEATURE; target: ET_IS_TYPE)
+		local
+			static: ET_FEATURE
+		do
+			static := o.static_feature
+			if static.is_once then
+				last_once := once_by_origin (static)
+				if last_once = Void then
+					create last_once.declare(o, target, Current)
+					all_onces.add (last_once)
+				end
+			else
+				last_once := Void
+			end
 		end
 	
 feature -- Basic operation 
@@ -768,6 +794,7 @@ feature -- Basic operation
 			needs_typeset: needs_typeset
 		local
 			set: attached like type_set
+			dyn: ET_DYNAMIC_TYPE
 			i, i0, n: INTEGER
 		do
 			i0 := type_stack.count
@@ -778,12 +805,12 @@ feature -- Basic operation
 				from
 					i := list.count
 				until i = 0 loop
-					if attached list.dynamic_type (i) as dyn then
-						if attached type_by_origin (dyn) as t and then t.is_alive then
-							type_stack.push (t)
-							if needs_effectors then
-								static.add_effector (t)
-							end
+					dyn := list.dynamic_type (i)
+					if dyn /= Void and then 
+						attached type_by_origin (dyn) as t and then t.is_alive then
+						type_stack.push (t)
+						if needs_effectors then
+							static.add_effector (t)
 						end
 					end
 					i := i - 1

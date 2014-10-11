@@ -106,7 +106,8 @@ namespace Gedb {
 		ANONYMOUS_ROUTINE = 0x800,
 		INLINED = 0x1000,
 		FROZEN = 0x2000,
-		SIDE_EFFECT = 0x4000
+		SIDE_EFFECT = 0x4000,
+		ROUTINE = 0x8000
 	}
 
 /* ---------------------------------------------------------------------- */
@@ -119,7 +120,7 @@ namespace Gedb {
 	public void clean<N> (N[] list) {
 		N di, dk;
 		uint i, k;
-		if (list.length<=1)  return;
+		if (list.length<=1) return;
 		for (k=list.length-1, dk=list[k]; k>0;) {
 			di = dk;
 			--k;
@@ -213,8 +214,8 @@ namespace Gedb {
 /**
    @return Is `to_string()' equal to `s' when ignoring letter case?
 **/
-		public bool has_name (string name) {
-			return to_string().ascii_casecmp(name)==0;
+		public bool has_name(string name) {
+			return fast_name.ascii_casecmp(name)==0;
 		}
 		
 /**
@@ -246,7 +247,7 @@ namespace Gedb {
 		public string pad_right(string to, uint n) {
 			string s = append_name(to);
 			int l = s.length - to.length;
-			if (l>0)  s += string.nfill(l, ' ');	
+			if (l>0) s += string.nfill(l, ' ');	
 			return s;
 		}
 
@@ -258,7 +259,7 @@ namespace Gedb {
 		public string pad_left(string to, uint n) {
 			string s = append_name(to);
 			int l = s.length - to.length;
-			if (l>0)  s = string.nfill(l, ' ') + s; 
+			if (l>0) s = string.nfill(l, ' ') + s; 
 			return s;			
 		}
 
@@ -414,6 +415,44 @@ namespace Gedb {
    Compiler name and version.
  **/
 		public string compiler;
+
+/**
+   The unique Type implementing `ct'.
+ **/
+		public Type* as_type(ClassText* ct) requires (ct.is_basic()) {
+			switch (((Name*)ct).fast_name) {
+			case "BOOLEAN":
+				return type_at(TypeIdent.BOOLEAN);
+			case "CHARACTER_8":
+				return type_at(TypeIdent.CHARACTER_8);
+			case "CHARACTER_32":
+				return type_at(TypeIdent.CHARACTER_32);
+			case "INTEGER_8":
+				return type_at(TypeIdent.INTEGER_8);
+			case "INTEGER_16":
+				return type_at(TypeIdent.INTEGER_16);
+			case "INTEGER_32":
+				return type_at(TypeIdent.INTEGER_32);
+			case "INTEGER_64":
+				return type_at(TypeIdent.INTEGER_64);
+			case "NATURAL_8":
+				return type_at(TypeIdent.NATURAL_8);
+			case "NATURAL_16":
+				return type_at(TypeIdent.NATURAL_16);
+			case "NATURAL_32":
+				return type_at(TypeIdent.NATURAL_32);
+			case "NATURAL_64":
+				return type_at(TypeIdent.NATURAL_64);
+			case "REAL_32":
+				return type_at(TypeIdent.REAL_32);
+			case "REAL_64":
+				return type_at(TypeIdent.REAL_64);
+			case "POINTER":
+				return type_at(TypeIdent.POINTER);
+			}
+			return null;
+		}
+
 /**
    @return Descriptor of the class of name `nm';
    `null' if no class has this name.
@@ -447,7 +486,7 @@ namespace Gedb {
 				c = class_at(i); 
 				if (c!=null) list += (Name*)c;
 			}
-			var res = query_from_list(nm, list, out n);
+			var res = query_from_list(nm.up(), list, out n);
 			return (res!=null && res.is_class_text()) ? (ClassText*) res : null;
 		}
 		
@@ -458,7 +497,7 @@ namespace Gedb {
 				uint n = s.type_stack.length;
 				if (i>=n) {
 					n = i==0 ? 4 : 2*i;
-					if (n==0)  s.type_stack = new Type*[n+1];
+					if (n==0) s.type_stack = new Type*[n+1];
 					else  s.type_stack.resize((int)n);
 				}
 				s.type_stack[i] = t;
@@ -478,7 +517,7 @@ namespace Gedb {
    Pop `n' types from the `type_stack'.
 **/
 		public static void pop_types(System* s, uint n) {
-			if (n>0)  s.type_stack_count -= n;
+			if (n>0) s.type_stack_count -= n;
 		}
 
 		public Type* basic_type(uint id) {
@@ -573,7 +612,7 @@ namespace Gedb {
 					result = t;
 					m = penalty;
 				}
-				if (m==0)  break;
+				if (m==0) break;
 			}
 			return result;
 		}
@@ -680,7 +719,7 @@ namespace Gedb {
 				if (cls.is_descendant(c.home))
 					list += (Name*)c;
 			}
-			var e = query_from_list(nm, list, out n);
+			var e = query_from_list(nm.down(), list, out n);
 			if (e==null) return null;
 			return (e.is_once() || e.is_constant()) ? (Entity*)e : null;
 		}
@@ -690,22 +729,22 @@ namespace Gedb {
 			AgentType* ag;
 			uint8* faddr;
 			uint i, flags, tid;
-			if (addr==null)  return TypeIdent.NONE;
+			if (addr==null) return TypeIdent.NONE;
 			flags = stat.flags;
 			if ((flags & TypeFlag.MEMORY_CATEGORY)!=0
-				&& (flags & TypeFlag.REFERENCE)==0)  return stat.ident;
-			if (is_home_addr && addr!=null)  addr = *(void**)addr;
-			if (addr==null)  return TypeIdent.NONE;
+				&& (flags & TypeFlag.REFERENCE)==0) return stat.ident;
+			if (is_home_addr && addr!=null) addr = *(void**)addr;
+			if (addr==null) return TypeIdent.NONE;
 			tid = *(uint*)addr;
 			if ((flags & TypeFlag.AGENT_EXPRESSION)==0 
-				&& (flags & TypeFlag.AGENT)==0)  return tid;
+				&& (flags & TypeFlag.AGENT)==0) return tid;
 			for (i=all_agents.length; i-->0;) {
 				ag = all_agents[i];
-				if (ag==null)  continue;
+				if (ag==null) continue;
 				dt = ag.declared_type;
-                if (dt._type.ident!=tid)  continue;
+                if (dt._type.ident!=tid) continue;
                 faddr = addr+ag.function_offset;
-                if (ag.call_function!=*(void**)faddr)  continue;
+                if (ag.call_function!=*(void**)faddr) continue;
                 return ag._type.ident;
 			}
 			return tid;
@@ -786,7 +825,7 @@ namespace Gedb {
 						} else {
 							break;
 						}
-						if (nm[0]==']')  break;
+						if (nm[0]==']') break;
 					}
 					str = nm.substring(1).strip();
 					nm = str;
@@ -814,7 +853,7 @@ namespace Gedb {
 		internal AgentType* as_agent(uint8* a) {
 			AgentType* at=null;
 			uint8* addr;
-			if (a==null)  return null;
+			if (a==null) return null;
 			uint did = c_ident(a);
 			for (uint i=agent_count(); at==null && i-->0;) {
 				at = agent_at(i);
@@ -919,8 +958,8 @@ namespace Gedb {
 		public bool is_constant() { return _name._id==TypeIdent.CONSTANT; }
 		
 		public bool is_assignable_from(Gedb.Type* rhs) {
-			if (type==null || rhs==null)  return false;
-			if (type.ident==rhs.ident)  return true;
+			if (type==null || rhs==null) return false;
+			if (type.ident==rhs.ident) return true;
 			switch (rhs.ident) {
 			case TypeIdent.BOOLEAN:
 				return type.ident == TypeIdent.BOOLEAN;
@@ -1062,7 +1101,7 @@ namespace Gedb {
 		public RoutineText* routine_text() ensures (result!=null) {
 			Routine* r = &this;
 			FeatureText* ft = ((Entity*)r).text;
-			return ft.is_routine_text() ? (RoutineText*)ft : null;			
+			return ft.is_routine() ? (RoutineText*)ft : null;			
 		}
 
 /**
@@ -1272,6 +1311,8 @@ namespace Gedb {
 		
 		public Routine*[] inline_routines;
 		
+		public Routine*[] precursors;
+		
 /**
    Absolute location of the routine call.
  **/
@@ -1352,7 +1393,7 @@ namespace Gedb {
 /* ---------------------------------------------------------------------- */
 
 /**
-   Internal description of a class in a system.
+   Internal description of a class in an Eiffel system.
  **/
 	public struct ClassText {
 
@@ -1392,7 +1433,7 @@ namespace Gedb {
 			return (flags & RoutineFlag.INVARIANT) != 0;
 		}
 
-		public bool is_sepcial() {
+		public bool is_special() {
 			return _name.fast_name == "SPECIAL";
 		}
 
@@ -1463,7 +1504,7 @@ namespace Gedb {
 			for (uint i=feature_count(); i-->0;) {
 				ft = feature_at(i);
 				if (ft.home._name.fast_name==_name.fast_name 
-					&& ft.first_line()<=l && l<=ft.last_line())  return ft;
+					&& ft.first_line()<=l && l<=ft.last_line()) return ft;
 			}
 			return null;
 		}
@@ -1510,13 +1551,13 @@ other value means `other' is a parent class.
 			if (within!=null) {
 				for (i=within.vars.length; i-->1;) {
 					ft = within.vars[i];
-					if (ft!=null)  list += (Name*)ft;
+					if (ft!=null) list += (Name*)ft;
 				}
 			}
 			for (i=features.length; i-->0;) {
 				ft = features[i];
 				if (ft.result_text==null) continue;
-				rt = ft.is_routine_text() ? (RoutineText*)ft : null;
+				rt = ft.is_routine() ? (RoutineText*)ft : null;
 				if (rt!=null) {
 					if ((rt.argument_count<2)!=as_prefix) continue;
 				}
@@ -1526,7 +1567,7 @@ other value means `other' is a parent class.
 				}
 				list += (Name*)ft;
 			} 
-			return (FeatureText*)query_from_list(name, list, out n);
+			return (FeatureText*)query_from_list(name.down(), list, out n);
 		}
 		
 	} /* struct ClassText */
@@ -1542,6 +1583,13 @@ other value means `other' is a parent class.
 
 		public string? alias_name;
 
+		public int flags;
+
+		public bool is_attribute() { return (flags & RoutineFlag.ROUTINE)==0; }
+		public bool is_routine() { return (flags & RoutineFlag.ROUTINE)!=0; }
+		public bool is_constant() { return (flags & RoutineFlag.ONCE)!=0; }
+		public bool is_variable() { return (flags & RoutineFlag.ONCE)==0; }
+		
 /**
    Tuple labels if the feature result is of a TUPLE type. 
  **/
@@ -1605,10 +1653,6 @@ other value means `other' is a parent class.
 			return str;
 		}
 
-		public bool is_routine_text() { 
-			return _name._id==TypeIdent.ROUTINE_TEXT; 
-		}
-
 /**
    Index of tuple label.
    
@@ -1623,7 +1667,7 @@ other value means `other' is a parent class.
 			var list = new Name*[0];
 			for (int i=labels.length; i-->0;) 
 				list += (Name*)labels[i];
-			found = query_from_list(name, list, out n);
+			found = query_from_list(name.down(), list, out n);
 			if (n>1) return -(int)n;
 			if (n<1) return -1;
 			for (int i=labels.length; i-->0;) 
@@ -1676,7 +1720,7 @@ other value means `other' is a parent class.
 			FeatureText* loc;
 			for (uint i=var_count(); i-->0;) {
 				loc = vars[i];
-				if (loc!=null && loc._name.fast_name==name)  return loc;
+				if (loc!=null && loc._name.fast_name==name) return loc;
 			}
 			return null;
 		}
@@ -1689,10 +1733,10 @@ other value means `other' is a parent class.
 
 		public uint next_position(int p) {
 			uint i, n, result=uint.MAX;
-			if (instruction_positions==null)  return result;
+			if (instruction_positions==null) return result;
 			for (i=instruction_positions.length; i-->0;) {
 				n = instruction_positions[i];
-				if (n<result && p<=n)  result = n;
+				if (n<result && p<=n) result = n;
 			}
 			return result;
 		}
@@ -1714,6 +1758,11 @@ other value means `other' is a parent class.
  **/
 		public uint ident;
 
+/**
+   Descriptor of underlying class text.
+ **/
+		public ClassText* base_class;
+	
 		public string class_name;
 
 		internal Type*[] generics;
@@ -1809,10 +1858,10 @@ other value means `other' is a parent class.
 **/
 		public Routine* default_creation() {
 			Routine* r;
-			if (routines==null)  return null;
+			if (routines==null) return null;
 			for (uint i=routine_count(); i-->0;) {
 				r = routine_at(i);
-				if (r.is_default_creation())  return r;
+				if (r.is_default_creation()) return r;
 			}
 			return null;
 		}
@@ -1834,7 +1883,7 @@ other value means `other' is a parent class.
 			Routine* r;
 			for (uint i=routine_count(); i-->0;) {
 				r = routine_at(i);
-				if (r.is_bracket())  return r;
+				if (r.is_bracket()) return r;
 			}
 			return null;
 		}
@@ -1929,10 +1978,10 @@ other value means `other' is a parent class.
 		} 
 
 		public bool conforms_to(Type* t) {
-			if (t==null)  return false;
+			if (t==null) return false;
 			if (t.ident==ident) return true;
 			for (uint i=effector_count(); i-->0;) 
-				if (effector_at(i)==t)  return true;
+				if (effector_at(i)==t) return true;
 			return false;
 		}
 
@@ -1941,8 +1990,16 @@ other value means `other' is a parent class.
  **/
 		public bool is_alive() { 
 			return (flags & TypeFlag.MEMORY_CATEGORY)>0 
-			&& (flags & TypeFlag.META_TYPE)==0; }
+			&& (flags & TypeFlag.META_TYPE)==0; 
+		}
 
+/**
+   @return "Does the type's base class define an invariant clause?
+ **/
+		public bool has_invariant() {
+			return base_class.supports_invariant();
+		}
+		
 /**
    Memory size (in bytes) of instances of the current type. 
  **/
@@ -1967,7 +2024,7 @@ other value means `other' is a parent class.
 		public bool is_name_less(Type* other) {
 			uint i, n;
 			int sign;
-			if (other==null)  return true;
+			if (other==null) return true;
 			n = uint.min(other.generic_count(), generic_count());
 			sign = class_name.ascii_casecmp(other.class_name);
 			if (sign==0) {
@@ -1984,7 +2041,7 @@ other value means `other' is a parent class.
  **/
 		public bool does_effect(Type* other) {
 			for (uint i=other.effectors.length; i-->0;) {
-				if (other.effectors[i]==&this)  return true;
+				if (other.effectors[i]==&this) return true;
 			}
 			return false;
 		}
@@ -1996,7 +2053,7 @@ other value means `other' is a parent class.
 			Field* f;
 			for (uint i=field_count(); i-->0;) {
 				f = field_at(i);
-				if (f._entity.has_name(nm))  return f;
+				if (f._entity.has_name(nm)) return f;
 			}
 			return null;
 		}
@@ -2009,8 +2066,9 @@ other value means `other' is a parent class.
 			Routine* r;
 			for (uint i=routine_count(); i-->0;) {
 				r = routine_at(i);
+				if (r.is_precursor()) continue;
 				bool cr = ((r.flags & RoutineFlag.CREATION)>0) == creation;
-				if (r._entity.has_name(nm) && cr)  return r;
+				if (r._entity.has_name(nm) && cr) return r;
 			}
 			return null;
 		}
@@ -2031,7 +2089,7 @@ other value means `other' is a parent class.
 				if (ag==null) {
 					for (i=within.vars.length; i-->0;) {
 						e = (Entity*)within.vars[i];
-						if (e!=null)  list += (Name*)e;
+						if (e!=null) list += (Name*)e;
 					}
 				} else {
 					uint j=0, l=within.argument_count, k=l, m=within.vars.length;
@@ -2043,7 +2101,7 @@ other value means `other' is a parent class.
 							e = (Entity*)within.vars[k];
 							++k;
 						}
-						if (e!=null)  list += (Name*)e;
+						if (e!=null) list += (Name*)e;
 					}
 				}
 			}
@@ -2084,7 +2142,7 @@ other value means `other' is a parent class.
 				}
 				list += (Name*)r;
 			} 
-			return (Entity*)query_from_list(name, list, out n);
+			return (Entity*)query_from_list(name.down(), list, out n);
 		}
 		
 		public string append_name(string to) {
@@ -2110,7 +2168,7 @@ other value means `other' is a parent class.
 			obj = c_new_object(allocate);
 			if (use_default_creation) {
 				Routine* dc = default_creation();
-				if (dc!=null)  c_call_create(dc.call, obj);
+				if (dc!=null) c_call_create(dc.call, obj);
 			}
 			return obj;
 		}
@@ -2133,17 +2191,6 @@ other value means `other' is a parent class.
 	public struct NormalType {
 
 		public Type _type;
-/**
-   Type descriptor of base type.
- **/
-		public ClassText* base_class;
-	
-/**
-   @return "Does the type's base class define an invariant clause?
- **/
-		public bool has_invariant() {
-			return base_class.supports_invariant();
-		}
 
 	} /* struct NormalType */
 
@@ -2198,13 +2245,13 @@ other value means `other' is a parent class.
  **/
 		public Field* count() { 
 			bool ok = _type.fields!=null;
-			if (ok)  return _type.fields[0];
+			if (ok) return _type.fields[0];
 			return null; 
 		}
 
 		public Field* item_0() { 
 			bool ok = _type.fields!=null;
-			if (ok)  return _type.fields[2];
+			if (ok) return _type.fields[2];
 			return null; 
 		}
 
@@ -2250,8 +2297,8 @@ other value means `other' is a parent class.
    @return Number of items of SPECIAL object at `addr'.
  **/
 		public uint special_count(uint8* addr) {
-			if (addr==null)  return 0;
-			if (_type.fields.length==0)  return 0;
+			if (addr==null) return 0;
+			if (_type.fields.length==0) return 0;
 			addr += count().offset;
 			return *(uint*)addr;
 		}
@@ -2260,7 +2307,7 @@ other value means `other' is a parent class.
    @return Item array of SPECIAL object at `addr'.
  **/
 		public uint8* base_address(uint8* addr) {
-			if (addr==null)  return null;
+			if (addr==null) return null;
 			return  addr+item_0().offset;
 		}
 
@@ -2319,9 +2366,9 @@ other value means `other' is a parent class.
 				if (labels!=null)
 					list += (Name*)labels[i];
 			}
-			found = query_from_list(name, list, out n);
-			if (found==null)  return null;
-			if (found.is_field())  return (Field*)found;
+			found = query_from_list(name.down(), list, out n);
+			if (found==null) return null;
+			if (found.is_field()) return (Field*)found;
 			var found_name = found.fast_name;
 			for (i=_type.fields.length; i-->0;)
 				if (((Name*)labels[i]).has_name(found_name)) 
@@ -2439,9 +2486,9 @@ other value means `other' is a parent class.
 			string str = to;
 			uint i, n;
 			str += "agent ";
-			if (!is_closed_operand(0))  str += "{";
+			if (!is_closed_operand(0)) str += "{";
 			str = base_type.append_name(str);
-			if (!is_closed_operand(0))  str += "}";
+			if (!is_closed_operand(0)) str += "}";
 			str += ".";
 			str += routine_name;
 			for (i=1, n=open_operand_count+closed_operand_count; i<n; ++i) {
@@ -2451,7 +2498,7 @@ other value means `other' is a parent class.
 				else
 					str += string.nfill(1, open_operand_indicator);
 			}
-			if (n>1)  str += ")";
+			if (n>1) str += ")";
 			return str;
 		}
 
@@ -2513,7 +2560,7 @@ other value means `other' is a parent class.
  */
 	public static uint8* target(StackFrame* f) {
 		var v0 = f.routine.vars[0];
-		if (v0==null)  return null;
+		if (v0==null) return null;
 		var obj = (uint8*)f;
 		obj += v0.offset;
 		return *(uint8**)obj;

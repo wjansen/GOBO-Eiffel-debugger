@@ -36,35 +36,61 @@ and are at the same time the numbers shown in the main <span style="font-family:
 when the <span style="font-family:sans-serif">ident</span> formatting is chosen. 
 A special meaning have the idents &#X201C;<span style="font-family:monospace">0</span>&#X201D; and &#X201C;<span style="font-family:monospace">?</span>&#X201D;: 
 &#X201C;<span style="font-family:monospace">0</span>&#X201D; denotes a void reference and &#X201C;<span style="font-family:monospace">?</span>&#X201D; a reference 
-to an object that has no ident but has been created during evaluation 
-of a called function. 
-All non-reference objects are shown in the <span style="font-family:sans-serif">natural</span> format. 
+to an object that has no ident 
+since it has been created during the call of a function. 
+Data of basic expanded types are shown in the <span style="font-family:sans-serif">natural</span> format 
+and data of other expanded types are (recursively) expanded to their fields. 
 The idents remain valid as long as the debuggee is not running 
 and the the stack level is not changed. The idents are refreshed 
-after run and stop of the debuggee and when the stack level has been changed. 
+after run and stop of the debuggee and when the stack level has been changed 
+(i.e. at the same events when the idents of the <span style="font-family:sans-serif">Data</span> part are refreshed). 
 </p><p>Issuing a <span style="font-family:monospace">SELCET</span> command to this table consists of filling 
-one to three entries in the window and then clicking button <span style="font-family:sans-serif">Updata</span> 
+one to three text fields in the window and then clicking button <span style="font-family:sans-serif">Update</span> 
 (a separate update action is necessary to inform the debugger 
 that all three input fields have got their values, 
 the click on a single input field may be misleading; 
-input fields <span style="font-family:sans-serif">select</span>, <span style="font-family:sans-serif">where</span> need to be clicked 
-by their own). 
+input fields <span style="font-family:sans-serif">select</span> and <span style="font-family:sans-serif">where</span> need to be clicked 
+by their own to accept the entered string). 
 The entries are: 
 </p><dl class="description"><dt class="dt-description"><span style="font-family:sans-serif">select</span></dt><dd class="dd-description"> (optional) queries of the table&#X2019;s type 
-as expression list, may contain nested detail parts but no range parts 
-(empty means all attributes);
+as expression list (empty means all attributes);
 </dd><dt class="dt-description"><span style="font-family:sans-serif">from</span></dt><dd class="dd-description"> (mandatory) a type name as the table name;
 </dd><dt class="dt-description"><span style="font-family:sans-serif">where</span></dt><dd class="dd-description"> (optional) a boolean expression to be satisfied 
 by the objects of the table (empty means <span style="font-family:monospace">True</span>)
 </dd></dl><p>
 (see Sec.&#XA0;<a href="debug004.html#S%3AspecialFields">3.1.1</a> for entering a type name or expressions).
+The expressions of any nested level may refer to the matching object 
+by a leading placeholder &#X201C;<span style="font-family:monospace">?</span>&#X201D;. This is particularly important 
+if a name clash of a <span style="font-family:sans-serif">from</span> type&#X2019;s query with a local variable occurs: 
+the local variable takes precedence and the query 
+should be written like &#X201C;<span style="font-family:monospace">?.</span><span style="font-style:italic">query</span>&#X201D;. 
 In any case, the type name should be entered first to ensure 
 that expression validation of the two other entries can be successful 
 (the arrangement of the entries is for tradition&#X2019;s sake).
 Further, the expression list in the <span style="font-family:sans-serif">select</span> field is always extended 
 by a leading element (i.e. a leading column in the table shown): 
-the ident of the selected object. 
-</p><p>It was not indented to implement a full database, 
+the ident of the row&#X2019;s object. </p><blockquote class="quote">
+<div class="center"><span style="font-weight:bold">Restrictiona</span></div>
+<ul class="itemize"><li class="li-itemize">
+The expressions in the <span style="font-family:sans-serif">select</span> field must not contain ranges
+(precisely, they are silently ignored): 
+the number of matching indices may vary from row to row 
+and no appropriate table width can be obtained in advance. 
+</li><li class="li-itemize">The expressions in the <span style="font-family:sans-serif">select</span> and <span style="font-family:sans-serif">where</span> fields must not contain 
+object idents: the idents are newly computed and previous settings 
+have become invalid. 
+</li></ul>
+</blockquote><p>The <span style="font-family:sans-serif">SQL select</span> part allows for two policies to filter objects. 
+The policy is chosen by clicking the <span style="font-family:sans-serif">precise</span>/<span style="font-family:sans-serif">conform</span> button: 
+</p><dl class="description"><dt class="dt-description">
+<span style="font-family:sans-serif">precise</span></dt><dd class="dd-description"> 
+the object type is equal to the one specified in the <span style="font-family:sans-serif">from</span> field, 
+this must be an alive type; 
+</dd><dt class="dt-description"><span style="font-family:sans-serif">conform</span></dt><dd class="dd-description"> 
+the object type conforms to the one specified in the <span style="font-family:sans-serif">from</span> field, 
+this may be a not alive (or even a deferred) type, 
+additional attributes of descendant types are not shown. 
+</dd></dl><p>It was not intended to implement a full database, 
 so the debugger&#X2019;s <span style="font-family:monospace">SELECT</span> query is rather poor: 
 only one table is supported (no <span style="font-family:monospace">JOIN</span>), 
 no grouping (no <span style="font-family:monospace">GROUP BY</span>, <span style="font-family:monospace">HAVING</span>), 

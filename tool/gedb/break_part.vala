@@ -28,7 +28,6 @@ public class BreakPart : Box {
 
 	private TreeView view;
 	private ListStore store;
-	private ListStore type_list;
 	private ExpressionChecker checker;
 	private Gee.Map<string,Expression> aliases;
 
@@ -205,13 +204,20 @@ public class BreakPart : Box {
 		ct.text = (wi!=null && wi.address!=null) ? "%p".printf(wi.address) : "";
 	}
 	
-	private bool do_set_type(CellRenderer cell, TreeIter at, TreeIter iter) {
-		TreePath path = store.get_path(iter);
-        var ct = cell as CellRendererText;
+	private bool do_filter_types(Gedb.Type* t, void* data) {
+		if (!t.is_alive() || t.is_agent()) return false;
+		if (data==null) return true;
+		ClassText* cls = (ClassText*)data;
+		if (t.is_special() && !cls.is_special()) return false;
+		if (t.is_tuple() && !cls.is_tuple()) return false;
+		return t.base_class.descendance(cls)<uint.MAX;
+	}
+
+	private bool do_set_type(TreeModel tt, TreeIter at, TreeIter iter) {
 		string name;
 		uint id;
-		type_list.@get(at, TypeEnum.TYPE_NAME,
-					   out name, TypeEnum.TYPE_IDENT, out id, -1);
+		tt.@get(at, TypeEnum.TYPE_NAME, out name,
+				TypeEnum.TYPE_IDENT, out id, -1);
 		store.@set(iter, Item.TYPE, name, Item.TYPE_ID, id, -1);
 		return true;
 	}
@@ -228,17 +234,11 @@ public class BreakPart : Box {
 				   Item.CLS, out cid, Item.POS, out pos, -1);
 		if (tid>0 && cid==0) {
 			Gedb.Type* t = dg.rts.type_at(tid);
-			ClassText* ct;
-			if (t.is_normal()) {
-				NormalType* nt = (NormalType*)t;
-				ct = nt.base_class;
-			} else {
-				ct = dg.rts.class_by_name(t.class_name);
-			}
+			ClassText* ct = t.base_class;
 			cid = ct.ident;
 		} 
 		if (cid>0) 
-			checker.check_static(str, tid, cid, pos, aliases, dg.rts, col==Item.IF);
+			checker.check_static(str, cid, pos, dg.rts, col==Item.IF, aliases);
 	}
 
 	private void do_pre_edit(CellRenderer cell, CellEditable editor,
@@ -268,15 +268,17 @@ public class BreakPart : Box {
 		case Item.TYPE:
 			entry = editor as Entry;
 			compl = new EntryCompletion();
-			compl.set_match_func((c,k,i) => 
-				{ return checker.do_filter_type_name(c,k,i,null); });
-			compl.set_model(type_list);
+			store.@get(iter, Item.CLS, out n, -1);
+			var tl = new_type_list(dg.rts, do_filter_types, dg.rts.class_at(n));
+			compl.set_model(tl);
 			compl.set_text_column(TypeEnum.TYPE_NAME);
-			n = type_list.iter_n_children(null);
+			n = tl.iter_n_children(null);
 			n = (int)(Math.log2(n)/3.0);
 			compl.set_minimum_key_length(n);
+			compl.set_match_func((c,k,i) =>
+				{ return checker.do_filter_type_name(c,k,i,dg.rts); });
 			compl.match_selected.connect(
-				(c,m,i) => { return do_set_type(cell,i,iter); });
+				(c,m,i) => { return do_set_type(m,i,iter); });
 			compl.insert_action_text (0, "clear");
 			compl.action_activated.connect(
 				(c,i) => { 
@@ -292,8 +294,6 @@ public class BreakPart : Box {
 			entry.set_has_frame(true);
 			col = col==Item.IF_TEXT ? Item.IF : Item.PRINT;
 			entry.activate.connect((e) => { do_check_expression(e,col,iter); });
-			break;
-		default:
 			break;
 		}
 	}
@@ -348,7 +348,7 @@ public class BreakPart : Box {
 					value = "%p".printf(wi.address);
 					store.@set(iter, Item.WATCH, wi, Item.WATCH_TEXT, value, -1);
 				} else {
-					checker.set_message("No valid data item selected.", "");
+					checker.show_message("No valid data item selected.", "");
 				}
 			} 
 			if (!ok)
@@ -420,12 +420,11 @@ public class BreakPart : Box {
 		set_deep_sensitive(this, !is_running);
 	}
 
-	public BreakPart(Driver dg, DataPart d, Status st, ListStore types, 
+	public BreakPart(Driver dg, DataPart d, Status st, 
 					 Gee.Map<string,Expression> aliases) {
 		this.dg = dg;
 		data = d;
 		status = st;
-		type_list = types;
 		this.aliases = aliases;
 		orientation = Orientation.VERTICAL;
 

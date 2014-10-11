@@ -547,6 +547,7 @@ public class DataCore : Box {
 		Entity* e;
 		DeepInfo? last=null, info=null, pinfo;
 		Expression? ex;
+		uint8* addr=null;
 		string name;
 		uint tid;
 		int i;
@@ -556,6 +557,7 @@ public class DataCore : Box {
 			store.@get(iter, 
 					   ItemFlag.MODE, out mode,
 					   ItemFlag.EXPR, out ex,
+					   ItemFlag.ADDR, out addr,
 					   ItemFlag.FIELD, out e,
 					   ItemFlag.INDEX, out i, 
 					   ItemFlag.TYPE_ID, out tid,
@@ -571,7 +573,7 @@ public class DataCore : Box {
 		}
 		uint up = (main!=null && frame!=null) ? 
 			main.frame.depth-frame.depth : 0;
-		menu = new FeatureMenu(last, this, up, dg.rts);
+		menu = new FeatureMenu(last, addr, this, up, dg.rts);
 		menu.popup(null, null, null, ev.button, ev.time);
 		return true;
 	}
@@ -642,7 +644,7 @@ public class DataCore : Box {
 		cell.background = "#fff6e0";
 		cell.ellipsize = Pango.EllipsizeMode.MIDDLE;
 		name = new TreeViewColumn.with_attributes
-			("Name", cell, "text", ItemFlag.NAME,null);
+			("Name", cell, "text", ItemFlag.NAME, null);
 		name.set_data<uint>("column", ItemFlag.NAME);
 		name.add_attribute(cell, "background-set", ItemFlag.CHANGED);
 		name.min_width = 40;
@@ -652,7 +654,7 @@ public class DataCore : Box {
 		view.append_column(name);
 
 		mode = new TreeViewColumn.with_attributes
-			("", cell, "text", ItemFlag.MODE,null);
+			("", cell, "text", ItemFlag.MODE, null);
 		mode.set_data<uint>("column", ItemFlag.MODE);
 		mode.add_attribute(cell, "background-set", ItemFlag.CHANGED);
 		mode.min_width = 10;
@@ -662,7 +664,7 @@ public class DataCore : Box {
 		view.append_column(mode);
 		
 		value = new TreeViewColumn.with_attributes
-			("Value", cell, "text", ItemFlag.VALUE,null);
+			("Value", cell, "text", ItemFlag.VALUE, null);
 		value.set_data<uint>("column", ItemFlag.VALUE);
 		value.add_attribute(cell, "background-set", ItemFlag.CHANGED);
 		value.min_width = 40;
@@ -671,7 +673,7 @@ public class DataCore : Box {
 		view.append_column(value);
 
 		type = new TreeViewColumn.with_attributes
-			("Type", cell, "text", ItemFlag.TYPE,null);
+			("Type", cell, "text", ItemFlag.TYPE, null);
 		type.set_data<uint>("column", ItemFlag.TYPE);
 		type.add_attribute(cell, "background-set", ItemFlag.CHANGED);
 		type.min_width = 40;
@@ -840,7 +842,7 @@ public class DataPart : DataCore {
 		int mode;
 		m.get_iter(out iter, p);
 		m.@get(iter, ItemFlag.MODE, out mode, -1);
-		return mode!='C' && mode !='X';
+		return mode!=DataMode.CURRENT && mode!=DataMode.EXTERN;
 	}
 
 	protected override FormatStyle format_style() {
@@ -1086,7 +1088,7 @@ in print commands.""");
 					view.expand_row(store.get_path(iter), false);
 					exr.traverse_range(
 						(r) => { add_expression(r, iter, true); }, 
-						frame, null, true);
+						frame, dg.rts, null, true);
 				} catch (Error e) {
 					stderr.printf("Error !!\n");
 				}
@@ -1367,7 +1369,7 @@ public class FixedPart : DataCore {
 	}
 
 	public FixedPart(Debuggee dg, StackPart stack, DataPart data, 
-					  Status status, ListStore types) {
+					 Status status) {
 		base(dg, stack, status, false);
 		main = data;
 		w = new Window();
@@ -1532,9 +1534,8 @@ public class FixedPart : DataCore {
 		main.notify["tree-lines"].connect((d,p) => { do_tree_lines(); });
 		stack.level_selected.connect(
 			(s,f,i,p) => { do_refresh(f,i,p); });
+		show_all();
 	}
-
-	public void show() { w.show_all(); }
 
 } /* FixedPart */
 
@@ -1689,10 +1690,10 @@ public class FeatureMenu : Gtk.Menu {
 		return  ((Entity*)u).is_less((Entity*)v) ? -1 : 1;
 	}
 
-	public FeatureMenu(DeepInfo deep, DataCore data, uint up, System* s) {
+	public FeatureMenu(DeepInfo deep, uint8* obj,
+					   DataCore data, uint up, System* s) {
 		ClassText* ct;
 		Gedb.Type* t;
-		NormalType* nt;
 		Entity* e;
 		Routine* r;
 		FeatureText* x;
@@ -1709,43 +1710,41 @@ public class FeatureMenu : Gtk.Menu {
 		eval = data.main!=null ? 
 			data.main.eval : (data as DataPart).eval;
 		items = new Gee.HashMap<Gtk.MenuItem,DeepInfo>();
-
 		t = deep.tp;
 
-		item = new Gtk.MenuItem.with_label("");
+		item = new Gtk.MenuItem.with_label("");	// self
 		append(item);
+		++size;
 		item.show();
 		item.activate.connect(do_feature);
 		items.@set(item, deep);
 
-		if (t.is_normal()) {
-			nt = (NormalType*)t;
-			ct = nt.base_class;
-			i = 0;
-			for (j=t.constant_count(); j-->0;) {
-				Constant* c = t.constant_at(j);
-				e = (Entity*)c;
-				if (i==0) {
-					item = new SeparatorMenuItem();
-					append(item);
-					item.show();
-					item = new Gtk.MenuItem.with_label("Constants");
-					append(item);
-					item.show();
-					item.sensitive = false;	
-				}
-				x = e.text;
-				alias = x.alias_name!=null;
-				name = alias ? x.alias_name : e._name.fast_name;
-				name = add_short_type(name, e);
-				item = new Gtk.MenuItem.with_label(name);
+		ct = t.base_class;
+		i = 0;
+		for (j=t.constant_count(); j-->0;) {
+			Constant* c = t.constant_at(j);
+			e = (Entity*)c;
+			if (i==0) {
+				item = new SeparatorMenuItem();
 				append(item);
 				item.show();
-				item.activate.connect(do_feature);
-				down = new DeepInfo(deep, e, s, -1, deep.depth+1);
-				items.@set(item, down);
-				++i;
+				item = new Gtk.MenuItem.with_label("Constants");
+				append(item);
+				item.show();
+				item.sensitive = false;	
 			}
+			x = e.text;
+			alias = x.alias_name!=null;
+			name = alias ? x.alias_name : e._name.fast_name;
+			name = add_short_type(name, e);
+			item = new Gtk.MenuItem.with_label(name);
+			append(item);
+			++size;
+			item.show();
+			item.activate.connect(do_feature);
+			down = new DeepInfo(deep, e, s, -1, deep.depth+1);
+			items.@set(item, down);
+			++i;
 		}
 
 		n = t.field_count();
@@ -1767,6 +1766,7 @@ public class FeatureMenu : Gtk.Menu {
 				name = add_short_type(name, e);
 				item = new Gtk.MenuItem.with_label(name);
 				append(item);
+				++size;
 				item.show();
 				item.activate.connect(do_feature);
 				down = new DeepInfo(deep, e, s, -1, deep.depth+1);
@@ -1775,10 +1775,8 @@ public class FeatureMenu : Gtk.Menu {
 		}
 
 		n = t.routine_count();
-		if (t.is_normal() && !t.is_basic()) {
-			nt = (NormalType*)t;
-			if (!nt.base_class.is_debug_enabled()) n = 0;
-		}
+		if (!t.is_basic()) 
+			if (!t.base_class.is_debug_enabled()) n = 0;
 		var flist = new Gee.ArrayList<Routine*>();
 		for (i=n; i-->0;) {
 			r = t.routines[i];
@@ -1802,6 +1800,7 @@ public class FeatureMenu : Gtk.Menu {
 				if (x==null)  continue;
 				item = new Gtk.MenuItem();
 				append(item);
+				++size;
 				item.show();
 				item.activate.connect(do_feature);
 				down = new DeepInfo(deep, e, s, -1, deep.depth+1);
@@ -1826,38 +1825,37 @@ public class FeatureMenu : Gtk.Menu {
 			}
 		}
 
-		if (t.is_normal()) {
-			nt = (NormalType*)t;
-			ct = nt.base_class;
-			i = 0;
-			for (j=s.once_count(); j-->0;) {
-				Gedb.Once* o = s.once_at(j);
-				if (o.home==ct && o.is_function() && o.is_initialized()) {
-					if (i==0) {
-						item = new SeparatorMenuItem();
-						append(item);
-						item.show();
-						item = new Gtk.MenuItem.with_label("Once functions");
-						append(item);
-						item.show();
-						item.sensitive = false;	
-					}
-					e = (Entity*)o;
-					x = e.text;
-					alias = x.alias_name!=null;
-					name = alias ? x.alias_name : x._name.fast_name;
-					name = add_short_type(name, e);
-					item = new Gtk.MenuItem.with_label(name);
-					append(item);
-					item.show();
-					item.activate.connect(do_feature);
-					down = new DeepInfo(deep, e, s, -1, deep.depth+1);
-					items.@set(item, down);
-					++i;
-				}
+		ct = t.base_class;
+		i = 0;
+		for (j=s.once_count(); j-->0;) {
+			Gedb.Once* o = s.once_at(j);
+			if (o.home!=ct || !o.is_function() || !o.is_initialized()) continue;
+			if (i==0) {
+				item = new SeparatorMenuItem();
+				append(item);
+				item.show();
+				item = new Gtk.MenuItem.with_label("Once functions");
+				append(item);
+				item.show();
+				item.sensitive = false;	
 			}
+			e = (Entity*)o;
+			x = e.text;
+			alias = x.alias_name!=null;
+			name = alias ? x.alias_name : x._name.fast_name;
+			name = add_short_type(name, e);
+			item = new Gtk.MenuItem.with_label(name);
+			append(item);
+			++size;
+			item.show();
+			item.activate.connect(do_feature);
+			down = new DeepInfo(deep, e, s, -1, deep.depth+1);
+			items.@set(item, down);
+			++i;
 		}
 	}
+
+	public uint size { get; private set; }
 
 } /* class FeatureMenu */
 
@@ -1909,8 +1907,9 @@ public class EvalPart : Grid {
 		checker.reset();
 		string str = edit.get_text();
 		if (str.strip().length==0) return false; 
-		bool ok = checker.check_with_idents
-			(str, data.frame, data.dg.rts, aliases, id_to_expr, data);
+		bool ok = checker.check_dynamic
+			(str, null, data.frame, data.dg.rts, true, 
+			 aliases, null, id_to_expr, data);
 		if (!ok) return false;
 		var ex = (!) checker.parsed;
 		history.add_item(ex.append_name(), false);

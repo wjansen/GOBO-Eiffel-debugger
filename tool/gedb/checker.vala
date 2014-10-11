@@ -8,8 +8,7 @@ public class ExpressionChecker : Expander {
 	private bool as_static;
 
 	public bool do_filter_type_name(EntryCompletion compl, 
-									string key, TreeIter iter, 
-									System* s, TypeFilter? tf=null) {
+									string key, TreeIter iter, System* s) {
 		TreeModel model = compl.get_model();
 		GLib.Regex regex;
 		string name;
@@ -19,7 +18,6 @@ public class ExpressionChecker : Expander {
 		expanded = false;
 		model.@get(iter, TypeEnum.TYPE_NAME, out name, 
 				   TypeEnum.TYPE_IDENT, out tid, -1);
-		if (tf!=null && !tf(s.type_at(tid))) return false;
 		try {
 			regex = new GLib.Regex(key, GLib.RegexCompileFlags.CASELESS, 0);
 			return regex.match(name);
@@ -39,11 +37,7 @@ public class ExpressionChecker : Expander {
 				good = str.substring(n);
 				l = int.parse(good);
 				good = key.substring(0, l);
-				bad = GLib.Markup.escape_text(key.substring(l));
-				str = good + "<span foreground='red'>" + bad +"</span>";
-				label = head;
-				msg.set_markup(str);
-				expanded = true;
+				show_message(head, good, key.substring(l));
 				return false;
 			}
 		}
@@ -68,58 +62,59 @@ public class ExpressionChecker : Expander {
 		expanded = false;
 	}
 
-	public void set_message(string head, string message) {
-		label = head;
-		msg.set_markup(message);
-		expanded = true;
-	}
-
 	public Expression? parsed { get; private set; }
 
 	public Expression? expression_at(int pos, bool with_range) { 
-		if (parser==null)  return null;
+		if (parser==null) return null;
 		var val = parser.value_at(pos, with_range);
 		return val!=null ? val.expr : null;
 	}
 
 	public Eval.Parser? parser;// {get; private set; }
 
-	public bool check_syntax(string query, 
-							 Gee.Map<string,Expression> list, System* s) {
+	public void set_placeholder_prefix(Gee.List<Expression> prefix) { 
+		parser.set_prefix(prefix);
+	}
+
+	public bool check_syntax(string query, System* s,
+							 Gee.Map<string,Expression>? alias=null, 
+							 Gee.List<Expression>? prefix=null) {
 		as_static = true;
 		parser.init_syntax(s);
-		parser.set_aliases(list);
+		parser.set_aliases(alias);
+		parser.set_prefix(prefix);
 		return check(query, parser, false);
 	}
 
-	public bool check_static(string query, uint tid, uint cid, uint pos, 
-							 Gee.Map<string,Expression> list, System* s,
-							 bool as_bool)
-	requires (tid>0 || cid>0) {
-		Gedb.Type* t = tid>0 ? s.type_at(tid) : null;
-		if (cid==0 && t!=null && t.is_normal()) {
-			var nt = (NormalType*)t;
-			cid = nt.base_class.ident;
-		}
+	public bool check_static(string query, uint cid, uint pos, System* s,
+							 bool as_bool,
+							 Gee.Map<string,Expression>? alias=null, 
+							 Gee.List<Expression>? prefix=null)
+	requires (cid>0) {
 		ClassText* ct = s.class_at(cid);
 		RoutineText* rt = null;
 		if (pos>0) {
 			FeatureText* ft = ct.feature_by_line((int)pos/256);
-			if (ft!=null && ft.is_routine_text())  rt = (RoutineText*)ft;
+			if (ft!=null && ft.is_routine()) rt = (RoutineText*)ft;
 		}
-		parser.init_typed(t, ct, rt, s, false);
-		parser.set_aliases(list);
+		parser.init_text(ct, rt, s);
+		parser.set_aliases(alias);
+		parser.set_prefix(prefix);
 		as_static = true;
 		return check(query, parser, as_bool);
 	}
 
-	public bool check_with_idents(string query, StackFrame* frame, System* s, 
-								  Gee.Map<string,Expression> list,
-								  Eval.IdentToExpression? func=null, 
-								  Object? data=null) {
-		parser.init_stack(frame, s);
-		parser.set_aliases(list);
-		parser.set_idents(func, data);
+	public bool check_dynamic(string query, 
+							  Gedb.Type* home, StackFrame* f, System* s, 
+							  bool to_compute,
+							  Gee.Map<string,Expression>? alias=null,
+							  Gee.List<Expression>? prefix=null,
+							  Eval.IdentToExpression? id_func=null, 
+							  Object? data=null) {
+		parser.init_typed(home, f, s, to_compute);
+		parser.set_aliases(alias);
+		parser.set_idents(id_func, data);
+		parser.set_prefix(prefix);
 		as_static = false;
 		return check(query, parser, false);
 	}
@@ -206,7 +201,7 @@ public class ExpressionChecker : Expander {
 				if (as_static) 
 					head = "<i>Object idents not supported";
 				else
-					head += "object ident";
+					head = "<i>Invalid object ident";
 				head += "</i>:";
 				break;
 			case Eval.ErrorCode.BAD_PH_POS:
@@ -214,6 +209,9 @@ public class ExpressionChecker : Expander {
 				break;
 			case Eval.ErrorCode.BAD_PH_COUNT:
 				head = "<i>Too many placeholders</i>:";
+				break;
+			case Eval.ErrorCode.NOT_COMPUTED:
+				head = "<i>Not computable</i>:";
 				break;
 			default:
 				head = "<i>Parse error</i>:";
@@ -226,13 +224,10 @@ public class ExpressionChecker : Expander {
 			expanded = false;
 		} else {
 			parsed = null;
-			label = head;
-			good  = query.substring(0, failed.at);
-			string html = GLib.Markup.escape_text(failed.name);
-			bad = "<span foreground='red'>"+html+"</span>";
-			str = good+bad+query.substring(failed.at+failed.size);
-			msg.set_markup(str);
-			expanded = true; 
+			show_message(head, 
+						query.substring(0, failed.at), 
+						failed.name, 
+						query.substring(failed.at+failed.size));
 		}
 		return ok;
 	}
@@ -243,9 +238,18 @@ public class ExpressionChecker : Expander {
 		expanded = false;
 	}
 
-	public void show_message(string head, string msg) {
+	public void show_message(string head, string good, 
+							string? bad=null, string? rest=null) {
 		label = head;
-		this.msg.set_markup(msg);
+		string str = GLib.Markup.escape_text(good);
+		if (bad!=null) {
+			str += "<span foreground='red'>"; 
+			str += GLib.Markup.escape_text(bad);
+			str += "</span>";
+		}
+		if (rest!=null) 
+			str += GLib.Markup.escape_text(rest);
+		msg.set_markup(str);
 		expanded = true;
 	}
 

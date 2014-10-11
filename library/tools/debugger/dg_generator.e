@@ -149,10 +149,7 @@ feature {} -- Initialization
 				end
 			end
 			create import
-			entity_declaration := "static "
-			l_type := debugger.type_by_name("ROUTINE", True)
-			entity_declaration.append (l_type.c_name)
-			entity_declaration.append ("* e = 0;%N")
+			entity_declaration := "static void* e = 0;%N"
 			field_declaration := "static "
 			l_type := debugger.type_by_name("TYPE", True)
 			field_declaration.append (l_type.c_name)
@@ -269,10 +266,8 @@ feature {} -- Feature generation
 					until j = 0 loop
 						j := j - 1
 						l_routine := t.routines [j]
-						if l_routine.in_class.is_debug_enabled then
-							k := signature_index (l_routine)
-							l_routine.set_wrap (k)
-						end
+						k := signature_index (l_routine)
+						l_routine.set_wrap (k)
 					end
 				end
 			end

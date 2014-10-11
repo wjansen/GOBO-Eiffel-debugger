@@ -19,10 +19,10 @@ create
 
 feature {} -- Initialization
 
-	make (nm: READABLE_STRING_8; anm: like alias_name; l, c: INTEGER;
+	make (nm: READABLE_STRING_8; anm: like alias_name; fl, l, c: INTEGER;
 			vv: like vars; ac, lc, cc: INTEGER; inline: like inline_texts)
 		do
-			make_feature (nm, anm, l, c)
+			make_feature (nm, anm, fl, l, c)
 			if l * c > 0 then
 				create instruction_positions.make_filled (0, 1)
 				instruction_positions.put (position_as_integer (l, c), 0)

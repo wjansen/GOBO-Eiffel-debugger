@@ -26,6 +26,7 @@ inherit
 			is_string,
 			is_unicode,
 			generic_count,
+			class_name,
 			append_name
 		end
 
@@ -186,11 +187,11 @@ feature -- Access
 
 	is_agent: BOOLEAN = True
 
-	class_name: READABLE_STRING_8 
+	class_name: READABLE_STRING_8
 		once
-			Result := "AGENT"
+			Result := "SPECIAL"
 		end
-
+	
 	base: IS_TYPE
 			-- Type descriptor of the routine's base class 
 	

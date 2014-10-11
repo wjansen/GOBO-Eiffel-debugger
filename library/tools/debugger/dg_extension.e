@@ -83,8 +83,6 @@ feature -- Basic operation
 feature {} -- Extension parts
 
 	print_defines
-		local
-			l_type: IS_TYPE
 		do
 --			Precursor	-- for future use
 			h_file.put_string ("{
@@ -130,14 +128,11 @@ feature {} -- Extension parts
 			end
 			print_pos_definition
 			-- Declare `routine', `local_offset'
-			l_type := c_generator.debugger.type_by_name("ROUTINE", True)
-			h_file.put_string (l_type.c_name)
-			h_file.put_character ('*')
-			h_file.put_character (' ')
-			h_file.put_string (c_names.c_get_routine,)
+			h_file.put_string ("void* ")
+			h_file.put_string (c_names.c_get_routine)
 			h_file.put_string ("(int,int);%N")
 			h_file.put_string ("void ")
-			h_file.put_string (c_names.c_local_offset_name,)
+			h_file.put_string (c_names.c_local_offset_name)
 			h_file.put_string ("(void*,int,int);%N")
 			h_file.put_string ("#define ")
 			h_file.put_string (c_names.c_set_local)
@@ -152,10 +147,7 @@ feature {} -- Extension parts
 			h_file.put_string (c_names.c_frame_name)
 			h_file.put_string ("),index)%N")
 			-- Declare `type', `field_offset'
-			l_type := c_generator.debugger.type_by_name("TYPE", True)
-			h_file.put_string (l_type.c_name)
-			h_file.put_character ('*')
-			h_file.put_character (' ')
+			h_file.put_string ("void* ")
 			h_file.put_string (c_names.c_get_type,)
 			h_file.put_string ("(int);%N")
 			h_file.put_string ("void ")

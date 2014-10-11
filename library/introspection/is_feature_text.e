@@ -19,7 +19,7 @@ create
 
 feature {} -- Initialization 
 
-	make (nm: READABLE_STRING_8; anm: detachable STRING_8; l, c: INTEGER)
+	make (nm: READABLE_STRING_8; anm: detachable STRING_8; fl, l, c: INTEGER)
 		note
 			action: "Create a `IS_FEATURE_TEXT'."
 		require
@@ -27,6 +27,7 @@ feature {} -- Initialization
 		do
 			fast_name := nm
 			alias_name := anm
+			flags := fl
 			if l < 0 then
 				-- Make `renames' alive:
 				renames := Current
@@ -35,6 +36,7 @@ feature {} -- Initialization
 			last_pos := first_pos
 		ensure
 			name_set: fast_name.is_equal (nm)
+			flags_set: flags = fl
 			first_line_set: first_line = l
 			last_line_set: first_line = l
 			column_set: column = c
@@ -53,6 +55,8 @@ feature -- Access
 
 	result_text: detachable like home
 			-- Class of `Result' type (if any). 
+
+	flags: INTEGER
 	
 	definition: like Current
 			-- Class and feature where `Current' is defined. 
@@ -91,6 +95,36 @@ feature -- Access
 
 	first_pos, last_pos: NATURAL
 
+feature -- Status
+
+	is_attribute: BOOLEAN
+		do
+			Result := flags & Routine_flag = 0
+		ensure
+			definition: Result = (flags & Routine_flag = 0)
+		end
+	
+	is_routine: BOOLEAN
+		do
+			Result := flags & Routine_flag /= 0
+		ensure
+			definition: Result = (flags & Routine_flag /= 0)
+		end
+
+	is_constant: BOOLEAN
+		do
+			Result := flags & Once_flag /= 0
+		ensure
+			definition: Result = (flags & Once_flag /= 0)
+		end
+		
+	is_variable: BOOLEAN
+		do
+			Result := flags & Once_flag = 0
+		ensure
+			definition: Result = (flags & Once_flag = 0)
+		end
+		
 feature -- Status setting 
 
 	set_name (nm: READABLE_STRING_8)
@@ -223,6 +257,7 @@ feature {} -- Implementation
 
 invariant
 
+	when_attribute: is_attribute implies routine_tex /= Void
 	last_below_first: last_line >= first_line
 
 note

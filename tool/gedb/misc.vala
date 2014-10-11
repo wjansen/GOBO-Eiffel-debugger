@@ -1,18 +1,6 @@
 using Gtk;
 using Gedb;
 
-public enum ClassEnum {
-	CLASS_IDENT,
-	CLASS_NAME,
-	NUM_CLASS_COLS
-}
-
-public enum TypeEnum {
-	TYPE_IDENT,
-	TYPE_NAME,
-	NUM_TYPE_COLS
-}
-
 public enum ItemFlag {
 	EXPR, 
 	FIELD,
@@ -40,8 +28,8 @@ public enum DataMode {
 
 public string compose_title(string? addendum, System* rts) {
 	string title = "Gedb";
-	if (rts!=null)  title += ": " + ((Gedb.Name*)rts).fast_name;
-	if (addendum!=null)  title += " -- " + addendum;
+	if (rts!=null) title += ": " + ((Gedb.Name*)rts).fast_name;
+	if (addendum!=null) title += " -- " + addendum;
 	return title;
 }
 
@@ -120,6 +108,80 @@ public void set_deep_tooltip(Widget widget, bool yes) {
 	} else {
 		widget.has_tooltip = false;
 	}
+}
+
+private static int class_less(ClassText* cls1, ClassText* cls2) {
+	string n1 = ((Gedb.Name*)cls1).fast_name;
+	string n2 = ((Gedb.Name*)cls2).fast_name;
+	return n1.ascii_casecmp(n2);
+}
+
+public enum ClassEnum {
+	CLASS_IDENT,
+	CLASS_NAME,
+	NUM_CLASS_COLS
+}
+
+public delegate bool ClassFilterFunc(ClassText* ct, void* data=null);
+
+public Gtk.ListStore new_class_list(System* s, ClassFilterFunc filter=null,
+									void* filter_data=null) {
+	ClassText* cls;
+	uint n;
+	Gee.ArrayList<ClassText*> list = new Gee.ArrayList<ClassText*>();
+	for (n=s.class_count(); n-->0;) {
+		cls = s.class_at(n);
+		if (cls==null || cls.ident==0) continue;
+		if (filter!=null && !filter(cls,filter_data)) continue;
+		list.@add(cls);
+	}
+	list.sort(class_less);
+	var store = new ListStore(2, typeof(uint), typeof(string));
+	TreeIter at;
+	Gee.Iterator<ClassText*> citer;
+	for (citer=list.iterator(); citer.next(); ) {
+		cls = citer.@get();
+		store.append(out at);
+		store.@set(at, ClassEnum.CLASS_IDENT, cls.ident,
+				   ClassEnum.CLASS_NAME, ((Gedb.Name*)cls).fast_name, -1);
+	}
+	return store;
+}
+
+public enum TypeEnum {
+	TYPE_IDENT,
+	TYPE_NAME,
+	NUM_TYPE_COLS
+}
+
+public delegate bool TypeFilterFunc(Gedb.Type* t, void* data=null);
+
+public Gtk.ListStore new_type_list(System* s, TypeFilterFunc filter=null,
+								   void* filter_data=null) {
+	Gedb.Type* t;
+	string name;
+	uint n;
+	var store = new ListStore(2, typeof(uint), typeof(string));
+	Gee.ArrayList<string> list = new Gee.ArrayList<string>();
+	Gee.HashMap<string,uint> table = new Gee.HashMap<string,uint>();
+	for (n=s.type_count(); n-->0;) {
+		t = s.type_at(n);
+		if (t==null) continue;
+		if (filter!=null && !filter(t,filter_data)) continue;
+		name = ((Gedb.Name*)t).fast_name;
+		list.@add(name);
+		table.@set(name, t.ident);
+	}
+	list.sort();
+	Gee.Iterator<string> titer;
+	TreeIter at;
+	for (titer=list.iterator(); titer.next(); ) {
+		name = titer.@get();
+		store.append(out at);
+		store.@set(at, TypeEnum.TYPE_IDENT, table.@get(name),
+				   TypeEnum.TYPE_NAME, name, -1);
+	}
+	return store;
 }
 
 public class HistoryBox : ComboBoxText {
@@ -299,15 +361,15 @@ public static string format_value(uint8* addr, int off, bool is_home_addr,
 								  Gedb.Type* t, FormatStyle fmt,
 								  Gee.HashMap<void*,uint>? idents=null) {
 	string str = "";
-	if (addr==null)  return is_home_addr ? str : "Void";
-	if (t.is_nonbasic_expanded())  return "";
-	if (is_home_addr && t.is_nonbasic_expanded())  return str;
+	if (addr==null) return is_home_addr ? str : "Void";
+	if (t.is_nonbasic_expanded()) return "";
+	if (is_home_addr && t.is_nonbasic_expanded()) return str;
 	uint8* orig = addr;
 	weak uint8[] cc;
 	weak unichar[] uu;
 	if (is_home_addr) addr = t.dereference(addr+off);
 	if (fmt==FormatStyle.HEX) {
-		if (addr==null)  return "0x0";
+		if (addr==null) return "0x0";
 		if ((t.flags & TypeFlag.BASIC_EXPANDED) == TypeFlag.BASIC_EXPANDED) { 
 			switch (t.ident) {
 			case 1:
@@ -352,7 +414,7 @@ public static string format_value(uint8* addr, int off, bool is_home_addr,
 				str ="%016p".printf(addr);
 		}
 	} else {
-		if (addr==null)  return "Void";
+		if (addr==null) return "Void";
 		StringBuilder sb;
 		int nc = 0;
 		switch (t.ident) {
@@ -443,7 +505,7 @@ public string format_type(uint8* addr, int off, bool is_home_addr,
 						  Gedb.Type* t, FeatureText* ft=null) {
 	string str;
 	uint n;
-	if (addr==null)  return "";
+	if (addr==null) return "";
 	str = ((Gedb.Name*)t).fast_name;
 	if (!t.is_subobject()) {
 		addr = is_home_addr && addr!=null ? *(void**)(addr+off) : addr;

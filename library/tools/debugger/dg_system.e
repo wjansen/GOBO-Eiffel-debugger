@@ -1153,7 +1153,7 @@ feature -- Basic operation
 					fl := ti.flags & Reference_flag
 				end
 				create {IS_SPECIAL_TYPE} 
-					Result.make (max_type_id, fl, ti, ff, Void, Void)
+				  Result.make (max_type_id, fl, special_class, ti, ff, Void, Void)
 				Result.set_c_name (ti.c_name)
 				all_types.force (Result, Result.ident)
 			end
@@ -1326,6 +1326,12 @@ feature {} -- Implementation
 				end
 				type_enums.force (enum_val, "Gedb" + nm)
 			end
+		end
+
+	special_class: IS_CLASS_TEXT
+		once
+			max_class_id := max_class_id + 1
+			create Result.make (max_class_id, "SPECIAL", 0, Void, Void, Void)
 		end
 
 	type_ident_name: STRING = "GEDB_TYPE_IDENT_"

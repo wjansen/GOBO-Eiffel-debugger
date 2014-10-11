@@ -34,15 +34,15 @@ typedef struct _GedbOffsets GedbOffsets;
 
 #define GEDB_TYPE_TYPE (gedb_type_get_type ())
 
+#define GEDB_TYPE_CLASS_TEXT (gedb_class_text_get_type ())
+
+#define GEDB_TYPE_FEATURE_TEXT (gedb_feature_text_get_type ())
+typedef struct _GedbFeatureText GedbFeatureText;
+typedef struct _GedbClassText GedbClassText;
+
 #define GEDB_TYPE_ROUTINE (gedb_routine_get_type ())
 
 #define GEDB_TYPE_ENTITY (gedb_entity_get_type ())
-
-#define GEDB_TYPE_FEATURE_TEXT (gedb_feature_text_get_type ())
-
-#define GEDB_TYPE_CLASS_TEXT (gedb_class_text_get_type ())
-typedef struct _GedbClassText GedbClassText;
-typedef struct _GedbFeatureText GedbFeatureText;
 typedef struct _GedbEntity GedbEntity;
 
 #define GEDB_TYPE_LOCAL (gedb_local_get_type ())
@@ -182,7 +182,8 @@ typedef enum  {
 	GEDB_ROUTINE_FLAG_ANONYMOUS_ROUTINE = 0x800,
 	GEDB_ROUTINE_FLAG_INLINED = 0x1000,
 	GEDB_ROUTINE_FLAG_FROZEN = 0x2000,
-	GEDB_ROUTINE_FLAG_SIDE_EFFECT = 0x4000
+	GEDB_ROUTINE_FLAG_SIDE_EFFECT = 0x4000,
+	GEDB_ROUTINE_FLAG_ROUTINE = 0x8000
 } GedbRoutineFlag;
 
 typedef gboolean (*GedbLessFunc) (gconstpointer u, gconstpointer v, void* user_data);
@@ -196,6 +197,19 @@ struct _GedbOffsets {
 	gint item;
 };
 
+struct _GedbFeatureText {
+	GedbName _name;
+	gchar* alias_name;
+	gint flags;
+	GedbFeatureText** tuple_labels;
+	gint tuple_labels_length1;
+	GedbClassText* home;
+	GedbClassText* result_text;
+	GedbFeatureText* renames;
+	guint first_pos;
+	guint last_pos;
+};
+
 struct _GedbClassText {
 	GedbName _name;
 	guint ident;
@@ -205,18 +219,6 @@ struct _GedbClassText {
 	gint parents_length1;
 	GedbFeatureText** features;
 	gint features_length1;
-};
-
-struct _GedbFeatureText {
-	GedbName _name;
-	gchar* alias_name;
-	GedbFeatureText** tuple_labels;
-	gint tuple_labels_length1;
-	GedbClassText* home;
-	GedbClassText* result_text;
-	GedbFeatureText* renames;
-	guint first_pos;
-	guint last_pos;
 };
 
 struct _GedbEntity {
@@ -248,6 +250,8 @@ struct _GedbRoutine {
 	gint vars_length1;
 	GedbRoutine** inline_routines;
 	gint inline_routines_length1;
+	GedbRoutine** precursors;
+	gint precursors_length1;
 	void* call;
 	guint wrap;
 };
@@ -268,6 +272,7 @@ struct _GedbConstant {
 struct _GedbType {
 	GedbName _name;
 	guint ident;
+	GedbClassText* base_class;
 	gchar* class_name;
 	GedbType** generics;
 	gint generics_length1;
@@ -287,7 +292,6 @@ struct _GedbType {
 
 struct _GedbNormalType {
 	GedbType _type;
-	GedbClassText* base_class;
 };
 
 struct _GedbTupleType {
@@ -436,18 +440,18 @@ void gedb_offsets_free (GedbOffsets* self);
 GType gedb_system_get_type (void) G_GNUC_CONST;
 GType gedb_agent_type_get_type (void) G_GNUC_CONST;
 GType gedb_type_get_type (void) G_GNUC_CONST;
-GType gedb_routine_get_type (void) G_GNUC_CONST;
-GType gedb_entity_get_type (void) G_GNUC_CONST;
-GType gedb_feature_text_get_type (void) G_GNUC_CONST;
 GType gedb_class_text_get_type (void) G_GNUC_CONST;
-GedbClassText* gedb_class_text_dup (const GedbClassText* self);
-void gedb_class_text_free (GedbClassText* self);
-void gedb_class_text_copy (const GedbClassText* self, GedbClassText* dest);
-void gedb_class_text_destroy (GedbClassText* self);
+GType gedb_feature_text_get_type (void) G_GNUC_CONST;
 GedbFeatureText* gedb_feature_text_dup (const GedbFeatureText* self);
 void gedb_feature_text_free (GedbFeatureText* self);
 void gedb_feature_text_copy (const GedbFeatureText* self, GedbFeatureText* dest);
 void gedb_feature_text_destroy (GedbFeatureText* self);
+GedbClassText* gedb_class_text_dup (const GedbClassText* self);
+void gedb_class_text_free (GedbClassText* self);
+void gedb_class_text_copy (const GedbClassText* self, GedbClassText* dest);
+void gedb_class_text_destroy (GedbClassText* self);
+GType gedb_routine_get_type (void) G_GNUC_CONST;
+GType gedb_entity_get_type (void) G_GNUC_CONST;
 GedbEntity* gedb_entity_dup (const GedbEntity* self);
 void gedb_entity_free (GedbEntity* self);
 void gedb_entity_copy (const GedbEntity* self, GedbEntity* dest);
@@ -513,6 +517,7 @@ guint gedb_system_once_count (GedbSystem *self);
 GedbOnce* gedb_system_once_at (GedbSystem *self, guint i);
 guint gedb_system_constant_count (GedbSystem *self);
 GedbConstant* gedb_system_constant_at (GedbSystem *self, guint i);
+GedbType* gedb_system_as_type (GedbSystem *self, GedbClassText* ct);
 GedbClassText* gedb_system_class_by_name (GedbSystem *self, const gchar* name);
 void gedb_system_push_type (GedbSystem* s, guint id);
 GedbType* gedb_system_top_type (GedbSystem* s);
@@ -597,7 +602,7 @@ gboolean gedb_class_text_is_deferred (GedbClassText *self);
 gboolean gedb_class_text_is_actionable (GedbClassText *self);
 gboolean gedb_class_text_is_debug_enabled (GedbClassText *self);
 gboolean gedb_class_text_supports_invariant (GedbClassText *self);
-gboolean gedb_class_text_is_sepcial (GedbClassText *self);
+gboolean gedb_class_text_is_special (GedbClassText *self);
 gboolean gedb_class_text_is_tuple (GedbClassText *self);
 guint gedb_class_text_parent_count (GedbClassText *self);
 gboolean gedb_class_text_valid_parent (GedbClassText *self, guint i);
@@ -610,6 +615,10 @@ GedbFeatureText* gedb_class_text_feature_by_line (GedbClassText *self, guint l);
 guint gedb_class_text_descendance (GedbClassText *self, GedbClassText* other);
 gboolean gedb_class_text_is_descendant (GedbClassText *self, GedbClassText* other);
 GedbFeatureText* gedb_class_text_query_by_name (GedbClassText *self, guint* n, const gchar* name, gboolean as_prefix, GedbRoutineText* within);
+gboolean gedb_feature_text_is_attribute (GedbFeatureText *self);
+gboolean gedb_feature_text_is_routine (GedbFeatureText *self);
+gboolean gedb_feature_text_is_constant (GedbFeatureText *self);
+gboolean gedb_feature_text_is_variable (GedbFeatureText *self);
 GedbFeatureText* gedb_feature_text_definition (GedbFeatureText *self);
 gboolean gedb_feature_text_has_line (GedbFeatureText *self, guint l);
 gboolean gedb_feature_text_has_position (GedbFeatureText *self, guint l, guint c);
@@ -617,7 +626,6 @@ guint gedb_feature_text_first_line (GedbFeatureText *self);
 guint gedb_feature_text_last_line (GedbFeatureText *self);
 guint gedb_feature_text_column (GedbFeatureText *self);
 gchar* gedb_feature_text_append_label (GedbFeatureText *self, const gchar* to, const gchar* item);
-gboolean gedb_feature_text_is_routine_text (GedbFeatureText *self);
 gint gedb_feature_text_item_by_label (GedbFeatureText *self, const gchar* name);
 gboolean gedb_routine_text_has_position (GedbRoutineText *self, guint l, guint c, gboolean body_only);
 gboolean gedb_routine_text_has_rescue (GedbRoutineText *self);
@@ -682,6 +690,7 @@ gboolean gedb_type_is_tuple (GedbType *self);
 gboolean gedb_type_is_agent (GedbType *self);
 gboolean gedb_type_conforms_to (GedbType *self, GedbType* t);
 gboolean gedb_type_is_alive (GedbType *self);
+gboolean gedb_type_has_invariant (GedbType *self);
 guint gedb_type_field_bytes (GedbType *self);
 gboolean gedb_type_is_less (GedbType *self, GedbType* other);
 gboolean gedb_type_is_name_less (GedbType *self, GedbType* other);
@@ -692,7 +701,6 @@ GedbEntity* gedb_type_query_by_name (GedbType *self, guint* n, const gchar* name
 gchar* gedb_type_append_name (GedbType *self, const gchar* to);
 void* gedb_type_new_instance (GedbType *self, gboolean use_default_creation);
 guint8* gedb_type_dereference (GedbType *self, void* addr);
-gboolean gedb_normal_type_has_invariant (GedbNormalType *self);
 GType gedb_expanded_type_get_type (void) G_GNUC_CONST;
 GedbExpandedType* gedb_expanded_type_dup (const GedbExpandedType* self);
 void gedb_expanded_type_free (GedbExpandedType* self);

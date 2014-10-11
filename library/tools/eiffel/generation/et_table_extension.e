@@ -83,7 +83,7 @@ feature {} -- Print C structs
 			end
 			if a_type.is_alive then
 				na := a_type.field_count
-				if a_type.is_normal and then compilee.needs_routines then
+				if compilee.needs_routines then
 					nr := a_type.routine_count
 				end
 			end
@@ -463,6 +463,9 @@ feature -- Building runtime descriptors
 			if a_type.is_alive then
 				put_field_table (a_type)
 			end
+			if compilee.needs_routines then
+				put_routine_table (a_type)
+			end
 			put_generic_table (a_type)
 			put_type_struct (a_type)
 		end
@@ -474,6 +477,9 @@ feature -- Building runtime descriptors
 					put_field_table (a_type)
 				end
 				put_generic_table (a_type)
+			end
+			if compilee.needs_routines then
+				put_routine_table (a_type)
 			end
 			put_type_struct (a_type)
 		end

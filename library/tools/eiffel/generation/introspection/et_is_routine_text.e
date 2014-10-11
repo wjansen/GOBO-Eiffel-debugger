@@ -47,6 +47,10 @@ feature {} -- Initialization
 			k, n: INTEGER
 		do
 			Precursor (f, h, s)
+			flags := Routine_flag
+			if f.is_once then
+				flags := flags | Once_flag
+			end
  			if attached {ET_INTERNAL_ROUTINE} f as ir then
 				set_compound_positions (ir.compound, ir.rescue_clause, ir.end_keyword)
 			end
@@ -56,13 +60,18 @@ feature {} -- Initialization
 											r: ET_IS_ROUTINE; h: like home; s: ET_IS_SYSTEM)
 		local
 			kw: ET_KEYWORD
+			fl: INTEGER
 		do
+			fl := Routine_flag
+			if r.is_once then
+				fl := fl | Once_flag
+			end
 			if attached r.alias_name as anm then
 				-- workaround to avoid a call on void target:
-				make (r.fast_name, anm, 0, 0, Void,
+				make (r.fast_name, anm, fl, 0, 0, Void,
 					r.argument_count, r.local_count, r.scope_var_count, Void)
 			else
-				make (r.fast_name, Void, 0, 0, Void,
+				make (r.fast_name, Void, fl, 0, 0, Void,
 					r.argument_count, r.local_count, r.scope_var_count, Void)
 			end
 			home := h

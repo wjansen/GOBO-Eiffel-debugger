@@ -1049,6 +1049,7 @@ namespace Gedb {
 
 		[Lemon(pattern="CREATE Identifier(i) DOT Query(q)")]
 		public Create._1(Parser h, Identifier i, Query q) { 
+			q.set_parent(i);
 			h.ident_matched(q);
 		}
 
@@ -1387,16 +1388,16 @@ namespace Gedb {
 			q.size = c!=null ? c.q.size : size;
 			if (arg!=null)  q.size += (arg.at-at) + (arg.size-1);
 			ClassText* home = null;
+			RoutineText* rt = null;
+			uint n;
 			if (p!=null) {
 				set_parent(p);
 			} else if (ft!=null) {
-				uint n;
 				home = ft.home;
-				RoutineText* rt = ft.is_routine_text() ? 
-					(RoutineText*)ft : null; 
+				rt = ft.is_routine() ? (RoutineText*)ft : null; 
 				q.ft = home.query_by_name(out n, name, arg==null, rt);
 				if (n==1 && q.ft==null)
-					q.ft = home.feature_by_name(name, true);
+					q.ft = null; //home.feature_by_name(name, true);
 			}
 		}
 		
@@ -1407,12 +1408,10 @@ namespace Gedb {
 
 		public void set_parent(Classified p) {
 			ClassText* home = p.q.ft!=null ? p.q.ft.result_text : p.q.cls;
-			uint n;
-			if (home==null) return;
+			uint n = 0;
 			q.p = p.q;
-			q.ft = home.query_by_name(out n, name);
-			if (n==1 && q.ft==null) 
-				q.ft = home.feature_by_name(name, true);
+			if (home==null) return;
+			q.ft = home.feature_by_name(name, true);
 		}
 	}
 	
@@ -1838,7 +1837,7 @@ namespace Gedb {
 
 		[Lemon(pattern="Args(a) COMMA Expr(x)")]
 		public Args._2(Parser h, Args aa, Expr x) { 
-			base.from_token(h.ft, x, aa); 
+			base.from_token(h.ft, x); 
 		}
 	}
 	

@@ -428,7 +428,8 @@ one can select from the combobox when this becomes convenient.
 While class names never include generic parameters 
 a type name may contain actual generic parameters, 
 in this case the opening bracket has to be escaped during input 
-by a backslash since the bracket is a special symbol of regular expressions. </p>
+by a backslash since the bracket is a special symbol of regular expressions 
+(the latter meaning takes precedence during input).</p>
 <!--TOC paragraph id="sec11" Expressions-->
 <h4 id="sec11" class="paragraph">Expressions</h4><!--SEC END --><p><a id="S:expressionField"></a>
 Parts <span style="font-family:sans-serif">Run</span>, <span style="font-family:sans-serif">Breakpoints</span>, <span style="font-family:sans-serif">SQL select</span>, and <span style="font-family:sans-serif">Evaluation</span>, 
@@ -443,7 +444,7 @@ by clicking the button on the field&#X2019;s right end.
 a so-called <span style="font-family:sans-serif">Expander</span> widget close to this field 
 (several of those fields in the same part share the <span style="font-family:sans-serif">Expander</span>), 
 here consisting of two text lines. The first line is generally 
-up to a leading <span style="font-family:sans-serif">expand/compess</span> icon empty while the second line is hidden
+up to a leading <span style="font-family:sans-serif">expand/compress</span> icon empty while the second line is hidden
 (clicking the icon shows and hides the second line). 
 If a validation error occurs then the first line contains an error description
 and the second (now made visible) contains the expression in question 
@@ -478,7 +479,7 @@ Menu <span style="font-family:sans-serif">Window</span> has the following items 
 </dd><dt class="dt-description"><span style="font-family:sans-serif"><U>G</U></span><span style="font-family:sans-serif">lobal data</span></dt><dd class="dd-description"> opens a window showing global data 
 (constant attributes, values of once functions);
 </dd><dt class="dt-description"><span style="font-family:sans-serif">SQL </span><span style="font-family:sans-serif"><U>s</U></span><span style="font-family:sans-serif">elect</span></dt><dd class="dd-description"> opens a window for selecting 
-and displaying data analogously to the <span style="font-style:oblique">SQL</span> command <span style="font-family:monospace">select</span>; 
+and displaying data analogously to the <span style="font-style:oblique">SQL</span> command <span style="font-family:monospace">SELECT</span>; 
 </dd><dt class="dt-description"><span style="font-family:sans-serif"><U>A</U></span><span style="font-family:sans-serif">lias definition</span></dt><dd class="dd-description"> opens a window showing 
 a table of alias definitions, the table entries are editable. 
 </dd></dl><p> 
@@ -639,7 +640,7 @@ This may cause the program state to be incorrect after <span style="font-family:
 </li><li class="li-itemize">Store and restore make a deep traversal through the objects reachable 
 from the current routine, so these actions may take some time. 
 </li><li class="li-itemize">The program state is written to a binary file 
-<span style="font-style:italic">debuggee</span><span style="font-family:sans-serif">.m</span><span style="font-style:italic">n</span> in a temporary directory 
+<span style="font-style:italic">debuggee</span><span style="font-family:monospace">.m</span><span style="font-style:italic">n</span> in a temporary directory 
 (<span style="font-style:italic">n</span> is a counter). 
 This file should not be viewed or printed and must not be modified 
 (it is deleted at end of the debugging session).
@@ -938,7 +939,7 @@ If the feature name under the mouse pointer is highlighted light pink
 then the <span style="font-family:sans-serif">Evaluation</span> part&#X2019;s <span style="font-family:sans-serif">Expr</span> field is cleared, 
 the feature is inserted in the field, and the evaluation is done immediately. 
 </dd></dl><p>
-The various <span style="font-family:monospace">Control</span> characters may be read as &#X201C;show actual&#X201D;,
+The various control characters may be read as &#X201C;show actual&#X201D;,
 &#X201C;breakpoint&#X201D;, &#X201C;delete breakpoint&#X201D;, &#X201C;go to&#X201D;, &#X201C;go to in any case!&#X201D;, 
 &#X201C;text of&#X201D;, &#X201C;evaluate&#X201D;, and &#X201C;evaluate now!&#X201D;, respectively.
 </p><p>Some final remarks on the phrases &#X201C;routine in the call stack&#X201D;
@@ -948,15 +949,15 @@ of the selected level in the <span style="font-family:sans-serif">Call stack</sp
 or the routine of a higher level 
 (for implementation reasons, routines on lower levels are not accessible). 
 If the routine occurs several times then action <span style="font-family:monospace">Control-.</span> 
-and background coloring for the actual point select the one 
+and background colouring for the actual point select the one 
 closest to the selected level. 
 </p><p>The location for the breakpoint is the first underlined 
 text position <U>left</U> or <U>above</U> the insertion cursor, 
 it is at the same time a position where a <span style="font-family:sans-serif">Next</span> command stops. </p>
 <!--TOC subsection id="sec26" Console part-->
 <h3 id="sec26" class="subsection">3.6&#XA0;&#XA0;Console part</h3><!--SEC END --><p><a id="S:console"></a>
-The <span style="font-family:sans-serif">Console</span> part is available only if the debugger is used as runtime analyser 
-(otherwise, it stays hidden). 
+The <span style="font-family:sans-serif">Console</span> part is available only if the debugger is used 
+as runtime analyser (otherwise, it stays hidden). 
 </p><p>The <span style="font-family:sans-serif">Console</span> part is a text field of (nearly) black background 
 containing the debuggee&#X2019;s output by <span style="font-family:monospace">io.output</span> (white), 
 <span style="font-family:monospace">io.error</span> (light pink), and the user input read by <span style="font-family:monospace">io.input</span> (light blue). 
@@ -1023,7 +1024,7 @@ a tree displaying objects and their fields and a row of buttons.
 </p><blockquote class="figure"><div class="center"><hr style="width:80%;height:2"></div>
 <div class="center"><img src="debug006.png"></div>
 <div class="caption"><table style="border-spacing:6px;border-collapse:separate;" class="cellpading0"><tr><td style="vertical-align:top;text-align:left;" >Figure 6: The <span style="font-family:sans-serif">Data</span> part.
-The <span style="font-family:monospace">*</span> in the second column denotes the <span style="font-family:monospace">Current</span> object
+The <span style="font-family:monospace">*</span> in the second column denotes the <span style="font-family:monospace">Current</span> object 
 and <span style="font-family:monospace">A</span> denotes a routine argument, 
 the other contents should be clear.</td></tr>
 </table></div><a id="F:data"></a>
@@ -1035,7 +1036,7 @@ fields of an object may be displayed as subtrees.
 The nodes of the tree contain the name of the object or field, 
 its category (see below), its value, and its type. 
 The category is a single letter meaning
-</p><dl class="description"><dt class="dt-description"><span style="font-family:sans-serif">*</span></dt><dd class="dd-description"> the <span style="font-weight:bold"><span style="font-family:monospace">Current</span></span> object; 
+</p><dl class="description"><dt class="dt-description"><span style="font-family:sans-serif">*</span></dt><dd class="dd-description"> the <span style="font-family:monospace">Current</span> object; 
 </dd><dt class="dt-description">(empty)</dt><dd class="dd-description"> an attribute of the node&#X2019;s parent object;
 </dd><dt class="dt-description"><span style="font-family:sans-serif">A</span></dt><dd class="dd-description"> an argument of the current routine;
 </dd><dt class="dt-description"><span style="font-family:sans-serif">L</span></dt><dd class="dd-description"> a local variable; 
@@ -1140,7 +1141,7 @@ if assignment is supported and if this set is not trivial
 The menu is for information display only, 
 selecting an item has no effect. </p>
 <!--TOC subsubsection id="sec31" More data windows-->
-<h4 id="sec31" class="subsubsection">3.8.3&#XA0;&#XA0;More data windows</h4><!--SEC END --><p><a id="S:moreData"></a>
+<h4 id="sec31" class="subsubsection">3.8.3&#XA0;&#XA0;More data windows</h4><!--SEC END --><p><a id="S:moreData"></a> 
 More <span style="font-family:sans-serif">Data</span> windows can be opened from menu <span style="font-family:sans-serif">Window </span>&#X2192;<span style="font-family:sans-serif"> New data</span>, 
 they contain the data tree and additionally a combobox on top 
 to select a stack level and the buttons <span style="font-family:sans-serif">manually/automatic</span>, 
@@ -1203,35 +1204,61 @@ and are at the same time the numbers shown in the main <span style="font-family:
 when the <span style="font-family:sans-serif">ident</span> formatting is chosen. 
 A special meaning have the idents &#X201C;<span style="font-family:monospace">0</span>&#X201D; and &#X201C;<span style="font-family:monospace">?</span>&#X201D;: 
 &#X201C;<span style="font-family:monospace">0</span>&#X201D; denotes a void reference and &#X201C;<span style="font-family:monospace">?</span>&#X201D; a reference 
-to an object that has no ident but has been created during evaluation 
-of a called function. 
-All non-reference objects are shown in the <span style="font-family:sans-serif">natural</span> format. 
+to an object that has no ident 
+since it has been created during the call of a function. 
+Data of basic expanded types are shown in the <span style="font-family:sans-serif">natural</span> format 
+and data of other expanded types are (recursively) expanded to their fields. 
 The idents remain valid as long as the debuggee is not running 
 and the the stack level is not changed. The idents are refreshed 
-after run and stop of the debuggee and when the stack level has been changed. 
+after run and stop of the debuggee and when the stack level has been changed 
+(i.e. at the same events when the idents of the <span style="font-family:sans-serif">Data</span> part are refreshed). 
 </p><p>Issuing a <span style="font-family:monospace">SELCET</span> command to this table consists of filling 
-one to three entries in the window and then clicking button <span style="font-family:sans-serif">Updata</span> 
+one to three text fields in the window and then clicking button <span style="font-family:sans-serif">Update</span> 
 (a separate update action is necessary to inform the debugger 
 that all three input fields have got their values, 
 the click on a single input field may be misleading; 
-input fields <span style="font-family:sans-serif">select</span>, <span style="font-family:sans-serif">where</span> need to be clicked 
-by their own). 
+input fields <span style="font-family:sans-serif">select</span> and <span style="font-family:sans-serif">where</span> need to be clicked 
+by their own to accept the entered string). 
 The entries are: 
 </p><dl class="description"><dt class="dt-description"><span style="font-family:sans-serif">select</span></dt><dd class="dd-description"> (optional) queries of the table&#X2019;s type 
-as expression list, may contain nested detail parts but no range parts 
-(empty means all attributes);
+as expression list (empty means all attributes);
 </dd><dt class="dt-description"><span style="font-family:sans-serif">from</span></dt><dd class="dd-description"> (mandatory) a type name as the table name;
 </dd><dt class="dt-description"><span style="font-family:sans-serif">where</span></dt><dd class="dd-description"> (optional) a boolean expression to be satisfied 
 by the objects of the table (empty means <span style="font-family:monospace">True</span>)
 </dd></dl><p>
 (see Sec.&#XA0;<a href="#S%3AspecialFields">3.1.1</a> for entering a type name or expressions).
+The expressions of any nested level may refer to the matching object 
+by a leading placeholder &#X201C;<span style="font-family:monospace">?</span>&#X201D;. This is particularly important 
+if a name clash of a <span style="font-family:sans-serif">from</span> type&#X2019;s query with a local variable occurs: 
+the local variable takes precedence and the query 
+should be written like &#X201C;<span style="font-family:monospace">?.</span><span style="font-style:italic">query</span>&#X201D;. 
 In any case, the type name should be entered first to ensure 
 that expression validation of the two other entries can be successful 
 (the arrangement of the entries is for tradition&#X2019;s sake).
 Further, the expression list in the <span style="font-family:sans-serif">select</span> field is always extended 
 by a leading element (i.e. a leading column in the table shown): 
-the ident of the selected object. 
-</p><p>It was not indented to implement a full database, 
+the ident of the row&#X2019;s object. </p><blockquote class="quote">
+<div class="center"><span style="font-weight:bold">Restrictiona</span></div>
+<ul class="itemize"><li class="li-itemize">
+The expressions in the <span style="font-family:sans-serif">select</span> field must not contain ranges
+(precisely, they are silently ignored): 
+the number of matching indices may vary from row to row 
+and no appropriate table width can be obtained in advance. 
+</li><li class="li-itemize">The expressions in the <span style="font-family:sans-serif">select</span> and <span style="font-family:sans-serif">where</span> fields must not contain 
+object idents: the idents are newly computed and previous settings 
+have become invalid. 
+</li></ul>
+</blockquote><p>The <span style="font-family:sans-serif">SQL select</span> part allows for two policies to filter objects. 
+The policy is chosen by clicking the <span style="font-family:sans-serif">precise</span>/<span style="font-family:sans-serif">conform</span> button: 
+</p><dl class="description"><dt class="dt-description">
+<span style="font-family:sans-serif">precise</span></dt><dd class="dd-description"> 
+the object type is equal to the one specified in the <span style="font-family:sans-serif">from</span> field, 
+this must be an alive type; 
+</dd><dt class="dt-description"><span style="font-family:sans-serif">conform</span></dt><dd class="dd-description"> 
+the object type conforms to the one specified in the <span style="font-family:sans-serif">from</span> field, 
+this may be a not alive (or even a deferred) type, 
+additional attributes of descendant types are not shown. 
+</dd></dl><p>It was not intended to implement a full database, 
 so the debugger&#X2019;s <span style="font-family:monospace">SELECT</span> query is rather poor: 
 only one table is supported (no <span style="font-family:monospace">JOIN</span>), 
 no grouping (no <span style="font-family:monospace">GROUP BY</span>, <span style="font-family:monospace">HAVING</span>), 
@@ -1243,9 +1270,12 @@ but there is implicit sorting by GUI manipulation). </p>
 <div class="center"><img src="debug008.png"></div>
 <div class="caption"><table style="border-spacing:6px;border-collapse:separate;" class="cellpading0"><tr><td style="vertical-align:top;text-align:left;" >Figure 8: The <span style="font-family:sans-serif">Evaluation</span> part: 
 an expression list entered in the <span style="font-family:sans-serif">Expr</span> field 
-and its value in the <span style="font-family:sans-serif">Value</span> field. Observe that the abbreviated 
-query names have been correctly expanded.</td></tr>
-</table></div><a id="F:eval"></a>
+and its value in the <span style="font-family:sans-serif">Value</span> field. 
+Observe that the abbreviated query names entered 
+into the <span style="font-family:sans-serif">Expr</span> field have been correctly expanded in the <span style="font-family:sans-serif">Value</span> field.
+</td></tr>
+</table></div>
+<a id="F:eval"></a>
 <div class="center"><hr style="width:80%;height:2"></div></blockquote>
 <!--TOC subsubsection id="sec34" Evaluation-->
 <h4 id="sec34" class="subsubsection">3.10.1&#XA0;&#XA0;Evaluation</h4><!--SEC END --><p><a id="S:compute"></a>
@@ -1316,7 +1346,8 @@ for the related object is shown.
 When the mouse hovers over a feature name whose definition can be displayed
 it is not only highlighted with light blue or light pink background 
 (see Sec.&#XA0;<a href="#S%3Ahighlights">3.5.1</a>), 
-also the name of its defining class is shown in the status bar. 
+also the name of its defining class is shown in the status bar 
+if this class is not the actual class. 
 Moreover if the feature can be computed (highlighted light pink) 
 and if the evaluation does not involve function calls 
 then the value is shown additionally. 
@@ -1429,10 +1460,10 @@ The more sophisticated expressions are composed as follows:
 The <span style="font-style:italic">index_range</span> will be discussed in Sec.&#XA0;<a href="#S%3AevalArrays">4.3</a>. 
 The expressions within the braces of <span style="font-style:italic">details</span> may start 
 (besides the start item of arbitrary <span style="font-style:italic">expression</span>s) 
-with one or more place-holders <span style="font-family:sans-serif">?</span> 
+with one or more place-holders <span style="font-family:monospace">?</span> 
 referring to the value of the <span style="font-style:italic">expression</span> in front of the braces 
-(if just one <span style="font-family:sans-serif">?</span>) 
-or in front of the <span style="font-style:italic">p</span><sup>th</sup> nested braces (if <span style="font-style:italic">p</span> placeholders). 
+(if just one <span style="font-family:monospace">?</span>) 
+or in front of the <span style="font-style:italic">p</span>-th nested braces (if <span style="font-style:italic">p</span> placeholders). 
 In contrast to <span style="font-style:italic">expression</span>s, <span style="font-style:italic">detailed_expression</span>s 
 may not be further referenced. 
 </p><p>Whether a simple expression is required on input or an expression 
@@ -1454,16 +1485,16 @@ including the limits;
 </li><li class="li-itemize">two integer <span style="font-style:italic">expression</span>s separated by a dollar sign 
 (say <span style="font-style:italic">first</span> and <span style="font-style:italic">count</span>) 
 select <span style="font-style:italic">count</span> elements starting at index <span style="font-style:italic">first</span>; 
-</li><li class="li-itemize">keyword <span style="font-family:sans-serif">all</span>: select all items; 
-</li><li class="li-itemize">keyword <span style="font-family:sans-serif">if</span> followed by a boolean <span style="font-style:italic">expression</span>: 
+</li><li class="li-itemize">keyword <span style="font-family:monospace">all</span>: select all items; 
+</li><li class="li-itemize">keyword <span style="font-family:monospace">if</span> followed by a boolean <span style="font-style:italic">expression</span>: 
 select the items satisfying this <span style="font-style:italic">expression</span> 
 where the running array item and index are referred to 
-by <span style="font-family:sans-serif">?</span> and <span style="font-family:sans-serif">!</span>, respectively. 
+by <span style="font-family:monospace">?</span> and <span style="font-family:monospace">!</span>, respectively. 
 </li></ul><p>
 Each of these notations define a <span style="font-style:italic">detailed_expression</span> that cannot 
 be further referenced, but <span style="font-style:italic">details</span> in braces may be added. 
-If so then a placeholder <span style="font-family:sans-serif">?</span> in the <span style="font-style:italic">details</span> part refers to 
-the running array element, and the placeholder <span style="font-family:sans-serif">!</span> 
+If so then a placeholder <span style="font-family:monospace">?</span> in the <span style="font-style:italic">details</span> part refers to 
+the running array element, and the placeholder <span style="font-family:monospace">!</span> 
 (precisely, the leading placeholder of a sequence of placeholders) 
 denotes the index itself. 
 </p><blockquote class="quote">
@@ -1528,10 +1559,10 @@ Define the alias name <span style="font-family:monospace">pairs</span> as
 whose keys are of a reference type. 
 Then expression <code>table { _pairs }</code> expands to 
 <pre class="verbatim">  table { ?.keys [[if ? /= Void]] { ??.content[!] } }
-</pre>where the first <span style="font-family:sans-serif">?</span> and the <span style="font-family:sans-serif">??</span> 
+</pre>where the first <span style="font-family:monospace">?</span> and the <span style="font-family:monospace">??</span> 
 refer to <span style="font-family:monospace">table</span> (in front of one or two nested details, respectively, 
 as seen from the placeholders)
-while the second <span style="font-family:sans-serif">?</span> and the <span style="font-family:sans-serif">!</span> refer to the actual item 
+while the second <span style="font-family:monospace">?</span> and the <span style="font-family:monospace">!</span> refer to the actual item 
 of <span style="font-family:monospace">keys</span> and <span style="font-family:monospace">content</span> (range and innermost details specification). 
 <p>In fact, the rather complex syntax of <span style="font-style:italic">detailed_expression</span> 
 has been motivated by the need for displaying key/value pairs of a hashtable, 
@@ -1561,10 +1592,10 @@ and their declared type must conform to the formal arguments&#X2019; type.
 is relaxed so that only as many characters have to be entered 
 as are necessary to make the name unique within its target class. 
 Moreover, names attributes and local variables take precedence 
-over the predefined entitues <span style="font-family:monospace">Current</span>, <span style="font-family:monospace">Result</span>, <span style="font-family:monospace">Void</span>, 
+over the predefined entities <span style="font-family:monospace">Current</span>, <span style="font-family:monospace">Result</span>, <span style="font-family:monospace">Void</span>, 
 <span style="font-family:monospace">True</span>, <span style="font-family:monospace">False</span>. 
-For example, if there is a unique attritube starting with &#X201C;t&#X201D; 
-then entering just a &#X201C;t&#X201D; means this attribute, not <span style="font-family:monospace">True</span>. 
+For example, if there is a unique attribute starting with <span style="font-family:monospace">t</span> 
+then entering just a <span style="font-family:monospace">t</span> means this attribute, not <span style="font-family:monospace">True</span>. 
 </p></dd><dt class="dt-description"><span style="font-weight:bold">Immediate evaluation</span></dt><dd class="dd-description">
 Type and routine must be provided, additionally the address of an object
 of this type (the object&#X2019;s dynamic type). 

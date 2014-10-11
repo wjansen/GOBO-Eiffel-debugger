@@ -24,7 +24,8 @@ inherit
 			is_int32,
 			is_int64,
 			is_string,
-			is_unicode
+			is_unicode,
+			class_name
 		end
 
 create {IS_SYSTEM, IS_TYPE}
@@ -34,17 +35,20 @@ create {IS_SYSTEM, IS_TYPE}
 
 feature {} -- Initialization 
 
-	make (id: INTEGER; fl: INTEGER; g: like generics; e: like effectors; a: like fields; r: like routines)
+	make (id: INTEGER; fl: INTEGER; ct: IS_CLASS_TEXT;
+			g: like generics; e: like effectors; a: like fields; r: like routines)
 		note
 			action: "Construct the descriptor."
 		require
 			not_negative: id >= 0
+			ct_is_special: ct.has_name ("TUPLE")
 		local
 			ai: like field_at
 			i, j: INTEGER
 		do
 			ident := id
 			flags := fl | Tuple_flag
+			base_class := ct
 			generics := g
 			effectors := e
 			if attached a then
@@ -113,13 +117,13 @@ feature {IS_FACTORY} -- Initialization
 			end
 		end
 
-feature -- Access 
-
-	class_name: READABLE_STRING_8 
+feature -- Access
+	
+	class_name: READABLE_STRING_8
 		once
 			Result := "TUPLE"
 		end
-
+	
 feature -- Status 
 
 	is_none: BOOLEAN = False

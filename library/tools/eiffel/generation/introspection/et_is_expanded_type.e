@@ -105,7 +105,7 @@ feature {} -- Implementation
 					and then not attached routine_by_name(nm, False)
 				 then
 					dq := origin.dynamic_query (q, s.origin)
-					create r.declare (dq, Current, False, s)
+					create r.declare (dq, Current, s)
 					buffer.push (r)
 				end
 				i := i - 1

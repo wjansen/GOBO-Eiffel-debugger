@@ -43,8 +43,7 @@ feature {} -- Initialization
 		require
 			is_once: o.static_feature.is_once
 		do
-			declare_routine (o, where, False, s)
-			s.add_once (Current)
+			declare_routine (o, where, s)
 			flags := flags | Once_flag
 		ensure
 			origin_set: origin = o

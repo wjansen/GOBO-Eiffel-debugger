@@ -246,7 +246,7 @@ public class StackPart : Box {
 							  typeof(bool));	// poor
 		this.dg = dg;
 		dg.new_executable.connect(do_new_exe);
-		dg.response.connect((dg,r,m,f,mc) => { do_refresh(dg,r,f); });
+		dg.response.connect((dg,r,m,f,mc) => { do_refresh(r); });
 		dg.notify["is-running"].connect(
 			(g,p) => { do_set_sensitive(dg.is_running); });
 	}
@@ -317,17 +317,20 @@ public class StackPart : Box {
 		automatic = active;
 	}
 
-	private void do_refresh(Debuggee dg, int reason, StackFrame* f) {
+	private void do_refresh(int reason) { 
 		if (main!=null && !automatic)  return;
+		StackFrame* f = dg.frame();
 		Driver? dr = dg as Driver;
 		if (dr!=null) {
-			switch (reason) {
+			switch (reason) { 
 			case dr.ProgramState.Program_start:
 				refresh(f);
 				level_selected(f, f.class_id, f.pos);
 				return;
 			case dr.ProgramState.Running:
+				return;
 			case dr.ProgramState.Still_waiting:
+				refresh(f);
 				return;
 			}
 		}

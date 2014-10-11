@@ -30,8 +30,7 @@ create {ET_IS_AGENT_TYPE}
 
 feature {} -- Initialization 
 
-	declare (o: attached like origin; where: like target; as_create: BOOLEAN;
-			s: ET_IS_SYSTEM)
+	declare (o: attached like origin; where: like target; s: ET_IS_SYSTEM)
 		note
 			action: "Create `Current' according to `o'."
 			where: "enclosing type"
@@ -45,7 +44,7 @@ feature {} -- Initialization
 			make_origin (o)
 			static := o.static_feature
 			fast_name := s.internal_name (static.lower_name)
-			flags := compute_flags (as_create, s)
+			flags := compute_flags (o.is_creation, s)
 			target := where
 			if o.is_query then
 				s.force_type(o.result_type_set.static_type)
@@ -67,7 +66,7 @@ feature {} -- Initialization
 			declare_locals (False, s)
 			if attached origin.first_precursor as ofp then
 				declare_precursor (ofp, s)
-				if attached origin.other_precursors as oop then
+ 				if attached origin.other_precursors as oop then
 					from
 						i := oop.count
 					until i = 0 loop
@@ -79,8 +78,9 @@ feature {} -- Initialization
 			if s.needs_feature_texts then
 				s.force_class (o.target_type.base_class)
 				target_class := s.last_class
-				target_class.force_feature (Current, s)
+				target_class.force_feature (origin.static_feature, s)
 				if attached {like text} target_class.last_feature as x then
+					x.make_locals (Current, s)
 					text := x
 				end
 			end
@@ -311,7 +311,7 @@ feature {} -- Implementation
 					end
 					if s.needs_feature_texts then
 						create vt.declare_simple (current_name, dynamic.base_type,
-																			pos, in_class, s)
+																			pos, in_class, False, s)
 					else
 						vt := Void
 					end
@@ -506,8 +506,8 @@ feature {} -- Implementation
 		do
 			s.force_type (p.parent_type)
 			t := s.last_type
-			create r.declare (p, t, False, s)
-			t.add_routine (r)
+			create r.declare (p, t, s)
+			t.force_precursor_routine (r)
 			s.origin_table.force (r, p)
 		end
 

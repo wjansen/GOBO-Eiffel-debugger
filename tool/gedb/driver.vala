@@ -313,24 +313,24 @@ public class Driver : Debuggee {
 
 	public void target_go(uint run, uint mode, uint repeat) {
 		if (pma) return;
-		if (timeout==0) {
-			uint run_cmd = run;
-			timeout = GLib.Timeout.@add(20, () => {
-					timeout = 0;	
-					switch (run_cmd) {
-					case RunCommand.cont:
-					case RunCommand.next:
-					case RunCommand.step:
-					case RunCommand.end:
-					case RunCommand.back:
+		switch (run) {
+		case RunCommand.cont:
+		case RunCommand.next:
+		case RunCommand.step:
+		case RunCommand.end:
+		case RunCommand.back:
+			if (timeout==0) {
+				timeout = GLib.Timeout.@add(20, () => {
+						timeout = 0;	
 						is_running = true;
-						break;
-					default:
-						is_running = false;
-						break;			
-					}
-					return false;
-				});
+						return false;
+					});
+			}
+			break;
+		default:
+			timeout = 0;
+			is_running = false;
+			break;
 		}
 		var qm = new QueueMember((int)(run + (mode<<4) + (repeat<<8)));
 		gui_to_target.push(qm);
@@ -391,13 +391,12 @@ public class Driver : Debuggee {
 			interactive = true;
 			if (stop_code!=ProgramState.Program_start) {
 				stop_code = ProgramState.Still_waiting;
-				response(stop_code, null, top, Marker.count);
 			}
 			break;
 		case After_reset_break:
 			just_marked = true;
 			interactive = true;
-			stop_code = ProgramState.At_reset;
+			stop_code = ProgramState.Still_waiting;
 			break;
 		case End_program_break:
 			interactive = true;
@@ -500,11 +499,13 @@ public class Driver : Debuggee {
 				interactive = false;
 				break;
 			case RunCommand.mark:
+				stop_code = ProgramState.Running;
 				m = Marker.create(top, rts);
 				just_marked = true;
 				intern = old_intern;
 				return m.buffer;
 			case RunCommand.reset:
+				stop_code = ProgramState.Running;
 				m = Marker.at(repeat+1);
 				Marker.clear_to_depth(m.depth);
 				top = m.restore(rts);
@@ -682,11 +683,11 @@ public class Driver : Debuggee {
 		base.with_args(args);
 		the_dg = this;
 		pma = false;
-		stop_code = ProgramState.Program_start;
 		cmd = 0;
 		match = new Gee.ArrayList<Breakpoint>();
 		if (pma) {
 			is_running = true;
+			stop_code = ProgramState.Running;
 		} else {
 			target_to_gui = new AsyncQueue<QueueMember>();
 			gui_to_target = new AsyncQueue<QueueMember>();
@@ -694,6 +695,7 @@ public class Driver : Debuggee {
 			queue_source.queue = target_to_gui;
 			queue_source.attach(null);
 			queue_source.set_callback(@callback);
+			stop_code = ProgramState.Program_start;
 		}
 		orig_handlers = new void*[32];
 		for (int sig=32; sig-->0;) {

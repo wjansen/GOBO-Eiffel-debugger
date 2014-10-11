@@ -160,7 +160,7 @@ feature {} -- Implentation
 			if s.needs_feature_texts then
 				s.force_class (origin.target_type.base_class)
 				target_class := s.last_class
-				target_class.force_feature (Current, s)
+				target_class.force_feature (origin.static_feature, s)
 				text := target_class.last_feature
 			end
 		end

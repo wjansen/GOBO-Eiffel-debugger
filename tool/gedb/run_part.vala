@@ -140,7 +140,7 @@ public class RunPart : Box {
 		var e = print_history.get_child() as Entry;
 		string str = e.get_text();
 		if (str.strip().length==0) return; 
-		checker.check_with_idents(str, f, dg.rts, aliases);
+		checker.check_dynamic(str, null, f, dg.rts, false, aliases);
 		var expr = checker.parsed;
 		if (expr==null) return;
 		str = expr.append_name();
@@ -221,28 +221,27 @@ public class RunPart : Box {
 
 	private void treat_response(int reason, Gee.List<Breakpoint>? match,
 							   StackFrame* frame, uint mc) { 
-		update_markers(mc);
-		switch (reason) {
-		case dg.ProgramState.Running:
-			return;
-		case dg.ProgramState.Still_waiting: 
-			status.pop(status.get_context_id("stop-reason"));
-			return;
-		}
-		status_changed(reason, frame, match);
-
 		ClassText* cls;
 		Breakpoint bp; 
 		string str = ""; 
 		string name, comment;
 		uint pos;
+		update_markers(mc);
+		status.pop(status.get_context_id("stop-reason"));
+		status_changed(reason, frame, match);
 		cls = dg.rts.class_at(frame.class_id);
 		name = ((Gedb.Name*)cls).fast_name;
 		pos = frame.pos;
 		comment = "Stop at %s:%u:%u\n".printf(name, pos/256, pos%256);
 		switch(reason) {
+		case dg.ProgramState.Running:
+		case dg.ProgramState.Still_waiting: 
+			return;
 		case dg.ProgramState.Step_by_step: 
 			str = "Step by step";
+			break;
+		case dg.ProgramState.At_reset: 
+			str = "Program state restored";
 			break;
 		case dg.ProgramState.At_breakpoint: 
 			Gee.Iterator<Breakpoint> iter;
@@ -298,7 +297,7 @@ public class RunPart : Box {
 						exb.Format.WITH_NAME |
 						exb.Format.WITH_TYPE |
 						exb.Format.INDEX_VALUE ,
-						frame);
+						frame, dg.rts);
 			} catch (ExpressionError e) {
 				ex = ex.next;
 			}

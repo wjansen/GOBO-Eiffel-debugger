@@ -10,7 +10,7 @@ public class HelpPart {
 	public void help_system(Window main, System* s) {
 		if (s==null) return;
 		var root = s.root_type;
-		var cls = root.base_class;
+		var cls = ((Gedb.Type*)root).base_class;
 		var routine = s.root_creation_procedure;
 		DateTime dt = new DateTime.from_unix_utc((int64)s.compilation_time/1000);
 		dt = dt.to_local();
@@ -91,8 +91,7 @@ specific positions in source code:</b>"""
 		tag.valign = Align.START;
 		text = new Label("");
 		table.attach(text, 1, 0, 1, 1);
-		text.set_text(
-"""Actual stop position if the class belongs to the call stack""");
+		text.set_text("Actual stop position");
 		text.set_justify(Justification.LEFT);
 		text.halign = Align.START;
 
@@ -220,7 +219,7 @@ of the expression under the mouse pointer can be computed
 		text.halign = Align.START;
 
 		tag = new Label("");
-		tag.set_markup("<tt>xyz.</tt>");
+		tag.set_markup("<tt>xyz </tt>");
 		table.attach(tag, 0, 8, 1, 1);
 		rgba = new Gdk.RGBA();
 		rgba.parse("#dddddc"); 

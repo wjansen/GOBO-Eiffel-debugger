@@ -32,9 +32,13 @@ feature {} -- Initialization
 			d: ET_DECLARED_TYPE; h: like home; s: ET_IS_SYSTEM)
 		local
 			pos: ET_POSITION
+			fl: INTEGER
 		do
 			make_origin (o)
-			make (s.internal_name (nm), Void, 0, 0)
+			if attached {ET_FEATURE} o as f and then f.is_constant_attribute then
+				fl := Once_flag
+			end
+			make (s.internal_name (nm), Void, fl, 0, 0)
 			home := h
 			if attached {ET_FEATURE} o as f and then f.is_frozen then
 				pos := f.frozen_keyword.position
@@ -60,9 +64,14 @@ feature {} -- Initialization
 		end
 
 	declare_simple (nm: STRING; t: ET_TYPE; pos: detachable ET_POSITION;
-			h: like home; s: ET_IS_SYSTEM)
+			h: like home; const: BOOLEAN; s: ET_IS_SYSTEM)
+		local
+			fl: INTEGER
 		do
-			make (s.internal_name (nm), Void, 0, 0)
+			if const then
+				fl := Once_flag
+			end
+			make (s.internal_name (nm), Void, fl, 0, 0)
 			home := h
 			declare_result (t, s)
 			if pos /= Void then
@@ -78,12 +87,16 @@ feature {} -- Initialization
 			static: ET_FEATURE
 			pos: ET_POSITION
 			nm: STRING
+			fl: INTEGER
 		do
 			static := f --e.origin.static_feature
 			home := h
 			nm := s.internal_name (static.name.lower_name)
 			make_origin (static)
-			make (s.internal_name (static.name.lower_name), Void, 0, 0)
+			if f.is_constant_attribute then
+				fl := Once_flag
+			end
+			make (s.internal_name (static.name.lower_name), Void, fl, 0, 0)
 			if attached static.alias_name as fa then
 				alias_name := s.internal_name (fa.alias_string.value)
 			end
@@ -111,9 +124,16 @@ feature {} -- Initialization
 			origin_set: origin = f.static_feature
 		end
 
-	declare_renamed (nm: STRING; h: like home; r: like renames; s: ET_IS_SYSTEM)
+	declare_renamed (nm: STRING; h: like home; r: like renames; const: BOOLEAN
+			s: ET_IS_SYSTEM)
+		local
+			fl: INTEGER
 		do
-			make (s.internal_name (nm), Void, 0, 0)
+			if const then
+				fl := Once_flag
+			end
+			fl := fl | r.flags 
+			make (s.internal_name (nm), Void, fl, 0, 0)
 			home := h
 			renames := r
 			result_text := r.result_text

@@ -34,8 +34,12 @@ feature -- Access
 	ident: INTEGER
 			-- System wide unique identifier. 
 
+	base_class: IS_CLASS_TEXT
+			-- Descriptor of base type.
+
 	class_name: READABLE_STRING_8
-		deferred
+		do
+			Result := base_class.fast_name
 		end
 
 	generic_count: INTEGER

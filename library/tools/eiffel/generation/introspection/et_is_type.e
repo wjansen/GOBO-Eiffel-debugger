@@ -11,6 +11,7 @@ inherit
 			{ET_C_SOURCE, IS_SYSTEM}
 				set_bytes
 		redefine
+			base_class,
 			generic_at,
 			effector_at,
 			field_at,
@@ -236,7 +237,7 @@ feature -- Status setting
 	set_fields (aa: IS_SEQUENCE [IS_FIELD])
 		do
 			if attached {IS_SEQUENCE [ET_IS_FIELD]} aa as ff then
-				-- workaround against spurious catcall
+				-- workaround spurious catcall
 				fields := ff
 			end
 		end
@@ -246,7 +247,7 @@ feature -- Searching
 	routine_by_origin (o: ET_DYNAMIC_FEATURE; s: ET_IS_SYSTEM): detachable like routine_at
 		note
 			return: "Current's routine having origin `o'."
-			o: "original routine"
+			o: "original routine, possible as Precursor"
 		do
 			s.origin_table.search (o)
 			if s.origin_table.found and then
@@ -280,8 +281,12 @@ feature -- Factory
 				last := Void
 			end
 			if not attached last then
-				create last.declare (f, Current, as_create, s)
-				add_routine (last)
+				create last.declare (f, Current, s)
+				if attached routines then
+				else
+					create routines
+				end
+				routines.add (last)
 				s.origin_table.force (last, f)
 			end
 			last_routine := last
@@ -289,6 +294,26 @@ feature -- Factory
 			not_void: attached last_routine
 		end
 
+	force_anonymous_routine (r: ET_IS_ROUTINE)
+		require
+			anonymous: r.is_anonymous
+			has_routines: routines /= Void
+		do
+			routines.add (r)
+		end
+
+	force_precursor_routine (r: ET_IS_ROUTINE)
+		require
+			is_precursor: r.is_precursor
+		do
+			if routines = Void then
+				create routines
+			end
+			routines.add (r)
+		ensure
+			routine_set: routines.has (r)
+		end
+	
 feature -- Status setting 
 
 	add_flag (fl: like flags)
@@ -296,17 +321,6 @@ feature -- Status setting
 			flags := flags | fl
 		ensure
 			flag_added: flags = old flags | fl
-		end
-
-	add_routine (r: like routine_at)
-		do
-			if attached routines then
-			else
-				create routines
-			end
-			routines.add (r)
-		ensure
-			routine_set: routines.has (r)
 		end
 
 feature -- Comparison
@@ -393,14 +407,13 @@ feature {ET_IS_TYPE} -- Additional construction
 			buffer: like routine_buffer
 			r: detachable ET_IS_ROUTINE
 			rc: ET_IS_ROUTINE
-			nm: READABLE_STRING_8
+			nm: STRING
 			i, nr: INTEGER
-			to_search, needed, onces_only: BOOLEAN
+			needed, onces_only: BOOLEAN
 		do
 			if origin.is_alive then
 				buffer := routine_buffer
 				nr := buffer.count
-				to_search := attached routines as rs and then rs.count > 0
 				needed := s.needs_routines
 				onces_only := not needed and s.needs_once_values
 				if needed or else onces_only then
@@ -409,32 +422,32 @@ feature {ET_IS_TYPE} -- Additional construction
 						i := queries.count
 					until i = 0 loop
 						dynamic := queries.item (i)
-						static := dynamic.static_feature
-						i := i - 1
-						r := Void
-						if needed or else (onces_only and then static.is_once) then
-							if not (dynamic.is_inlined or else dynamic.is_builtin)
-								and then dynamic.is_built and then dynamic.is_function
-							 then
-								if to_search then
-									r := routine_by_name (static.lower_name, False)
-								end
-								if not attached r then
-									if (needed or else onces_only) and then
-										not (is_basic and then attached static.alias_name)
-									 then
-										if static.is_once then
-											create {ET_IS_ONCE} r.declare (dynamic, Current, s)
-										else
-											create r.declare (dynamic, Current, False, s)
+						if not s.origin_table.has (dynamic) then
+							static := dynamic.static_feature
+							i := i - 1
+							r := Void
+							if needed or else (onces_only and then static.is_once) then
+								if not (dynamic.is_inlined or else dynamic.is_builtin)
+									and then dynamic.is_built and then dynamic.is_function
+								 then
+									if not attached r then
+										if (needed or else onces_only) and then
+											not (is_basic and then attached static.alias_name)
+										 then
+											if static.is_once then
+												s.force_once (dynamic, Current)
+												r := s.last_once
+											else
+												create r.declare (dynamic, Current, s)
+											end
 										end
 									end
+									if r /= Void then
+										buffer.push (r)
+										s.origin_table.force (r, dynamic)
+									end
+								else
 								end
-								if r /= Void then
-									buffer.push (r)
-									s.origin_table.force (r, dynamic)
-								end
-							else
 							end
 						end
 					end
@@ -447,31 +460,25 @@ feature {ET_IS_TYPE} -- Additional construction
 							i := procedures.count
 						until i = 0 loop
 							dynamic := procedures.item (i)
-							static := dynamic.static_feature
-							i := i - 1
-							r := Void
-							if not (dynamic.is_inlined or else dynamic.is_builtin)
-								and then dynamic.is_built
-							 then
-								if to_search then
-									r := routine_by_name (static.lower_name, False)
+							if not s.origin_table.has (dynamic) then
+								static := dynamic.static_feature
+								i := i - 1
+								r := Void
+								if not (dynamic.is_inlined or else dynamic.is_builtin)
+									and then dynamic.is_built
+								 then
+									if not attached r then
+										create r.declare (dynamic, Current, s)
+									end
+									check attached r end
+									buffer.push (r)
+									s.origin_table.force (r, dynamic)
 								end
-								if not attached r then
-									create r.declare (dynamic, Current, False, s)
-								end
-								check attached r end
-								buffer.push (r)
-								if dynamic.is_creation then
-									create rc.declare (dynamic, Current, True, s)
-									buffer.push (rc)
-								end
-								s.origin_table.force (r, dynamic)
 							end
 						end
 					end
 					-- To do: create invariant 
 				elseif s.needs_default_creation then
-					to_search := attached routines as rs and then rs.count > 0
 					procedures := origin.procedures
 					from
 						i := procedures.count
@@ -479,24 +486,26 @@ feature {ET_IS_TYPE} -- Additional construction
 						dynamic := procedures.item (i)
 						static := dynamic.static_feature
 						i := i - 1
-						if dynamic.is_creation
-							and then static.has_seed (s.origin.current_system.default_create_seed)
+						if dynamic.is_creation and then
+							static.has_seed (s.origin.current_system.default_create_seed)
 						 then
-							create rc.declare (dynamic, Current, True, s)
-							s.origin_table.force (rc, dynamic)
-							buffer.push (rc)
+							if not s.origin_table.has (dynamic) then
+								create rc.declare (dynamic, Current, s)
+								s.origin_table.force (rc, dynamic)
+								buffer.push (rc)
+							end
 						end
 					end
 				end
 				nr := buffer.count - nr
-				if nr > 0 then
+				if nr > 0 and then routines = Void then
 					create routines.make (nr, buffer.top)
-					from
-					until nr = 0 loop
-						routines.add (buffer.top)
-						buffer.pop (1)
-						nr := nr - 1
-					end
+				end
+				from
+				until nr = 0 loop
+					routines.add (buffer.top)
+					buffer.pop (1)
+					nr := nr - 1
 				end
 			end
 		end

@@ -57,9 +57,6 @@ feature {} -- Initialization
 				end
 			end
 			flags := compute_flags (s)
-			if s.needs_feature_texts then
-				create features
-			end
 		ensure
 			origin_set: origin = o
 			s_has_result: s.class_at (ident) = Current
@@ -100,7 +97,7 @@ feature -- Initialization
 							j := j - 1
 							f_ij := p_i.features [j]
 							if feature_by_name (f_ij.fast_name) = Void then
-								features.add (f_ij)
+								add_text (f_ij)
 							end
 						end
 					end
@@ -156,7 +153,6 @@ feature -- Status setting
 
 	add_text (f: like feature_at)
 		require
-			has_features: attached features
 			not_has_f: not features.has (f)
 		do
 			if features = Void then
@@ -179,7 +175,8 @@ feature -- Searching
 		do
 			s.origin_table.search (o)
 			if s.origin_table.found and then
-				attached {attached like last_feature} s.origin_table.found_item as found
+				attached {like last_feature} s.origin_table.found_item as found
+				and then found.home = Current
 			 then
 				Result := found
 			end
@@ -195,6 +192,7 @@ feature -- Searching
 			s.origin_table.search (o)
 			if s.origin_table.found and then
 				attached {attached like last_feature} s.origin_table.found_item as found
+				and then found.home = Current
 			 then
 				Result := found
 			end
@@ -204,56 +202,68 @@ feature -- Searching
 
 feature -- Factory
 	
-	force_feature (e: ET_IS_ORIGIN[ET_DYNAMIC_FEATURE, IS_NAME]; s: ET_IS_SYSTEM)
+	force_feature (f: ET_FEATURE; s: ET_IS_SYSTEM)
 		note
 			action:
 			"[
-			 Create `last_feature' corresponding to `e' and add it to `features'. 
+			 Create `last_feature' corresponding to `f' and add it to `features'. 
 		   If the implementing class is not `Current' then create also
 			 a ET_IS_FEATURE_TEXT in that class and set `last_feature.renames'
 			 to this other feature. 
 			 ]"
-			e: "entity of `last_feature' to generate"
+			f: "entity of `last_feature' to generate"
 		local
 			impl: ET_IS_CLASS_TEXT
-			static: ET_FEATURE
 			last: like last_feature
 			rt: ET_IS_ROUTINE_TEXT
 			nm: STRING
+			const: BOOLEAN
 		do
-			static := e.origin.static_feature
-			s.force_class (static.implementation_class)
+			s.force_class (f.implementation_class)
 			impl := s.last_class
 			if impl = Current then
-				static := static.implementation_feature
-				s.origin_table.search (static)
-				if s.origin_table.found 
-					and then attached {ET_IS_FEATURE_TEXT} s.origin_table.found_item as f
+				s.origin_table.search (f)
+				if s.origin_table.found and then
+					attached {ET_IS_FEATURE_TEXT} s.origin_table.found_item as x
+					and then x.home = Current
 				 then
-					last := f
+					last := x
 				end
-				if not attached last then
-					if attached {ET_IS_ROUTINE} e as r then
-						create rt.declare_from_feature (static, Current, s)
-							rt.make_locals (r, s)
-							last := rt
+				if last = Void then
+					if f.is_routine then
+						create rt.declare_from_feature (f, Current, s)
+						last := rt
 					else
-						create last.declare_from_feature (static, Current, s)
+						create last.declare_from_feature (f, Current, s)
 					end
-					s.origin_table.force (last, static)
-					features.add (last)
+					s.origin_table.force (last, f)
+					add_text (last)
+				end
+				if attached f.first_precursor as p then
+					s.force_class (p.implementation_class)
+					impl := s.last_class
+					impl.force_feature (p, s)
+					if attached f.other_precursors as pp then
+						pp.do_declared (
+							agent (item: ET_FEATURE; sys: ET_IS_SYSTEM)
+								do
+									force_feature (item, sys)
+								end (?, s))
+					end
 				end
 			else
-				impl.force_feature (e, s)
+				impl.force_feature (f, s)
 				last := impl.last_feature
-				nm := static.lower_name
+				nm := f.lower_name
+				const := f.is_constant_attribute or f.is_once
 				if not STRING_.same_string (nm, last.fast_name) then
-					if attached {ET_IS_ROUTINE} e as r then
-						create {ET_IS_ROUTINE_TEXT} last.declare_renamed (nm, Current, last, s)
+					if f.is_routine then
+						create rt.declare_renamed (nm, Current, last, const, s)
+						last := rt
 					else
-						create last.declare_renamed (nm, Current, last, s)
+						create last.declare_renamed (nm, Current, last, const, s)
 					end
-					features.add (last)
+					add_text (last)
 				end
 			end
 			last_feature := last

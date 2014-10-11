@@ -24,11 +24,11 @@ public const string  bullet = "⚫"; // "●" "⚫" "•"
 
 
 public void copy_value(uint8* left, uint8* right, size_t size) {
-	if (left!=right)  Posix.memcpy (left, right, size);
+	if (left!=right) Posix.memcpy (left, right, size);
 }
 
 public bool are_values_equal(uint8* left, uint8* right, size_t size) {
-	if (left==right)  return true;
+	if (left==right) return true;
 	return Posix.memcmp(left, right, size) == 0;
 }
 
@@ -37,7 +37,7 @@ public void clear_value(uint8* val, uint size) {
 }
 
 public bool is_zero_value(uint8* val, uint size) {
-	for (uint i=0; i<size; i++, val++) if (*val != 0)  return false;
+	for (uint i=0; i<size; i++, val++) if (*val != 0) return false;
 	return true;
 }
 
@@ -47,12 +47,12 @@ public bool is_zero_value(uint8* val, uint size) {
 	requires (lt.is_basic() && rt.is_basic()) {
 		uint lid = lt.ident;
 	
-	uint rid = rt.ident;
-		bool b = false;
+		uint rid = rt.ident;
+		bool b = *(bool*)left;
 		int64 i = 0;
 		uint64 n = 0;
 		double d = 0;
-		bool rb = false;
+		bool rb = *(bool*)right;
 		int64 ri = 0;
 		uint64 rn = 0;
 		double rd = 0;
@@ -267,12 +267,16 @@ public bool is_zero_value(uint8* val, uint size) {
 			case TypeIdent.INTEGER_8:
 			case TypeIdent.INTEGER_16:
 			case TypeIdent.INTEGER_32:
+				i = i / (int32)ri;
+				break;
 			case TypeIdent.INTEGER_64:
 				i = i / ri;
 				break;
 			case TypeIdent.NATURAL_8:
 			case TypeIdent.NATURAL_16:
 			case TypeIdent.NATURAL_32:
+				n = n / (int32)rn;
+				break;
 			case TypeIdent.NATURAL_64:
 				n = n / rn;
 				break;
@@ -283,14 +287,18 @@ public bool is_zero_value(uint8* val, uint size) {
 			case TypeIdent.INTEGER_8:
 			case TypeIdent.INTEGER_16:
 			case TypeIdent.INTEGER_32:
+				i = i % (int32)ri;
+				break;
 			case TypeIdent.INTEGER_64:
 				i = i % ri;
 				break;
 			case TypeIdent.NATURAL_8:
 			case TypeIdent.NATURAL_16:
 			case TypeIdent.NATURAL_32:
+				n = n % (uint32)rn;
+				break;
 			case TypeIdent.NATURAL_64:
-				n = n % rn;
+				n = n % (uint32)rn;
 				break;
 			}
 			break;
@@ -332,53 +340,53 @@ public bool is_zero_value(uint8* val, uint size) {
 			case TypeIdent.INTEGER_16:
 			case TypeIdent.INTEGER_32:
 			case TypeIdent.INTEGER_64:
-				i = i << ri;
+				i = i << (int8)ri;
 				break;
 			case TypeIdent.NATURAL_8:
 			case TypeIdent.NATURAL_16:
 			case TypeIdent.NATURAL_32:
 			case TypeIdent.NATURAL_64:
-				n = n % rn;
+				n = n << (uint8)rn;
 				break;
 			}
 			break;
 		case OpCode.r_shift:
 			switch (lid) {
 			case TypeIdent.INTEGER_8:
-				*(int8*)result = (int8)i >> ri;
+				*(int8*)result = (int8)i >> (int8)ri;
 				break;
 			case TypeIdent.INTEGER_16:
-				*(int16*)result = (int16)i >> ri;
+				*(int16*)result = (int16)i >> (int8)ri;
 				break;
 			case TypeIdent.INTEGER_32:
-				*(int32*)result = (int32)i >> ri;
+				*(int32*)result = (int32)i >> (int8)ri;
 				break;
 			case TypeIdent.INTEGER_64:
-				*(int64*)result = i >> ri;
+				*(int64*)result = i >> (int8)ri;
 				break;
 			case TypeIdent.NATURAL_8:
-				*(uint8*)result = (uint8)n >> rn;
+				*(uint8*)result = (uint8)n >> (uint8)rn;
 				break;
 			case TypeIdent.NATURAL_16:
-				*(uint16*)result = (uint16)n >> rn;
+				*(uint16*)result = (uint16)n >> (uint8)rn;
 				break;
 			case TypeIdent.NATURAL_32:
-				*(uint32*)result = (uint32)n >> rn;
+				*(uint32*)result = (uint32)n >> (uint8)rn;
 				break;
 			case TypeIdent.NATURAL_64:
-				*(uint64*)result = n >> rn;
+				*(uint64*)result = n >> (uint8)rn;
 				break;
 			}
 			break;
 		case OpCode.power:
-			d = Math.ldexp(*(double*)left, (int32)rd);
+			d = Math.ldexp(*(double*)left, (int8)rd);
 			break;
 		case OpCode.eq:
 			switch (lid) {
 			case TypeIdent.INTEGER_8:
 			case TypeIdent.INTEGER_16:
 			case TypeIdent.INTEGER_32:
-				*(bool*)result = (int32)i == ri;
+				*(bool*)result = (int32)i == (int32)ri;
 				break;
 			case TypeIdent.INTEGER_64:
 				*(bool*)result = i == ri;
@@ -386,7 +394,7 @@ public bool is_zero_value(uint8* val, uint size) {
 			case TypeIdent.NATURAL_8:
 			case TypeIdent.NATURAL_16:
 			case TypeIdent.NATURAL_32:
-				*(bool*)result = (uint32)n == rn;
+				*(bool*)result = (uint32)n == (uint32)rn;
 				break;
 			case TypeIdent.NATURAL_64:
 				*(bool*)result = n == rn;
@@ -401,7 +409,7 @@ public bool is_zero_value(uint8* val, uint size) {
 			case TypeIdent.INTEGER_8:
 			case TypeIdent.INTEGER_16:
 			case TypeIdent.INTEGER_32:
-				*(bool*)result = (int32)i != ri;
+				*(bool*)result = (int32)i != (int32)ri;
 				break;
 			case TypeIdent.INTEGER_64:
 				*(bool*)result = i != ri;
@@ -409,7 +417,7 @@ public bool is_zero_value(uint8* val, uint size) {
 			case TypeIdent.NATURAL_8:
 			case TypeIdent.NATURAL_16:
 			case TypeIdent.NATURAL_32:
-				*(bool*)result = (uint32)n != rn;
+				*(bool*)result = (uint32)n != (uint32)rn;
 				break;
 			case TypeIdent.NATURAL_64:
 				*(bool*)result = n != rn;
@@ -424,7 +432,7 @@ public bool is_zero_value(uint8* val, uint size) {
 			case TypeIdent.INTEGER_8:
 			case TypeIdent.INTEGER_16:
 			case TypeIdent.INTEGER_32:
-				*(bool*)result = (int32)i < ri;
+				*(bool*)result = (int32)i < (int32)ri;
 				break;
 			case TypeIdent.INTEGER_64:
 				*(bool*)result = i < ri;
@@ -432,7 +440,7 @@ public bool is_zero_value(uint8* val, uint size) {
 			case TypeIdent.NATURAL_8:
 			case TypeIdent.NATURAL_16:
 			case TypeIdent.NATURAL_32:
-				*(bool*)result = (uint32)n < rn;
+				*(bool*)result = (uint32)n < (uint32)rn;
 				break;
 			case TypeIdent.NATURAL_64:
 				*(bool*)result = n < rn;
@@ -447,7 +455,7 @@ public bool is_zero_value(uint8* val, uint size) {
 			case TypeIdent.INTEGER_8:
 			case TypeIdent.INTEGER_16:
 			case TypeIdent.INTEGER_32:
-				*(bool*)result = (int32)i <= ri;
+				*(bool*)result = (int32)i <= (int32)ri;
 				break;
 			case TypeIdent.INTEGER_64:
 				*(bool*)result= i <= ri;
@@ -455,7 +463,7 @@ public bool is_zero_value(uint8* val, uint size) {
 			case TypeIdent.NATURAL_8:
 			case TypeIdent.NATURAL_16:
 			case TypeIdent.NATURAL_32:
-				*(bool*)result= (uint32)n <= rn;
+				*(bool*)result= (uint32)n <= (uint32)rn;
 				break;
 			case TypeIdent.NATURAL_64:
 				*(bool*)result = n <= rn;
@@ -470,7 +478,7 @@ public bool is_zero_value(uint8* val, uint size) {
 			case TypeIdent.INTEGER_8:
 			case TypeIdent.INTEGER_16:
 			case TypeIdent.INTEGER_32:
-				*(bool*)result= (int32)i > ri;
+				*(bool*)result= (int32)i > (int32)ri;
 				break;
 			case TypeIdent.INTEGER_64:
 				*(bool*)result= i > ri;
@@ -478,7 +486,7 @@ public bool is_zero_value(uint8* val, uint size) {
 			case TypeIdent.NATURAL_8:
 			case TypeIdent.NATURAL_16:
 			case TypeIdent.NATURAL_32:
-				*(bool*)result = (uint32)n > rn;
+				*(bool*)result = (uint32)n > (uint32)rn;
 				break;
 			case TypeIdent.NATURAL_64:
 				*(bool*)result = n > rn;
@@ -493,7 +501,7 @@ public bool is_zero_value(uint8* val, uint size) {
 			case TypeIdent.INTEGER_8:
 			case TypeIdent.INTEGER_16:
 			case TypeIdent.INTEGER_32:
-				*(bool*)result = (int32)i >= ri;
+				*(bool*)result = (int32)i >= (int32)ri;
 				break;
 			case TypeIdent.INTEGER_64:
 			  *(bool*)result = i >= ri;
@@ -501,7 +509,7 @@ public bool is_zero_value(uint8* val, uint size) {
 			case TypeIdent.NATURAL_8:
 			case TypeIdent.NATURAL_16:
 			case TypeIdent.NATURAL_32:
-				*(bool*)result= (uint32)n >= rn;
+				*(bool*)result= (uint32)n >= (uint32)rn;
 				break;
 			case TypeIdent.NATURAL_64:
 				*(bool*)result = n >= rn;
@@ -513,7 +521,7 @@ public bool is_zero_value(uint8* val, uint size) {
 			break;
 		case OpCode.and:
 			*(bool*)result = b && rb;
-		  break;
+			break;
 		case OpCode.or:
 			*(bool*)result = b || rb;
 			break;
@@ -576,6 +584,7 @@ public errordomain ExpressionError {
 	UNKNOWN,
 	REDEFINED,
 	VOID_TARGET,
+	NOT_IMPLEMENTED, 
 	NOT_INITIALIZED, 
 	NOT_FUNCTION,
 	INVALID_ARGUMENTS,
@@ -741,7 +750,7 @@ public abstract class Expression : Object {
 	protected virtual void adjust_to_parent() requires (parent!=null) {}
 
 	public static Expression new_named(Expression? parent, string name, 
-									 Expression? args)  
+									 Expression? args) 
 		ensures (result.arg==args) {
 		Expression ex;
 		string alias = null;
@@ -774,13 +783,13 @@ public abstract class Expression : Object {
 		var alias = ft.alias_name;
 		if (alias!=null &&((Name*)parent.base_class()).has_name("SPECIAL")){
 			ex = new ItemExpression(parent, args);
-		} else if (ft.is_routine_text()) {
+		} else if (ft.is_routine()) {
 			var rt = (RoutineText*)ft;
 			if (alias!=null) {
 				if (parent==null)
 					throw new ExpressionError.NO_PARENT
 						("Missing parent expression.");
-				if (alias=="[]" && parent.base_class().is_sepcial()) 
+				if (alias=="[]" && parent.base_class().is_special()) 
 					ex = new ItemExpression(parent, args);
 				else
 					ex = new OperatorExpression(parent, rt, args);
@@ -891,7 +900,7 @@ public abstract class Expression : Object {
 
    @return newly created `Expression'
  */
-	public Expression clone() ensures (parent==null) {
+	public Expression clone() ensures (result.parent==null) {
 		return clone_with_parent(null);
 	}
 	
@@ -940,18 +949,21 @@ public abstract class Expression : Object {
 
 	}
 	
-	protected Expression? get_place(ref int n) requires (n>0) {
-		Expression? p = null;
-		for (p=parent; p!=null; p=p.parent) {
-			var rex = p as RangeExpression;
-			if (rex!=null) break;
-			if (p.detail!=null) break;
-		}
-		if (p==null) return null;
-		--n;
-		return n==0 ? p : p.get_place(ref n);
-	}
+/**
+   Create a clone of `this' with leading placeholders resolved.
 
+   Create a clone of `this' including (recursively) clones of the children 
+   but do not set the `parent'. Placeholders pointing outside will be set 
+   to new targets (other placeholders are resolved internally as in `clone').
+
+   @ph placeholders targets for outside pointing placeholders
+   @return newly created `Expression'
+ */
+	public Expression clone_resolved(Gee.List<Expression> ph) 
+	ensures (result.parent==null) {
+		return expanded(null, ph);
+	}
+	
 	protected Expression? search(Expression what, Expression where) {
 		Expression? w;
 		Expression? ex;
@@ -1021,8 +1033,8 @@ public abstract class Expression : Object {
 	private static ManifestExpression _void_constant;
 	internal static ManifestExpression void_constant(System* s) {
 		if (_void_constant==null) {
-			_void_constant = 
-			new ManifestExpression.typed(s.type_at(TypeIdent.NONE), "Void");
+			var t = s.type_at(TypeIdent.NONE);
+			_void_constant = new ManifestExpression.typed(t, "Void");
 		} 
 		return _void_constant;
 	}
@@ -1067,7 +1079,7 @@ public abstract class Expression : Object {
 	protected Expression children[5];	// 5 == Child.COUNT
 	
 	public void set_child(uint i, Expression? val) {
-		if (children[i]!=null)  children[i].parent = null;
+		if (children[i]!=null) children[i].parent = null;
 		children[i] = val;
 		if (val!=null) val.parent = this;
 	}
@@ -1081,7 +1093,7 @@ public abstract class Expression : Object {
 		get { return children[Child.DOWN]; }
 		private set { 
 			set_child(Child.DOWN, value);
-			if (value!=null)  value.adjust_to_parent();
+			if (value!=null) value.adjust_to_parent();
 		}
 	}
 	
@@ -1140,7 +1152,7 @@ public abstract class Expression : Object {
 	
 	public char as_char() {
 		uint8* addr = address();
-		if (addr==null)  return 0;
+		if (addr==null) return 0;
 		unichar u;
 		switch (dynamic_type.ident) {
 		case TypeIdent.CHARACTER_8:
@@ -1160,7 +1172,7 @@ public abstract class Expression : Object {
 	
 	public unichar as_unichar() {
 		uint8* addr = address();
-		if (addr==null)  return 0;
+		if (addr==null) return 0;
 		char c;
 		unichar u;
 		switch (dynamic_type.ident) {
@@ -1179,7 +1191,7 @@ public abstract class Expression : Object {
 	
 	public int64 as_long() {
 		uint8* addr = address();
-		if (addr==null)  return 0;
+		if (addr==null) return 0;
 		int64 i = 0;
 		uint64 n;
 		switch (dynamic_type.ident) {
@@ -1219,7 +1231,7 @@ public abstract class Expression : Object {
 	
 	public uint64 as_ulong() {
 		uint8* addr = address();
-		if (addr==null)  return 0;
+		if (addr==null) return 0;
 		int64 i;
 		uint64 n = 0;
 		switch (dynamic_type.ident) {
@@ -1257,7 +1269,7 @@ public abstract class Expression : Object {
 
 	public float as_float() {
 		uint8* addr = address();
-		if (addr==null)  return 0;
+		if (addr==null) return 0;
 		int64 i;
 		float f = 0;
 		double d;
@@ -1289,7 +1301,7 @@ public abstract class Expression : Object {
 
 	public double as_double() {
 		uint8* addr = address();
-		if (addr==null)  return 0;
+		if (addr==null) return 0;
 		int64 i;
 		float f;
 		double d = 0;
@@ -1323,7 +1335,7 @@ public abstract class Expression : Object {
 
 	public string as_string(System* s) {
 		uint8* addr = address();
-		if (addr==null)  return null;
+		if (addr==null) return null;
 		switch (dynamic_type.ident) {
 		case TypeIdent.STRING_8:
 			addr += s.string_offsets.area;
@@ -1362,17 +1374,17 @@ public abstract class Expression : Object {
 		}
 		if (d!=null) {
 			more = d.append_name(null, fmt);
-			if (more.length>0)  here += " { " + more + " }";
+			if (more.length>0) here += " { " + more + " }";
 		}
 		if (next!=null) {
 			more = next.append_name(null, fmt);
-			if (more.length>0)  here += ", " + more;
+			if (more.length>0) here += ", " + more;
 		}
 		return here;
 	}
 
-	public string append_qualified_name(string? to=null, 
-										Expression? up_to=null, uint fmt=0) {
+	public virtual string append_qualified_name(string? to=null, 
+			Expression? up_to=null, uint fmt=0) {
 		string here;
 		here = append_single_name(to, fmt);
 		if (down!=null && this!=up_to) 
@@ -1404,14 +1416,14 @@ public abstract class Expression : Object {
 
 	private void append_item(ItemExpression rng, ref string str, 
 							uint indent, uint incr, uint fmt, 
-							StackFrame* f, uint8* env) {
+							 StackFrame* f, System* s) {
 		string here = str!=null ? str : "";
-		here = rng.append_next_value(here, indent, incr, fmt, f, env);
+		here = rng.append_next_value(here, indent, incr, fmt, f, s);
 		str = here;
 	}
 
 	private string append_next_value(string to, uint indent, uint incr, 
-									uint fmt, StackFrame* f, uint8* env=null) {
+									 uint fmt, StackFrame* f, System* s) {
 		var exb = bottom();
 		string str = to;
 		str += indent>0 ? string.nfill(indent, ' ') : "";
@@ -1421,18 +1433,18 @@ public abstract class Expression : Object {
 		var ex = exa!=null ? exa.alias : exb; 
 		if (ex.range!=null) {
 			ex.range.traverse_range((r) => 
-				{ ex.append_item(r, ref str, indent+incr, incr, fmt, f, env); },
-								f, env);
+				{ ex.append_item(r, ref str, indent+incr, incr, fmt, f, s); }, 
+									f, s);
 		} else if (ex.detail!=null) {
-			str = ex.detail.append_next_value(str, indent+incr, incr, fmt, f, env);
+			str = ex.detail.append_next_value(str, indent+incr, incr, fmt, f, s);
 		}
 		if (ex.next!=null) 
-			str = ex.next.append_next_value(str, indent, incr, fmt, f, env);
+			str = ex.next.append_next_value(str, indent, incr, fmt, f, s);
 		return str;
 	}
 
-	public string format_values(uint indent, uint fmt, StackFrame* f) {
-		return append_next_value("", indent, indent, fmt, f);
+	public string format_values(uint indent, uint fmt, StackFrame* f, System* s) {
+		return append_next_value("", indent, indent, fmt, f, s);
 	}
 
 	public delegate void ExpressionFunc(Expression ex);
@@ -1440,10 +1452,10 @@ public abstract class Expression : Object {
 	public void traverse(ExpressionFunc func, Expression? up_to=null,
 						bool with_detail=true, bool with_next=true) {
 		func(this);
-		if (this==up_to)  return;
+		if (this==up_to) return;
 		if (arg!=null) arg.traverse(func, up_to, with_detail, with_next);
 		if (down!=null) down.traverse(func, up_to, with_detail, with_next);
-		if (with_detail &&range!=null)  
+		if (with_detail &&range!=null) 
 			range.traverse(func, up_to, with_detail, with_next);
 		if (with_detail && detail!=null) 
 			detail.traverse(func, up_to, with_detail, with_next);
@@ -1456,7 +1468,7 @@ public abstract class Expression : Object {
 		if (address()==null) return false;
 		for (int i=0; i<Child.COUNT; ++i) {
 			ex = children[i];
-			if (ex!=null && !ex.clean_up())  children[i] = null;
+			if (ex!=null && !ex.clean_up()) children[i] = null;
 		}
 		return true;
 	}
@@ -1470,7 +1482,7 @@ public abstract class Expression : Object {
 			} 
 		}
 		for (i=Child.COUNT; i-->0;) 
-			if (children[i]!=null && children[i].cut_before(ex))  return true;
+			if (children[i]!=null && children[i].cut_before(ex)) return true;
 		return false;
 	}
 
@@ -1482,7 +1494,7 @@ public abstract class Expression : Object {
 			down = null;
 			arg = null;
 		}
-		if (arg!=null)  arg.cut_children(preserve_simple);
+		if (arg!=null) arg.cut_children(preserve_simple);
 		if (down!=null) down.cut_children(preserve_simple);
 	}
 
@@ -1561,27 +1573,29 @@ public abstract class Expression : Object {
 		return ex;
 	}
 
-	public bool static_check(ClassText* ct, System* s, StackFrame* f) 
-//	requires (ct!=null || (f!=null && s!=null)) {
-	{ // workaround
-		RoutineText* rt = null;
+	public bool static_check(ClassText* ct, RoutineText* rt, 
+							 System* s, StackFrame* f) 
+//	requires ((ct!=null && rt!null) || (f!=null && s!=null)) {
+	requires (ct!=null) { // workaround
 		uint n = 0;
 		bool ok = true;
-		if (is_down()) {
-			ct = parent.base_class();
-		} else {
-			if (f!=null) {
-				ct = s.class_at(f.class_id);
-				rt = f.routine.routine_text();
+		if (ct==null) {
+			if (is_down()) {
+				ct = parent.base_class();
+			} else {
+				if (f!=null) {
+					ct = s.class_at(f.class_id);
+					rt = f.routine.routine_text();
+				}
 			}
 		}
-		ct.query_by_name(out n, name(), arg!=null, rt);
+		var ft = ct.query_by_name(out n, name(), arg==null, rt);
 		if (n!=1) return false;
 		Expression? ci;
 		for (uint i=0; i<Child.COUNT; ++i) {
 			ci = children[i] as AliasExpression;
 			if (ci==null) continue;
-			ok = ci.static_check(ct, s, f);
+			ok = ci.static_check(ct, rt, s, f);
 			if (!ok) return false;
 		}
 		return ok;
@@ -1592,10 +1606,7 @@ public abstract class Expression : Object {
 	of an object of dynamic type `pt' or as local variable of routine `r'. 
 	Default action: do nothing.
   */
-	protected virtual bool set_dyn_type(Gedb.Type* pt, StackFrame* f,
-		uint8* env=null) {
-		return true;
-	}
+	protected abstract bool set_dyn_type(Gedb.Type* pt, StackFrame* f);
 
  /**
 	Compute `this' as field of an object at `addr', 
@@ -1609,17 +1620,18 @@ public abstract class Expression : Object {
 	Compute a query of an object. This includes the computation 
 	of the `arg', `down', `range', `detail', and `next' expressions. 
 	@object Address of object one of whose queries is to be computed
-		(??`null' in case of local variables)
+		(`null' in case of local variables)
 	@t Static type of `object' (needed for objects with type info missing)
 	@s System to obtain dynamic type from static type
 	@f stack frame to compute local variables 
-	and as start object for `arg' and 'next' when `object==null'
-	@env alternative start object for `arg' and `next' when `object==null'
+		and as start object for `arg' and 'next' when `object==null'
+	@env alternative start object for `arg' and `next' 
+		when `object==null' and `f==null'
   */
 	public void compute_in_object(uint8* object, Gedb.Type* t, System* s, 
 								 StackFrame* f, uint8* env=null) 
 	throws ExpressionError 
-	requires ((object!=null && t!=null) || f!=null 
+	requires ((object!=null && t!=null) || f!=null || env!=null
  //			&& (t.is_subobject() || s.type_of_any(object).conforms_to(t))) {
 		) {	// workaround
 		ExpressionError? error = null;
@@ -1627,6 +1639,7 @@ public abstract class Expression : Object {
 			try {
 				arg.compute_in_object(null, t, s, f, env);
 			} catch (ExpressionError e) {
+				stderr.printf("%s\n", e.message);
 				if (is_down()) parent.down = null;
  /*
 				else throw e;
@@ -1636,17 +1649,19 @@ public abstract class Expression : Object {
 		Routine* r = f!=null ? f.routine : null;
 		var aex = this as AliasExpression;
 		if (object==null) {
-			if (env!=null) {
-				addr = env;
-				t = s.type_of_any(env);
-			} else {
+			if (f!=null) {
 				addr = target(f);
 				t = f.target_type();
+			} else if (env!=null) {
+				addr = env;
+				t = s.type_of_any(env);
 			}
 		} else {
 			if (!t.is_subobject()) t = s.type_of_any(object);
 		}
-		bool ok = aex!=null || set_dyn_type(t, f, env);
+		bool ok = aex!=null;
+		if (!ok && is_down()) t = parent.dynamic_type;
+		ok = set_dyn_type(t, f);
 		if (!ok) throw new ExpressionError.UNKNOWN 
 			("Unknown feature `"+name()+"'");
 		compute(addr, f, s);
@@ -1715,7 +1730,7 @@ public abstract class Expression : Object {
 				uint8* l_addr = address();
 				uint8* r_addr = right.address();
 				for (uint i=rt.instance_bytes; i-->0;)
-					if (l_addr[i]!=r_addr[i])  return false;
+					if (l_addr[i]!=r_addr[i]) return false;
 				return true;
 			} else {
 				return address() == right.address();
@@ -1775,7 +1790,7 @@ public abstract class Expression : Object {
 			var e = pe.type.query_by_name(out n, name(), arg==null);
 			entity = n==1 ? e : null;
 		}
-		if (down!=null)  down.adjust_to_parent();
+		if (down!=null) down.adjust_to_parent();
 	}
 
 	private void invalidate() {
@@ -1789,23 +1804,21 @@ public abstract class Expression : Object {
 		}
 	}
 
-	protected override bool set_dyn_type(Gedb.Type* pt, StackFrame* f,
-										uint8* env=null) {
+	protected override bool set_dyn_type(Gedb.Type* pt, StackFrame* f) {
 		string name = text!=null ? text._name.fast_name : work_name;
 		name = name.down();
 		uint n;
 		Entity* e;
 		for (uint i=upframe_count; i-->0;) {
 			if (f==null) 
-				throw new ExpressionError.NO_STACK
-					("");
+				throw new ExpressionError.NO_STACK ("No valid stack frame.");
 			f = f.caller;
 		}
 		Routine* r = f!=null ? f.routine : null;
 		if (pt==null) 
 			pt = r.vars[0]._entity.type;
 		e = pt.query_by_name(out n, name, arg==null, r);
-		if (n==1 && e!=entity)  invalidate();
+		if (n==1 && e!=entity) invalidate();
 		entity = e;
 		n = (uint)sizeof(void*);
 		if (n>result.length) result = new uint8[n];	
@@ -1815,13 +1828,12 @@ public abstract class Expression : Object {
 	protected override void compute(uint8* obj, StackFrame* f, System* s) 
 	throws ExpressionError {
 		if (entity==null) 
-			throw new ExpressionError.UNKNOWN ("Unknown feature "+name());
+			throw new ExpressionError.UNKNOWN ("Unknown feature "+name()+".");
 		else if (entity.is_routine()) 
-			throw new ExpressionError.REDEFINED ("Feature "+name()+" redefined"); 
+			throw new ExpressionError.REDEFINED ("Feature "+name()+" redefined."); 
 		for (uint i=upframe_count; i-->0;) {
 			if (f==null) 
-				throw new ExpressionError.NO_STACK
-					("No valid stack frame.");
+				throw new ExpressionError.NO_STACK ("No valid stack frame.");
 			f = f.caller;
 		}
 		Entity* e = entity;
@@ -1832,7 +1844,7 @@ public abstract class Expression : Object {
 			off = ((Local*)e).offset;
 		} else {
 			addr = obj;
-			if (parent!=null && parent.dynamic_type.is_agent()) {
+			if (is_down() && parent.dynamic_type.is_agent()) {
 				var t = parent.dynamic_type;
 				var at = (AgentType*)t;
 				var dt = (Gedb.Type*)at.declared_type;
@@ -1955,8 +1967,7 @@ public abstract class Expression : Object {
 
  public class PredefExpression : TextExpression {
 
-	protected override bool set_dyn_type(Gedb.Type* pt, StackFrame* f,
-										uint8* env=null) {
+	protected override bool set_dyn_type(Gedb.Type* pt, StackFrame* f) {
 		Routine* r = f.routine;
 		uint nr = name().@get(0)=='C' ? 0 : r.argument_count;
 		entity = nr<r.vars.length ? (Entity*)r.vars[nr] : null;
@@ -1997,16 +2008,15 @@ public abstract class Expression : Object {
 			e = (Entity*)r.vars[i];
 			if (!e.is_assignable_from(ab.dynamic_type)) 
 				throw new ExpressionError.INVALID_ARGUMENTS
-					(@"Argument $i is does not conform to formal type");
+					(@"Argument $i is does not conform to formal type.");
 		}
 		for (a=arg; a!=null; a=a.next) {
-			if (a.down!=null)  a.down.adjust_to_parent();
+			if (a.down!=null) a.down.adjust_to_parent();
 		} 
 	}
 
-	protected override bool set_dyn_type(Gedb.Type* pt, StackFrame* f,
-										uint8* env=null) {
-		base.set_dyn_type(pt, f, env);
+	protected override bool set_dyn_type(Gedb.Type* pt, StackFrame* f) {
+		base.set_dyn_type(pt, f);
 		if (entity==null) return false;
 		uint n = entity.type.field_bytes();		
 		if (n>result.length) new uint8[n];
@@ -2075,7 +2085,7 @@ public abstract class Expression : Object {
 				here += " (";
 			}
 			for (arg_i=arg; arg_i!=null; arg_i=arg_i.next) {
-				if (need_comma)  here += ", ";
+				if (need_comma) here += ", ";
 				here += arg_i.append_single_name(null, fmt);
 				need_comma = true;
 			}
@@ -2271,7 +2281,7 @@ public abstract class Expression : Object {
 		case OpCode.not:
 			*(bool*)result = ! parent.as_bool();
 			break;
-		case OpCode.minus:
+		case OpCode.neg:
 			switch (pt.ident) {
 			case TypeIdent.INTEGER_8:
 				*(int8*)result = - (int8)parent.as_int();
@@ -2302,10 +2312,18 @@ public abstract class Expression : Object {
 	throws ExpressionError {
 		var t = entity.type;
 		if (t.is_basic() && 0<op_code && op_code<OpCode.free1) {
-			if (arg==null)  {
+			if (arg==null) {
 				compute_basic_prefix();
 			} else {
 				var ab = arg.bottom();
+				switch (op_code) {
+				case OpCode.and_then:
+					*(bool*)result = !parent.as_bool() ? false : ab.as_bool();
+					return;
+				case OpCode.or_else:
+					*(bool*)result = parent.as_bool() ? true : ab.as_bool();
+					return;
+				}
 				compute_basic_infix(parent.dynamic_type, parent.address(), 
 									ab.dynamic_type, ab.address(), 
 									op_code, result);
@@ -2358,6 +2376,10 @@ public abstract class Expression : Object {
 		ok = qex.ok;
 	}
 
+	protected override bool set_dyn_type(Gedb.Type* pt, StackFrame* f) {
+		return true;
+	}
+
 	protected override void compute(uint8* obj, StackFrame* f, System* s) 
 	throws ExpressionError {
 		ok = parent.compare_to(arg, op_code==OpCode.eq || op_code==OpCode.ne);
@@ -2381,7 +2403,7 @@ public abstract class Expression : Object {
 	public override string name() { return _name; }
 
 	public override ClassText* base_class() { 
-		return ((NormalType*)dynamic_type).base_class;
+		return dynamic_type.base_class;
 	}
 
 	public override uint8* address() { 
@@ -2469,14 +2491,13 @@ public abstract class Expression : Object {
 		special_type = (SpecialType*)special.dynamic_type;
 		if (special_type==old || special_type==null) return;
 		var it = special_type.item_type();
-		if (it.is_normal()) cls = ((NormalType*)it).base_class;
+		cls = it.base_class;
 		entity = (Entity*)special_type.item_0();
 	}
 
 	protected ClassText* cls;
 
-	protected override bool set_dyn_type(Gedb.Type* pt, StackFrame* f,
-										uint8* env=null) {
+	protected override bool set_dyn_type(Gedb.Type* pt, StackFrame* f) {
 		set_type_and_class();
 		if (special_type!=null) entity = (Entity*)special_type.item_0();
 		return entity!=null;
@@ -2487,7 +2508,7 @@ public abstract class Expression : Object {
 		if (implicit) index = arg.bottom().as_int();
 	}
 
-	protected ItemExpression.fixed(Expression array)  
+	protected ItemExpression.fixed(Expression array) 
 	requires (array.base_class()._name.fast_name=="SPECIAL") {
 		uint n;
 		var bc = array.base_class();
@@ -2573,18 +2594,15 @@ public abstract class Expression : Object {
 	private ClassText* cls;
 	private uint item_size;
 
-	internal System* system;
-
 	protected override void copy(Expression ex) {
 		base.copy(ex);
 		var rex = ex as RangeExpression;
-		system = rex.system;
 		cls = rex.cls;
 		item_size = rex.item_size;
 		_code = rex._code;
 	}
 
-	public override Expression resolved(Expression? p, 
+	protected override Expression resolved(Expression? p, 
 		Gee.List<Expression> pl) {
 		var rex = base.resolved(p, pl) as RangeExpression;
 		rex.set_type_and_class();
@@ -2594,21 +2612,19 @@ public abstract class Expression : Object {
 	public RangeCode code { get; set; }
 	public uint item_count { get; private set; }
 
-	public RangeExpression.named(Expression array, System* s) {
+	public RangeExpression.named(Expression array) {
 		base.named(array, null);
 		index = -1;
-		system = s;
 		array.range = this;
 		work_name = "[[]]";
 	}
 
-	public RangeExpression(Expression array, System* s) 
+	public RangeExpression(Expression array) 
 		requires (array.base_class()._name.fast_name=="SPECIAL") 
 		ensures (array.range==this) {
 		base.fixed(array);
 		cls = array.base_class();
 		index = -1;
-		system = s;
 		array.range = this;
 		work_name = "[[]]";
 	}
@@ -2657,7 +2673,7 @@ public abstract class Expression : Object {
 		return item;
 	}
 
-	public void traverse_range(RangeFunc func, StackFrame* f, 
+	public void traverse_range(RangeFunc func, StackFrame* f, System* s, 
 							 uint8* env=null, bool new_item=false) 
 	throws ExpressionError {
 		item_count = 0;
@@ -2689,12 +2705,12 @@ public abstract class Expression : Object {
 		for (int i=first; i<beyond; ++i) {
 			index = i;
 			if (exif!=null) {
-				exif.top().compute_in_object(addr, t, system, f, env);
+				exif.top().compute_in_object(addr, t, s, f, env);
 				if (exif!=null && !exif.dynamic_type.is_boolean()) continue;
 				if (!exif.as_bool()) continue;
 			}
 			item = this; //new_item ? as_item(f) : this;
-			item.compute_in_object(parent.address(), t, system, f, env);
+			item.compute_in_object(parent.address(), t, s, f, env);
 			func(item);
 			item_count++;
 		}
@@ -2714,6 +2730,9 @@ public abstract class Expression : Object {
 
 	private string _name;
 
+	protected override bool set_dyn_type(Gedb.Type* pt, StackFrame* f) {
+		return true;
+	}
 	protected override void compute(uint8* obj, Gedb.Type* t, System* s) 
 	throws ExpressionError { }
 
@@ -2734,7 +2753,7 @@ public abstract class Expression : Object {
 		*(uint8**)result = str;
 		results.@add(str);
 		int l = value.length-2;
-		if (l<=0)  return;
+		if (l<=0) return;
 		string bar = value.slice(1, l+1);
 		Field* f = t.field_by_name("count");
 		uint8* addr = str+f.offset;
@@ -2749,15 +2768,21 @@ public abstract class Expression : Object {
 		l = 0;
 	}
 
-	public ManifestExpression.typed(Gedb.Type* t, string value) {
+	public ManifestExpression.typed(Gedb.Type* t, string value) 
+	requires (!t.is_subobject()) {
 		base((uint)sizeof(void*));
 		dynamic_type = t;
 		_name = value;
 	}
 
+	public void set_result(uint8* res) 
+		requires (!dynamic_type.is_subobject()) {
+		*(void**)result = res;
+	}
+
 	public override string name() { return _name; }
 	public override ClassText* base_class() { 
-		return ((NormalType*)dynamic_type).base_class; 
+		return (dynamic_type).base_class; 
 	}
 	public override uint8* address() { 
 		return dynamic_type.is_basic() ? (uint8*)result : *(uint8**)result;
@@ -2783,6 +2808,10 @@ public abstract class Expression : Object {
 		_class = tex._class;
 		tt = tex.tt;
 		_item_count = tex.item_count;
+	}
+
+	protected override bool set_dyn_type(Gedb.Type* pt, StackFrame* f) {
+		return true;
 	}
 
 	protected override void compute(uint8* obj, StackFrame* f, System* s) 
@@ -2844,7 +2873,7 @@ public abstract class Expression : Object {
 		}
 	}
 
-	public override Expression resolved(Expression? p, 
+	protected override Expression resolved(Expression? p, 
 		Gee.List<Expression> pl) {
 		var aex = base.resolved(p, pl) as AliasExpression;
 		aex.parent = p;
@@ -2852,7 +2881,7 @@ public abstract class Expression : Object {
 		if (alias==null) return aex;
 		Expression ex;
 		int i=0, n=0;
-		for (ex=alias_top.bottom(); alias_top!=ex; ex=ex.parent) {
+		for (ex=alias_top.bottom(); ex!=alias_top; ex=ex.parent) {
 			++n;
 			if (i==0 && ex!=alias) ++i;
 		}
@@ -2862,8 +2891,7 @@ public abstract class Expression : Object {
 		return aex;
 	}
 
-	protected override bool set_dyn_type(Gedb.Type* pt, StackFrame* f,
-										uint8* env=null) {
+	protected override bool set_dyn_type(Gedb.Type* pt, StackFrame* f) {
 		dynamic_type = alias.dynamic_type;
 		return dynamic_type!=null; 
 	}
@@ -2952,7 +2980,7 @@ public abstract class Expression : Object {
 		dynamic_type = ex.dynamic_type;
 	}
 
-	public override Expression resolved(Expression? p, 
+	protected override Expression resolved(Expression? p, 
 		Gee.List<Expression> pl) {
 		int n = pl.size;
 		int l = _name.length;
@@ -2965,7 +2993,10 @@ public abstract class Expression : Object {
 	}
 	
 	protected override void compute(uint8* obj, StackFrame* f, System* s) 
-	throws ExpressionError {}	// origin is already computed
+	throws ExpressionError {
+		// target is already computed
+		dynamic_type = alias.dynamic_type;
+	}
 
 	public Placeholder.named(string name, Gedb.Type* int_type) {
 		base(name, null);
@@ -3005,7 +3036,7 @@ public class RangePlaceholder : Placeholder {
 		idx = rp.idx;
 	}
 
-	public override Expression resolved(Expression? p, 
+	protected override Expression resolved(Expression? p, 
 		Gee.List<Expression> pl) {
 		var rp = base.resolved(p, pl) as RangePlaceholder;
 		rp.int_type = int_type;
@@ -3014,15 +3045,15 @@ public class RangePlaceholder : Placeholder {
 		return rp;
 	}
 
-	public RangePlaceholder(RangeExpression rng, string name) {
-		var it = rng.system.type_at(TypeIdent.INTEGER_32);
+	public RangePlaceholder(RangeExpression rng, string name, Gedb.Type* it)
+		requires (it.ident=TypeIdent.INTEGER_32) {
 		base(rng, name, it);
 		int_type = (NormalType*)it;
 	}
 	
 	public override ClassText* base_class() {
 		if (!is_index()) return base.base_class();
-		return int_type.base_class;		
+		return ((Gedb.Type*)int_type).base_class;		
 	}
 
 	public override uint8* address() {

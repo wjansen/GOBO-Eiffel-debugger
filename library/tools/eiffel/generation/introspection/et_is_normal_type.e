@@ -67,7 +67,9 @@ feature {} -- Initialization
 			end
 			if o.is_alive then
 				declare_fields (s)
-				declare_routines (s)
+				if s.needs_routines then
+					declare_routines (s)
+				end
 			end
 			declare_constants (s)
 		end

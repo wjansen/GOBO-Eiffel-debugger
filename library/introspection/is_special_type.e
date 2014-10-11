@@ -25,7 +25,8 @@ inherit
 			is_int64,
 			is_string,
 			is_unicode,
-			generics
+			generics,
+			class_name
 		end
 
 create {IS_SYSTEM, IS_TYPE}
@@ -35,16 +36,18 @@ create {IS_SYSTEM, IS_TYPE}
 
 feature {} -- Initialization 
 
-	make (id: INTEGER; fl: INTEGER; it: like item_type;
+	make (id: INTEGER; fl: INTEGER; ct: IS_CLASS_TEXT; it: like item_type;
 				a: attached like fields; e: like effectors; r: like routines)
 		note
 			action: "Construct the descriptor."
 		require
 			not_negative: id >= 0
 			a_count: attached a as aa implies aa.count = 3
+			ct_is_special: ct.has_name ("SPECIAL")
 		do
 			ident := id
 			flags := fl | Flexible_flag
+			base_class := ct
 			fields := a
 			effectors := e
 			routines := r
@@ -122,7 +125,7 @@ feature -- Access
 		once
 			Result := "SPECIAL"
 		end
-
+	
 	count: detachable like field_at
 		note
 			return: "Field describing the array's `count'."

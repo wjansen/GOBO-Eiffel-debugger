@@ -31,12 +31,14 @@ inherit
 			is_unicode,
 			generic_count,
 			hash_code,
+			class_name,
 			append_name,
 			print_name
 		redefine
 			declare_from_pattern,
 			define,
-			declare_fields
+			declare_fields,
+			base_class
 		end
 
 	IS_AGENT_TYPE
@@ -51,6 +53,7 @@ inherit
 		redefine
 			base,
 			declared_type,
+			base_class,
 			routine,
 			in_routine,
 			closed_operands_tuple
@@ -152,6 +155,8 @@ feature -- Initialization
 feature -- Access 
 
 	orig_agent: ET_AGENT
+
+	base_class: ET_IS_CLASS_TEXT
 
 	base: ET_IS_TYPE
 	
@@ -267,7 +272,7 @@ feature {} -- Implementation
 					base.force_routine (where, False, s)
 					in_routine := base.last_routine
 					create routine.declare_anonymous (Current, in_routine, s)
-					base.add_routine (routine)
+					base.force_anonymous_routine (routine)
 				end
 				routine.build_arguments (s)
 			end

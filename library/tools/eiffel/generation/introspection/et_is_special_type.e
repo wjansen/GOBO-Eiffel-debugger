@@ -26,11 +26,13 @@ inherit
 			is_string,
 			is_unicode,
 			generic_count,
-			field_count
+			field_count,
+			class_name
 		redefine
 			declare,
 			declare_from_pattern,
 			define,
+			base_class,
 			generics
 		end
 
@@ -44,6 +46,7 @@ inherit
 			set_fields,
 			is_equal
 		redefine
+			base_class,
 			generics
 		end
 
@@ -91,7 +94,7 @@ feature {} -- Initialization
 					end
 				end
 				if df /= Void then
-					create r.declare (df, Current, False, s)
+					create r.declare (df, Current, s)
 					a2.set_text (r.text)
 				end
 			end
@@ -124,6 +127,10 @@ feature -- Initialization
 				end				
 			end
 		end
+
+feature -- Access 
+
+	base_class: ET_IS_CLASS_TEXT
 
 feature -- ET_IS_ORIGIN 
 

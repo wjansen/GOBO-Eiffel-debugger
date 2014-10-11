@@ -25,11 +25,13 @@ inherit
 			is_int64,
 			is_string,
 			is_unicode,
-			generic_count
+			generic_count,
+			class_name
 		redefine
 			declare,
 			declare_from_pattern,
-			define
+			define,
+			base_class
 		end
 
 	IS_TUPLE_TYPE
@@ -41,6 +43,8 @@ inherit
 			routine_at,
 			set_fields,
 			is_equal
+		redefine
+			base_class
 		end
 
 create 
@@ -102,7 +106,9 @@ feature {} -- Initialization
 					i := i + 1
 				end
 			end
-			declare_routines (s)
+			if o.is_alive and then s.needs_routines then
+				declare_routines (s)
+			end
 		end
 
 	declare_from_pattern (o: like origin; p: like Current; s: ET_IS_SYSTEM)
@@ -152,6 +158,10 @@ feature -- Initialization
 				end
 			end
 		end
+
+feature -- Access 
+
+	base_class: ET_IS_CLASS_TEXT
 
 feature -- ET_IS_ORIGIN 
 

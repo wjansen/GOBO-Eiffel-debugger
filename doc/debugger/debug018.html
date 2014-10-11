@@ -65,10 +65,10 @@ Define the alias name <span style="font-family:monospace">pairs</span> as
 whose keys are of a reference type. 
 Then expression <code>table { _pairs }</code> expands to 
 <pre class="verbatim">  table { ?.keys [[if ? /= Void]] { ??.content[!] } }
-</pre>where the first <span style="font-family:sans-serif">?</span> and the <span style="font-family:sans-serif">??</span> 
+</pre>where the first <span style="font-family:monospace">?</span> and the <span style="font-family:monospace">??</span> 
 refer to <span style="font-family:monospace">table</span> (in front of one or two nested details, respectively, 
 as seen from the placeholders)
-while the second <span style="font-family:sans-serif">?</span> and the <span style="font-family:sans-serif">!</span> refer to the actual item 
+while the second <span style="font-family:monospace">?</span> and the <span style="font-family:monospace">!</span> refer to the actual item 
 of <span style="font-family:monospace">keys</span> and <span style="font-family:monospace">content</span> (range and innermost details specification). 
 <p>In fact, the rather complex syntax of <span style="font-style:italic">detailed_expression</span> 
 has been motivated by the need for displaying key/value pairs of a hashtable, 

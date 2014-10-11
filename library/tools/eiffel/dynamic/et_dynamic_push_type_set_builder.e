@@ -17,7 +17,6 @@ inherit
 	ET_DYNAMIC_TYPE_BUILDER
 		redefine
 			new_dynamic_type_set,
-			build_dynamic_type_sets,
 			build_tuple_item,
 			build_tuple_put,
 			build_agent_call,
@@ -67,7 +66,7 @@ feature -- Factory
 
 feature -- Generation
 
-	build_dynamic_type_sets
+	build_dynamic_type_sets__orig
 			-- Build dynamic type sets for `current_dynamic_system'.
 			-- Set `has_fatal_error' if a fatal error occurred.
 		local

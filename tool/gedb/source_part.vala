@@ -29,6 +29,7 @@ public class SourcePart : Box, ClassPosition {
 	internal int mono_width;
 	internal bool active; 
 
+	internal Entry plus;
 	internal Entry search;
 	internal ToggleButton precise;
 	internal Entry go_to;
@@ -122,22 +123,8 @@ public class SourcePart : Box, ClassPosition {
 		tag.background = "red"; 
 		tag.background_set = true; 
 		tags.@add(tag);
-		tag = new TextTag("break-edit");
-		tag.background = "violet"; //"#ff9381", 
-		tag.background_set = true; 
-		tags.@add(tag);
 		tag = new TextTag("search");
 		tag.background = "#ffd475";
-		tag.foreground_set = true; 
-		tags.@add(tag);
-		tag = new TextTag("lineno");
-		tag.foreground = "blue";
-		tag.foreground_set = true; 
-		tags.@add(tag);
-		tag = new TextTag("goto-lineno");
-		tag.background = "blue"; 
-		tag.background_set = true; 
-		tag.foreground = "#fff6e0";
 		tag.foreground_set = true; 
 		tags.@add(tag);
 	}
@@ -260,7 +247,10 @@ public class SourcePart : Box, ClassPosition {
 	}
 
 	private void do_new_exe(Debuggee dg) {
+		class_list = new_class_list(dg.rts);
+		plus.completion.set_model(class_list);
 		for (int n=pages.get_n_pages()-1; n-->0;) pages.remove_page(n);
+		feature_window.get_toplevel().hide();
 		feature_window.title = compose_title("Feature text", dg.rts);
 	}
 
@@ -310,19 +300,18 @@ public class SourcePart : Box, ClassPosition {
 		var full = act_source();
 		if (full!=null) full.do_goto(entry);
 	}
-	
+
 	private void do_set_sensitive(bool is_running) { active = !is_running; }
 
 	private Notebook new_pages() {
 		var pages = new Notebook();
 		pages.enable_popup = true;
 		pages.scrollable = true;
-		var plus = new Entry();
+		plus = new Entry();
 		plus.width_chars = 12;
 		plus.placeholder_text = "More classes";
 		var compl = new EntryCompletion();
 		plus.set_completion(compl);
-		compl.set_model(class_list);
 		compl.set_text_column(ClassEnum.CLASS_NAME);
 		compl.set_match_func(do_filter_class);
 		compl.match_selected.connect(
@@ -413,7 +402,7 @@ and close feature window.""");
 
 	public SourcePart(Debuggee dg, 
 					  BreakPart? b, RunPart? r, DataPart d, ConsolePart? c, 
-					  StackPart s, Status status, ListStore classes) {
+					  StackPart s, Status status) {
 		this.dg = dg;
 		run = r;
 		brk = b;
@@ -422,7 +411,6 @@ and close feature window.""");
 		console = c;
 		the_console = console;
 		this.status = status;
-		class_list = classes;
 		needle = "";
 
 		orientation = Orientation.VERTICAL;
@@ -485,7 +473,7 @@ Shortcut: <span><i>&lt;CTRL&gt;L</i></span>""");
 		search.activate.connect(() => { do_search(); });
 		precise.clicked.connect(() => { do_toggle(precise); });
 		go_to.activate.connect(() => { do_goto(go_to); });
-		if (dg!=null) dg.new_executable.connect(do_new_exe);
+		dg.new_executable.connect(do_new_exe);
 		stack.level_selected.connect((s,f,i,p) => { do_actual(f,i,p); });
 		pages.switch_page.connect((s,w,i) => { do_switch(w as FullSource); });
 
@@ -943,7 +931,6 @@ public class FullSource : SingleSource {
 		end.assign(start);
 		end.forward_char();
 		text.remove_tag_by_name("break", start, end);
-		text.remove_tag_by_name("break-edit", start, end);
 	}
 	
 	private void highlight_one_breakpoint(Breakpoint? old_bp, 
@@ -1051,8 +1038,8 @@ public class FullSource : SingleSource {
 						try {
 							ex.compute_in_stack(frame, source.dg.rts);
 							if (name.length>0) name += "  ;  ";
-							name += ex.format_one_value
-							(ex.Format.WITH_NAME | ex.Format.WITH_TYPE);
+							name += ex.bottom().format_one_value
+								(ex.Format.WITH_NAME | ex.Format.WITH_TYPE);
 						} catch (GLib.Error e) {
 						}
 					}
@@ -1114,7 +1101,7 @@ public class FullSource : SingleSource {
 		Entity* e = null;
 		string name = q.ft._name.fast_name;
 		uint n;
-		if (q.ft.is_routine_text())  return null;
+		if (q.ft.is_routine())  return null;
 		if (q.p!=null) {
 			pex = simple_value(q.p);
 			if (pex==null) return null;
@@ -1231,6 +1218,7 @@ public class FullSource : SingleSource {
 			case 'b': 
 				if (brk!=null) {
 					cls = current_class();
+					if (!cls.is_debug_enabled()) break;
 					actual_pos = insert_position(true);
 					bp = new Breakpoint.with_location(cls.ident, actual_pos, true);
 					brk.add_breakpoint(bp);
@@ -1425,7 +1413,7 @@ public class FullSource : SingleSource {
 		for (i=cls.features.length; i-->0;) {
 			ft = cls.features[i];
 			if (ft.home!=cls || ft.renames!=null)  continue;
-			if (ft.is_routine_text()) {
+			if (ft.is_routine()) {
 				rt = (RoutineText*)ft;
 				pos = rt.instruction_positions;
 				n = rt.instruction_positions.length;

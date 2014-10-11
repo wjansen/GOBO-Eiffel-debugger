@@ -136,6 +136,8 @@ feature -- Routine flags
 
 	Side_effect_flag: INTEGER = 0x4000
 
+	Routine_flag: INTEGER = 0x8000
+
 	runtime_system: IS_RUNTIME_SYSTEM
 		note
 			return: "The actual IS_SYSTEM."

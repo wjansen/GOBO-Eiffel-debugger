@@ -8,7 +8,7 @@ void* GE_zresults = 0;
 void* GE_zmarkers = 0;
 GE_jmp_buf GE_zbuf0;
 
-GedbRoutine* GE_zroutine(int t_id, int r_id) {
+void* GE_zroutine(int t_id, int r_id) {
   GedbType* t = GE_zrts->all_types[t_id];
   return t->routines[r_id];
 }
@@ -42,7 +42,7 @@ static void longjmp_(void* buf, int jmp) {
 }
 void (*GE_zlongjmp)(void*,int) = longjmp_;
 
-GedbType* GE_ztype(int t_id) {
+void* GE_ztype(int t_id) {
   return GE_zrts->all_types[t_id];
 }
 
@@ -101,8 +101,17 @@ void set_offsets_(void) {
     t = rts->all_types[i];
     if (t==0) continue;
     fl = t->flags;
-    if ((fl & Alive_flag)==0) continue;
     ext = GE_zt[i];
+    if (fl & Flexible_flag) {
+      t->class_name = "SPECIAL";
+    } else if (fl & Tuple_flag) {
+      t->class_name = "TUPLE";
+    } else if (fl & Agent_flag) {
+      t->class_name = "AGENT";
+    } else {
+      t->class_name = ((GedbName*)t->base_class)->fast_name;
+    }
+    if ((fl & Alive_flag)==0) continue;
     t->instance_bytes = ext->size;
     t->default_instance = ext->def;
     t->allocate = ext->alloc;
@@ -141,15 +150,7 @@ void set_offsets_(void) {
 	off = (size_t)ext_f->def - (size_t)ext->def;
 	f->offset = (int)off;
       }
-      if (fl & Flexible_flag) {
-	t->class_name = "SPECIAL";
-      } else if (fl & Tuple_flag) {
-	t->class_name = "TUPLE";
-      } else if (fl & Agent_flag) {
-	t->class_name = "AGENT";
-      } else {
-	GedbNormalType* nt = (GedbNormalType*)t;
-	t->class_name = ((GedbName*)nt->base_class)->fast_name;
+      if ((fl & Flexible_flag)==0) {
 	for (j=t->routines_length; j-->0;) {
 	  r = t->routines[j];
 	  r->call = ((GedbRoutine**)ext->routines)[j];

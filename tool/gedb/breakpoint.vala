@@ -318,7 +318,7 @@ public class Breakpoint : GLib.Object {
 					print.Format.WITH_NAME |
 					print.Format.WITH_TYPE |
 					print.Format.INDEX_VALUE ,
-					f);
+					f, s);
 			} catch (Error e) {
 				// TODO show parse error 
 			}
