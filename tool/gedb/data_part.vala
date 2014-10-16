@@ -1,12 +1,12 @@
 using Gtk;
 using Gedb;
 
-public class DataCore : Box {
+public class DataCore : Box, AbstractPart {
 
 	protected StackPart stack;
 	protected Status status;
 	public DataPart? main;
-	public Debuggee dg;
+	public Debuggee? dg;
 
 	protected TreeStore store;
 	protected TreeView view {get; protected set; }
@@ -23,7 +23,7 @@ public class DataCore : Box {
 							 Entity* e, SpecialType* st, uint idx,
 							 char mode, string? name, string value,
 							 Expression? ex=null) 
-	requires (e!=null || st!=null || ex!=null) {
+	requires (e!=null || st!=null || ex!=null || dg==null) {
 		Gedb.Type* t = st!=null 
 			? st.item_type()
 			: (e!=null ? e.type : ex.dynamic_type);
@@ -54,6 +54,7 @@ public class DataCore : Box {
 		uint tid;
 		int i, n;
 		char c;
+		if (dg==null) return;
 		FormatStyle fmt = format_style(); 
 		store.@get(iter, ItemFlag.ADDR, out addr, 
 				   ItemFlag.TYPE_ID, out tid, -1);
@@ -75,6 +76,7 @@ public class DataCore : Box {
 	}
 	
 	internal void update_subtree(TreeIter iter, uint8* addr) {
+		if (dg==null) return;
 		Gedb.Type* t;
 		Gedb.Type* ft;
 		Field* f;
@@ -145,7 +147,7 @@ public class DataCore : Box {
 			uint8* faddr = st.base_address(addr);
 			step = st.item_type().field_bytes();
 			for (i=0; i<n; ++i, faddr+=step) {
-				// if (is_default_value(faddr, TRUE, fid))  continue;
+				// if (is_default_value(faddr, TRUE, fid)) continue;
 				heap = e.type.dereference(faddr);
 				if (i<n_old) {
 					store.iter_nth_child(out child, iter, i);
@@ -199,7 +201,8 @@ public class DataCore : Box {
 		ct.text = "%c".printf((char)mode);
 	}
 
-	protected virtual void do_refresh(StackFrame* f, uint class_id, uint pos)  {
+	protected virtual void do_refresh(StackFrame* f, uint class_id, uint pos) {
+		if (dg==null) return;
 		Gedb.Type* lt;
 		AgentType* ag; 
 		Routine* r;
@@ -215,12 +218,12 @@ public class DataCore : Box {
 		FormatStyle fmt = format_style();
 		known_objects = null;
 		if (fmt==FormatStyle.IDENT) {
-			refill_known_objects();
+			refill_known_objects(dg.rts);
 		}
 		for (n=store.iter_n_children(null); n-->0;) {
 			store.iter_nth_child(out iter, null, (int)n);
 			store.@get(iter, ItemFlag.MODE, out ch, -1);
-			if (ch==DataMode.EXTERN)  store.@remove(ref iter);
+			if (ch==DataMode.EXTERN) store.@remove(ref iter);
 			else  break;
 		}
 		if (f==null) {
@@ -327,6 +330,7 @@ public class DataCore : Box {
 	}
 
 	protected virtual void do_expand(TreeIter iter) {
+		if (dg==null) return;
 		Gedb.Type* t, ft;
 		Field* f;
 		Entity* e, pe;
@@ -371,7 +375,7 @@ public class DataCore : Box {
 			uint8* faddr = st.base_address(addr);
 			uint step = st.item_type().field_bytes();
 			for (i=0; i<n; ++i, faddr+=step) {
-				// if (is_default_value(faddr, TRUE, fid))  continue;
+				// if (is_default_value(faddr, TRUE, fid)) continue;
 				heap = e.type.dereference(faddr);
 				if (more) 
 					store.append(out child, iter);
@@ -435,6 +439,7 @@ public class DataCore : Box {
 
 	private void add_item(TreeIter iter, Entity*e, uint8* addr, DataMode mode,
 						  int replace=-1, int array_idx=-1, int tuple_idx=-1) {
+		if (dg==null) return;
 		TreeIter child;
 		FormatStyle fmt = format_style();
 		int off = e.is_local() ? ((Local*)e).offset : ((Field*)e).offset;
@@ -462,6 +467,7 @@ public class DataCore : Box {
 	}
 
 	protected virtual void do_collapse(TreeIter iter) {
+		if (dg==null) return;
 		Gedb.Type* t;
 		Expression? ex;
 		TreeIter child;
@@ -482,12 +488,12 @@ public class DataCore : Box {
 
 	private string add_short_type(string name, Entity* e) requires (e!=null) {
 		string type = e.type._name.fast_name;
-		if (type.length>20)  type = type.substring(0,18) + "...";
+		if (type.length>20) type = type.substring(0,18) + "...";
 		return name + " : " + type;
 	}
 
 	private static int compare_routines(Routine* u, Routine* v) {
-		if (u==v)  return 0;
+		if (u==v) return 0;
 		return  ((Entity*)u).is_less((Entity*)v) ? -1 : 1;
 	}
 
@@ -535,6 +541,7 @@ public class DataCore : Box {
 	private Gtk.Menu menu;
 
 	private bool do_features(Gdk.EventButton ev) {	
+		if (dg==null) return false;
 		if (ev.type!=Gdk.EventType.BUTTON_PRESS || ev.button!=3) return false;
 		TreeViewColumn col;
 		TreePath path;
@@ -563,11 +570,11 @@ public class DataCore : Box {
 					   ItemFlag.TYPE_ID, out tid,
 					   ItemFlag.NAME, out name, 
 					   -1);
-			if (name==null || name=="")  break;
+			if (name==null || name=="") break;
 			pinfo = ex!=null && ex.bottom().address()!=null 
-				? new DeepInfo.from_expression(ex, dg.rts) 
-				: new DeepInfo(null, e, dg.rts, i, 0, tid);
-			if (info==null)  last = pinfo;
+			? new DeepInfo.from_expression(ex) 
+			: new DeepInfo(null, e, i, addr, dg.rts.type_at(tid));
+			if (info==null) last = pinfo;
 			else  info.parent = pinfo;
 			info = pinfo;
 		}
@@ -590,15 +597,15 @@ public class DataCore : Box {
 	private string do_deep(TreeModel model, TreeIter at, uint col) {
 		string text;
 		store.@get(at, col, out text, -1);	
-		if (col==ItemFlag.VALUE && format_style()==FormatStyle.IDENT
-			&& text.length>0) {
+		if (col==ItemFlag.VALUE && format_style()==FormatStyle.IDENT) {
+			if (text.length<1 || text[0]!='_') return text;
 			text = text.substring(1);
 			int id = int.parse(text);
-			if (id<=0)  return "";
+			if (id<=0) return "";
 			var info = deep_info[id];
 			text = dotted_name(info);
 			bool valued = false;	// TODO: for future use
-			if (!valued || info.addr==null)  return text;
+			if (!valued || info.addr==null) return text;
 			text += " = " + format_value(info.addr, 0, false, info.tp, 0);
 			text += " : " + format_type(info.addr, 0, false, info.tp);
 			return text;
@@ -607,7 +614,7 @@ public class DataCore : Box {
 			string str;
 			for (; model.iter_parent(out p, at); at=p) {
 				model.@get(p, col, out str, -1);
-				if (text.@get(0)!='[')  str += ".";
+				if (text.@get(0)!='[') str += ".";
 				text = str+text;
 			}
 			return text;
@@ -616,9 +623,7 @@ public class DataCore : Box {
 		}
 	}
 	
-	internal DataCore(Debuggee dg, StackPart stack, Status state, 
-					  bool as_main) {
-		this.dg = dg;
+	internal DataCore(StackPart stack, Status state, bool as_main) {
 		this.stack = stack;
 		status = state;
 		orientation = Orientation.VERTICAL;
@@ -700,8 +705,6 @@ public class DataCore : Box {
 			{ return status.set_long_string(ev, view, info_list, do_deep); });
 		view.leave_notify_event.connect((ev) =>
 			{ return status.remove_long_string(); });
-		dg.notify["is-running"].connect(
-			(g,p) => { do_set_sensitive(dg.is_running); });
 	}
 
 	private EvalPart _eval;
@@ -718,27 +721,31 @@ public class DataCore : Box {
 		private set { _deep_info = value; }
 	}
 
-	private DeepInfo info; 
-	private DeepSource deep_source;
+	private MemorySource deep_source;
 
-	private void add_deep_info(uint od, void* id) {
-		if (_deep_info.length<=od)  _deep_info.resize((int)(2*od+1));
-		_deep_info[od] = info;
+	private void add_deep_info(uint od, void* id, Gedb.Type* t, 
+							   void* w, Entity* e, int i) {
+		if (_deep_info.length<=od) _deep_info.resize((int)(2*od+1));
+		var p = deep_info[known_objects[w]];
+		_deep_info[od] = new DeepInfo(p, e, i, id, t);
 	}
 
-	private void improve_deep_info(uint od, void* id) {
-		if (info.depth < _deep_info[od].depth)  _deep_info[od] = info;
-	}
-
-	internal void fill_info(uint od, Entity* e, int idx, int d) {
-		info = new DeepInfo(deep_info[od], e, dg.rts, idx, d);
+	private void improve_deep_info(uint od, void *w, Entity* e, int i) {
+		var old = _deep_info[od];
+		if (old.parent==null) return; // cannot be improved;
+		if (w==null) { // is root 
+			old.reparent(null, e, i);
+		} else {
+			var now = _deep_info[known_objects[w]];
+			if (old.parent.depth > now.depth) old.reparent(now, e, i); 
+		}
 	}
 
 	public string dotted_name(DeepInfo info) {
-		if (info==null)  return "";
+		if (info==null) return "";
 		DeepInfo? pinfo = info.parent;
 		string name = info.field._name.fast_name;
-		if (name==null)  name = "";
+		if (name==null) name = "";
 		if (info.field.is_once()) {
 			var o = (Gedb.Once*)info.field;
 			name = "{" + o.home._name.fast_name + "}." + name;
@@ -746,41 +753,40 @@ public class DataCore : Box {
 		if (pinfo!=null) {
 			int i = info.index;
 			string text = dotted_name(pinfo);
-			return i<0 ? "%s.%s".printf(text, name)	: "%s[%i]".printf(text, i);
+			return i<0 ? @"$text.$name" : @"$text[$i]";
 		}
 		return name;
 	}
 
-	public void refill_known_objects() {
+	public void refill_known_objects(System* s) {
 		if (main!=null || known_objects!=null) return;
 		deep_info = new DeepInfo[99];
 		var d = new Persistence<uint,void*>();
-		deep_source = new DeepSource(frame, dg.rts, this, d);
-		d.when_new.connect((od,id,t,n) => { add_deep_info(od,id); });
-		d.when_known.connect((od,id,t,n) => { improve_deep_info(od,id); });
-		d.traverse_stack(new NullTarget(), deep_source, frame, dg.rts, true); 
 		known_objects = d.known_objects;
+		d.when_new.connect((od,id,t,n,p,e,i) => 
+			{ add_deep_info(od,id,t,p,e,i); });
+		d.when_known.connect((od,id,t,n,p,e,i) =>
+			{ improve_deep_info(od,p,e,i); });
+		deep_source = new MemorySource(frame, s);
+		d.traverse_stack(new NullTarget(), deep_source, frame, s, true); 
 	}
 
 	private TextExpression? id2expr(DeepInfo info) {
 		var p = info.parent;
 		var f = info.field;
-		if (p!=null) {
-			var pex = id2expr(p);
-			if (pex!=null) {
-				pex.bottom().set_child(pex.Child.DOWN,  
-					pex.new_typed(p.expr, f, null));
-				return pex;
-			}
-		} 
-		if (f.text!=null) {
-			return Expression.new_typed(null, f, null) as TextExpression;
-		}
-		return null;
+		Expression? pex = p!=null ? id2expr(p) : null;
+		TextExpression tex = null;
+		if (info.index>=0) 
+			tex = new ItemExpression.computed(pex, info.index, dg.rts);
+		 else if (f.text!=null) 
+			tex = new TextExpression.computed(f, info.addr, dg.rts);
+		info.expr = tex;
+		if (pex!=null) pex.set_child(pex.Child.DOWN, tex);
+		return tex;
 	}
 
 	public TextExpression? id_to_expr(uint id) {
-		if (known_objects==null) return null;
+		if (known_objects==null || dg==null) return null;
 		if (id>=_deep_info.length) return null;
 		var info = _deep_info[id];
 		if (info==null) return null;
@@ -806,6 +812,18 @@ public class DataCore : Box {
 		return tex;
 	}
 
+	public void set_debuggee(Debuggee? dg) { 
+		this.dg = dg; 
+		eval.set_debuggee(dg);
+		var dp = this as DataPart;
+		if (dp!=null) dp.more_data.clear();
+		set_sensitive(dg!=null);
+		if (dg!=null) {
+			dg.notify["is-running"].connect(
+				(g,p) => { do_set_sensitive(dg.is_running); });
+		}
+	}
+
 	public signal void item_selected(DataItem? item);
 	public signal void reformatted(FormatStyle fmt);
 }
@@ -815,14 +833,15 @@ public class DataPart : DataCore {
 	private RadioButton addr;
 	private RadioButton ident;
 	private RadioButton hex;
+	internal Gee.List<MoreDataPart> more_data;
 	internal Gee.Map<string,Expression> aliases;
 
 	private void do_reformat(ToggleButton b) {
-		if (!b.active)  return;
+		if (!b.active || dg==null) return;
 		FormatStyle fmt = format_style();
 		switch (fmt) {
 		case FormatStyle.IDENT: 
-			refill_known_objects();
+			refill_known_objects(dg.rts);
 			break;
 		default:
 			known_objects = null;
@@ -850,12 +869,13 @@ public class DataPart : DataCore {
 			addr.active ? FormatStyle.ADDRESS : FormatStyle.IDENT;
 	}
 
-	public DataPart(Debuggee dg, StackPart sp, Status state,
+	public DataPart(StackPart sp, Status state,
 					Gee.Map<string,Expression> aliases) {
-		base(dg, sp, state, true);
+		base(sp, state, true);
 		main = null;
+		more_data = new Gee.ArrayList<MoreDataPart>();
 		this.aliases = aliases;
-		eval = new EvalPart(dg, this);
+		eval = new EvalPart(this);
 		TreeSelection sel = view.get_selection();
 		sel.mode = SelectionMode.SINGLE;
 		sel.set_select_function(do_select);
@@ -886,8 +906,6 @@ in print commands.""");
 		hex.toggled.connect(do_reformat);
 		
 		notify["tree-lines"].connect((d,p) => { do_tree_lines(); });
-		if (dg!=null) 
-			dg.new_executable.connect(() => { ExtraData.part_count=0; });
 		sel.changed.connect((s) => { 
 				TreeModel model;
 				TreeIter iter;
@@ -911,7 +929,7 @@ in print commands.""");
 	
 	public void assign(Expression rhs) requires (rhs.dynamic_type!=null) {
 		var lhs = selected_item(); 
-		if (lhs==null)  return;
+		if (lhs==null) return;
 		var linfo = new WatchInfo.from_data(lhs, frame, dg.rts);
 		Entity* e = lhs.field;
 		Gedb.Type* t = e.type;
@@ -1047,7 +1065,7 @@ in print commands.""");
 
 	internal void add_expression(Expression expr, TreeIter? at=null,
 		bool expand=false) {
-		if (main!=null)  return;
+		if (main!=null) return;
 		Gedb.Type* t;
 		Entity* e = null;
 		Expression ex, exb;
@@ -1107,6 +1125,10 @@ in print commands.""");
 		}
 	}
 
+	public void add_more(MoreDataPart m) {
+		more_data.insert(0,m);
+	}
+
 }
 
 public class ExtraData : DataCore {
@@ -1128,7 +1150,7 @@ public class ExtraData : DataCore {
 	}
 
 	public ExtraData(Debuggee dg, DataPart main, StackPart own) {
-		base(dg, own, main.status, false);
+		base(own, main.status, false);
 		this.main = main;
 		++part_count;
 		id = part_count;
@@ -1148,7 +1170,6 @@ public class MoreDataPart : Window {
 		GLib.Idle.@add(() => { destroy();  return false; });
 		return true;
 	}
-
 
 	public MoreDataPart(Debuggee dg, DataPart d, StackPart s) {
 		destroy_with_parent = true;
@@ -1184,10 +1205,10 @@ public class MoreDataPart : Window {
 		buttons.@add(close);
 		close.clicked.connect((b) => { do_close_data(); });
 		delete_event.connect((e) => { return do_close_data(); });
-		if (dg!=null)
-			dg.new_executable.connect(() => { destroy(); });
 
 		has_resize_grip = true;
+
+		d.add_more(this);
 	}
 
 } 
@@ -1219,7 +1240,7 @@ public class FixedPart : DataCore {
 				addr = (uint8*)o.value_address;
 				t = e.type;
 				addr = t.dereference(addr);
-				if (!t.is_subobject())  t = dg.rts.type_of_any(addr, t);
+				if (!t.is_subobject()) t = dg.rts.type_of_any(addr, t);
 				value = format_value(addr, 0, false, t, 
 									 fmt, main.known_objects);
 				type = t._name.fast_name;
@@ -1266,7 +1287,7 @@ public class FixedPart : DataCore {
 							   Item.FRESH, out fresh,
 							   ItemFlag.MODE, out m, 
 							   -1);
-					if (m!=DataMode.ONCE)  continue;
+					if (m!=DataMode.ONCE) continue;
 					o = (Gedb.Once*)e;
 					if (fresh==o.is_initialized()) {
 						fresh = !fresh;
@@ -1370,7 +1391,7 @@ public class FixedPart : DataCore {
 
 	public FixedPart(Debuggee dg, StackPart stack, DataPart data, 
 					 Status status) {
-		base(dg, stack, status, false);
+		base(stack, status, false);
 		main = data;
 		w = new Window();
 		w.title = compose_title("Fixed data", dg.rts);
@@ -1541,78 +1562,69 @@ public class FixedPart : DataCore {
 
 public class DeepInfo { 
 
-	public DeepInfo(DeepInfo? p, Entity* e, System* s, 
-					int i=-1, int d=0, uint tid=0) {
-		parent = p;
-		field = e;
-		index = i;
-		depth = d;
-		tp = tid>0 ? s.type_at(tid) : e.type;
+	public DeepInfo(DeepInfo? p, Entity* e, int i=-1, uint8* obj, Gedb.Type* t)
+	//	requires (p==null || ((i>=0) == p.tp.is_special()))
+		{ // workaround
+		addr = obj;
+		tp = t;
+		reparent(p, e, i);
 	}
 
-	public DeepInfo.from_expression(Expression ex, System* s) 
+	public DeepInfo.from_expression(Expression ex) 
 	requires (ex.bottom().address()!=null) {
 		var tex = ex.bottom() as TextExpression;
 		assert (tex!=null);
-		this(null, tex.entity, s);
+		var iex = tex as ItemExpression;
+		int idx = iex!=null ? iex.index : -1;
+		this(null, tex.entity, idx, ex.address(), ex.dynamic_type);
 		expr = ex;
 		tp = ex.dynamic_type;
-		addr = ex.address();
+		assert (addr==ex.address());
 	}
 
+/**
+   Parent of object, `null' for root objects 
+   (local variables of actual routine, once function values)
+ **/
 	public DeepInfo? parent { get; set; } 
-	public Gedb.Type* tp { get; private set; } 
-	public Expression? expr { get; private set; }
+
+/**
+   Associated Expression.
+ **/
+	public Expression? expr { get; internal set; }
+
+/**
+   Entity of object if `parent' is not of SPECIAL type
+ **/
 	public Entity* field { get; private set; } 
+
+/**
+   Index of object if `parent' is of SPECIAL type
+ **/
 	public int index { get; private set; } 
+
+/**
+   Traversal depth of object 
+ **/
 	public int depth { get; private set; } 
+
+/**
+   Dynamic type of object
+ **/
+	public Gedb.Type* tp { get; private set; } 
+
+/**
+   Object address
+ **/
 	public uint8* addr { get; private set; } 
+
+	public void reparent(DeepInfo? p, Entity* e, int i) {
+		parent = p;
+		field = e;
+		index = i;
+		depth = p!=null ? p.depth+1 : 0;
+	}
 } 
-
-public class DeepSource : MemorySource {
-
-	private DataCore data;
-	private Persistence<uint,void*> driver;
-
-	public DeepSource(StackFrame* f, System* s, 
-					  DataCore d, Persistence<uint,void*> io) { 
-		base(f, s); 
-		data = d;
-		driver = io;
-	}
-
-	public override void set_local(Local* l, StackFrame* f) {
-		base.set_local(l, f);
-		if (!l._entity.type.is_subobject())
-			fill_info(null, (Entity*)l, -1);
-	}
-
-	public override void set_once(Gedb.Once* o) {
-		base.set_once(o);
-		Entity* e = (Entity*)o;
-		if (o._routine.is_function() && !e.type.is_subobject())
-			fill_info(null, e, -1);
-	}
-	
-	public override void set_field(Field* f, void* in_id) { 
-		base.set_field(f, in_id);
-		if (!f._entity.type.is_subobject())
-			fill_info(in_id, (Entity*)f, -1);
-	}
-
-	public override void set_index(SpecialType* st, uint i, void* in_id) {
-		base.set_index(st, i, in_id);
-		Gedb.Type* it = st.item_type();
-		if (!it.is_subobject())
-			fill_info(in_id, (Entity*)st.item_0(), (int)i);
-	}
-	  
-	private void fill_info(void* obj, Entity* e, int idx) {
-		uint od = obj!=null ? driver.known_objects.@get(obj) : 0;
-		data.fill_info(od, e, idx, offsets.depth());
-	}
-
-} /* class DeepSource */
 
 public class FeatureMenu : Gtk.Menu {
 
@@ -1681,19 +1693,19 @@ public class FeatureMenu : Gtk.Menu {
 
 	private string add_short_type(string name, Entity* e) requires (e!=null) {
 		string type = e.type._name.fast_name;
-		if (type.length>20)  type = type.substring(0,18) + "...";
+		if (type.length>20) type = type.substring(0,18) + "...";
 		return name + " : " + type;
 	}
 
 	private static int compare_routines(Routine* u, Routine* v) {
-		if (u==v)  return 0;
+		if (u==v) return 0;
 		return  ((Entity*)u).is_less((Entity*)v) ? -1 : 1;
 	}
 
 	public FeatureMenu(DeepInfo deep, uint8* obj,
 					   DataCore data, uint up, System* s) {
 		ClassText* ct;
-		Gedb.Type* t;
+		Gedb.Type* t, et;
 		Entity* e;
 		Routine* r;
 		FeatureText* x;
@@ -1701,6 +1713,7 @@ public class FeatureMenu : Gtk.Menu {
 		Expression ex, arg, prev;
 		Gtk.MenuItem item;
 		string name;
+		uint8* addr;
 		uint tid;
 		uint i, j, m, n;
 		bool alias;
@@ -1742,7 +1755,7 @@ public class FeatureMenu : Gtk.Menu {
 			++size;
 			item.show();
 			item.activate.connect(do_feature);
-			down = new DeepInfo(deep, e, s, -1, deep.depth+1);
+			down = new DeepInfo(deep, e, -1, null, e.type);
 			items.@set(item, down);
 			++i;
 		}
@@ -1760,7 +1773,13 @@ public class FeatureMenu : Gtk.Menu {
 			for (i=0; i<n; i++) {
 				e = (Entity*)t.fields[i];
 				x = e.text;
-				if (x==null)  continue;
+				if (x==null) continue;
+				addr = obj+((Field*)e).offset;
+				et = e.type;
+				if (!et.is_subobject()) {
+					addr = et.dereference(addr);
+					et = s.type_of_any(addr);
+				}
 				alias = x.alias_name!=null;
 				name = alias ? x.alias_name : e._name.fast_name;
 				name = add_short_type(name, e);
@@ -1769,7 +1788,7 @@ public class FeatureMenu : Gtk.Menu {
 				++size;
 				item.show();
 				item.activate.connect(do_feature);
-				down = new DeepInfo(deep, e, s, -1, deep.depth+1);
+				down = new DeepInfo(deep, e, -1, addr, et);
 				items.@set(item, down);
 			}
 		}
@@ -1794,16 +1813,16 @@ public class FeatureMenu : Gtk.Menu {
 			item.sensitive = false;
 			for (i=0; i<n; i++) {
 				r = flist.@get((int)i);
-				if (r.is_once())  continue;
+				if (r.is_once()) continue;
 				e = (Entity*)r;
 				x = e.text;
-				if (x==null)  continue;
+				if (x==null) continue;
 				item = new Gtk.MenuItem();
 				append(item);
 				++size;
 				item.show();
 				item.activate.connect(do_feature);
-				down = new DeepInfo(deep, e, s, -1, deep.depth+1);
+				down = new DeepInfo(deep, e, -1, null, e.type);
 				items.@set(item, down);
 				m = r.argument_count;
 				if (x.alias_name=="[]") {
@@ -1849,7 +1868,13 @@ public class FeatureMenu : Gtk.Menu {
 			++size;
 			item.show();
 			item.activate.connect(do_feature);
-			down = new DeepInfo(deep, e, s, -1, deep.depth+1);
+			addr = o.value_address;
+			et = e.type;
+			if (!et.is_subobject()) {
+				addr = et.dereference(addr);
+				et = s.type_of_any(addr);
+			}
+			down = new DeepInfo(deep, e, -1, addr, et);
 			items.@set(item, down);
 			++i;
 		}
@@ -1867,7 +1892,7 @@ enum Query {
 	NUM_COLS
 }
 	
-public class EvalPart : Grid {
+public class EvalPart : Grid, AbstractPart {
 
 	private DataPart? data;
 	private Entry result;
@@ -1906,7 +1931,7 @@ public class EvalPart : Grid {
 	private bool do_check_expression() {
 		checker.reset();
 		string str = edit.get_text();
-		if (str.strip().length==0) return false; 
+		if (str.strip().length==0 || data.dg==null) return false; 
 		bool ok = checker.check_dynamic
 			(str, null, data.frame, data.dg.rts, true, 
 			 aliases, null, id_to_expr, data);
@@ -1951,7 +1976,7 @@ public class EvalPart : Grid {
 
 	private void do_result_icon(EntryIconPosition pos) {
 		if (pos==EntryIconPosition.PRIMARY) {		
-			if (result_expr==null)  return;
+			if (result_expr==null) return;
 			data.assign(result_expr.bottom());
 		} else {
 			expanding = !expanding;
@@ -1965,11 +1990,7 @@ public class EvalPart : Grid {
 		sensitive = !is_running;
 	}
 
-	private void do_new_exe(Debuggee dg) {
-		history.clear();
-	}
-
-	public EvalPart(Debuggee dg, DataPart d) {
+	public EvalPart(DataPart d) {
 		Label label;
 		
 		aliases = d.aliases;
@@ -2009,15 +2030,11 @@ public class EvalPart : Grid {
 		edit.set_icon_from_stock(EntryIconPosition.SECONDARY, Stock.CLEAR);
 		edit.icon_release.connect((p,ev) => { do_edit_icon(p); });
 		edit.activate.connect((e) => { do_check_expression(); });
-//		edit.changed.connect(do_changed);
 		moved_id = edit.notify["cursor-position"].connect_after(
 			(e,p) => { do_moved(e); });
 		attach(checker, 1, 3, 3, 1);
 
 		data.item_selected.connect(do_data_selected);
-		dg.new_executable.connect(() => { do_new_exe(dg); });
-		dg.notify["is-running"].connect(
-			(g,p) => { do_set_sensitive(dg.is_running); });
 	}
 	
 	public HistoryBox history { get; private set; }
@@ -2035,6 +2052,13 @@ public class EvalPart : Grid {
 		text = text.splice(n, n, str);
 		edit.text = text;
 		edit.move_cursor(MovementStep.LOGICAL_POSITIONS, text.length, false);
+	}
+
+	public void set_debuggee(Debuggee? dg) { 
+		if (dg!=null) {
+			dg.notify["is-running"].connect(
+				(g,p) => { do_set_sensitive(dg.is_running); });
+		}
 	}
 
 } /* EvalPart */

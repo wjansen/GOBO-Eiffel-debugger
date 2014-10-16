@@ -599,9 +599,8 @@ public errordomain ExpressionError {
 /* -------------------------------------------------------------------- */
 
 /**
-   Hashmap whose data are Eiffel objects which will be protected
-   against memory reclamation by Eiffel's garbage collection.
-   The keys' class must `H' must be hashable. 
+   Hashmap whose data are Eiffel reference objects which will be protected
+   against memory reclamation by Eiffel's garbage collection. 
  */
 public class EiffelObjects : Object {
 
@@ -627,7 +626,7 @@ public class EiffelObjects : Object {
 			d = old_data[i];
 			if (d==null) continue;
 			h = (uint)d;
-			data[h] = old_data[i];
+			data[h] = d;
 			counts[h] = old_counts[i];
 			if (i==old_last_code) last_code = h;
 		}
@@ -638,7 +637,7 @@ public class EiffelObjects : Object {
 	internal EiffelObjects(uint n=0) { clear(n); }
 
 /**
-   Does the table Eiffel object `obj'?
+   Does the table contain Eiffel object `obj'?
    Caution: the function has side effects on private fields:
    `last_code' is set to the found values (or to the next free slot).
  */
@@ -673,7 +672,6 @@ public class EiffelObjects : Object {
 			if (2*size>cap) {
 				cap = 3*size + 1;
 				resize(cap);
-				contains(obj);	// adjust `last_code'
 				h = last_code;
 			}
 			data[h] = obj;
@@ -810,6 +808,9 @@ public abstract class Expression : Object {
 	ensures (result.arg==args) {
 		Expression ex;
 		var alias = e.text.alias_name;
+		if (alias=="[]"){
+			stderr.printf("%s\n", ((Name*)e).fast_name);
+		}
 		if (e.is_routine() && !e.is_once()) {
 			var r = (Routine*)e;
 			if (alias!=null) {
@@ -830,6 +831,8 @@ public abstract class Expression : Object {
 				ex = new RoutineExpression.typed(r, args);
 			}
 		} else  {
+			if (alias!=null && parent==null) 
+				alias = null;
 			if (alias!=null && parent.dynamic_type.is_special()) {
 				ex = new ItemExpression.typed(parent, args);
 			} else if (e.is_once()) {
@@ -1078,12 +1081,6 @@ public abstract class Expression : Object {
 	
 	protected Expression children[5];	// 5 == Child.COUNT
 	
-	public void set_child(uint i, Expression? val) {
-		if (children[i]!=null) children[i].parent = null;
-		children[i] = val;
-		if (val!=null) val.parent = this;
-	}
-	
 	public Expression? arg { 
 		get { return children[Child.ARG]; }
 		private set { set_child(Child.ARG, value); }
@@ -1110,6 +1107,12 @@ public abstract class Expression : Object {
 	public Expression? next { 
 		get { return children[Child.NEXT]; }
 		private set { set_child(Child.NEXT, value); }
+	}
+	
+	public void set_child(uint i, Expression? val) {
+		if (children[i]!=null) children[i].parent = null;
+		children[i] = val;
+		if (val!=null) val.parent = this;
 	}
 	
 	public Expression root() {
@@ -1383,10 +1386,11 @@ public abstract class Expression : Object {
 		return here;
 	}
 
-	public virtual string append_qualified_name(string? to=null, 
+	public string append_qualified_name(string? to=null, 
 			Expression? up_to=null, uint fmt=0) {
 		string here;
 		here = append_single_name(to, fmt);
+		var tex = this as TextExpression;
 		if (down!=null && this!=up_to) 
 			here = down.append_qualified_name(here, up_to, fmt);
 		return here;
@@ -1662,6 +1666,11 @@ public abstract class Expression : Object {
 		bool ok = aex!=null;
 		if (!ok && is_down()) t = parent.dynamic_type;
 		ok = set_dyn_type(t, f);
+		if (!ok && env!=null && f!=null) {	// try again in fallback mode
+			addr = env;
+			t = s.type_of_any(env);
+			ok = set_dyn_type(t, f);
+		}
 		if (!ok) throw new ExpressionError.UNKNOWN 
 			("Unknown feature `"+name()+"'");
 		compute(addr, f, s);
@@ -1887,6 +1896,13 @@ public abstract class Expression : Object {
 	requires (e!=null && e.text!=null) {
 		this(e.text);
 		entity = e;
+	}
+
+	public TextExpression.computed(Entity* e, void* obj, System *s) 
+	requires (e!=null && !e.type.is_subobject() 
+			  && s.type_of_any(obj).conforms_to(e.type)) {
+		this.typed(e);
+		copy_value(result, obj, sizeof(void*));
 	}
 
 	public override string name() { 
@@ -2433,12 +2449,14 @@ public abstract class Expression : Object {
 	}
 
 	public override string append_single_name(string? to, uint fmt=0) {
+		string nm;
 		if (is_down()) {
-			return base.append_single_name(to, fmt);
+			nm = base.append_single_name(to, fmt);
 		} else {
 			var o = (Gedb.Once*)entity;
-			return "{" + o.home._name.fast_name + "}." + name();
+			nm =  "{" + o.home._name.fast_name + "}." + name();
 		}
+		return nm;
 	}
 
  }
@@ -2459,12 +2477,14 @@ public abstract class Expression : Object {
 	}
 
 	public override string append_single_name(string? to, uint fmt=0) {
+		string nm;
 		if (is_down()) {
-			return base.append_single_name(to, fmt);
+			nm = base.append_single_name(to, fmt);
 		} else {
 			var c = (Constant*)entity;
-			return "{" + c.home._name.fast_name + "}." + name();
+		    nm = "{" + c.home._name.fast_name + "}." + name();
 		}
+		return nm;
 	}
 
  }
@@ -2543,6 +2563,12 @@ public abstract class Expression : Object {
 		implicit = true;
 	}
 
+	public ItemExpression.computed(Expression array, uint idx, System* s) 
+	requires (array.dynamic_type.is_special()) {
+		this.fixed(array);
+		index = (int)idx;
+	}
+
 	public override string name() { return implicit ? "[]" : @"[$index]"; }
 
 	public override ClassText* base_class() { return cls; }
@@ -2560,7 +2586,7 @@ public abstract class Expression : Object {
 	}
 
 	public override string append_single_name(string? to, uint fmt=0) {
-		string here = to!=null ? to : "";
+		string here;
 		if ((fmt&Format.INDEX_VALUE)!=0 || arg==null) {
 			here = @"$index";
 		} else {
@@ -2568,7 +2594,6 @@ public abstract class Expression : Object {
 		}
 		here = "[" + here + "]";
 		if (to!=null) here = to+here;
-
 		return here;
 	}
 

@@ -282,7 +282,8 @@ feature {} -- Feature generation
 			l_intro_ext.save_system (debuggee)
 			if attached {DG_SYSTEM} debugger as rts then
 				create import
-				create l_extension.make (Current, debuggee, import)
+				create l_extension.make (Current, debuggee, import,
+																 max_line_number, max_column_number)
 				c1 := c_clock
 				l_extension.save_system (rts)
 				c2 := c_clock
@@ -550,6 +551,7 @@ feature {} -- Debugging code
 			actual_text := l_routine.text
 			actual_debugged := l_routine.in_class.is_debug_enabled
 				or else l_routine = debuggee.root_creation_procedure
+			actual_id := l_routine.in_class.ident
 				-- Define stack frame variable: 
 			print_indentation
 			current_file.put_string (import.frame_struct_name)
@@ -760,15 +762,29 @@ feature {} -- Debugging code
 				-- force printing of possibly repeated position:
 				if ar = debuggee.root_creation_procedure then
 					print_indentation
-					current_file.put_string ("if (s.caller==0)%N")
+					current_file.put_string ("if (")
+					current_file.put_string ("s.caller==0) {%N")
 					indent
 					print_position_handling(a_keyword, End_program_break)
 					dedent
+					print_indentation
+					current_file.put_string ("} else {%N")
+					indent
+					print_indentation
+					current_file.put_string (import.c_stacktop_name)
+					current_file.put_string (once " = s.caller;%N")
+					print_position_handling(a_keyword, End_routine_break)
+					dedent
+					print_indentation
+					current_file.put_character ('}')
+					current_file.put_new_line
+				else
+					print_indentation
+					current_file.put_string (import.c_stacktop_name)
+					current_file.put_string (once " = s.caller;%N")
+					print_position_handling(a_keyword, End_routine_break)					
 				end
 				actual_position := 0
-				print_indentation
-				current_file.put_string (import.c_stacktop_name)
-				current_file.put_string (once " = s.caller;%N")
 				if actual_debugged and then attached actual_text as x then
 					x.copy_instruction_positions(positions_buffer)
 				end
@@ -776,6 +792,7 @@ feature {} -- Debugging code
 			positions_buffer.wipe_out
 			actual_text := Void
 			actual_position := 0
+			actual_id := 0
 		end
 			
 	print_new_initialization (a_type: ET_IS_TYPE)
@@ -866,22 +883,11 @@ feature {} -- Debugging code
 				current_file.put_string ("->caller==0) {%N")
 				indent
 				print_indentation
-				current_file.put_string (import.c_debugger_name)
-				current_file.put_string (" = ")
 				current_file.put_string (import.c_init_name)
 				current_file.put_string ("();%N")
 				print_position_handling(de, Start_program_break)
-				dedent
-				print_indentation
-				current_file.put_string ("} else {%N")
-				indent
-				print_position_handling(de, Begin_scope_break)
-				dedent
-				print_indentation
 				current_file.put_string ("}%N")
-			else
-				print_indentation
-				print_position_handling (de, Begin_scope_break)
+				dedent
 			end
 		ensure
 			is_delayed: not attached delayed_enter
@@ -891,7 +897,7 @@ feature {} -- Debugging code
 		local
 			pos: NATURAL
 			n, l, c: INTEGER
-			pure_pos, for_instruction: BOOLEAN
+			pure_pos, for_instruction, jump, info: BOOLEAN
 		do
 			if attached delayed_enter then
 				flush_delayed
@@ -907,10 +913,17 @@ feature {} -- Debugging code
 					pos := (pos - 1).max (1)
 				when Step_into_break then
 					for_instruction := False
-				when End_program_break then
+				when Start_program_break, Debug_break then
 					for_instruction := True
-				when End_scope_break then
+				when 
+					End_scope_break,
+					End_routine_break,
+					End_program_break,
+					After_mark_break,
+					After_reset_break
+				 then
 					for_instruction := False
+					info := True;
 				else
 				end
 				l := line_of_position (pos)
@@ -925,11 +938,18 @@ feature {} -- Debugging code
 				if pure_pos then
 					tmp_str.append (import.c_skip_name)
 				elseif supports_marking and then for_instruction then
+					jump := True
 					tmp_str.append (import.c_jump_name)
+				elseif info then
+					tmp_str.append (import.c_status_name)
 				else
 					tmp_str.append (import.c_pos_name)
 				end
 				tmp_str.extend ('(')
+				if jump then
+					tmp_str.append_integer (actual_id)
+					tmp_str.extend (',')
+				end
 				tmp_str.append_integer (l)
 				tmp_str.extend (',')
 				tmp_str.append_integer (c)
@@ -978,6 +998,8 @@ feature {} -- Debugging code
 
 	actual_text: detachable ET_IS_ROUTINE_TEXT
 
+	actual_id: INTEGER
+	
 	actual_debugged: BOOLEAN
 
 	old_pos: INTEGER
@@ -1132,7 +1154,7 @@ feature {} -- Extended code generation
 			if actual_routine /= Void and then not pma_only then
 				print_indentation
 				current_file.put_string ("++s.scope_depth;%N")			
-				print_position_handling (a_node, Begin_scope_break)
+				print_position_handling (a_node, Instruction_break)
 			end
 		end
 	

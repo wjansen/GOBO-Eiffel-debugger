@@ -785,8 +785,8 @@ feature {} -- External implementation
 		alias
 			"[
 			 
-			#ifdef GE_ZINTRO
-				GE_zrts
+			#ifdef GEIP_INTRO
+				geip_rts
 			#else
 				0
 			#endif
@@ -872,8 +872,8 @@ feature {} -- External implementation
 		alias
 "[
 
-#ifdef GE_ZTABLES
-  (GE_zt[$id] != 0)
+#ifdef GEIP_TABLES
+  (geip_t[$id] != 0)
 #else
   0
 #endif
@@ -886,8 +886,8 @@ feature {} -- External implementation
 		alias
 "[
 
-#ifdef GE_ZTABLES
-  GE_zself
+#ifdef GEIP_TABLES
+  geip_self
 #else
   0
 #endif
@@ -900,8 +900,8 @@ feature {} -- External implementation
 		alias
 "[
 
-#ifdef GE_ZTABLES
-  GE_ztime
+#ifdef GEIP_TABLES
+  geip_time
 #else
   0
 #endif
@@ -914,8 +914,8 @@ feature {} -- External implementation
 		alias
 "[
 
-#ifdef GE_ZTABLES
-  GE_zcc
+#ifdef GEIP_TABLES
+  geip_cc
 #else
   0
 #endif
@@ -928,8 +928,8 @@ feature {} -- External implementation
 		alias
 "[
 
-#ifdef GE_ZTABLES
-  GE_zc[$id]
+#ifdef GEIP_TABLES
+  geip_c[$id]
 #else
   0
 #endif
@@ -942,8 +942,8 @@ feature {} -- External implementation
 		alias
 "[
 
-#ifdef GE_ZTABLES
-  GE_zcf[$id]
+#ifdef GEIP_TABLES
+  geip_cf[$id]
 #else
   0
 #endif
@@ -956,8 +956,8 @@ feature {} -- External implementation
 		alias
 "[
 
-#ifdef GE_ZTABLES
-  GE_ztc
+#ifdef GEIP_TABLES
+  geip_tc
 #else
   0
 #endif
@@ -970,8 +970,8 @@ feature {} -- External implementation
 		alias
 "[
 
-#ifdef GE_ZTABLES
-  GE_zroot
+#ifdef GEIP_TABLES
+  geip_root
 #else
   0
 #endif
@@ -984,8 +984,8 @@ feature {} -- External implementation
 		alias
 "[
 
-#ifdef GE_ZTABLES
-  GE_zany
+#ifdef GEIP_TABLES
+  geip_any
 #else
   0
 #endif
@@ -998,8 +998,8 @@ feature {} -- External implementation
 		alias
 "[
 
-#ifdef GE_ZTABLES
-  GE_zt[$id]->flags
+#ifdef GEIP_TABLES
+  geip_t[$id]->flags
 #else
   0
 #endif
@@ -1012,8 +1012,8 @@ feature {} -- External implementation
 		alias
 "[
 
-#ifdef GE_ZTABLES
-  GE_zt[$id]->class_id
+#ifdef GEIP_TABLES
+  geip_t[$id]->class_id
 #else
   0
 #endif
@@ -1026,8 +1026,8 @@ feature {} -- External implementation
 		alias
 "[
 
-#ifdef GE_ZTABLES
-  GE_zt[$id]->ngenerics
+#ifdef GEIP_TABLES
+  geip_t[$id]->ngenerics
 #else
   0
 #endif
@@ -1040,8 +1040,8 @@ feature {} -- External implementation
 		alias
 "[
 
-#ifdef GE_ZTABLES
-(GE_zt[$id]->generics)[$i]
+#ifdef GEIP_TABLES
+(geip_t[$id]->generics)[$i]
 #else
   0
 #endif
@@ -1054,8 +1054,8 @@ feature {} -- External implementation
 		alias
 "[
 
-#ifdef GE_ZTABLES
-  GE_zt[$id]->nfields
+#ifdef GEIP_TABLES
+  geip_t[$id]->nfields
 #else
   0
 #endif
@@ -1068,8 +1068,8 @@ feature {} -- External implementation
 		alias
 "[
 
-#ifdef GE_ZTABLES
-  GE_zt[$id]->create_id
+#ifdef GEIP_TABLES
+  geip_t[$id]->create_id
 #else
   0
 #endif
@@ -1084,8 +1084,8 @@ feature {} -- External implementation
 		alias
 "[
 
-#ifdef GE_ZTABLES
-  GE_zt[$id]->alloc
+#ifdef GEIP_TABLES
+  geip_t[$id]->alloc
 #else
   0
 #endif
@@ -1100,8 +1100,8 @@ feature {} -- External implementation
 		alias
 "[
 
-#ifdef GE_ZTABLES
-  GE_zt[$id]->def
+#ifdef GEIP_TABLES
+  geip_t[$id]->def
 #else
   0
 #endif
@@ -1116,8 +1116,8 @@ feature {} -- External implementation
 		alias
 "[
 
-#ifdef GE_ZTABLES
-  GE_zt[$id]->size
+#ifdef GEIP_TABLES
+  geip_t[$id]->size
 #else
   0
 #endif
@@ -1132,8 +1132,8 @@ feature {} -- External implementation
 		alias
 "[
 
-#ifdef GE_ZTABLES
-((GE_ZTb*)GE_zt[$id])->boxed_size
+#ifdef GEIP_TABLES
+((GEIP_Tb*)geip_t[$id])->boxed_size
 #else
   0
 #endif
@@ -1148,8 +1148,8 @@ feature {} -- External implementation
 		alias
 "[
 
-#ifdef GE_ZTABLES
-((GE_ZA*)GE_zt[$id])->declared_id
+#ifdef GEIP_TABLES
+((GEIP_A*)geip_t[$id])->declared_id
 #else
   0
 #endif
@@ -1164,8 +1164,8 @@ feature {} -- External implementation
 		alias
 "[
 
-#ifdef GE_ZTABLES
-((GE_ZA*)GE_zt[$id])->closed_tuple_id
+#ifdef GEIP_TABLES
+((GEIP_A*)geip_t[$id])->closed_tuple_id
 #else
   0
 #endif
@@ -1180,8 +1180,8 @@ feature {} -- External implementation
 		alias
 "[
 
-#ifdef GE_ZTABLES
-((GE_ZA*)GE_zt[$id])->result_id
+#ifdef GEIP_TABLES
+((GEIP_A*)geip_t[$id])->result_id
 #else
   0
 #endif
@@ -1196,8 +1196,8 @@ feature {} -- External implementation
 		alias
 "[
 
-#ifdef GE_ZTABLES
-((GE_ZA*)GE_zt[$id])->open_closed
+#ifdef GEIP_TABLES
+((GEIP_A*)geip_t[$id])->open_closed
 #else
   0
 #endif
@@ -1212,8 +1212,8 @@ feature {} -- External implementation
 		alias
 "[
 
-#ifdef GE_ZTABLES
-  GE_zn ? GE_zn[((GE_ZA*)GE_zt[$id])->routine_name] : 0
+#ifdef GEIP_TABLES
+  geip_n ? geip_n[((GEIP_A*)geip_t[$id])->routine_name] : 0
 #else
   0
 #endif
@@ -1228,8 +1228,8 @@ feature {} -- External implementation
 		alias
 "[
 
-#ifdef GE_ZTABLES
-((GE_ZA*)GE_zt[$id])->call_field
+#ifdef GEIP_TABLES
+((GEIP_A*)geip_t[$id])->call_field
 #else
   0
 #endif
@@ -1244,8 +1244,8 @@ feature {} -- External implementation
 		alias
 "[
 
-#ifdef GE_ZTABLES
-((GE_ZA*)GE_zt[$id])->call
+#ifdef GEIP_TABLES
+((GEIP_A*)geip_t[$id])->call
 #else
   0
 #endif
@@ -1258,8 +1258,8 @@ feature {} -- External implementation
 		alias
 "[
 
-#ifdef GE_ZTABLES
-  GE_zt[$id]->fields[$i].type_id
+#ifdef GEIP_TABLES
+  geip_t[$id]->fields[$i].type_id
 #else
   0
 #endif
@@ -1274,8 +1274,8 @@ feature {} -- External implementation
 		alias
 "[
 
-#ifdef GE_ZTABLES
-(int)((size_t)((GE_zt[$id]->fields)[$i].def)-(size_t)(GE_zt[$id]->def))
+#ifdef GEIP_TABLES
+(int)((size_t)((geip_t[$id]->fields)[$i].def)-(size_t)(geip_t[$id]->def))
 #else
   0
 #endif
@@ -1288,8 +1288,8 @@ feature {} -- External implementation
 		alias
 "[
 
-#ifdef GE_ZTABLES
-(int)((size_t)(((GE_ZTb*)GE_zt[$id])->subobject)-(size_t)(((GE_ZTb*)GE_zt[$id])->boxed_def))
+#ifdef GEIP_TABLES
+(int)((size_t)(((GEIP_Tb*)geip_t[$id])->subobject)-(size_t)(((GEIP_Tb*)geip_t[$id])->boxed_def))
 #else
   0
 #endif
@@ -1302,8 +1302,8 @@ feature {} -- External implementation
 		alias
 "[
 
-#ifdef GE_ZTABLES
-  GE_znc
+#ifdef GEIP_TABLES
+  geip_nc
 #else
   0
 #endif
@@ -1318,8 +1318,8 @@ feature {} -- External implementation
 		alias
 "[
 
-#ifdef GE_ZTABLES
-  GE_zt[$id]->fields[$i].name_id
+#ifdef GEIP_TABLES
+  geip_t[$id]->fields[$i].name_id
 #else
   0
 #endif
@@ -1332,8 +1332,8 @@ feature {} -- External implementation
 		alias
 "[
 
-#ifdef GE_ZTABLES
-  GE_zn ? GE_zn[$i] : 0
+#ifdef GEIP_TABLES
+  geip_n ? geip_n[$i] : 0
 #else
   0
 #endif
@@ -1348,8 +1348,8 @@ feature {} -- External implementation
 		alias
 "[
 
-#ifdef GE_ZTABLES
-  GE_zt[$tid]->fields[$fid].typeset_id
+#ifdef GEIP_TABLES
+  geip_t[$tid]->fields[$fid].typeset_id
 #else
   0
 #endif
@@ -1364,8 +1364,8 @@ feature {} -- External implementation
 		alias
 "[
 
-#ifdef GE_ZTABLES
-  GE_ztss[$id]
+#ifdef GEIP_TABLES
+  geip_tss[$id]
 #else
   0
 #endif
@@ -1380,8 +1380,8 @@ feature {} -- External implementation
 		alias
 "[
 
-#ifdef GE_ZTABLES
-  GE_zts[$id][$i]
+#ifdef GEIP_TABLES
+  geip_ts[$id][$i]
 #else
   0
 #endif

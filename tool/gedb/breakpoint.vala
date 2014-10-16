@@ -3,18 +3,6 @@ using Gedb;
 public const int trace = 1;
 public const int silent = 2;
 
-public const int Instruction_break = 0;
-public const int Call_break = -1;
-public const int Step_into_break = -2;
-public const int Assignment_break = -3;
-public const int Debug_break = -4;
-public const int Begin_compound_break = -5;
-public const int End_compound_break = -6;
-public const int Start_program_break = -7;
-public const int End_program_break = -8;
-public const int After_mark_break = -9;
-public const int After_reset_break = -10;
-
 public enum IseCode {
   Void_call_target = 1,
   No_more_memory,

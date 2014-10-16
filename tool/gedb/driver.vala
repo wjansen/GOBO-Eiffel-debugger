@@ -1,16 +1,18 @@
 using Gedb;
+public delegate void* JumpBufferFunc();
+public delegate void* LongjmpFunc(void* buf, int val);
+public delegate void PositionFunc(uint id, uint l, uint c);
+public delegate void LimitsFunc(uint d, uint s);
+public delegate void OffsetFunc();
+public delegate void* AddressFunc(char* name);
 public delegate int MainFunc(int argc, char **argv);
 public delegate void RaiseFunc(int code);
-internal delegate void* JumpBufferFunc();
-internal delegate void* LongjmpFunc(void* buf, int val);
-public delegate void OffsetFunc();
 
 internal JumpBufferFunc jump_buffer_func;
 internal LongjmpFunc longjmp_func;
-internal RaiseFunc raise_func; 	
-internal OffsetFunc offset_func;
-public void** eif_markers;
-	
+
+internal void** eif_markers;
+
 internal class QueueMember : Object {
 	internal int code;
 	internal string name;
@@ -80,38 +82,35 @@ internal struct Marker {
 
 	internal static Marker* at(uint n) { return markers[n]; }
 
-	internal static void keep(uint n) {
+	internal static void reset(bool all) {
+		uint n = all ? 0 : 1;
 		for (uint i=count; i-->n;) {
 			Marker* m = markers[i];
-			m.clear();
+			m.clear(!all);
 			free_func(m);
 		}
 		count = n;
-		if (count==0 && cap>0) {
-			free_func(markers);
-			markers = null;
-			*eif_markers = null;
+		if (all) {
+			if (cap>0) free_func(markers);
 			cap = 0;
 		}
 	}
 
-	internal static void clear_to_depth(uint d) {
+	internal static void clear_to_depth(uint d) requires (d>0) {
 		uint n;
 		for (n=count; n-->1;) {
 			Marker* m = markers[n];
-			if (m.depth>d) {
-				m.clear();
-				free_func(m);
-				markers[n] = null;
-			}
-			else break;
+			if (m.depth<=d) break;
+			m.clear(true);
+			free_func(m);
+			markers[n] = null;
 		}
 		++n;
 		count = n;		
 		if (count==0 && cap>0) {
 			free_func(markers);
 			markers = null;
-			*eif_markers = null;
+			*eif_markers = markers;
 			cap = 0;
 		}
 	}
@@ -133,9 +132,11 @@ internal struct Marker {
 		return frame;
 	}
 
-	private void clear() { 
-		free_func(buffer);
-		free_func(objects);
+	private void clear(bool buffered) { 
+		if (buffered) {
+			free_func(buffer);
+			free_func(objects);
+		}
 		if (path!=null) {
 			File f = File.new_for_path(path);
 			f.delete();
@@ -192,33 +193,44 @@ internal struct GE_ZA {
 	int routine_name;
 	char* open_closed;
 	void* call_field;
-		void* call;
+	void* call;
 }
 
 public class Debuggee : Object {
 
 	protected StackFrame** top0;
 
-	public string[] args { get; set; }
+	protected RaiseFunc raise_func; 	
+	protected PositionFunc set_pos_func;
+	protected LimitsFunc set_limits_func;
+	protected OffsetFunc offset_func;
+
+	protected Debuggee.by_args(string[] args) {
+		this.args = args[0:args.length];
+	}
+
+	protected virtual void set_addresses_and_offsets(AddressFunc af) {
+		rts = *(System**)af("rts");
+		top0 = (StackFrame**)af("top");
+		EiffelObjects.eif_results = af("results");
+		realloc_func = (ReallocFunc)af("realloc");
+		free_func = (FreeFunc)af("free");
+		chars_func = (CharsFunc)af("chars");
+		unichars_func = (UnicharsFunc)af("unichars");
+		offset_func = (OffsetFunc)af("set_offsets");
+		offset_func();
+	}
+
+	public string[] args { get; internal set; }
 	public bool is_running { get; protected set; }
 
 	public string home;
 
-	public Debuggee.with_args(string[] args) { this.args = args; }
+	protected Debuggee.dummy() {}	// Make the Vala compiler happy!
 
-	public Debuggee(string[] args, void* rts, void* top, void* res, 
-					void* set_offs, void* alloc, void* free,
-					void* chars, void* uncodes) { 
-		this.with_args(args);
-		this.rts = (System*)rts;
-		top0 = (StackFrame**)top;
-		EiffelObjects.eif_results = res;
-		realloc_func = (ReallocFunc)alloc;
-		free_func = (FreeFunc)free;
-		chars_func = (CharsFunc)chars;
-		unichars_func = (UnicharsFunc)chars;
-		offset_func = (OffsetFunc)set_offs;
-		offset_func();
+	public Debuggee(string[] args, AddressFunc address_of) { 
+		this.by_args(args);
+		set_addresses_and_offsets(address_of);
 	}
 
 	public System* rts;
@@ -230,13 +242,24 @@ public class Debuggee : Object {
 		response(Driver.ProgramState.Crash, null, *top0, 0);
 	}
 
-	public signal void new_executable();
 	public signal void response(int reason, Gee.List<Breakpoint>? match,
 								Gedb.StackFrame* f, uint mc);
 }
 
 public class Driver : Debuggee {
 
+	public const int Instruction_break = 0;
+	public const int Call_break = -1;
+	public const int Step_into_break = -2;
+	public const int Assignment_break = -3;
+	public const int Debug_break = -4;
+	public const int End_compound_break = -5;
+	public const int End_routine_break = -6;
+	public const int Start_program_break = -7;
+	public const int End_program_break = -8;
+	public const int After_mark_break = -9;
+	public const int After_reset_break = -10;
+	
 	public enum RunCommand {
 		cont = 1, 
 		end, 
@@ -275,7 +298,8 @@ public class Driver : Debuggee {
 	private QueueSource queue_source;
 
 	private Thread<int> th;
-	protected GLib.Module module;
+
+	private FreeFunc free;
 
 	private uint cmd;
 	private uint run_mode;
@@ -296,7 +320,6 @@ public class Driver : Debuggee {
 	private int stop_code;
 	private int os_signal;
 	private uint timeout;
-
 	private int* step;
 
 	private void* argv;
@@ -307,8 +330,24 @@ public class Driver : Debuggee {
 	private Gee.List<Breakpoint> breakpoints;
 	private Gee.List<Breakpoint> match;
 	
-	public void update_breakpoints(Gee.List<Breakpoint> list) {
+	public void update_breakpoints(Gee.List<Breakpoint>? list) {
 		breakpoints = list;
+		int n = 0;
+		bool ok = true;
+		set_pos_func(0, 0, 1);
+		if (list==null) return;
+		foreach (var bp in list) {
+			if (bp.exc==0) {
+				if (bp.pos==0) {
+					ok = false;
+					break;
+				} else {
+					set_pos_func(bp.cid, bp.pos/256, bp.pos%256);
+					++n;
+				}
+			}
+		}
+		if (!ok || n>20) set_pos_func(0, 0, 0);
 	}
 
 	public void target_go(uint run, uint mode, uint repeat) {
@@ -351,58 +390,72 @@ public class Driver : Debuggee {
 		bool old_intern = intern;
 		intern = interactive;
 		os_signal = sgn;
-		check(IseCode.Signal_exception);
+		treat_stop(IseCode.Signal_exception);
 		os_signal = 0;
 		intern = old_intern;
 	}
 
-	public void* check(int reason) {
+	public void* treat_info(int reason) {
 		if (intern) return null;
 		top = *(StackFrame**)top0;
-		StackFrame* rescue = null;
-		Marker* m;
 		interactive = just_marked;
 		just_marked = false;
-		bool stoppable = false;
 		bool old_intern = intern;
 		intern = true;
 		switch(reason) {
-		case Start_program_break:
-			stop_code = ProgramState.Program_start;
-			intern = old_intern;
-			Marker.keep(0);
-			m = Marker.create(top, rts);
-			just_marked = true;
-			return m.buffer;
-		case Instruction_break:
-		case Call_break:
-		case Assignment_break:
-		case Begin_compound_break:
-			stoppable = breakpoints!=null && breakpoints.size>0;
+		case End_compound_break:
+			if (cmd==RunCommand.end) 
+				interactive = top.scope_depth<=compound_limit;
 			break;
-		case Debug_break:
-			if (debug_clause_enabled && run_mode!=silent) {
-				interactive = true;
-				stop_code = ProgramState.Debug_clause;
-			}
+		case End_routine_break:
+			if (cmd==RunCommand.back) 
+				interactive = top.depth<=target_depth;
+			break;
+		case End_program_break:
+			interactive = true;
+			just_marked = true;
+			stop_code = ProgramState.Program_end;
 			break;
 		case After_mark_break:
 			just_marked = true;
 			interactive = true;
-			if (stop_code!=ProgramState.Program_start) {
+			if (stop_code!=ProgramState.Program_start) 
 				stop_code = ProgramState.Still_waiting;
-			}
+			else if (breakpoints!=null)
+				update_breakpoints(breakpoints);
 			break;
 		case After_reset_break:
 			just_marked = true;
 			interactive = true;
 			stop_code = ProgramState.Still_waiting;
 			break;
-		case End_program_break:
-			interactive = true;
+		}
+		void* res = interactive ? treat_commands(reason, old_intern) : null;
+		intern = old_intern;
+		return res;
+	}
+
+	public void* treat_stop(int reason) {
+		if (intern) return null;
+		top = *(StackFrame**)top0;
+		StackFrame* rescue = null;
+		bool old_intern = intern;
+		intern = true;
+		Marker* m;
+		switch(reason) {
+		case Start_program_break:
+			stop_code = ProgramState.Program_start;
+			minimum_stack_size = 1;
+			intern = old_intern;
+			m = Marker.create(top, rts);
 			just_marked = true;
-			stoppable = false;
-			stop_code = ProgramState.Program_end;
+			interactive = true;
+			return m.buffer;	
+		case Debug_break:
+			if (debug_clause_enabled && run_mode!=silent) {
+				interactive = true;
+				stop_code = ProgramState.Debug_clause;
+			}
 			break;
 		}
 		if (interrupted) {
@@ -416,20 +469,26 @@ public class Driver : Debuggee {
 		if (!interactive && reason>0) {
 			rescue = check_reason(reason, top);
 			stop_code = rescue!=null ? ProgramState.Catch : ProgramState.Crash;
-			stoppable = true;
 		}
 		if (!interactive) {
 			check_step(reason);
 			if (interactive) stop_code = ProgramState.Step_by_step;
 		}
-		if (stoppable) {
-			match.clear();
-			check_breakpoints(reason, top, rescue, rts, match);
-			if (match.size>0) 
-				stop_code = interactive 
-					? ProgramState.At_breakpoint
-					: ProgramState.At_tracepoint;
+		match.clear();
+		check_breakpoints(reason, top, rescue, rts, match);
+		if (match.size>0) {
+			stop_code = interactive ?
+				ProgramState.At_breakpoint : ProgramState.At_tracepoint;
 		}
+		void* res = interactive ? treat_commands(reason, old_intern) : null;
+		if (os_signal>0 && rescue!=null) raise_func(0);
+		intern = old_intern;
+		return res;
+	}
+
+	private void* treat_commands(int reason, bool old_intern) 
+	requires (interactive) {
+		Marker* m;
 		while (interactive) {
 			int ss = top.depth;
 			if (ss<minimum_stack_size) minimum_stack_size = ss;
@@ -449,27 +508,24 @@ public class Driver : Debuggee {
 			switch (stop_code) {
 			case ProgramState.At_breakpoint:
 			case ProgramState.At_tracepoint:
-//			case ProgramState.Crash:
 				qm.list = match;
 				stop_code = ProgramState.Still_waiting;
 				break;
-			}
-			minimum_stack_size = top!=null ? top.depth : 0;
-			if (pma) {
-				new_executable();
+			case ProgramState.Crash:
 				var bp = new Breakpoint();
 				bp.exc = reason;
+				match.clear();
 				match.@add(bp);
-				response(stop_code, match, top, 0);
-			} else {
-				if (timeout!=0) {
-					GLib.Source.@remove(timeout);
-					timeout = 0;
-				}
-				*step = cmd==RunCommand.step ? 1 : 0;
-				target_to_gui.push(qm);
-				qm = gui_to_target.pop();
+				qm.list = match;
+				break;
 			}
+			minimum_stack_size = top!=null ? top.depth : 0;
+			if (timeout!=0) {
+				GLib.Source.@remove(timeout);
+				timeout = 0;
+			}
+			target_to_gui.push(qm);
+			qm = gui_to_target.pop();
 			just_marked = false;
 			repeat = qm.code;
 			cmd = repeat & 0x0f;
@@ -479,24 +535,34 @@ public class Driver : Debuggee {
 			switch (cmd) {
 			case RunCommand.cont:
 				interactive = false;
+				*step = 0;
+				set_limits_func(0, 0);
 				break;
 			case RunCommand.next:
 				target_depth = ss;
 				interactive = false;
+				*step = 1;
+				set_limits_func(0, 0);
 				break;
 			case RunCommand.step:
 				target_depth = int.MAX;
 				interactive = false;
+				*step = 1;
+				set_limits_func(0, 0);
 				break;
 			case RunCommand.end:
 				target_depth = ss;
-				compound_limit = top->scope_depth-(int)repeat;
+				compound_limit = top.scope_depth-(int)repeat;
 				if (compound_limit<0) compound_limit = 0;
 				interactive = false;
+				*step = 0;
+				set_limits_func(0, compound_limit);
 				break;
 			case RunCommand.back:
 				target_depth = ss-(int)repeat;
 				interactive = false;
+				*step = 0;
+				set_limits_func(target_depth, 0);
 				break;
 			case RunCommand.mark:
 				stop_code = ProgramState.Running;
@@ -514,23 +580,20 @@ public class Driver : Debuggee {
 				longjmp_func(m.buffer, 1);
 				break;
 			case RunCommand.restart:
-				Marker.keep(1);
+				Marker.reset(false);
 				m = Marker.at(0);
 				top = m.restore(rts);
 				just_marked = true;
-				*argc = args!=null ? args.length : 0;
-				*(void**)argv = args;
+// Set args
 				intern = old_intern;
 				longjmp_func(m.buffer, 2);
 				break;
 			case RunCommand.exit:
 				intern = false;
-				Marker.keep(0);
 				th.exit(0);
 				break;
 			}
 		}
-		if (os_signal>0 && rescue!=null) raise_func(0);
 		intern = old_intern;
 		return null;
 	}
@@ -670,18 +733,28 @@ public class Driver : Debuggee {
 	private void*[] orig_handlers;
 
 	private static void sig_handler(int sig) {
-		if (the_dg!=null) the_dg.catch_signal(sig);
+		the_driver.catch_signal(sig);
 	}
 
 	private static void interrupt_handler(int sig) {
-		if (the_dg!=null) the_dg.interrupted = true;
+		the_driver.interrupted = true;
 	}
 
-	~Driver() { Marker.clear_to_depth(0); }
+	~Driver() { Marker.reset(true); }
 
-	public Driver(string[] args) {
-		base.with_args(args);
-		the_dg = this;
+	protected override void set_addresses_and_offsets(AddressFunc address_of) {
+		base.set_addresses_and_offsets(address_of);
+		longjmp_func = (LongjmpFunc)address_of("longjmp");
+		jump_buffer_func = (JumpBufferFunc)address_of("jmp_buffer");
+		eif_markers = address_of("markers");
+		raise_func = (RaiseFunc)address_of("raise");
+		set_pos_func = (PositionFunc)address_of("set_bp_pos");
+		set_limits_func = (LimitsFunc)address_of("set_limits");
+		step = (int*)address_of("step");
+	}
+
+	public Driver() {
+		base.dummy();
 		pma = false;
 		cmd = 0;
 		match = new Gee.ArrayList<Breakpoint>();
@@ -713,107 +786,16 @@ public class Driver : Debuggee {
 				break;
 			}
 		}
+		the_driver = this;
+	}
+
+	public Driver.with_args(string[] args, AddressFunc af) {
+		this();
+		this.args = args;
+		set_addresses_and_offsets(af);		
 	}
 
 	public StackFrame* top { get; private set; }
-
-	public bool load(string? libname) {
-		stop();
-		if (module!=null) {
-			jump_buffer_func = null;
-			longjmp_func = null;
-			realloc_func = null;
-			free_func = null;
-			wrap_func = null;
-			chars_func = null;
-			unichars_func = null;
-			raise_func = null;
-			*eif_markers = null;
-			rts = null;
-			top = null;
-			module = null;
-		}
- 		void* addr;
-		bool ok = true;
-		module = GLib.Module.open(libname, 0);
-		string err = GLib.Module.error();
-		if (module==null) return false;
-		string lib = module.name();
-
-		ok &= module.symbol("GE_zlongjmp", out addr);
-		if (ok) addr = *(void**)addr;
-		longjmp_func = (LongjmpFunc)addr;
-
-		ok &= module.symbol("GE_zjmp_buffer", out addr);
-		if (ok) addr = *(void**)addr;
-		jump_buffer_func = (JumpBufferFunc)addr;
-
-		ok &= module.symbol("GE_zrealloc", out addr);
-		if (ok) addr = *(void**)addr;
-		realloc_func = (ReallocFunc)addr;
-
-		ok &= module.symbol("GE_zfree", out addr);
-		if (ok) addr = *(void**)addr;
-		free_func = (FreeFunc)addr;
-
-		ok &= module.symbol("GE_zwrap", out addr);
-		if (ok) addr = *(void**)addr;
-		wrap_func = (WrapFunc)addr;
-
-		ok &= module.symbol("GE_zset_offsets", out addr);
-		if (ok) addr = *(void**)addr;
-		offset_func = (OffsetFunc)addr;
-
-		ok &= module.symbol("GE_zchars", out addr);
-		if (ok) addr = *(void**)addr;
-		chars_func = (CharsFunc)addr;
-
-		ok &= module.symbol("GE_zunichars", out addr);
-		if (ok) addr = *(void**)addr;
-		unichars_func = (UnicharsFunc)addr;
-
-		ok &= module.symbol("GE_argc", out addr);
-		argc = (int*)addr;
-		ok &= module.symbol("GE_argv", out addr);
-		argv = addr;
-
-		ok &= module.symbol("GE_zresults", out addr);
-		EiffelObjects.eif_results = addr;
-
-		ok &= module.symbol("GE_zmarkers", out addr);
-		eif_markers = addr;
-
-		ok &= module.symbol("GE_zrts", out addr);
-		if (addr!=null) rts = *(System**)addr;
-
-		ok &= module.symbol("GE_ztop", out addr);
-		top0 = (StackFrame**)addr;
-
-		ok &= module.symbol("GE_zstep", out addr);
-		step = (int*)addr;
-
-		offset_func();
-		if (libname!=null) {
-			ok &= module.symbol("GE_raise", out addr);
-			var raise = (RaiseFunc)addr;
-			ok &= module.symbol("GE_main", out addr);
-			var main = (MainFunc)addr;
-			if (ok) ok = run(main, raise);
-		}
-		return ok;
-	}
-
-	public bool run(MainFunc main, RaiseFunc raise) {
-		raise_func = raise;
-		new_executable();
-		try {
-			th = new Thread<int>("Debuggee", () => 
-				{ return main(args.length, (void**)args); });
-		} catch (Error e) { 
-			return false;
-		}
-		return true;
-	}
 
 	public void stop() {
 		if (th!=null) {
@@ -822,9 +804,21 @@ public class Driver : Debuggee {
 			th.join();
 			th = null;
 		}
-		Marker.clear_to_depth(0);
+		Marker.reset(true);
 	}
 
 }
 
-private weak Driver the_dg;
+namespace Gedb {
+	
+	private static weak Driver the_driver;
+	
+	public void* inform(int reason) { 
+		return the_driver.treat_info(reason);
+	}
+
+	public void* stop(int reason) { 
+		return the_driver.treat_stop(reason);
+	}
+
+}

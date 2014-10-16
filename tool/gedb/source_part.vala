@@ -5,13 +5,13 @@ internal ConsolePart the_console;
 
 private const string regexp_string = "Regular expression to search";
 
-public class SourcePart : Box, ClassPosition { 
+public class SourcePart : Box, AbstractPart, ClassPosition { 
 
 	internal SourceView feature_view;
 	internal Label feature_class;
 	internal Label feature_lines;
 
-	internal Debuggee dg;
+	internal Debuggee? dg;
 
 	internal RunPart? run;
 	internal BreakPart? brk;
@@ -19,6 +19,7 @@ public class SourcePart : Box, ClassPosition {
 	internal DataPart data;
 	internal ConsolePart? console;
 	internal ConsolePart? separate_console;
+	internal Window? console_window;
 	internal Notebook pages;
 	internal Status status;
 	internal Window feature_window;
@@ -156,6 +157,7 @@ public class SourcePart : Box, ClassPosition {
 	}
 
 	internal void do_actual(StackFrame* f, uint id, uint pos) {
+		if (dg==null) return;
  		ClassText* cls = null;
 		ClassText* cls_new = dg.rts.class_at(id);
 		StackFrame* sf;
@@ -246,15 +248,7 @@ public class SourcePart : Box, ClassPosition {
 		the_console = console;
 	}
 
-	private void do_new_exe(Debuggee dg) {
-		class_list = new_class_list(dg.rts);
-		plus.completion.set_model(class_list);
-		for (int n=pages.get_n_pages()-1; n-->0;) pages.remove_page(n);
-		feature_window.get_toplevel().hide();
-		feature_window.title = compose_title("Feature text", dg.rts);
-	}
-
-	private void do_to_main(Widget top) {
+	private void do_to_main(Widget top) requires (dg!=null) {
 		top.hide();
 		string c_name = feature_class.get_text();
 		ClassText* cls = dg.rts.class_by_name(c_name);
@@ -335,13 +329,10 @@ public class SourcePart : Box, ClassPosition {
 			var menu = new Label("Console");
 			menu.xalign = 0.0F;
 			pages.append_page_menu(console, cb, menu);
-			dg.notify["is-running"].connect(
-				(g,p) => { do_set_sensitive(dg.is_running); });
-			var sw = new Window();
+			console_window = new Window();
 			var sb = new Box(Orientation.VERTICAL, 0);
-			sw.@add(sb);
-			sw.set_title(compose_title("Console", dg.rts));
-			sw.set_border_width(5);
+			console_window.@add(sb);
+			console_window.set_border_width(5);
 			separate_console = new ConsolePart.as_separate(console);
 			sb.pack_start(separate_console, true, true, 3);
 			var buttons = new ButtonBox(Orientation.HORIZONTAL);
@@ -363,7 +354,6 @@ back to source window.""");
 
 	private Window new_feature_window() {
 		var w = new Window();
-		w.title = compose_title("Feature text", dg.rts);
 		var box = new Box(Orientation.VERTICAL, 3);
 		w.@add(box);
 		Grid grid = new Grid();
@@ -400,10 +390,8 @@ and close feature window.""");
 		return w;
 	}
 
-	public SourcePart(Debuggee dg, 
-					  BreakPart? b, RunPart? r, DataPart d, ConsolePart? c, 
+	public SourcePart(BreakPart? b, RunPart? r, DataPart d, ConsolePart? c, 
 					  StackPart s, Status status) {
-		this.dg = dg;
 		run = r;
 		brk = b;
 		stack = s;
@@ -473,7 +461,6 @@ Shortcut: <span><i>&lt;CTRL&gt;L</i></span>""");
 		search.activate.connect(() => { do_search(); });
 		precise.clicked.connect(() => { do_toggle(precise); });
 		go_to.activate.connect(() => { do_goto(go_to); });
-		dg.new_executable.connect(do_new_exe);
 		stack.level_selected.connect((s,f,i,p) => { do_actual(f,i,p); });
 		pages.switch_page.connect((s,w,i) => { do_switch(w as FullSource); });
 
@@ -515,19 +502,35 @@ Shortcut: <span><i>&lt;CTRL&gt;L</i></span>""");
 		}
 	}
 
-	public void init_input() { 
+	public void init_input() {
 		GLib.Idle.@add(() => { 
 				if (the_console==console) pages.page = -1; 
 				the_console.init_input();  
 				return false; 
 			});
+	}
+
+	public void set_debuggee(Debuggee? dg) { 
+		this.dg = dg;
+		for (int n=pages.get_n_pages()-1; n-->0;) pages.remove_page(n);
+		set_sensitive(dg!=null);
+		if (dg!=null) {
+			class_list = new_class_list(dg.rts);
+			plus.completion.set_model(class_list);
+			feature_window.get_toplevel().hide();
+			feature_window.title = compose_title("Feature text", dg.rts);
+			if (console_window!=null)
+				console_window.set_title(compose_title("Console", dg.rts));
+			dg.notify["is-running"].connect(
+				(g,p) => { do_set_sensitive(dg.is_running); });
+		} 
 	} 
 
 } /* class SourcePart */
 
 internal SourcePart the_source;
 
-public static void GE_zinit_stdin() { the_source.init_input(); }
+public static void gedb_init_stdin() { the_source.init_input(); }
 
 public class SingleSource : Box {
 	
@@ -634,7 +637,8 @@ public class SingleSource : Box {
 		parenths = new Gee.HashMap<int,int>();
 	}
 
-	public ClassText* current_class() { return source.dg.rts.class_at(cid); }
+	public ClassText* current_class() { 
+		return source.dg!=null ? source.dg.rts.class_at(cid) : null; }
 
 } /* class SingleSource */
 
@@ -903,7 +907,7 @@ public class FullSource : SingleSource {
 	}
 	
 	void highlight_breakpoint(uint class_id, int pos) {
-		if (class_id==0 || class_id!=cid) return;
+		if (class_id==0 || class_id!=cid || source.dg==null) return;
 		ClassText* cls = source.dg.rts.class_at(class_id);
 		var text = text_view.get_buffer() as SourceBuffer;
 		var tags = text.get_tag_table();
@@ -919,7 +923,7 @@ public class FullSource : SingleSource {
 	}
 	
 	void lowlight_breakpoint(uint class_id, int pos) {
-		if (class_id==0 || class_id!=cid) return;
+		if (class_id==0 || class_id!=cid || source.dg==null) return;
 		ClassText* cls = source.dg.rts.class_at(class_id);
 		var text = text_view.get_buffer() as SourceBuffer;
 		var tags = text.get_tag_table();
@@ -933,8 +937,7 @@ public class FullSource : SingleSource {
 		text.remove_tag_by_name("break", start, end);
 	}
 	
-	private void highlight_one_breakpoint(Breakpoint? old_bp, 
-										  Breakpoint new_bp) {
+	private void highlight_one_breakpoint(Breakpoint? old_bp, Breakpoint new_bp) {
 		if (old_bp!=null && old_bp.cid==cid) {
 			lowlight_breakpoint(cid, (int)old_bp.pos);
 		}
@@ -977,7 +980,7 @@ public class FullSource : SingleSource {
 	}
 	
 	private bool do_motion (Gdk.EventMotion ev, SourcePart s) {
-		if ((int)cid<0)  return false;
+		if ((int)cid<0 || source.dg==null)  return false;
 		ClassText* cls = source.dg.rts.class_at(cid);
 		FeatureText* ft = null;
 		int[] pos;
@@ -1394,7 +1397,7 @@ public class FullSource : SingleSource {
 	}
 
 	public void show_main_class(ClassText* cls) {
-		if (cls.ident==cid) return;
+		if (cls.ident==cid || source.dg==null) return;
 		FeatureText* ft;
 		RoutineText* rt;
 		var text = text_view.get_buffer() as SourceBuffer;
@@ -1457,6 +1460,7 @@ public class FullSource : SingleSource {
 	}
 	
 	public void highlight_actual(StackFrame* f, uint pos) {
+		if (source.dg==null) return;
 		var text = text_view.get_buffer() as SourceBuffer;
 		var tags = text.get_tag_table();
 		var actual = tags.lookup("actual");

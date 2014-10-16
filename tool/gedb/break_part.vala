@@ -1,7 +1,7 @@
 using Gtk; 
 using Gedb; 
 
-public class BreakPart : Box {
+public class BreakPart : Box, AbstractPart {
 	
 	private enum Item {
 		ID = 0,
@@ -20,7 +20,7 @@ public class BreakPart : Box {
 
 	private enum Action { KILL, ENABLE, DISABLE }
 
-	private Driver dg;
+	private Driver dr;
 	private DataPart data;
 	private Status status;
 	private Expander info;
@@ -81,7 +81,8 @@ public class BreakPart : Box {
 
 	private void do_create() { add_breakpoint(new Breakpoint()); }
 
-	private void do_single_break(TreeModel model, TreeIter iter, int flag) {
+	private void do_single_break(TreeModel model, TreeIter iter, int flag) 
+	requires (dr!=null) {
 		ListStore store = model as ListStore;
 		uint id = 0;
 		bool ok = true;
@@ -96,7 +97,7 @@ public class BreakPart : Box {
 			break;
 		}
 		var list = breakpoints(false);
-		dg.update_breakpoints(list);
+		dr.update_breakpoints(list);
 		set_changed(list);	
 	}
 
@@ -108,7 +109,7 @@ public class BreakPart : Box {
 		ids.@add(id);
 	}
 
-	private void kill_breakpoints(Gee.List<int> ids) {
+	private void kill_breakpoints(Gee.List<int> ids) requires (dr!=null) {
 		TreeIter at;
 		int id, kill, n;
 		bool ok;
@@ -124,7 +125,7 @@ public class BreakPart : Box {
 			}
 		}
 		var list = breakpoints(true);
-		dg.update_breakpoints(list);
+		dr.update_breakpoints(list);
 		set_changed(list);	
 	}
 
@@ -222,7 +223,8 @@ public class BreakPart : Box {
 		return true;
 	}
 
-	private void do_check_expression(Entry entry, uint col, TreeIter iter) {
+	private void do_check_expression(Entry entry, uint col, TreeIter iter) 
+	requires (dr!=null) {
 		checker.reset();
 		string str = entry.get_text(); 
 		if (str.strip().length==0) {
@@ -233,16 +235,16 @@ public class BreakPart : Box {
 		store.@get(iter, Item.TYPE_ID, out tid, 
 				   Item.CLS, out cid, Item.POS, out pos, -1);
 		if (tid>0 && cid==0) {
-			Gedb.Type* t = dg.rts.type_at(tid);
+			Gedb.Type* t = dr.rts.type_at(tid);
 			ClassText* ct = t.base_class;
 			cid = ct.ident;
 		} 
 		if (cid>0) 
-			checker.check_static(str, cid, pos, dg.rts, col==Item.IF, aliases);
+			checker.check_static(str, cid, pos, dr.rts, col==Item.IF, aliases);
 	}
 
 	private void do_pre_edit(CellRenderer cell, CellEditable editor,
-							 string path_string) {
+							 string path_string) requires (dr!=null) {
 		TreePath path;
 		TreeRowReference tref;
 		TreeIter iter;
@@ -269,14 +271,14 @@ public class BreakPart : Box {
 			entry = editor as Entry;
 			compl = new EntryCompletion();
 			store.@get(iter, Item.CLS, out n, -1);
-			var tl = new_type_list(dg.rts, do_filter_types, dg.rts.class_at(n));
+			var tl = new_type_list(dr.rts, do_filter_types, dr.rts.class_at(n));
 			compl.set_model(tl);
 			compl.set_text_column(TypeEnum.TYPE_NAME);
 			n = tl.iter_n_children(null);
 			n = (int)(Math.log2(n)/3.0);
 			compl.set_minimum_key_length(n);
 			compl.set_match_func((c,k,i) =>
-				{ return checker.do_filter_type_name(c,k,i,dg.rts); });
+				{ return checker.do_filter_type_name(c,k,i,dr.rts); });
 			compl.match_selected.connect(
 				(c,m,i) => { return do_set_type(m,i,iter); });
 			compl.insert_action_text (0, "clear");
@@ -299,7 +301,7 @@ public class BreakPart : Box {
 	}
 
 	private void do_post_edit(CellRendererText cell, string path_string,
-							  string? text) {
+							  string? text) requires (dr!=null) {
 		if (text==null) return;
 		Eval.Parser parser;
 		Expression ex;
@@ -326,7 +328,7 @@ public class BreakPart : Box {
 			ok = false;
 			if (text[0].tolower()=='s') {
 				source.get_position(out n, out pos);
-				ClassText* cls = dg.rts.class_at(n);
+				ClassText* cls = dr.rts.class_at(n);
 				value = "%s:%u:%u".printf(((Gedb.Name*)cls).fast_name,
 										  pos/256, pos%256);
 			} else {
@@ -342,7 +344,7 @@ public class BreakPart : Box {
 		case Item.WATCH_TEXT: 
 			if (text[0].tolower()=='s') {
 				var sel = data.selected_item();
-				var wi = new WatchInfo.from_data(sel, data.frame, dg.rts);
+				var wi = new WatchInfo.from_data(sel, data.frame, dr.rts);
 				ok = wi.address!=null;
 				if (ok) {
 					value = "%p".printf(wi.address);
@@ -371,7 +373,7 @@ public class BreakPart : Box {
 		}
 		cell.text = value;
 		Breakpoint bp_new = filled_bp(store, iter);
-		dg.update_breakpoints(breakpoints(false));
+		dr.update_breakpoints(breakpoints(false));
 		edited(bp_old, bp_new);
 	}
 	
@@ -420,9 +422,8 @@ public class BreakPart : Box {
 		set_deep_sensitive(this, !is_running);
 	}
 
-	public BreakPart(Driver dg, DataPart d, Status st, 
+	public BreakPart(DataPart d, Status st,
 					 Gee.Map<string,Expression> aliases) {
-		this.dg = dg;
 		data = d;
 		status = st;
 		this.aliases = aliases;
@@ -718,11 +719,6 @@ treated as breakpoints?""");
 			{ return status.set_long_string(ev, view, list, do_show_watch); });
 		view.leave_notify_event.connect((ev) =>
 			{ return status.remove_long_string(); });
-		dg.response.connect(treat_response);
-		dg.new_executable.connect((g) => { store.clear(); });
-		dg.response.connect(treat_response);
-		dg.notify["is-running"].connect(
-			(g,p) => { do_set_sensitive(dg.is_running); });
 	}
 	
 	public Gee.ArrayList<Breakpoint> breakpoints(bool all) {
@@ -749,17 +745,18 @@ treated as breakpoints?""");
 		set_breakpoint(bp, iter);
 	}
 	
-	private void set_breakpoint(Breakpoint bp, TreeIter iter) {
+	private void set_breakpoint(Breakpoint bp, TreeIter iter)
+	requires (dr!=null) {
 		ClassText* cls = null;
 		string at, type;
 		if (bp.pos>0) {
-			cls = dg.rts.class_at(bp.cid);
+			cls = dr.rts.class_at(bp.cid);
 			at = ((Gedb.Name*)cls).fast_name;
 			at = "%s:%d:%d".printf(at, (int)(bp.pos/256), (int)(bp.pos%256));
 		} else {
 			at = "";
 		}
-		type = bp.tid>0 ? ((Gedb.Name*)dg.rts.type_at(bp.tid)).fast_name : "";
+		type = bp.tid>0 ? ((Gedb.Name*)dr.rts.type_at(bp.tid)).fast_name : "";
 		store.@set(iter,
 				   Item.ID, bp.id,
 				   Item.CATCH, bp.exc,
@@ -781,7 +778,7 @@ treated as breakpoints?""");
 				  -1);
 		if (bp.enabled) {
 			Gee.List<Breakpoint> list = breakpoints(false);
-			dg.update_breakpoints(list);
+			dr.update_breakpoints(list);
 			set_changed(list);
 		}
 	}
@@ -817,7 +814,6 @@ treated as breakpoints?""");
 				}
 			} while (store.iter_next(ref at));
 		}
-
 	}
 
 	public void kill_breakpoint(uint cid, uint pos) {
@@ -833,8 +829,19 @@ treated as breakpoints?""");
 				 break;
 			 }
 		}
-		if (ids!=null)  kill_breakpoints(ids);
+		if (ids!=null) kill_breakpoints(ids);
 	}
+
+	public void set_debuggee(Debuggee? dg) { 
+		dr = dg as Driver; 
+		do_set_sensitive(dr!=null);
+		if (dr!=null) {
+			dr.response.connect(treat_response);
+			dr.notify["is-running"].connect(
+				(g,p) => { do_set_sensitive(dr.is_running); });
+		}
+	}
+
 
 	public signal void edited(Breakpoint old_bp, Breakpoint new_bp);
 	public signal void set_changed(Gee.List<Breakpoint> list);

@@ -3,35 +3,39 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
 <meta name="generator" content="hevea 2.09">
-<link rel="stylesheet" type="text/css" href="debug.css">
+<link rel="stylesheet" type="text/css" href="debugh.css">
 <title>Source part</title>
 </head>
 <body >
-<a href="debug007.html"><img src="previous_motif.gif" alt="Previous"></a>
+<a href="debugh008.html"><img src="previous_motif.gif" alt="Previous"></a>
 <a href="index.html"><img src="contents_motif.gif" alt="Up"></a>
-<a href="debug009.html"><img src="next_motif.gif" alt="Next"></a>
+<a href="debugh010.html"><img src="next_motif.gif" alt="Next"></a>
 <hr>
-Gedb &#X2013; The Gec debugger<h3 id="sec20" class="subsection">3.5&#XA0;&#XA0;Source part</h3>
+Gedb &#X2013; The Gec debugger<h3 id="sec20" class="subsection">3.6&#XA0;&#XA0;Source part</h3>
 <p><a id="S:source"></a>
 The <span style="font-family:sans-serif">Source</span> part consists of the main text field 
 that is the overlay of several source texts 
-(and the <span style="font-family:sans-serif">Console</span> part, see Sec.&#XA0;<a href="debug009.html#S%3Aconsole">3.6</a>) 
+(and the <span style="font-family:sans-serif">Console</span> part, see Sec.&#XA0;<a href="debugh010.html#S%3Aconsole">3.7</a>) 
 and of the bottom fields to enter a search string or a line number. 
+The text field is not editable to preserve the consistence 
+of shown class texts with the ones the debuggee was compiled with 
+(of course, the source texts must also not be edited by an external editor 
+as long as the debugging session runs). 
 </p><blockquote class="figure"><div class="center"><hr style="width:80%;height:2"></div>
-<div class="center"><img src="debug004.png"></div>
+<div class="center"><img src="debugh004.png"></div>
 <div class="caption"><table style="border-spacing:6px;border-collapse:separate;" class="cellpading0"><tr><td style="vertical-align:top;text-align:left;" >Figure 4: The <span style="font-family:sans-serif">Source</span> part
 showing a breakpoint (red) and the actual stop point (green).
 The underlined characters represent possible positions 
 for breakpoints.</td></tr>
 </table></div><a id="F:source"></a>
 <div class="center"><hr style="width:80%;height:2"></div></blockquote>
-<h4 id="sec21" class="subsubsection">3.5.1&#XA0;&#XA0;Highlighted text</h4>
+<h4 id="sec21" class="subsubsection">3.6.1&#XA0;&#XA0;Highlighted text</h4>
 <p><a id="S:highlights"></a>
 Within the displayed source code a few small parts may be highlighted 
 (besides syntax highlighting) as follows:
 </p><dl class="description"><dt class="dt-description"><span style="font-family:sans-serif">green background</span></dt><dd class="dd-description"> actual stop position if the class is that 
 of the actual stack level or belongs otherwise to the call stack
-(see remark in Sec.&#XA0;<a href="#S%3AsourceActions">3.5.5</a>); 
+(see remark in Sec.&#XA0;<a href="#S%3AsourceActions">3.6.5</a>); 
 </dd><dt class="dt-description"><span style="font-family:sans-serif">light green background</span></dt><dd class="dd-description"> line of actual stop position 
 (to make the stop position better detectable);
 </dd><dt class="dt-description"><span style="font-family:sans-serif">red background</span></dt><dd class="dd-description"> 
@@ -41,17 +45,17 @@ possible positions for the <span style="font-family:sans-serif">At</span> condit
 (classes not compiled for debugging or routines without generated <span style="font-style:oblique">C</span> code
 don&#X2019;t have those positions);
 </dd><dt class="dt-description"><span style="font-family:sans-serif">orange background</span></dt><dd class="dd-description"> string found by a search 
-(see Sec.&#XA0;<a href="#S%3Asearching">3.5.4</a>); 
+(see Sec.&#XA0;<a href="#S%3Asearching">3.6.4</a>); 
 </dd><dt class="dt-description"><span style="font-family:sans-serif">medium blue background</span></dt><dd class="dd-description"> 
 name of the class under the mouse pointer that can be displayed 
-(see Sec.&#XA0;<a href="#S%3AsourceActions">3.5.5</a>);
+(see Sec.&#XA0;<a href="#S%3AsourceActions">3.6.5</a>);
 </dd><dt class="dt-description"><span style="font-family:sans-serif">light blue background</span></dt><dd class="dd-description"> 
 name of the feature under the mouse pointer that can be listed 
-(see Sec.&#XA0;<a href="#S%3AsourceActions">3.5.5</a>);
+(see Sec.&#XA0;<a href="#S%3AsourceActions">3.6.5</a>);
 </dd><dt class="dt-description"><span style="font-family:sans-serif">light pink background</span></dt><dd class="dd-description"> 
 name of the feature under the mouse pointer that can be listed and computed, 
 the enclosing routine must belong to the call stack 
-(see Sec.&#XA0;<a href="#S%3AsourceActions">3.5.5</a>);
+(see Sec.&#XA0;<a href="#S%3AsourceActions">3.6.5</a>);
 </dd><dt class="dt-description"><span style="font-family:sans-serif">light gray background</span></dt><dd class="dd-description"> line of the insertion cursor 
 (to make the cursor position better detectable).
 </dd></dl><p>
@@ -59,7 +63,7 @@ The various background colors take the priorities:
 orange, red, green, light pink, light blue, medium blue, 
 light green, light gray. 
 </p>
-<h4 id="sec22" class="subsubsection">3.5.2&#XA0;&#XA0;Class selection</h4>
+<h4 id="sec22" class="subsubsection">3.6.2&#XA0;&#XA0;Class selection</h4>
 <p><a id="S:classSelection"></a>
 The class is selected (and added to the tag fields bar if not yet there) by 
 </p><ul class="itemize"><li class="li-itemize">choosing a tag from the tag fields bar 
@@ -67,17 +71,17 @@ The class is selected (and added to the tag fields bar if not yet there) by
 in the tag fields bar: 
 a pop-up menu opens from which the class can be chosen); 
 </li><li class="li-itemize">choosing a class from the text entry at the left of the tag field bar 
-(see Sec.&#XA0;<a href="debug004.html#S%3AtypenameField">3.1.1</a> for details on class name selection);
-</li><li class="li-itemize">choosing a stack level in the <span style="font-family:sans-serif">Call stack</span> part (see Sec.&#XA0;<a href="debug010.html#S%3Astack">3.7</a>), 
+(see Sec.&#XA0;<a href="debugh005.html#S%3AtypenameField">3.2</a> for details on class name selection);
+</li><li class="li-itemize">choosing a stack level in the <span style="font-family:sans-serif">Call stack</span> part (see Sec.&#XA0;<a href="debugh011.html#S%3Astack">3.8</a>), 
 in this case the source code around the actual stop point is displayed;
 </li><li class="li-itemize">the class of the additional <span style="font-family:sans-serif">Feature</span> window 
 when clicking <span style="font-family:sans-serif">To source</span> there 
-(see Sec.&#XA0;<a href="#S%3AsourceActions">3.5.5</a>). 
+(see Sec.&#XA0;<a href="#S%3AsourceActions">3.6.5</a>). 
 </li></ul><p>
 If a class is selected that has been excluded from debugging 
 then this fact will be indicated by striking through the class name 
 in the tag fields bar. </p>
-<h4 id="sec23" class="subsubsection">3.5.3&#XA0;&#XA0;Cursor movement</h4>
+<h4 id="sec23" class="subsubsection">3.6.3&#XA0;&#XA0;Cursor movement</h4>
 <p><a id="S:textCursor"></a>
 Within the text field a special location is indicated 
 by the insertion cursor (not to be confused with the mouse pointer): 
@@ -91,7 +95,7 @@ It can be moved by
 </dd><dt class="dt-description"><span style="font-weight:bold"><span style="font-family:monospace">Page Up, Page Down </span></span>keys</dt><dd class="dd-description"> move up or down as many lines 
 as are shown in the source text.
 </dd><dt class="dt-description"><span style="font-weight:bold"><span style="font-family:monospace">Control-l</span></span></dt><dd class="dd-description"> select a line directly (see below); 
-</dd><dt class="dt-description"><span style="font-weight:bold"><span style="font-family:monospace">Control-f</span></span></dt><dd class="dd-description"> search for a string (see Sec.&#XA0;<a href="#S%3Asearching">3.5.4</a>).
+</dd><dt class="dt-description"><span style="font-weight:bold"><span style="font-family:monospace">Control-f</span></span></dt><dd class="dd-description"> search for a string (see Sec.&#XA0;<a href="#S%3Asearching">3.6.4</a>).
 </dd></dl><p>
 A specific line can be selected by entering a number 
 into the entry on bottom right of the <span style="font-family:sans-serif">Source</span> part. 
@@ -107,7 +111,7 @@ The entered number <span style="font-style:italic">n</span> may be
 </dd><dt class="dt-description"><span style="font-family:sans-serif">negative</span></dt><dd class="dd-description"> the <span style="font-style:italic">n</span>-th line from the text end is selected;
 </dd><dt class="dt-description"><span style="font-family:sans-serif">zero</span></dt><dd class="dd-description"> the line of the previous show line action is selected. 
 </dd></dl>
-<h4 id="sec24" class="subsubsection">3.5.4&#XA0;&#XA0;Searching</h4>
+<h4 id="sec24" class="subsubsection">3.6.4&#XA0;&#XA0;Searching</h4>
 <p><a id="S:searching"></a>
 The text field is not writeable but searchable: two methods are provided.
 First, enter the string (generally: regular expression) to be searched 
@@ -131,7 +135,7 @@ another search cycle with two <span style="font-family:monospace">Control-f</spa
 In any case, 
 the search is case insensitive and regular expressions are not supported.
 </p>
-<h4 id="sec25" class="subsubsection">3.5.5&#XA0;&#XA0;Other actions</h4>
+<h4 id="sec25" class="subsubsection">3.6.5&#XA0;&#XA0;Other actions</h4>
 <p><a id="S:sourceActions"></a>
 The actions of the <span style="font-family:sans-serif">Source</span> part described so far 
 work completely inside the GUI without interacting the debuggee 
@@ -186,7 +190,7 @@ The various control characters may be read as &#X201C;show actual&#X201D;,
 </p><p>Some final remarks on the phrases &#X201C;routine in the call stack&#X201D;
 and &#X201C;next to the insertion cursor&#X201D;. 
 A routine belongs to the call stack if it is the routine 
-of the selected level in the <span style="font-family:sans-serif">Call stack</span> part (see Sec.&#XA0;<a href="debug010.html#S%3Astack">3.7</a>)
+of the selected level in the <span style="font-family:sans-serif">Call stack</span> part (see Sec.&#XA0;<a href="debugh011.html#S%3Astack">3.8</a>)
 or the routine of a higher level 
 (for implementation reasons, routines on lower levels are not accessible). 
 If the routine occurs several times then action <span style="font-family:monospace">Control-.</span> 
@@ -196,8 +200,8 @@ closest to the selected level.
 text position <U>left</U> or <U>above</U> the insertion cursor, 
 it is at the same time a position where a <span style="font-family:sans-serif">Next</span> command stops. </p>
 <hr>
-<a href="debug007.html"><img src="previous_motif.gif" alt="Previous"></a>
+<a href="debugh008.html"><img src="previous_motif.gif" alt="Previous"></a>
 <a href="index.html"><img src="contents_motif.gif" alt="Up"></a>
-<a href="debug009.html"><img src="next_motif.gif" alt="Next"></a>
+<a href="debugh010.html"><img src="next_motif.gif" alt="Next"></a>
 </body>
 </html>

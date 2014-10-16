@@ -66,8 +66,8 @@ feature {} -- External implementation
 		alias
 			"[ 
  
-#if defined (GE_ZTABLES) && ( GE_ZTABLES == 2 ) 
-  (EIF_NATURAL_32)GE_zblk[$b][$i] 
+#if defined GEIP_TABLES && GEIP_TABLES == 2
+  (EIF_NATURAL_32)geip_blk[$b][$i] 
 #else 
   0 
 #endif 

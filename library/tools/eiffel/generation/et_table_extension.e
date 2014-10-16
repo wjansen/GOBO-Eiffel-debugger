@@ -28,13 +28,15 @@ feature -- Basic operation
 			id: INTEGER
 		do
 			print_extension
-			h_file.put_string ("#define GE_ZTABLES%N")
+			h_file.put_string ("#define ")
+			h_file.put_string (c_names.table_name)
+			h_file.put_new_line
 			put_class_table 
 			put_names_table
 			put_typeset_table 
 			put_type_tables
 			put_onces_table
-			-- Declare `GE_zroot'
+			-- Declare `root'
 			if attached compilee.root_type as rt then
 				id := rt.ident
 				put_global_integer (id, c_names.c_root_name, False)
@@ -813,7 +815,7 @@ feature {} -- Implementation
 	 int size; 
 	 void *alloc; 
 	 void *def; 
-	 GE_ZF *fields; 
+	 GEIP_F *fields; 
 	 int nfields; 
 	 void *routines; 
 	 int nroutines; 
@@ -824,7 +826,7 @@ feature {} -- Implementation
 		
 	boxed_struct: STRING =
 	"{
-	 GE_ZT simple;
+	 GEIP_T simple;
 	 int boxed_size; 
 	 void *boxed_def; 
 	 void *subobject; 
@@ -833,7 +835,7 @@ feature {} -- Implementation
 	 
 	agent_struct: STRING =
 	"{
-	 GE_ZT simple;
+	 GEIP_T simple;
 	 int declared_id;
 	 int closed_tuple_id;
 	 int routine_name;

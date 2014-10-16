@@ -469,11 +469,11 @@ feature {NONE} -- Compilation script generation
 			end
 			l_variables.force (l_libs, "libs")
 			l_exe_name := l_base_name
-			if debugger_level > 1 then
-				l_exe_name := l_c_config.item ("prelib") + l_exe_name + l_c_config.item ("lib")
-			else
+--			if debugger_level > 1 then	-- future 
+--				l_exe_name := l_c_config.item ("prelib") + l_exe_name + l_c_config.item ("lib")
+--			else
 				l_exe_name := l_exe_name + l_c_config.item ("exe")
-			end
+--			end
 			l_variables.force (l_exe_name, "exe")
 			create l_obj_filenames.make (100)
 			l_obj := l_c_config.item ("obj")
@@ -564,17 +564,17 @@ feature {NONE} -- Compilation script generation
 						l_obj_filenames.append_string (l_res_filename)
 					end
 				end
-				inspect debugger_level
-				when 1 then
-					l_lib := l_c_config.item ("prelib") + "gedb" + l_c_config.item ("lib")
-					l_lib := file_system.nested_pathname ("${GOBO}", <<"bin", l_lib>>)
-					l_link_template := l_c_config.item ("link") + " " + l_lib
-				when 2 then
-					l_exe_name := l_c_config.item ("prelib") + l_exe_name + l_c_config.item ("lib")
-					l_link_template := l_c_config.item ("linklib") 
-				else
+--				inspect debugger_level	-- future
+--				when 1 then
+--					l_lib := l_c_config.item ("prelib") + "gedb" + l_c_config.item ("lib")
+--					l_lib := file_system.nested_pathname ("${GOBO}", <<"bin", l_lib>>)
+--					l_link_template := l_c_config.item ("link") + " " + l_lib
+--				when 2 then
+--					l_exe_name := l_c_config.item ("prelib") + l_exe_name + l_c_config.item ("lib")
+--					l_link_template := l_c_config.item ("linklib") 
+--				else
 					l_link_template := l_c_config.item ("link")
-				end
+--				end
 				l_command_name := template_expander.expand_from_values (l_link_template, l_variables)
 				l_file.put_line (l_command_name)
 				l_file.close

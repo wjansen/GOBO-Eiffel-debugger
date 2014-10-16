@@ -1,7 +1,7 @@
 using Gtk;
 using Gedb;
 
-public class StackPart : Box {
+public class StackPart : Box, AbstractPart {
 
 	private enum Column {
 		LEVEL = 0,
@@ -19,8 +19,8 @@ public class StackPart : Box {
 	
 	private static const string rescue_arrow = "↳";	//"►";
 
-	private Debuggee dg;
-	private StackPart* main;
+	private Debuggee? dg;
+	private StackPart? main;
 	private Label depth_label;
 	private ComboBox? combo;
 	private TreeView? view;
@@ -31,6 +31,7 @@ public class StackPart : Box {
 
 	private void set_row(TreeIter iter, int level, uint cid, 
 						 string rout, bool rescue, int line, int col) {
+		if (dg==null) return;
 		ClassText* cls = dg.rts.class_at(cid);
 		string name = ((Gedb.Name*)cls).fast_name;
 		string str = "%d  %s.%s:%d:%d".printf(level, name, rout, line, col);
@@ -57,6 +58,7 @@ public class StackPart : Box {
 		int old_depth, new_depth, min, i, old_level;
 		old_depth = depth;
 		TreeSelection sel;
+		if (dg==null) return;
 		if (main==null) {
 			sel = view.get_selection();
 			sel.unselect_all();
@@ -227,12 +229,7 @@ public class StackPart : Box {
 		}
 	}
 
-	private void do_new_exe(Debuggee dg) {
-		top = null;
-		level = 0;
-	}
-
-	private void core_part(Debuggee dg) {
+	private void core_part() {
 		orientation = Orientation.VERTICAL;
 		store = new ListStore(Column.NUM_COLS, 
 							  typeof(uint),		// level
@@ -244,18 +241,14 @@ public class StackPart : Box {
 							  typeof(uint),		// col
 							  typeof(string),	// verbose
 							  typeof(bool));	// poor
-		this.dg = dg;
-		dg.new_executable.connect(do_new_exe);
-		dg.response.connect((dg,r,m,f,mc) => { do_refresh(r); });
-		dg.notify["is-running"].connect(
-			(g,p) => { do_set_sensitive(dg.is_running); });
 	}
 
 	public StackPart.additionally(Debuggee dg, StackPart main) { 
 		this.main = main;
+		set_debuggee(dg);
 		status = main.status;
 		view = null;
-		core_part(dg);
+		core_part();
 		var box = new Box(Orientation.HORIZONTAL, 5);
 		depth_label = new Label("");
 		depth_label.width_chars = 5;
@@ -277,7 +270,7 @@ public class StackPart : Box {
 		add(box);
 	}
 	
-	public StackPart(Debuggee dg, Status s) { 
+	public StackPart(Status s) { 
 		status = s;
 		main = null;
 		combo = null;
@@ -286,7 +279,7 @@ public class StackPart : Box {
 		hbox.pack_start(new Label("Depth: "), false, false, 0);
 		depth_label = new Label("");
 		hbox.pack_start(depth_label, false, false, 0);
-		core_part(dg);
+		core_part();
 		pack_start(new_list_stack(), true, true, 0);
 	}
 
@@ -318,7 +311,7 @@ public class StackPart : Box {
 	}
 
 	private void do_refresh(int reason) { 
-		if (main!=null && !automatic)  return;
+		if (main!=null && !automatic || dg==null)  return;
 		StackFrame* f = dg.frame();
 		Driver? dr = dg as Driver;
 		if (dr!=null) {
@@ -357,6 +350,17 @@ public class StackPart : Box {
 			} 
 		}
 		return null;
+	}
+
+	public void set_debuggee(Debuggee? dg) { 
+		this.dg = dg; 
+		top = null;
+		level = 0;
+		if (dg!=null) {
+			dg.response.connect((dg,r,m,f,mc) => { do_refresh(r); });
+			dg.notify["is-running"].connect(
+				(g,p) => { do_set_sensitive(dg.is_running); });
+		}
 	}
 
 	public signal void level_selected (StackFrame* f, uint cid, uint pos);

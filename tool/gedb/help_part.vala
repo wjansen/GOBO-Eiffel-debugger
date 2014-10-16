@@ -3,27 +3,23 @@ using Gedb;
 
 public class HelpPart {
 
-	private weak GUI gui;
-
-	public HelpPart(GUI gui) { this.gui = gui; }
-	
-	public void help_system(Window main, System* s) {
-		if (s==null) return;
-		var root = s.root_type;
-		var cls = ((Gedb.Type*)root).base_class;
-		var routine = s.root_creation_procedure;
-		DateTime dt = new DateTime.from_unix_utc((int64)s.compilation_time/1000);
-		dt = dt.to_local();
+	public void help_system(System* s) {
 		Pango.FontDescription font 
 			= Pango.FontDescription.from_string("Monospace");
 
 		MessageDialog dialog = new MessageDialog(
-			main,
-			DialogFlags.DESTROY_WITH_PARENT, MessageType.INFO,
+			null,
+			DialogFlags.DESTROY_WITH_PARENT, 
+			s!=null ? MessageType.INFO : MessageType.WARNING,
 			ButtonsType.CLOSE, 
 			"", "title");
 
 		if (s!=null) {
+			DateTime dt = new DateTime.from_unix_utc((int64)s.compilation_time/1000);
+			dt = dt.to_local();
+			var root = s.root_type;
+			var cls = ((Gedb.Type*)root).base_class;
+			var routine = s.root_creation_procedure;
 			dialog.format_secondary_markup(
 """<span><tt>System            : %s</tt></span>
 <span><tt>Root class        : %s</tt></span>

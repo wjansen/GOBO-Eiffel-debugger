@@ -184,6 +184,8 @@ public class ConsolePart : ScrolledWindow {
 		close(in_id);
 		out_channel = new IOChannel.unix_new(out_id);
 		c = IOCondition.OUT;
+//	to be activated when input is requested:
+//		out_channel.add_watch(c, (ch,c) => { return false; }); 
 		
 		pipe(pfd);
 		in_id = pfd[0];
@@ -206,8 +208,6 @@ public class ConsolePart : ScrolledWindow {
 		view.events |= Gdk.EventMask.ENTER_NOTIFY_MASK;
 		view.enter_notify_event.connect(do_enter);
 		view.leave_notify_event.connect(do_leave);
-		// view.focus_in_event.connect(do_focus);		
-		// view.focus_out_event.connect(do_focus);		
 	}
 
 	public ConsolePart.as_separate(ConsolePart main) {
@@ -256,4 +256,6 @@ public class ConsolePart : ScrolledWindow {
 			buffer.set_text("");
 		}		
 	}
+
+	public signal void watch_input();
 }

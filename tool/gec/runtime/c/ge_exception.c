@@ -29,14 +29,14 @@ GE_rescue* GE_last_rescue;
 void GE_raise(int code)
 {
 	GE_rescue* r = GE_last_rescue;
-#ifdef GE_ZD
-	if (code>0) GE_zdebug(GE_zdg, code);
+#ifdef GEDB_D
+	if (code>0) gedb_crash(code);
 #endif
 	if (r != 0) {
 		GE_last_rescue = r->previous;
 		GE_longjmp(r->jb, code);
 	}
-#ifndef GE_ZD
+#ifndef GEDB_D
 #  ifdef EIF_WINDOWS
 	GE_show_console();
 #  endif
@@ -64,7 +64,7 @@ EIF_REFERENCE GE_check_catcall(EIF_REFERENCE obj, int type_ids[], int nb)
 			int i;
 			for (i = 0; i < nb; i++) {
 				if (type_id == type_ids[i]) {
-#ifndef GE_ZD
+#ifndef GEDB_D
 #  ifdef EIF_WINDOWS
 					GE_show_console();
 #  endif
@@ -97,7 +97,7 @@ EIF_REFERENCE GE_check_catcall(EIF_REFERENCE obj, int type_ids[], int nb)
 EIF_REFERENCE GE_check_void(EIF_REFERENCE obj)
 {
 	if (!obj) {
-#ifndef GE_ZD
+#ifndef GEDB_D
 #  ifdef EIF_WINDOWS
 		GE_show_console();
 #  endif
@@ -123,7 +123,7 @@ EIF_REFERENCE GE_check_void(EIF_REFERENCE obj)
 void* GE_check_null(void* ptr)
 {
 	if (!ptr) {
-#ifndef GE_ZD
+#ifndef GEDB_D
 #  ifdef EIF_WINDOWS
 		GE_show_console();
 #  endif

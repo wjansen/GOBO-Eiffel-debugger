@@ -10,7 +10,11 @@ internal int max_dp;
 namespace Gedb {
 
 	public class Persistence<O,I> {
-		
+
+		private I last_id;
+		private Entity* last_e;
+		private int last_idx;
+
 		public Persistence() {
 			known_objects = new Gee.HashMap<I,O>();
 		}
@@ -54,6 +58,9 @@ namespace Gedb {
 					if (l!=null) {
 						source.set_local(l, f);
 						target.set_local(l, f);
+						last_id = source_void_ident;
+						last_e = (Entity*)l;
+						last_idx = -1;
 						process_entity((Entity*)l);
 					}
 				}
@@ -63,6 +70,9 @@ namespace Gedb {
 					if (l!=null) {
 						source.set_local(l, f);
 						target.set_local(l, f);
+						last_e = (Entity*)l;
+						last_id = source_void_ident;
+						last_idx = -1;
 						if (source.last_scope_var) process_entity((Entity*)l);
 					}
 				}
@@ -76,13 +86,18 @@ namespace Gedb {
 				init = source.last_once_init;
 				target.set_once(o, init);
 				if (((Routine*)o).is_function() && init) {
+					last_id = source_void_ident;
+					last_idx = -1;
+					last_e = (Entity*)o;
 					process_entity((Entity*)o);
 				}
 			}	
 		}
 
-		public signal void when_new(O od, I id, Gedb.Type* t, uint n);
-		public signal void when_known(O od, I id, Gedb.Type* t, uint n);
+		public signal void when_new(O od, I id, Gedb.Type* t, uint n,
+									I where, Entity* e, int i);
+		public signal void when_known(O od, I id, Gedb.Type* t, uint n,
+									I where, Entity* e, int i);
 
 		protected virtual void process_closure() {
 			I id, id1=source_void_ident;
@@ -121,7 +136,7 @@ namespace Gedb {
 				}
 				O od = target.last_ident;
 				known_objects[id] = od;
-				when_new(od, id, t, n);
+				when_new(od, id, t, n, last_id, last_e, last_idx);
 				process_data(id, t);
 			} else {
 				known_objects[id] = null;
@@ -148,6 +163,9 @@ namespace Gedb {
 				f = t.field_at(k);
 				source.set_field(f, id);
 				target.set_field(f, od);
+				last_id = id;
+				last_e = (Entity*)f;
+				last_idx = -1;
 				process_entity((Entity*)f);
 			}
 			source.post_object(t, as_ref, id);
@@ -168,6 +186,9 @@ namespace Gedb {
 					f = t.field_at(k);
 					source.set_field(f, id);
 					target.set_field(f, od);
+					last_id = id;
+					last_e = (Entity*)f;
+					last_idx = -1;
 					process_entity((Entity*)f);
 				}
 				source.post_agent(at, id);
@@ -177,6 +198,9 @@ namespace Gedb {
 			if (f!=null) {
 				source.set_field(f, id);
 				target.set_field(f, od);
+				last_id = id;
+				last_e = (Entity*)f;
+				last_idx = -1;
 				process_entity((Entity*)f);
 			}
 			source.post_object(t, true, id);
@@ -197,7 +221,7 @@ namespace Gedb {
 				source.read_int32s(cap);
 				target.put_int32s(od, source.last_int32s, cap, st);
 				break;
-			case 13:
+			case TypeIdent.REAL_64:
 				source.read_doubles(cap);
 				target.put_doubles(od, source.last_doubles, cap, st);
 				break;
@@ -205,6 +229,9 @@ namespace Gedb {
 				for (uint k=0; k<cap; ++k) {
 					source.set_index(st, k, id);
 					target.set_index(st, k, od);
+					last_id = id;
+					last_e = f;
+					last_idx = (int)k;
 					process_entity(f);
 				}
 				break;
@@ -229,7 +256,7 @@ namespace Gedb {
 						uint n = source.last_cap;
 						O od = known_objects[id];
 						target.put_known_ident(od, dyn);
-						when_known(od, id, dyn, n);
+						when_known(od, id, dyn, n, last_id, last_e, last_idx);
 					} else {
 						process_announcement(id, false);
 					}

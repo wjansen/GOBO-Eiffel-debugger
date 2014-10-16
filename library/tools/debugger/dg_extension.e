@@ -8,6 +8,8 @@ class DG_EXTENSION
 inherit
 	
 	ET_TABLE_EXTENSION
+		rename
+			make as make_tables
 		redefine
 			c_generator,
 			c_names,
@@ -23,11 +25,53 @@ inherit
 			default_create,
 			copy, is_equal, out
 		end
+
+	DOUBLE_MATH
+		undefine
+			default_create,
+			copy, is_equal, out
+		end
 	
 create
 
 	make
 
+feature {} -- Initialization
+	
+	make (a_generator: like c_generator; a_compilee: like compilee;
+			a_c_names: like c_names; max_line, max_column: INTEGER)
+		require
+			a_generator_has_c_names: attached a_generator.c_names
+		local
+			n, id_bits, line_bits, col_bits: INTEGER
+		do
+			make_tables (a_generator, a_compilee, a_c_names)
+			from
+				n := a_compilee.class_count
+			until n = 0 loop
+				id_bits := id_bits + 1
+				n := n |>> 1
+			end
+			from
+				n := max_line
+			until n = 0 loop
+				line_bits := line_bits + 1
+				n := n |>> 1
+			end
+			from
+				n := max_column
+			until n = 0 loop
+				col_bits := col_bits + 1
+				n := n |>> 1
+			end
+			if id_bits + line_bits + col_bits > 32 then
+				line_shift := 0
+			else
+				line_shift := col_bits
+			end
+			id_shift := line_bits + line_shift
+		end
+	
 feature -- Access
 
 	c_generator: DG_GENERATOR
@@ -109,31 +153,38 @@ feature {} -- Extension parts
 			-- Define system and frame struct
 			print_forward_variable (True, c_names.frame_struct_name,
 															c_names.c_stacktop_name, "0")
-			-- Define `make'
-			print_forward_variable (True, "void", c_names.c_debugger_name, "0")
-			h_file.put_string ("DllImport void* ")
-			h_file.put_string (c_names.c_init_name)
-			h_file.put_string ("();%N")
+			h_file.put_string ("void ")
+			h_file.put_string (c_names.c_crash_name)
+			h_file.put_string ("(EIF_NATURAL_32 code);%N")
 			if not c_generator.pma_only then
 				-- Define `break'
 				h_file.put_string ("DllImport ")
 				if c_generator.supports_marking then
 					h_file.put_string ("GE_jmp_buf * ")
 				else
+					h_file.put_string ("EIF_NATURAL_32")
+				end
+				h_file.put_string (c_names.c_info_name)
+				h_file.put_string ("(EIF_NATURAL_32 code);%N")
+				h_file.put_string ("DllImport ")
+				if c_generator.supports_marking then
+					h_file.put_string ("GE_jmp_buf * ")
+				else
 					h_file.put_string ("int")
 				end
-				h_file.put_string (c_names.c_debug_name)
-				h_file.put_string ("(void* dg, int code);%N")
-				print_forward_variable (False, "int", c_names.c_step_name, "0")
+				h_file.put_string (c_names.c_break_name)
+				h_file.put_string ("(EIF_INTEGER_32 code);%N")
 			end
+			print_forward_variable (False, "EIF_NATURAL_32", c_names.c_step_name, "1")
+			
 			print_pos_definition
 			-- Declare `routine', `local_offset'
 			h_file.put_string ("void* ")
 			h_file.put_string (c_names.c_get_routine)
-			h_file.put_string ("(int,int);%N")
+			h_file.put_string ("(EIF_NATURAL_32,EIF_NATURAL_32);%N")
 			h_file.put_string ("void ")
 			h_file.put_string (c_names.c_local_offset_name)
-			h_file.put_string ("(void*,int,int);%N")
+			h_file.put_string ("(void*,EIF_INTEGER_32,EIF_NATURAL_32);%N")
 			h_file.put_string ("#define ")
 			h_file.put_string (c_names.c_set_local)
 			h_file.put_string ("(name,index) ")
@@ -149,10 +200,10 @@ feature {} -- Extension parts
 			-- Declare `type', `field_offset'
 			h_file.put_string ("void* ")
 			h_file.put_string (c_names.c_get_type,)
-			h_file.put_string ("(int);%N")
+			h_file.put_string ("(EIF_NATURAL_32);%N")
 			h_file.put_string ("void ")
 			h_file.put_string (c_names.c_field_offset_name,)
-			h_file.put_string ("(void*,int,int);%N")
+			h_file.put_string ("(void*,EIF_INTEGER_32,EIF_NATURAL_32);%N")
 			h_file.put_string ("#define ")
 			h_file.put_string (c_names.c_set_field)
 			h_file.put_string ("(def,name,index) ")
@@ -166,54 +217,75 @@ feature {} -- Extension parts
 			c_generator.flush_to_c_file
 		end
 
-feature -- Print C structs 
+feature {} -- Print C structs 
 
+	id_shift, line_shift: INTEGER
+	
 	print_pos_definition
 		local
 			s: IS_SYSTEM
 			n: INTEGER
 		once
-				-- Define `skip', `pos', `jump' 
+				-- Define `skip', `info', `pos', `jump' 
 			h_file.put_string ("#define ")
 			h_file.put_string (c_names.c_skip_name)
-			h_file.put_string ("(l,c)  s.pos = l*256+c;%N")
+			h_file.put_string ("(l,c)  s.pos=l*256+c;%N")
 			if not c_generator.pma_only then
 				h_file.put_string ("#define ")
+				h_file.put_string (c_names.c_id_shift_name)
+				h_file.put_character (' ')
+				h_file.put_integer (id_shift)
+				h_file.put_new_line
+				h_file.put_string ("#define ")
+				h_file.put_string (c_names.c_line_shift_name)
+				h_file.put_character (' ')
+				h_file.put_integer (line_shift)
+				h_file.put_new_line
+				h_file.put_string ("#define ")
+				h_file.put_string (c_names.c_status_name)
+				h_file.put_string ("(l,c,code)  s.pos=l*256+c;  ")
+				h_file.put_string (c_names.c_info_name)
+				h_file.put_string ("1(code);%N")
+				h_file.put_string ("#define ")
 				h_file.put_string (c_names.c_pos_name)
-				h_file.put_string ("(l,c,code)  s.pos = l*256+c;  ")
-				h_file.put_string (" if (")
+				h_file.put_string ("(l,c,code)  s.pos=l*256+c;  ")
+				h_file.put_string ("if (")
 				h_file.put_string (c_names.c_step_name)
 				h_file.put_character (')')
 				h_file.put_character (' ')
-				h_file.put_string (c_names.c_debug_name)
-				h_file.put_character ('(')
-				h_file.put_string (c_names.c_debugger_name)
-				h_file.put_string (",code);")
-				h_file.put_new_line
+				h_file.put_string (c_names.c_break_name)
+				h_file.put_string ("(code);%N")
 				h_file.put_string ("#define ")
 				h_file.put_string (c_names.c_jump_name)
-				h_file.put_string ("(l,c,code)  s.pos = l*256+c;  ")
-			end
-			if c_generator.supports_marking and then not c_generator.pma_only then
-				h_file.put_string ("{ buf=")
-				h_file.put_string (c_names.c_debug_name)
-				h_file.put_character ('(')
-				h_file.put_string (c_names.c_debugger_name)
-				h_file.put_string (",code); \%N  if (buf) { if (GE_setjmp(*buf)) { ")
-				h_file.put_string (c_names.c_stacktop_name)
-				h_file.put_string ("=&s; ")
-				h_file.put_string (c_names.c_debug_name)
-				h_file.put_character ('(')
-				h_file.put_string (c_names.c_debugger_name)
-				h_file.put_character (',')
-				h_file.put_integer (c_generator.After_reset_break)
-				h_file.put_string ("); } \%N    else ")
-				h_file.put_string (c_names.c_debug_name)
-				h_file.put_character ('(')
-				h_file.put_string (c_names.c_debugger_name)
-				h_file.put_character (',')
-				h_file.put_integer (c_generator.After_mark_break)
-				h_file.put_string ("); }}%N")
+				h_file.put_string ("(id,l,c,code)  s.pos=l*256+c; \%N")
+				h_file.put_string ("  if (")
+				h_file.put_string (c_names.c_break_name)
+				h_file.put_string ("1(id<<")
+				h_file.put_string(c_names.c_id_shift_name)
+				if line_shift > 0 then 
+					h_file.put_string (" | l<<")
+					h_file.put_string(c_names.c_line_shift_name)
+					h_file.put_string (" | c")
+				else
+					h_file.put_string (" | l")
+				end
+				h_file.put_string (", code)) { \%N")
+				if c_generator.supports_marking then
+					h_file.put_string ("    buf=")
+					h_file.put_string (c_names.c_break_name)
+					h_file.put_string("(code); \%N")
+					h_file.put_string ("    if (buf) { if (GE_setjmp(*buf)) { ")
+					h_file.put_string (c_names.c_stacktop_name)
+					h_file.put_string ("=&s; ")
+					h_file.put_string (c_names.c_info_name)
+					h_file.put_character ('(')
+					h_file.put_integer (c_generator.After_reset_break)
+					h_file.put_string ("); } \%N      else ")
+					h_file.put_string (c_names.c_info_name)
+					h_file.put_character ('(')
+					h_file.put_integer (c_generator.After_mark_break)
+					h_file.put_string ("); }}%N")
+				end
 			end
 			h_file.flush
 		end
@@ -272,11 +344,11 @@ feature -- Print C structs
 			-- Define `longjmp'
 			c0_file.put_string ("static void ")
 			c0_file.put_string (c_names.c_longjmp_name)
-			c0_file.put_string ("_(void* buf, int jmp) {%N  ")
+			c0_file.put_string ("_(void* buf, EIF_NATURAL_32 jmp) {%N  ")
 			c0_file.put_string ("GE_longjmp(*(GE_jmp_buf*)buf,jmp);%N}%N")
 			c0_file.put_string ("void (*")
 			c0_file.put_string (c_names.c_longjmp_name);
-			c0_file.put_string (")(void*,int) = ")
+			c0_file.put_string (")(void*,EIF_NATURAL_32) = ")
 			c0_file.put_string (c_names.c_longjmp_name);
 			c0_file.put_string ("_;%N")
 			-- Define `type', `field_offset'
@@ -286,7 +358,7 @@ feature -- Print C structs
 			c0_file.put_character ('*')
 			c0_file.put_character (' ')
 			c0_file.put_string (c_names.c_get_type)
-			c0_file.put_string ("(int t_id) {%N  ")
+			c0_file.put_string ("(EIF_NATURAL_32 t_id) {%N  ")
 			l_type := c_generator.debugger.type_by_name("TYPE", True)
 			l_string := l_type.c_name
 			c0_file.put_string("return ((GedbSystem*)")
@@ -294,7 +366,7 @@ feature -- Print C structs
 			c0_file.put_string(")->all_types[t_id];%N}%N")
 			c0_file.put_string ("void ")
 			c0_file.put_string (c_names.c_field_offset_name)
-			c0_file.put_string ("(void* t, int off, int f_id) {%N  ")
+			c0_file.put_string ("(void* t, EIF_NATURAL_32 off, EIF_NATURAL_32 f_id) {%N  ")
 			c0_file.put_string (l_string)
 			c0_file.put_string ( "* type = (")
 			c0_file.put_string (l_string)
@@ -311,7 +383,7 @@ feature -- Print C structs
 			c0_file.put_character ('*')
 			c0_file.put_character (' ')
 			c0_file.put_string (c_names.c_get_routine)
-			c0_file.put_string ("(int t_id, int r_id) {%N  ")
+			c0_file.put_string ("(EIF_NATURAL_32 t_id, EIF_NATURAL_32 r_id) {%N  ")
 			l_type := c_generator.debugger.type_by_name("TYPE", True)
 			l_string := l_type.c_name
 			c0_file.put_string(l_string)
@@ -324,7 +396,7 @@ feature -- Print C structs
 			l_string := l_type.c_name
 			c0_file.put_string ("void ")
 			c0_file.put_string (c_names.c_local_offset_name)
-			c0_file.put_string ("(void* r, int off, int l_id) {%N  ")
+			c0_file.put_string ("(void* r, EIF_INTEGER_32 off, EIF_NATURAL_32 l_id) {%N  ")
 			c0_file.put_string (l_string)
 			c0_file.put_string ( "* routine = (")
 			c0_file.put_string (l_string)
@@ -335,12 +407,12 @@ feature -- Print C structs
 			c0_file.put_string ("* local = routine->vars[l_id];%N  ")
 			c0_file.put_string ("local->offset = off;%N}%N")
 			-- Define `chars', `unichars'
-			c0_file.put_string ("static T2* GE_zchars_(void* obj, int* nc) {")
+			c0_file.put_string ("static T2* gedb_chars_(void* obj, EIF_INTEGER_32* nc) {")
 			l_type := c_generator.debugger.string_type
 			if l_type /= Void and then l_type.is_alive then
 				c0_file.put_string ("%N  *nc = 0;%N")
 				c0_file.put_string ("  if (obj==0) return 0;%N")
-				c0_file.put_string ("  if (*(int*)obj!=17) return 0;%N")
+				c0_file.put_string ("  if (*(EIF_INTEGER_32*)obj!=17) return 0;%N")
 				c0_file.put_string ("  if (((T17*)obj)->a1==0) return 0;%N")
 				c0_file.put_string ("  *nc = ((T17*)obj)->a2;%N")
 				c0_file.put_string ("  return ((T15*)((T17*)obj)->a1)->z2;%N")
@@ -349,16 +421,16 @@ feature -- Print C structs
 			end
 			c0_file.put_string ("}%N")
 			c0_file.put_string ("T2* (*")
-			c0_file.put_string ("GE_zchars");
-			c0_file.put_string (")(void*,int*) = ")
-			c0_file.put_string ("GE_zchars");
+			c0_file.put_string ("gedb_chars");
+			c0_file.put_string (")(void*,EIF_INTEGER_32*) = ")
+			c0_file.put_string ("gedb_chars");
 			c0_file.put_string ("_;%N")
-			c0_file.put_string ("static T3* GE_zunichars_(void* obj, int* nc) {")
+			c0_file.put_string ("static T3* gedb_unichars_(void* obj, EIF_INTEGER_32* nc) {")
 			l_type := c_generator.debugger.string32_type
 			if l_type /= Void and then l_type.is_alive then
 				c0_file.put_string ("%N  *nc = 0;%N")
 				c0_file.put_string ("  if (obj==0) return 0;%N")
-				c0_file.put_string ("  if (*(int*)obj!=18) return 0;%N")
+				c0_file.put_string ("  if (*(EIF_INTEGER_32*)obj!=18) return 0;%N")
 				c0_file.put_string ("  if (((T18*)obj)->a1==0) return 0;%N")
 				c0_file.put_string ("  *nc = ((T18*)obj)->a2;%N")
 				c0_file.put_string ("  return ((T16*)((T18*)obj)->a1)->z2;%N")
@@ -367,9 +439,9 @@ feature -- Print C structs
 			end
 			c0_file.put_string ("}%N")
 			c0_file.put_string ("T3* (*")
-			c0_file.put_string ("GE_zunichars");
-			c0_file.put_string (")(void*,int*) = ")
-			c0_file.put_string ("GE_zunichars");
+			c0_file.put_string ("gedb_unichars");
+			c0_file.put_string (")(void*,EIF_INTEGER_32*) = ")
+			c0_file.put_string ("gedb_unichars");
 			c0_file.put_string ("_;%N")
 			c0_file.put_string ("void* ")
 			c0_file.put_string (c_names.c_markers_name)
@@ -511,7 +583,7 @@ feature {} -- Print C structs
 			l_pool := c_generator.signature_pool
 			c0_file.put_string ("static void ")
 			c0_file.put_string (c_names.c_wrapper_name)
-			c0_file.put_string ("_(int i,void *call,void *C,void **args,void *R) {%N")
+			c0_file.put_string ("_(EIF_NATURAL_32 i,void *call,void *C,void **args,void *R) {%N")
 			c0_file.put_string ("  switch (i) {%N")
 			n := l_pool.count
 			n := l_pool.count
@@ -632,7 +704,7 @@ feature {} -- Print C structs
 			c0_file.put_string ("  default: R=NULL;%N  }%N}%N")
 			c0_file.put_string ("void (*")
 			c0_file.put_string (c_names.c_wrapper_name);
-			c0_file.put_string (")(int,void*,void*,void**,void*) = ")
+			c0_file.put_string (")(EIF_NATURAL_32,void*,void*,void**,void*) = ")
 			c0_file.put_string (c_names.c_wrapper_name);
 			c0_file.put_string ("_;%N")
 		end
@@ -652,6 +724,7 @@ feature {} -- Print C structs
 feature {} -- Implemantation
 
 	c0_file: PLAIN_TEXT_FILE
+
 invariant
 
 	when_pma: c_generator.pma_only implies not c_generator.supports_marking 

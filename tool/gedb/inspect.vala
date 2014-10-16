@@ -1980,8 +1980,8 @@ other value means `other' is a parent class.
 		public bool conforms_to(Type* t) {
 			if (t==null) return false;
 			if (t.ident==ident) return true;
-			for (uint i=effector_count(); i-->0;) 
-				if (effector_at(i)==t) return true;
+			for (uint i=t.effector_count(); i-->0;) 
+				if (t.effector_at(i).ident==ident) return true;
 			return false;
 		}
 

@@ -8,7 +8,6 @@ deferred class ET_EXTENSION
 inherit
 	
 	PC_BASE
-
 	
 feature {} -- Initialization
 	
@@ -53,7 +52,11 @@ feature {} -- Extension parts
 	
 	print_defines
 		do
-			h_file.put_string ("#ifndef GE_ZINTRO%N#define GE_ZINTRO%N#endif%N")
+			h_file.put_string ("#ifndef ")
+			h_file.put_string (c_names.struct_name)
+			h_file.put_string ("INTRO%N#define ")
+			h_file.put_string (c_names.struct_name)
+			h_file.put_string ("INTRO%N#endif%N")
 		end
 	
 	print_typedefs

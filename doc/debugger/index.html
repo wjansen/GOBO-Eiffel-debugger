@@ -3,78 +3,77 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
 <meta name="generator" content="hevea 2.09">
-<title>A debugger for the GOBO Eiffel compiler 
---- User's guide --- 
+<title>A debugger for the Gobo Eiffel compiler  
+User's guide 
+ 
 Version: 2.0
-
 </title>
-<link rel="stylesheet" type="text/css" href="debug.css">
+<link rel="stylesheet" type="text/css" href="debugh.css">
 </head>
 <body >
-<!--HEVEA command line is: /usr/bin/hevea -fix debug -->
-<!--HACHA command line is: /usr/bin/hacha debug.html -->
-Gedb &#X2013; The Gec debugger<table class="title"><tr><td style="padding:1ex"><h1 class="titlemain">A debugger for the GOBO Eiffel compiler<br>
-&#X2014; User&#X2019;s guide &#X2014;<br>
-<span style="font-size:large">Version: 2.0
-</span></h1><h3 class="titlerest"><span style="font-size:large">Wolfgang Jansen</span></h3></td></tr>
-</table><h2 id="sec1" class="section">Contents</h2>
+<!--HEVEA command line is: /usr/bin/hevea -fix debugh -->
+<!--HACHA command line is: /usr/bin/hacha debugh.html -->
+Gedb &#X2013; The Gec debugger<table class="title"><tr><td style="padding:1ex"><h1 class="titlemain">A debugger for the Gobo Eiffel compiler <br>
+User&#X2019;s guide 
+<br>
+<span style="font-size:large">Version: 2.0</span></h1><h3 class="titlerest"><span style="font-size:large">Wolfgang Jansen</span></h3></td></tr>
+</table><p><code>(A printable version of this manual <a href="debug.pdf">is here</a>.)</code>
+</p><h2 id="sec1" class="section">Contents</h2>
 <ul class="toc"><li class="li-toc">
 <a href="#sec2">1&#XA0;&#XA0;Introduction</a>
 </li><li class="li-toc"><a href="#sec3">2&#XA0;&#XA0;Installation and Usage</a>
 <ul class="toc"><li class="li-toc">
-<a href="debug001.html#sec4">2.1&#XA0;&#XA0;Prerequisites</a>
-</li><li class="li-toc"><a href="debug002.html#sec5">2.2&#XA0;&#XA0;Installation</a>
-</li><li class="li-toc"><a href="debug003.html#sec6">2.3&#XA0;&#XA0;Usage</a>
+<a href="debugh001.html#sec4">2.1&#XA0;&#XA0;Prerequisites</a>
+</li><li class="li-toc"><a href="debugh002.html#sec5">2.2&#XA0;&#XA0;Installation</a>
+</li><li class="li-toc"><a href="debugh003.html#sec6">2.3&#XA0;&#XA0;Usage</a>
 </li></ul>
 </li><li class="li-toc"><a href="#sec7">3&#XA0;&#XA0;GUI</a>
 <ul class="toc"><li class="li-toc">
-<a href="debug004.html#sec8">3.1&#XA0;&#XA0;Overview</a>
+<a href="debugh004.html#sec8">3.1&#XA0;&#XA0;Overview</a>
+</li><li class="li-toc"><a href="debugh005.html#sec9">3.2&#XA0;&#XA0;Specialized fields</a>
+</li><li class="li-toc"><a href="debugh006.html#sec12">3.3&#XA0;&#XA0;Menu bar</a>
+</li><li class="li-toc"><a href="debugh007.html#sec13">3.4&#XA0;&#XA0;Run part</a>
 <ul class="toc"><li class="li-toc">
-<a href="debug004.html#sec9">3.1.1&#XA0;&#XA0;Specialized fields</a>
+<a href="debugh007.html#sec14">3.4.1&#XA0;&#XA0;Stop-and-go behaviour</a>
+</li><li class="li-toc"><a href="debugh007.html#sec15">3.4.2&#XA0;&#XA0;Mark and reset</a>
 </li></ul>
-</li><li class="li-toc"><a href="debug005.html#sec12">3.2&#XA0;&#XA0;Menu bar</a>
-</li><li class="li-toc"><a href="debug006.html#sec13">3.3&#XA0;&#XA0;Run part</a>
+</li><li class="li-toc"><a href="debugh008.html#sec16">3.5&#XA0;&#XA0;Breakpoints part</a>
 <ul class="toc"><li class="li-toc">
-<a href="debug006.html#sec14">3.3.1&#XA0;&#XA0;Stop-and-go behaviour</a>
-</li><li class="li-toc"><a href="debug006.html#sec15">3.3.2&#XA0;&#XA0;Mark and reset</a>
+<a href="debugh008.html#sec17">3.5.1&#XA0;&#XA0;Breakpoints table</a>
+</li><li class="li-toc"><a href="debugh008.html#sec18">3.5.2&#XA0;&#XA0;Editing</a>
+</li><li class="li-toc"><a href="debugh008.html#sec19">3.5.3&#XA0;&#XA0;Create and remove</a>
 </li></ul>
-</li><li class="li-toc"><a href="debug007.html#sec16">3.4&#XA0;&#XA0;Breakpoints part</a>
+</li><li class="li-toc"><a href="debugh009.html#sec20">3.6&#XA0;&#XA0;Source part</a>
 <ul class="toc"><li class="li-toc">
-<a href="debug007.html#sec17">3.4.1&#XA0;&#XA0;Breakpoints table</a>
-</li><li class="li-toc"><a href="debug007.html#sec18">3.4.2&#XA0;&#XA0;Editing</a>
-</li><li class="li-toc"><a href="debug007.html#sec19">3.4.3&#XA0;&#XA0;Create and remove</a>
+<a href="debugh009.html#sec21">3.6.1&#XA0;&#XA0;Highlighted text</a>
+</li><li class="li-toc"><a href="debugh009.html#sec22">3.6.2&#XA0;&#XA0;Class selection</a>
+</li><li class="li-toc"><a href="debugh009.html#sec23">3.6.3&#XA0;&#XA0;Cursor movement</a>
+</li><li class="li-toc"><a href="debugh009.html#sec24">3.6.4&#XA0;&#XA0;Searching</a>
+</li><li class="li-toc"><a href="debugh009.html#sec25">3.6.5&#XA0;&#XA0;Other actions</a>
 </li></ul>
-</li><li class="li-toc"><a href="debug008.html#sec20">3.5&#XA0;&#XA0;Source part</a>
+</li><li class="li-toc"><a href="debugh010.html#sec26">3.7&#XA0;&#XA0;Console part</a>
+</li><li class="li-toc"><a href="debugh011.html#sec27">3.8&#XA0;&#XA0;Stack part</a>
+</li><li class="li-toc"><a href="debugh012.html#sec28">3.9&#XA0;&#XA0;Data part</a>
 <ul class="toc"><li class="li-toc">
-<a href="debug008.html#sec21">3.5.1&#XA0;&#XA0;Highlighted text</a>
-</li><li class="li-toc"><a href="debug008.html#sec22">3.5.2&#XA0;&#XA0;Class selection</a>
-</li><li class="li-toc"><a href="debug008.html#sec23">3.5.3&#XA0;&#XA0;Cursor movement</a>
-</li><li class="li-toc"><a href="debug008.html#sec24">3.5.4&#XA0;&#XA0;Searching</a>
-</li><li class="li-toc"><a href="debug008.html#sec25">3.5.5&#XA0;&#XA0;Other actions</a>
+<a href="debugh012.html#sec29">3.9.1&#XA0;&#XA0;Data representation</a>
+</li><li class="li-toc"><a href="debugh012.html#sec30">3.9.2&#XA0;&#XA0;Actions</a>
+</li><li class="li-toc"><a href="debugh012.html#sec31">3.9.3&#XA0;&#XA0;More data windows</a>
 </li></ul>
-</li><li class="li-toc"><a href="debug009.html#sec26">3.6&#XA0;&#XA0;Console part</a>
-</li><li class="li-toc"><a href="debug010.html#sec27">3.7&#XA0;&#XA0;Stack part</a>
-</li><li class="li-toc"><a href="debug011.html#sec28">3.8&#XA0;&#XA0;Data part</a>
+</li><li class="li-toc"><a href="debugh013.html#sec32">3.10&#XA0;&#XA0;SQL part</a>
+</li><li class="li-toc"><a href="debugh014.html#sec33">3.11&#XA0;&#XA0;Evaluation part</a>
 <ul class="toc"><li class="li-toc">
-<a href="debug011.html#sec29">3.8.1&#XA0;&#XA0;Data representation</a>
-</li><li class="li-toc"><a href="debug011.html#sec30">3.8.2&#XA0;&#XA0;Actions</a>
-</li><li class="li-toc"><a href="debug011.html#sec31">3.8.3&#XA0;&#XA0;More data windows</a>
+<a href="debugh014.html#sec34">3.11.1&#XA0;&#XA0;Evaluation</a>
+</li><li class="li-toc"><a href="debugh014.html#sec35">3.11.2&#XA0;&#XA0;Assignment</a>
 </li></ul>
-</li><li class="li-toc"><a href="debug012.html#sec32">3.9&#XA0;&#XA0;SQL part</a>
-</li><li class="li-toc"><a href="debug013.html#sec33">3.10&#XA0;&#XA0;Evaluation part</a>
-<ul class="toc"><li class="li-toc">
-<a href="debug013.html#sec34">3.10.1&#XA0;&#XA0;Evaluation</a>
-</li><li class="li-toc"><a href="debug013.html#sec35">3.10.2&#XA0;&#XA0;Assignment</a>
-</li></ul>
-</li><li class="li-toc"><a href="debug014.html#sec36">3.11&#XA0;&#XA0;Status bar</a>
+</li><li class="li-toc"><a href="debugh015.html#sec36">3.12&#XA0;&#XA0;Status bar</a>
 </li></ul>
 </li><li class="li-toc"><a href="#sec37">4&#XA0;&#XA0;Expressions</a>
 <ul class="toc"><li class="li-toc">
-<a href="debug015.html#sec38">4.1&#XA0;&#XA0;General objects</a>
-</li><li class="li-toc"><a href="debug016.html#sec39">4.2&#XA0;&#XA0;Expression lists</a>
-</li><li class="li-toc"><a href="debug017.html#sec40">4.3&#XA0;&#XA0;<span style="font-family:monospace">SPECIAL</span> objects</a>
-</li><li class="li-toc"><a href="debug018.html#sec41">4.4&#XA0;&#XA0;Alias names</a>
-</li><li class="li-toc"><a href="debug019.html#sec42">4.5&#XA0;&#XA0;Validation</a>
+<a href="debugh016.html#sec38">4.1&#XA0;&#XA0;General objects</a>
+</li><li class="li-toc"><a href="debugh017.html#sec39">4.2&#XA0;&#XA0;Expression lists</a>
+</li><li class="li-toc"><a href="debugh018.html#sec40">4.3&#XA0;&#XA0;<span style="font-family:monospace">SPECIAL</span> objects</a>
+</li><li class="li-toc"><a href="debugh019.html#sec41">4.4&#XA0;&#XA0;Alias names</a>
+</li><li class="li-toc"><a href="debugh020.html#sec42">4.5&#XA0;&#XA0;Validation</a>
 </li></ul>
 </li></ul>
 <h2 id="sec2" class="section">1&#XA0;&#XA0;Introduction</h2>
@@ -90,35 +89,33 @@ while <U>debugger</U> means both, post mortem analyser and runtime analyser).
 The effect is that the post mortem analyser 
 gets invoked if the program crashes for some reason. 
 This way, the call stack as well as data on stack and heap can be analysed. 
-The post mortem analyser provides functionality for the following topics: 
+The post mortem analyser has been inspired by the <span style="font-family:monospace">core</span> file 
+written by <span style="font-style:oblique">Unix</span> in case of a program crash: 
+the file can then be used by a debugger to analyse the program state 
+at the point of the crash. So, why not invoking the debugger at once? 
+The post mortem analyser of <span style="font-style:oblique">Gedb</span> gives a positive answer. 
+In more detail, 
+the post mortem analyser provides functionality for the following topics: 
 </p><ul class="itemize"><li class="li-itemize">moving up and down the call stack 
-(see Sec.&#XA0;<a href="debug010.html#S%3Astack">3.7</a>); 
+(see Sec.&#XA0;<a href="debugh011.html#S%3Astack">3.8</a>); 
 </li><li class="li-itemize">computing and displaying data 
-(see Secs.&#XA0;<a href="debug011.html#S%3Adata">3.8</a>, <a href="debug013.html#S%3Aeval">3.10</a> except <a href="debug013.html#S%3Aassign">3.10.2</a>); 
-</li><li class="li-itemize">listing source code (see Sec.&#XA0;<a href="debug008.html#S%3Asource">3.5</a>). 
+(see Secs.&#XA0;<a href="debugh012.html#S%3Adata">3.9</a>, <a href="debugh013.html#S%3Asql">3.10</a>, <a href="debugh014.html#S%3Aeval">3.11</a> except <a href="debugh014.html#S%3Aassign">3.11.2</a>); 
+</li><li class="li-itemize">listing source code (see Sec.&#XA0;<a href="debugh009.html#S%3Asource">3.6</a>). 
 </li></ul><p>
 Additionally, the runtime analyser provides functionality for 
-</p><ul class="itemize"><li class="li-itemize">defining and manipulating breakpoints (see Sec.&#XA0;<a href="debug007.html#S%3Abreakpoints">3.4</a>); 
+</p><ul class="itemize"><li class="li-itemize">defining and manipulating breakpoints (see Sec.&#XA0;<a href="debugh008.html#S%3Abreakpoints">3.5</a>); 
 </li><li class="li-itemize">running the program in a stop-and-go manner 
-(see Sec.&#XA0;<a href="debug006.html#S%3Arun">3.3</a>); 
-</li><li class="li-itemize">assigning values to variables (see Sec.&#XA0;<a href="debug013.html#S%3Aassign">3.10.2</a>). 
+(see Sec.&#XA0;<a href="debugh007.html#S%3Arun">3.4</a>); 
+</li><li class="li-itemize">assigning values to variables (see Sec.&#XA0;<a href="debugh014.html#S%3Aassign">3.11.2</a>). 
 </li></ul><p>In contrast to debuggers like <span style="font-style:oblique">gdb</span> that run debugger and debuggee 
 in two different processes, 
 the <span style="font-style:oblique">Gedb</span> follows a poor man&#X2019;s approach: 
-at many instructions of the generated <span style="font-style:oblique">C</span> code 
+at many places of the generated <span style="font-style:oblique">C</span> code 
 calls to the debugger are inserted during compilation to check 
 whether the debugger should become active, 
 in particular checking for breakpoints. 
-The more intelligent approach of <span style="font-style:oblique">dbx</span>, <span style="font-style:oblique">gdb</span> and the like 
-which run the debuggee between breakpoints at full speed is not possible. 
-This approach required, among others, 
-that information about the generated machine code 
-(precisely, the correspondence of machine addresses and program lines) 
-is provided by the compiler to be known to the debugger. 
-But this is not the case here, 
-since the <span style="font-style:oblique">Gec</span> compiles to <span style="font-style:oblique">C</span> code, not to machine code. 
-The chosen technique increases dramatically the run time between breakpoints, 
-the relation 1:1200 or worse is often observed 
+Depending on the number and complexity of breakpoints, 
+the chosen technique increases dramatically the run time between breakpoints 
 (but does not detectable slow down the debuggee 
 when progressing the system step by step 
 since then most time is consumed by user interactions). 
@@ -127,16 +124,6 @@ at the places in <span style="font-style:oblique">C</span> code where the runtim
 it simply sets a local variable to the program position. 
 Together, with the meta-information linked into the debuggee 
 this is sufficient for the <span style="font-style:oblique">Gedb</span> to do its job after crash.
-The chosen approach also determines 
-the master/slave relation of debugger and debuggee. 
-In case of the post mortem analyser the debuggee contains the main routine 
-and is the master while the debuggee is merely a library to be linked to 
-and that is called at the dramatic end of the debuggee&#X2019;s run. 
-By contrast, the runtime analyser is the master that drives the debuggee 
-by user interactions, here, the debuggee is a library 
-(a <span style="font-family:monospace">.dll</span> in case of <span style="font-style:oblique">Windows</span>, 
-a <span style="font-family:monospace">.so</span> in case of <span style="font-style:oblique">Posix</span> compliant systems) 
-to be linked to the debugger on request. 
 </p><p>To integrate the debugger into the <span style="font-style:oblique">Gec</span> compiler 
 the compiler had to be modified. But this concerns the code generation 
 and command line analysis only, 
@@ -151,8 +138,11 @@ for the graphical user interface (GUI for short).
 are written in <span style="font-style:oblique">C</span> and are intended to be used from <span style="font-style:oblique">C</span> programs. 
 This is a hard job for an <span style="font-style:oblique">Eiffel</span> programmer. 
 But there is the OO programming language <span style="font-style:oblique">Vala</span> 
-that is a shell for <span style="font-style:oblique">GLib</span> and <span style="font-style:oblique">GTK+</span>, 
+that is a shell for <span style="font-style:oblique">GLib</span> and <span style="font-style:oblique">GTK+</span> 
 so the debugger has been written in <span style="font-style:oblique">Vala</span>. 
+The result is a library (a shared object under <span style="font-style:oblique">POSIX</span> compliant 
+operation systems, a <span style="font-style:oblique">DLL</span> under <span style="font-style:oblique">Windows</span>) that is to be linked 
+to the <span style="font-style:oblique">Gec</span> generated program. 
 </p><p>So far it has been described what the debugger is and what it does. 
 Another question is what the debugger does not. 
 On the lower end, some traditional debuggers like the <span style="font-style:oblique">gdb</span> 
@@ -184,69 +174,67 @@ In such a case, please send a bug report to <br>
 <p><a id="S:installtionUsage"></a>
 </p>
 <ul>
-<li><a href="debug001.html">Prerequisites</a>
-</li><li><a href="debug002.html">Installation</a>
-</li><li><a href="debug003.html">Usage</a>
+<li><a href="debugh001.html">Prerequisites</a>
+</li><li><a href="debugh002.html">Installation</a>
+</li><li><a href="debugh003.html">Usage</a>
 </li></ul>
 <h2 id="sec7" class="section">3&#XA0;&#XA0;GUI</h2>
 <p><a id="S:gui"></a>
 </p>
 <ul>
-<li><a href="debug004.html">Overview</a>
+<li><a href="debugh004.html">Overview</a>
+</li><li><a href="debugh005.html">Specialized fields</a>
+</li><li><a href="debugh006.html">Menu bar</a>
+</li><li><a href="debugh007.html">Run part</a>
 <ul>
-<li><a href="debug004.html#sec9">Specialized fields</a>
+<li><a href="debugh007.html#sec14">Stop-and-go behaviour</a>
+</li><li><a href="debugh007.html#sec15">Mark and reset</a>
 </li></ul>
-</li><li><a href="debug005.html">Menu bar</a>
-</li><li><a href="debug006.html">Run part</a>
+</li><li><a href="debugh008.html">Breakpoints part</a>
 <ul>
-<li><a href="debug006.html#sec14">Stop-and-go behaviour</a>
-</li><li><a href="debug006.html#sec15">Mark and reset</a>
+<li><a href="debugh008.html#sec17">Breakpoints table</a>
+</li><li><a href="debugh008.html#sec18">Editing</a>
+</li><li><a href="debugh008.html#sec19">Create and remove</a>
 </li></ul>
-</li><li><a href="debug007.html">Breakpoints part</a>
+</li><li><a href="debugh009.html">Source part</a>
 <ul>
-<li><a href="debug007.html#sec17">Breakpoints table</a>
-</li><li><a href="debug007.html#sec18">Editing</a>
-</li><li><a href="debug007.html#sec19">Create and remove</a>
+<li><a href="debugh009.html#sec21">Highlighted text</a>
+</li><li><a href="debugh009.html#sec22">Class selection</a>
+</li><li><a href="debugh009.html#sec23">Cursor movement</a>
+</li><li><a href="debugh009.html#sec24">Searching</a>
+</li><li><a href="debugh009.html#sec25">Other actions</a>
 </li></ul>
-</li><li><a href="debug008.html">Source part</a>
+</li><li><a href="debugh010.html">Console part</a>
+</li><li><a href="debugh011.html">Stack part</a>
+</li><li><a href="debugh012.html">Data part</a>
 <ul>
-<li><a href="debug008.html#sec21">Highlighted text</a>
-</li><li><a href="debug008.html#sec22">Class selection</a>
-</li><li><a href="debug008.html#sec23">Cursor movement</a>
-</li><li><a href="debug008.html#sec24">Searching</a>
-</li><li><a href="debug008.html#sec25">Other actions</a>
+<li><a href="debugh012.html#sec29">Data representation</a>
+</li><li><a href="debugh012.html#sec30">Actions</a>
+</li><li><a href="debugh012.html#sec31">More data windows</a>
 </li></ul>
-</li><li><a href="debug009.html">Console part</a>
-</li><li><a href="debug010.html">Stack part</a>
-</li><li><a href="debug011.html">Data part</a>
+</li><li><a href="debugh013.html">SQL part</a>
+</li><li><a href="debugh014.html">Evaluation part</a>
 <ul>
-<li><a href="debug011.html#sec29">Data representation</a>
-</li><li><a href="debug011.html#sec30">Actions</a>
-</li><li><a href="debug011.html#sec31">More data windows</a>
+<li><a href="debugh014.html#sec34">Evaluation</a>
+</li><li><a href="debugh014.html#sec35">Assignment</a>
 </li></ul>
-</li><li><a href="debug012.html">SQL part</a>
-</li><li><a href="debug013.html">Evaluation part</a>
-<ul>
-<li><a href="debug013.html#sec34">Evaluation</a>
-</li><li><a href="debug013.html#sec35">Assignment</a>
-</li></ul>
-</li><li><a href="debug014.html">Status bar</a>
+</li><li><a href="debugh015.html">Status bar</a>
 </li></ul>
 <h2 id="sec37" class="section">4&#XA0;&#XA0;Expressions</h2>
 <p><a id="S:expression"></a>
 <span style="font-style:oblique">Eiffel</span> expressions have to be entered in several debugger fields. 
 The expressions can be rather complex 
-and are in any case the most complex keyboard inputs required,
+and are by far the most complex keyboard inputs required,
 so they may need a special explanation.
 The first section describes their general format, the following one describes 
 how to format <span style="font-family:monospace">SPECIAL</span> objects or to select entries. 
 </p>
 <ul>
-<li><a href="debug015.html">General objects</a>
-</li><li><a href="debug016.html">Expression lists</a>
-</li><li><a href="debug017.html"><span style="font-family:monospace">SPECIAL</span> objects</a>
-</li><li><a href="debug018.html">Alias names</a>
-</li><li><a href="debug019.html">Validation</a>
+<li><a href="debugh016.html">General objects</a>
+</li><li><a href="debugh017.html">Expression lists</a>
+</li><li><a href="debugh018.html"><span style="font-family:monospace">SPECIAL</span> objects</a>
+</li><li><a href="debugh019.html">Alias names</a>
+</li><li><a href="debugh020.html">Validation</a>
 </li></ul>
 <!--FOOTER-->
 <hr style="height:2"><blockquote class="quote"><em>This document was translated from L<sup>A</sup>T<sub>E</sub>X by

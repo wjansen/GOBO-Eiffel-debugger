@@ -3,27 +3,27 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
 <meta name="generator" content="hevea 2.09">
-<link rel="stylesheet" type="text/css" href="debug.css">
+<link rel="stylesheet" type="text/css" href="debugh.css">
 <title>Data part</title>
 </head>
 <body >
-<a href="debug010.html"><img src="previous_motif.gif" alt="Previous"></a>
+<a href="debugh011.html"><img src="previous_motif.gif" alt="Previous"></a>
 <a href="index.html"><img src="contents_motif.gif" alt="Up"></a>
-<a href="debug012.html"><img src="next_motif.gif" alt="Next"></a>
+<a href="debugh013.html"><img src="next_motif.gif" alt="Next"></a>
 <hr>
-Gedb &#X2013; The Gec debugger<h3 id="sec28" class="subsection">3.8&#XA0;&#XA0;Data part</h3>
+Gedb &#X2013; The Gec debugger<h3 id="sec28" class="subsection">3.9&#XA0;&#XA0;Data part</h3>
 <p><a id="S:data"></a>
 The <span style="font-family:sans-serif">Data</span> part consists of two subparts: 
 a tree displaying objects and their fields and a row of buttons. 
 </p><blockquote class="figure"><div class="center"><hr style="width:80%;height:2"></div>
-<div class="center"><img src="debug006.png"></div>
+<div class="center"><img src="debugh006.png"></div>
 <div class="caption"><table style="border-spacing:6px;border-collapse:separate;" class="cellpading0"><tr><td style="vertical-align:top;text-align:left;" >Figure 6: The <span style="font-family:sans-serif">Data</span> part.
 The <span style="font-family:monospace">*</span> in the second column denotes the <span style="font-family:monospace">Current</span> object 
 and <span style="font-family:monospace">A</span> denotes a routine argument, 
 the other contents should be clear.</td></tr>
 </table></div><a id="F:data"></a>
 <div class="center"><hr style="width:80%;height:2"></div></blockquote>
-<h4 id="sec29" class="subsubsection">3.8.1&#XA0;&#XA0;Data representation</h4>
+<h4 id="sec29" class="subsubsection">3.9.1&#XA0;&#XA0;Data representation</h4>
 <p><a id="S:dataTree"></a>
 The tree displays the result of expressions in hierarchical order: 
 fields of an object may be displayed as subtrees.
@@ -37,7 +37,7 @@ The category is a single letter meaning
 </dd><dt class="dt-description"><span style="font-family:sans-serif">S</span></dt><dd class="dd-description"> scope dependent variable: variable of an object test 
 or iterator of an <span style="font-family:monospace">across</span> clause; 
 </dd><dt class="dt-description"><span style="font-family:sans-serif">X</span></dt><dd class="dd-description"> the result of an expression evaluation 
-(see Sec.&#XA0;<a href="debug013.html#S%3Aeval">3.10</a>). 
+(see Sec.&#XA0;<a href="debugh014.html#S%3Aeval">3.11</a>). 
 </dd></dl><p>The tree is filled the following ways:
 </p><ul class="itemize"><li class="li-itemize">by the values of <span style="font-family:monospace">Current</span> and the local variables 
 when a stack frame has been selected, 
@@ -54,7 +54,7 @@ empty of other expanded types
 </dd><dt class="dt-description"><span style="font-family:sans-serif">ident</span></dt><dd class="dd-description"> objects of a reference type are represented 
 by a unique integer number, the number has a leading underscore 
 to distinguish it from common integer numbers
-(see Sec.&#XA0;<a href="debug012.html#S%3Asql">3.9</a> how the numbers are obtained);
+(see Sec.&#XA0;<a href="debugh013.html#S%3Asql">3.10</a> how the numbers are obtained);
 </dd><dt class="dt-description"><span style="font-family:sans-serif">hex</span></dt><dd class="dd-description"> values of basic expanded types are shown by their 
 hexadecimal representations and values of any reference type 
 by their address. 
@@ -107,7 +107,7 @@ to such a class then arguments, local variables, object test variables,
 and across iterators are not shown, only <span style="font-family:monospace">Current</span> is shown 
 (that in turn has no attributes). 
 </p>
-<h4 id="sec30" class="subsubsection">3.8.2&#XA0;&#XA0;Actions</h4>
+<h4 id="sec30" class="subsubsection">3.9.2&#XA0;&#XA0;Actions</h4>
 <p><a id="S:dataActions"></a>
 A single row in the data tree (provided its category is an attribute 
 or a local variable) can be selected by left clicking. 
@@ -134,7 +134,7 @@ if assignment is supported and if this set is not trivial
 (e.g. not for expanded types). 
 The menu is for information display only, 
 selecting an item has no effect. </p>
-<h4 id="sec31" class="subsubsection">3.8.3&#XA0;&#XA0;More data windows</h4>
+<h4 id="sec31" class="subsubsection">3.9.3&#XA0;&#XA0;More data windows</h4>
 <p><a id="S:moreData"></a> 
 More <span style="font-family:sans-serif">Data</span> windows can be opened from menu <span style="font-family:sans-serif">Window </span>&#X2192;<span style="font-family:sans-serif"> New data</span>, 
 they contain the data tree and additionally a combobox on top 
@@ -145,7 +145,7 @@ These windows and the <span style="font-family:sans-serif">Data</span> part on t
 of each other. 
 After stopping the debuggee the main <span style="font-family:sans-serif">Data</span> part is automatically 
 updated, not the additional <span style="font-family:sans-serif">Data</span> windows if <span style="font-family:sans-serif">manually</span> is selected 
-(in case of <span style="font-family:sans-serif">automatic</span> it is updated like the main <span style="font-family:sans-serif">Data</span> window). 
+(in case of <span style="font-family:sans-serif">automatic</span> they are updated like the main <span style="font-family:sans-serif">Data</span> window). 
 This way, it is possible to have at the same time a look 
 at the actual values and at previous values. 
 An additional <span style="font-family:sans-serif">Data</span> window is synchronized to the main <span style="font-family:sans-serif">Data</span> window 
@@ -158,7 +158,7 @@ if the stack level is not below the <span style="font-family:sans-serif">Data</s
 (and, of course, if the window is synchronized): 
 the selected query is inserted into the <span style="font-family:sans-serif">Evaluation</span> part 
 with the necessary leading <span style="font-family:sans-serif">^</span> characters added 
-(see Sec.&#XA0;<a href="debug015.html#S%3AgeneralExpression">4.1</a> for the meaning of these characters).
+(see Sec.&#XA0;<a href="debugh016.html#S%3AgeneralExpression">4.1</a> for the meaning of these characters).
 </p><p>A similar structure has the additional window opened 
 from menu <span style="font-family:sans-serif">Window </span>&#X2192;<span style="font-family:sans-serif"> Global data</span>. 
 It shows the values of constant attributes (indicated by <span style="font-family:monospace">C</span>), 
@@ -174,8 +174,8 @@ where a string can be entered,
 then any constant attribute and once routine whose name starts 
 with this string will be highlighted. </p>
 <hr>
-<a href="debug010.html"><img src="previous_motif.gif" alt="Previous"></a>
+<a href="debugh011.html"><img src="previous_motif.gif" alt="Previous"></a>
 <a href="index.html"><img src="contents_motif.gif" alt="Up"></a>
-<a href="debug012.html"><img src="next_motif.gif" alt="Next"></a>
+<a href="debugh013.html"><img src="next_motif.gif" alt="Next"></a>
 </body>
 </html>

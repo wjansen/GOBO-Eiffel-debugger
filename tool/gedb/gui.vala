@@ -3,7 +3,7 @@ using Gedb;
 
 internal class History : Dialog {
 
-	private GUI gui;
+	private weak GUI gui;
 
 	private SpinButton expr;
 	private int expr_size = 10;
@@ -100,7 +100,7 @@ of <b>Source/Console</b>)  </span>"""
 
 internal class Appearance : Dialog {
 
-	private GUI gui;
+	private weak GUI gui;
 
 	private SpinButton tabs;
 	private int tab_width = 3;
@@ -144,7 +144,7 @@ internal class Appearance : Dialog {
 
 	internal Appearance(GUI gui) {
 		this.gui = gui;
-		title = compose_title("Appearance", gui.dg.rts);
+		title = compose_title("Appearance", null);
 		add_button(Gtk.Stock.APPLY, ResponseType.APPLY);
 		add_button(Gtk.Stock.CLOSE, ResponseType.CLOSE);
 		transient_for = gui;
@@ -221,6 +221,8 @@ internal class Appearance : Dialog {
 
 internal class Menus : GLib.Object {
 
+	private weak GUI gui;
+
 	private void dialog_close(Dialog d) { d.destroy(); }
 
 	private static int alias_less(string a, string b, 
@@ -271,7 +273,7 @@ internal class Menus : GLib.Object {
 		if (gui.brk.debug.active) fs.printf("debug\n");
 	}
 
-	private FileStream? compose_file(bool save) {
+	private FileStream? compose_file(bool save) requires (gui.dg!=null) {
 		var title = compose_title("Store file", gui.dg.rts);
 		string? fn = null;
 		FileChooserAction mode = save 
@@ -303,8 +305,8 @@ internal class Menus : GLib.Object {
 	}
 
 	private void do_load(Gtk.Action a) {
-		var title = compose_title("Debuggee", null);
 		string? fn = null;
+		var title = compose_title("Debuggee", null);
 		var dialog = 
 			new FileChooserDialog(title, null, FileChooserAction.OPEN,
 								  "_Cancel", ResponseType.CANCEL,
@@ -312,7 +314,7 @@ internal class Menus : GLib.Object {
 		dialog.select_multiple = false;
 		var filter = new FileFilter();
 		filter.set_filter_name("Loadable Libs");
-		filter.add_pattern(".so");	// or ".dll"
+		filter.add_pattern("*.so");	// or ".dll"
 		dialog.add_filter(filter);
 		filter = new FileFilter();
 		filter.set_filter_name("All files");
@@ -320,7 +322,7 @@ internal class Menus : GLib.Object {
 		dialog.add_filter(filter);
 		if (dialog.run () == ResponseType.ACCEPT) {
 			fn = dialog.get_filename();
-			((Driver)gui.dg).load(fn);
+			gui.new_debuggee(fn);
 		}
 		dialog.close();
 	}
@@ -332,7 +334,7 @@ internal class Menus : GLib.Object {
 	}
 
 	private void do_store(Gtk.Action a) {
-		var fs = compose_file(true);
+		var fs = compose_file(true); 
 		if (fs!=null) store(fs);
 	}
 
@@ -341,10 +343,7 @@ internal class Menus : GLib.Object {
 		if (fs!=null) gui.restore(fs);
 	}
 
-	private void do_quit(Gtk.Action a) {
-		gui = null;
-		Gtk.main_quit();
-	}	
+	private void do_quit(Gtk.Action a) { gui.quit(); }	
 
 	private void do_stack_data(Gtk.Action a) {
 		Window extra = new MoreDataPart(gui.dg, gui.data, gui.stack);
@@ -355,7 +354,7 @@ internal class Menus : GLib.Object {
 	private void do_sql(Gtk.Action a) { gui.show_sql(); }
 	private void do_alias(Gtk.Action a) { gui.show_alias(); }
 
-	private void do_history(Gtk.Action a) { 
+	private void do_history(Gtk.Action a) {
 		var hist = gui.history;
 		hist.show_all();
 		hist.run();
@@ -377,7 +376,11 @@ internal class Menus : GLib.Object {
 		}
 	}
 	private void help_colors(Gtk.Action a) { help.help_colors(gui); }
-	private void help_system(Gtk.Action a) { help.help_system(gui, gui.dg.rts); }
+
+	private void help_system(Gtk.Action a) { 
+		help.help_system(gui.dg!=null ? gui.dg.rts : null); 
+	}
+
 	private void help_about(Gtk.Action a) { help.help_about(gui); }
 
 	private const Gtk.ActionEntry[] entries = {
@@ -393,7 +396,7 @@ internal class Menus : GLib.Object {
 		{"Restore", null, "_Restore from ...", null, 
 		 "Restore breakpoints and alias definitions\nfrom chosen path", 
 		 do_restore},
-		{"Quit", null, "_Quit", "<control>Q", "Quit debugger", Gtk.main_quit},
+		{"Quit", null, "_Quit", "<control>Q", "Quit debugger", do_quit},
 		
 		{ "WindowMenu", null, "_Window" },   
 		{"Data", null, "New _data", null, 
@@ -418,12 +421,23 @@ internal class Menus : GLib.Object {
 		{"About", null, "_About", null, "", help_about},
 	};
 
-	private static const string ui_info = """
+	private static const string ui_info_head = """
 <ui>
   <menubar name='Menubar'>
     <menu action='FileMenu'>
+""";
+
+	private static const string ui_info_cont = """
+      <menuitem action='Cont'/>
+      <separator/>
+""";
+
+	private static const string ui_info_load = """
       <menuitem action='Load'/>
       <separator/>
+""";
+
+	private static const string ui_info_tail = """
       <menuitem action='Store_def'/>
       <menuitem action='Store'/>
       <menuitem action='Restore'/>
@@ -450,30 +464,34 @@ internal class Menus : GLib.Object {
 </ui>
 """;
 
-	private weak GUI gui;
 	private HelpPart help;
 	private Gee.ArrayList<Widget> preserve_list;
 
-	private void do_set_sensitive(Container c, bool is_running) {
-		set_deep_sensitive(c, !is_running, preserve_list);
+	internal void do_set_sensitive(bool is_running) {
+		set_deep_sensitive(menubar, !is_running, preserve_list);
 	}
 
-	public Menus(GUI gui) {
+	public Menus(GUI gui, bool with_cont, bool with_load) {
 		this.gui = gui;
 		Gtk.ActionGroup actions = new Gtk.ActionGroup("Actions");
 		actions.add_actions(entries, this);
 		UIManager ui = new UIManager();
 		ui.insert_action_group(actions, 0);
 		accel = ui.get_accel_group();
-		string info = ui_info;
-		if (gui.pma) info = info.replace("Load","Cont");
-		ui.add_ui_from_string(info, -1);
-		menubar = ui.get_widget("/Menubar") as MenuBar;
-		if (gui.pma) {
+		string info = ui_info_head;
+		if (with_cont) {
+			info += ui_info_cont;
 			cont = ui.get_widget("/Menubar/FileMenu/Cont") as Gtk.MenuItem;
 			cont.set_sensitive(false);
 		}
-		help = new HelpPart(gui);
+		if (with_load) {
+			info += ui_info_load;
+			load = ui.get_widget("/Menubar/FileMenu/Load") as Gtk.MenuItem;
+		}
+		info += ui_info_tail;
+		ui.add_ui_from_string(info, -1);
+		menubar = ui.get_widget("/Menubar") as MenuBar;
+		help = new HelpPart();
 
 		preserve_list = new Gee.ArrayList<Widget>();
 		preserve_list.@add(ui.get_widget("/Menubar/FileMenu/Quit"));
@@ -481,12 +499,13 @@ internal class Menus : GLib.Object {
 		preserve_list.@add(ui.get_widget("/Menubar/HelpMenu"));
 		if (gui.dg!=null)
 			gui.dg.notify["is-running"].connect(
-				(g,p) => { do_set_sensitive(menubar, gui.dg.is_running); });
+				(g,p) => { do_set_sensitive(gui.dg.is_running); });
 	}
 
 	public Gtk.AccelGroup accel { get; private set; }
 	public MenuBar menubar { get; private set; }
 	public Gtk.MenuItem cont { get ; private set; }
+	public Gtk.MenuItem load { get ; private set; }
 
 }
 
@@ -502,7 +521,8 @@ internal class AliasDef : Window {
 		NUM_COLS
 	}
 
-	private GUI gui;
+	private weak GUI gui;
+
 	private TreeView view;
 	private ListStore store;
 	private ExpressionChecker checker;
@@ -614,7 +634,7 @@ internal class AliasDef : Window {
 		return sep;
 	}
 
-	public AliasDef(GUI gui, Gee.Map<string,Expression> list) {
+	public AliasDef(GUI gui, Gee.Map<string, Expression> list) {
 		this.gui = gui;
 		this.list = list;
 		checker = new ExpressionChecker();
@@ -730,15 +750,13 @@ public class GUI : Window {
 	private AliasDef alias_def;
 	private Paned panel;
 
-	private GLib.Module module;
-
 	private string gedb;
 	private string home;
 	private string pwd;
 
 	internal string command;
 	internal Debuggee dg;
-	internal bool pma;
+	internal bool as_pma;
 	
 	public void show_global() {
 		if (fixed==null) 
@@ -767,20 +785,14 @@ public class GUI : Window {
 		return frame;
 	}
 
-	private void new_exe() {
+	internal void new_exe(Debuggee dg) {
+		this.dg = dg;
 		if (fixed!=null) {
 // Delay closing `fixed' until all events have been served:
 			GLib.Idle.@add(() => { 
 					fixed.get_toplevel().destroy(); 
 					return false;
 				});
-		}
-		if (fixed!=null) {
-			GLib.Idle.@add(() => { 
-					fixed.get_toplevel().destroy(); 
-					return false;
-				});
-			fixed = null;
 		}
 		if (sql!=null) {
 // Delay closing `sql' until all events have been served:
@@ -798,21 +810,20 @@ public class GUI : Window {
 				});
 			alias_def = null;
 		}
+		AbstractPart[] abs = {run, brk, source, stack, data};
+		foreach (var a in abs) 
+			if (a!=null) a.set_debuggee(dg);
 		string fn = ((Gedb.Name*)dg.rts).fast_name;
 		command = Path.build_filename(pwd, fn);
 		fn = command + ".edg";
 		var fs = FileStream.open(fn, "r");
 		if (fs!=null) restore(fs);
-		title = compose_title(null, null);
+		if (dg!=null) title = compose_title(null, dg.rts);
 	}
 		
-	public GUI(Debuggee dg) {
+	internal GUI(Debuggee dg, bool as_rta, bool loadable) {
 		Frame frame;
 		Label label;
-		this.dg = dg;
-		the_gui = this;
-		Driver? dr = dg as Driver;
-		pma = dr==null;
 
 		gedb = Environment.get_variable("GOBO");
 		home = Environment.get_variable("HOME");
@@ -834,19 +845,19 @@ public class GUI : Window {
 		Box vbox = new Box (Orientation.VERTICAL, 5);
 		@add(vbox);
 
-		menus = new Menus(this);
+		menus = new Menus(this, !as_rta, as_rta&&loadable);
 		accel = menus.accel;
 		add_accel_group(accel);
 		status = new Status();
-		stack = new StackPart(dg, status);
-		data = new DataPart(dg, stack, status, alias_list);
+		stack = new StackPart(status);
+		data = new DataPart(stack, status, alias_list);
 		eval = data.eval;
-		if (dr!=null) {
+		if (as_rta) {
 			console = new ConsolePart();
-			run = new RunPart(dr, stack, console, status, accel, alias_list);
-			brk = new BreakPart(dr, data, status, alias_list);
+			run = new RunPart(stack, console, status, accel, alias_list);
+			brk = new BreakPart(data, status, alias_list);
 		}
-		source = new SourcePart(dg, brk, run, data, console, stack, status);
+		source = new SourcePart(brk, run, data, console, stack, status);
 		history = new History(this);
 		appearance = new Appearance(this);
 		// Set part members which could not be set during construction
@@ -888,11 +899,12 @@ public class GUI : Window {
 		box.pack_start(frame, false, false, 0);
 		right.add2(box);
 		has_resize_grip = true;
-		set_default_size(1080,800);
-		dg.new_executable.connect(() => { new_exe(); });
-		destroy.connect(main_quit);
-	}
+//		set_default_size(1080,800);
+		destroy.connect(quit);
 
+		new_exe(dg);
+	}
+	
 	public Gtk.AccelGroup accel { get; set; }
 	public RunPart? run { get; private set; }
 	public BreakPart? brk { get; private set; }
@@ -941,51 +953,87 @@ public class GUI : Window {
 		if (alias_def!=null) set_deep_tooltip(alias_def, yes);
 	}
 
+	public GUI.pma(Debuggee dg) {
+		this(dg, false, false);
+		new_exe(dg);
+	}
+
+	private Thread<int> th;
+
+	public GUI.rta(Driver dr, bool loadable) {
+		this(dr, true, loadable);
+		menus.do_set_sensitive(false);
+		show_all();
+		try {
+			th = new Thread<int>("GUI", () => 
+				{ Gtk.main(); Posix.exit(0); return 0; });
+		} catch (Error e) { 
+			stderr.printf("%s\n", e.message);
+			Posix.exit(1);
+		}
+	}
+
+	public void quit() {
+		destroy();
+		Gtk.main_quit(); 
+	}
+
+	public signal void new_debuggee(string fn);
 }
 
-internal GUI the_gui;
+namespace Gedb {
 
-public void* GE_zmake_gedb() { return the_gui.dg; }
+	internal GUI the_gui;
+	
+	public void make_rta(string[]args, AddressFunc af) {
+		var dr = new Driver.with_args(args, af);
+		if (the_gui==null) {
+			Gtk.init(ref args);
+			the_gui = new GUI.rta(dr, false);
+		}
+	}
 
-public void* GE_zmake_pma(string[] args, void* rts, void* top, void* res, 
-						  void* set_offs, void* alloc, void* free, 
-						  void* chars, void* unicodes) {
-	Gtk.init(ref args);
-	var dg = new Debuggee(args, rts, top, res, 
-						  set_offs, alloc, free, chars, unicodes);
-	the_gui = new GUI(dg);
-	dg.new_executable();
-	return the_gui.dg;
-}
-
-public void* GE_zdebug(Debuggee dg, int reason) { 
-	var dr = dg as Driver;
-	if (dr!=null) return dr.check(reason);
-	var bp = new Breakpoint();
-	bp.exc = reason;
-	string msg = bp.catch_to_string();
-	uint id = the_gui.status.get_context_id("stop-reason");
-	var str = "Program crashed: ";
-	the_gui.status.push(id, str+msg);
-	str = "Eiffel system <span><b>";
-	str += ((Gedb.Name*)dg.rts).fast_name;
-	str += "</b></span> has crashed.";
-	var dialog = new MessageDialog(the_gui, DialogFlags.MODAL,
-								   MessageType.ERROR,
-								   ButtonsType.YES_NO, str);
-	dialog.use_markup = true;
-	dialog.secondary_use_markup = true;
-	dialog.secondary_text =
-	"Reason: <span foreground='red'>" + msg + "</span>"
-		+ "\n\nYoy may now run the Post Mortem Anal yser:  ";
-	dialog.title = compose_title("Crash", dg.rts);
-	dialog.response.connect((ans) => { 
-			dialog.destroy(); 
-			if (ans==Gtk.ResponseType.NO) GLib.Process.exit(0);
-		});
-	dialog.run();
-	dg.crash_response();
-	the_gui.show_all();
-	Gtk.main();
-	GLib.Process.exit(0);
+	public void make_pma(string[] args, AddressFunc af) {
+		var dg = new Debuggee(args, af);
+		if (the_gui==null) {
+			Gtk.init(ref args);
+			the_gui = new GUI.pma(dg);
+			the_gui.new_exe(dg);
+		}
+	}
+	
+	public void* crash(int reason) { 
+		var dr = the_gui.dg as Driver;
+		if (dr!=null) 
+			return dr.treat_stop(reason);
+		var rts = the_gui.dg.rts;
+		var bp = new Breakpoint();
+		bp.exc = reason;
+		string msg = bp.catch_to_string();
+		uint id = the_gui.status.get_context_id("stop-reason");
+		var str = "Program crashed: ";
+		the_gui.status.push(id, str+msg);
+		str = "Eiffel system <span><b>";
+		str += ((Gedb.Name*)rts).fast_name;
+		str += "</b></span> has crashed.";
+		var dialog = new MessageDialog(the_gui, DialogFlags.MODAL,
+									   MessageType.ERROR,
+									   ButtonsType.YES_NO, str);
+		dialog.use_markup = true;
+		dialog.secondary_use_markup = true;
+		dialog.secondary_text =
+		"Reason: <span foreground='red'>" + msg + "</span>"
+			+ "\n\nYoy may now run the Post Mortem Analyser:  ";
+		dialog.title = compose_title("Crash", rts);
+		dialog.response.connect((ans) => { 
+				dialog.destroy(); 
+				if (ans==Gtk.ResponseType.NO) GLib.Process.exit(0);
+			});
+		dialog.run();
+		the_gui.dg.crash_response();
+		the_gui.show_all();
+		Gtk.main();
+		the_gui = null;
+		GLib.Process.exit(0);
+	}
 }

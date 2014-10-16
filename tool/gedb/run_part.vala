@@ -2,7 +2,7 @@ using Gtk;
 using Gee;
 using Gedb;
 
-public class RunPart : Box {
+public class RunPart : Box, AbstractPart {
 	
 	private enum PrintItem {
 		TEXT,
@@ -15,7 +15,7 @@ public class RunPart : Box {
 	private int mode;
 	private int repeat;
 	
-	private Driver dg;
+	private Driver? dr;
 	private StackPart stack;
 	private ConsolePart? console;
 	private Status status;
@@ -31,13 +31,14 @@ public class RunPart : Box {
   	private string[] arg_list;
 	private bool at_end;
 
-	private void issue_command(int cmd, int mode, int rep, string comment) {
+	private void issue_command(int cmd, int mode, int rep, string comment) 
+	requires (dr!=null){
 		uint id;
 		id = status.get_context_id("stop-reason");
 		status.remove_all(id);
 		status.push (id, comment);
-		status_changed(dg.ProgramState.Running, null, null);
-		dg.target_go(cmd, mode, rep);
+		status_changed(Driver.ProgramState.Running, null, null);
+		dr.target_go(cmd, mode, rep);
 	}
 
 	private void do_run(string name) {
@@ -57,31 +58,31 @@ public class RunPart : Box {
 		}
 		switch (name[0].tolower()) {
 		case 'c':
-			cmd = dg.RunCommand.cont;
+			cmd = Driver.RunCommand.cont;
 			break;
 		case 'n':
-			cmd = dg.RunCommand.next;
+			cmd = Driver.RunCommand.next;
 			break;
 		case 's':
-			cmd = dg.RunCommand.step;
+			cmd = Driver.RunCommand.step;
 			break;
 		case 'e':
-			cmd = dg.RunCommand.end;
+			cmd = Driver.RunCommand.end;
 			break;
 		case 'b':
 			rep = stack.level;
-			cmd = dg.RunCommand.back;
+			cmd = Driver.RunCommand.back;
 			break;
 		case 0:
 			name = "Stop";
-			cmd = dg.RunCommand.stop;
+			cmd = Driver.RunCommand.stop;
 			break;
 		}
 		cmd2 = "%s%s".printf(name, cmd1);
 		if (rep>1) cmd2 += " %d".printf(rep);
 		cmd2 += "\n";
 		if (console!=null) console.put_log_info(cmd2, Log.GO);
-		if (cmd==dg.RunCommand.stop) 
+		if (cmd==Driver.RunCommand.stop) 
 			Process.raise(ProcessSignal.INT);
 		else 
 			issue_command(cmd, mode, rep, "Program is running");
@@ -108,7 +109,7 @@ public class RunPart : Box {
 	private void do_mark() {
 		string cmd = "Mark\n";
 		if (console!=null) console.put_log_info(cmd, Log.INFO);
-		issue_command(dg.RunCommand.mark, 0, 0, "Saving program state");
+		issue_command(Driver.RunCommand.mark, 0, 0, "Saving program state");
 		add_mark(stack.top);
 	}
 
@@ -118,7 +119,7 @@ public class RunPart : Box {
 		if (rep<0) return;
 		string cmd = "Reset %d\n".printf(repeat);
 		if (console!=null) console.put_log_info(cmd, Log.INFO);
-		issue_command(dg.RunCommand.reset, 0, n-1-rep, "Restoring program state");
+		issue_command(Driver.RunCommand.reset, 0, n-1-rep, "Restoring program state");
 		at_end = false;
 		set_deep_sensitive(buttons, true, null, invert_list);
 		marks.active = -1;
@@ -126,21 +127,21 @@ public class RunPart : Box {
 		e.set_text("");
 	}
 
-	private void do_restart(Button b) {
+	private void do_restart(Button b) requires (dr!=null) {
 		at_end = false;
-		dg.args = arg_list[0:arg_list.length];
-		issue_command(dg.RunCommand.restart, 0, 0, "");
+		dr.args = arg_list[0:arg_list.length];
+		issue_command(Driver.RunCommand.restart, 0, 0, "");
 		set_deep_sensitive(buttons, true, null, invert_list);
 	}
 
-	private void do_check_expression() {
+	private void do_check_expression() requires (dr!=null) {
 		StackFrame* f = stack.frame();
 		if (f==null || f.depth==0) return;
 		checker.reset();
 		var e = print_history.get_child() as Entry;
 		string str = e.get_text();
 		if (str.strip().length==0) return; 
-		checker.check_dynamic(str, null, f, dg.rts, false, aliases);
+		checker.check_dynamic(str, null, f, dr.rts, false, aliases);
 		var expr = checker.parsed;
 		if (expr==null) return;
 		str = expr.append_name();
@@ -207,20 +208,9 @@ public class RunPart : Box {
 		return true;
 	}
 
-	private void do_new_exe(Debuggee dg) {
-		assert (dg is Driver);
-		this.dg = dg as Driver;
-		total_list.clear();
-		arg_history.clear();
-		string aa = "";
-		arg_list = this.dg.args;
-		for (int j=1; j<arg_list.length; ++j) aa += arg_list[j] + " ";
-		do_set_args(aa);
-		at_end = false;
-	}
-
 	private void treat_response(int reason, Gee.List<Breakpoint>? match,
-							   StackFrame* frame, uint mc) { 
+							   StackFrame* frame, uint mc) 
+	requires (dr!=null) { 
 		ClassText* cls;
 		Breakpoint bp; 
 		string str = ""; 
@@ -229,43 +219,43 @@ public class RunPart : Box {
 		update_markers(mc);
 		status.pop(status.get_context_id("stop-reason"));
 		status_changed(reason, frame, match);
-		cls = dg.rts.class_at(frame.class_id);
+		cls = dr.rts.class_at(frame.class_id);
 		name = ((Gedb.Name*)cls).fast_name;
 		pos = frame.pos;
 		comment = "Stop at %s:%u:%u\n".printf(name, pos/256, pos%256);
 		switch(reason) {
-		case dg.ProgramState.Running:
-		case dg.ProgramState.Still_waiting: 
+		case Driver.ProgramState.Running:
+		case Driver.ProgramState.Still_waiting: 
 			return;
-		case dg.ProgramState.Step_by_step: 
+		case Driver.ProgramState.Step_by_step: 
 			str = "Step by step";
 			break;
-		case dg.ProgramState.At_reset: 
+		case Driver.ProgramState.At_reset: 
 			str = "Program state restored";
 			break;
-		case dg.ProgramState.At_breakpoint: 
+		case Driver.ProgramState.At_breakpoint: 
 			Gee.Iterator<Breakpoint> iter;
 			str = "Stop at breakpoint";
 			for (iter=match.iterator(); iter.next();) {
 				bp = iter.@get();
 				str += " " + bp.id.to_string();
-				comment += bp.to_string(frame, dg.rts);				
+				comment += bp.to_string(frame, dr.rts);				
 			}
 			break;
-		case dg.ProgramState.Debug_clause: 
+		case Driver.ProgramState.Debug_clause: 
 			str = "Stop at debug clause";
 			comment += "Debug clause entered\n";
 			break;
-		case dg.ProgramState.Interrupt: 
+		case Driver.ProgramState.Interrupt: 
 			str = "Program interrupted";
 			comment += "Interrupt\n";
 			break;
-		case dg.ProgramState.Program_end: 
+		case Driver.ProgramState.Program_end: 
 			str = "Program finished";
 			comment += str+"\n";
 			at_end = true;
 			break;
-		case dg.ProgramState.Crash: 
+		case Driver.ProgramState.Crash: 
 			str = "Program crashed";
 			if (match!=null && match.size>0) {
 				bp = match.@get(0);
@@ -290,14 +280,14 @@ public class RunPart : Box {
 			m.get_iter(out iter, path);
 			m.@get(iter, PrintItem.EXPR, out ex, -1);
 			try {
-				ex.compute_in_stack(frame, dg.rts);
+				ex.compute_in_stack(frame, dr.rts);
 				var exb = ex.bottom();
 				if (exb.dynamic_type!=null)
 					comment += exb.format_values(2, 
 						exb.Format.WITH_NAME |
 						exb.Format.WITH_TYPE |
 						exb.Format.INDEX_VALUE ,
-						frame, dg.rts);
+						frame, dr.rts);
 			} catch (ExpressionError e) {
 				ex = ex.next;
 			}
@@ -308,8 +298,8 @@ public class RunPart : Box {
 	private Widget add_button(string name, int cmd,
 							  AccelGroup accel, string comment) {
 		int key;
-		if (cmd!=dg.RunCommand.stop) {
-			key = FK_CONT + (cmd-dg.RunCommand.cont);
+		if (cmd!=Driver.RunCommand.stop) {
+			key = FK_CONT + (cmd-Driver.RunCommand.cont);
 			key += Gdk.Key.F1-1;
 		}  else {
 			key = Gdk.Key.Pause;
@@ -323,14 +313,13 @@ public class RunPart : Box {
 		item.add_accelerator("clicked", accel, key, 0, AccelFlags.VISIBLE);
 		item.set_tooltip_markup(comment);
 		buttons.@add(item);
-		if (cmd>=dg.RunCommand.stop) buttons.set_child_secondary(item, true);
+		if (cmd>=Driver.RunCommand.stop) buttons.set_child_secondary(item, true);
 		return item;
 	}
 	
-	public RunPart(Driver dg, StackPart s, ConsolePart? c, 
+	public RunPart(StackPart s, ConsolePart? c, 
 				   Status i, AccelGroup accel, 
 				   Gee.Map<string,Expression> list) {
-		this.dg = dg;
 		stack = s;
 		console = c;
 		status = i;
@@ -342,17 +331,17 @@ public class RunPart : Box {
 		buttons = new ButtonBox(Orientation.HORIZONTAL); 
 		pack_start(buttons);
 		buttons.set_layout(ButtonBoxStyle.START);
-		add_button("Cont", dg.RunCommand.cont, accel, 
+		add_button("Cont", Driver.RunCommand.cont, accel, 
 				   "Continue to next breakpoint.");
-		add_button("End", dg.RunCommand.end, accel, 
+		add_button("End", Driver.RunCommand.end, accel, 
 				   "Continue to next `end' keyword.");
-		add_button("Next", dg.RunCommand.next, accel, 
+		add_button("Next", Driver.RunCommand.next, accel, 
 				   "Continue to next instruction,\ndo not enter called routines.");
-		add_button("Step", dg.RunCommand.step, accel, 
+		add_button("Step", Driver.RunCommand.step, accel, 
 				   "Continue to next instruction\nor expression, enter called routines.");
-		add_button("Back", dg.RunCommand.back, accel, 
+		add_button("Back", Driver.RunCommand.back, accel, 
 		 		   "Finish called routines\nuntil back at caller. ");
-		stop = add_button("Stop", dg.RunCommand.stop, accel, 
+		stop = add_button("Stop", Driver.RunCommand.stop, accel, 
 						 "Stop running system.");
 		
 		box = new Box(Orientation.HORIZONTAL, 0); 
@@ -406,7 +395,6 @@ continuation commands.""");
 		marks = new ComboBoxText.with_entry();
 		buttons.@add(marks);
 		marks.add_tearoffs = true;
-		marks.tearoff_title = compose_title("Marked positions", dg.rts);
 		var me = marks.get_child() as Entry;
 		me.editable = false;
 		me.placeholder_text = "Reset";
@@ -459,7 +447,7 @@ Click right mouse button to show parsed argument list.""");
 		filter.set_visible_func((m,i) => { 
 				Routine* r;
 				m.@get(i, PrintItem.ROUTINE, out r, -1); 
-				return r==null || r==dg.top.routine;
+				return r==null || (dr!=null && r==dr.top.routine);
 			});
 		print_history = new MergedHistoryBox("Print expression", filter);
 		box.pack_end(print_history, true, true, 0);
@@ -479,10 +467,6 @@ Click right mouse button to show parsed argument list.""");
 		at_end_list = new Gee.ArrayList<Widget>();
 		at_end_list.@add(restart);
 		at_end_list.@add(arg_history);
-		dg.notify["is-running"].connect(
-			(g,p) => { do_set_sensitive(dg.is_running); });
-		dg.response.connect(treat_response);
-		dg.new_executable.connect((g) => { do_new_exe(g); });
 	} 
 
 	public HistoryBox arg_history { get; private set; }
@@ -497,13 +481,31 @@ Click right mouse button to show parsed argument list.""");
 	}
 
 	public void simple_cont(bool hard) {
-		issue_command(dg.RunCommand.cont, hard ? silent : mode, 1, "");
+		issue_command(Driver.RunCommand.cont, hard ? silent : mode, 1, "");
 	}
 
 	public void do_set_sensitive(bool is_running) { 
 		set_deep_sensitive(this, !is_running, null, invert_list);
 		if (is_running)  stop.grab_focus();
 		if (at_end) set_deep_sensitive(buttons, false);
+	}
+
+	public void set_debuggee(Debuggee? dg) { 
+		dr = dg as Driver; 
+		total_list.clear();
+		arg_history.clear();
+		string aa = "";
+		arg_list = dr!=null ? dr.args : arg_list = {};
+		for (int j=1; j<arg_list.length; ++j) aa += arg_list[j] + " ";
+		do_set_args(aa);
+		at_end = false;
+		do_set_sensitive(dr!=null);
+		if (dr!=null) {
+			dr.notify["is-running"].connect(
+				(g,p) => { do_set_sensitive(dr.is_running); });
+			dr.response.connect(treat_response);
+			marks.tearoff_title = compose_title("Marked positions", dr.rts);
+		}
 	}
 
 	public signal void status_changed(uint code, StackFrame* frame,

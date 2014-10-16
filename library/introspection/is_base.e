@@ -194,7 +194,7 @@ feature {} -- POINTER conversion
 		alias
 			"[
 			
-			#ifdef GE_ZTABLES 
+			#ifdef GEIP_TABLES 
 				(EIF_BOOLEAN)1
 			#else 
 				(EIF_BOOLEAN)0

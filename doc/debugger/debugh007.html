@@ -3,32 +3,32 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
 <meta name="generator" content="hevea 2.09">
-<link rel="stylesheet" type="text/css" href="debug.css">
+<link rel="stylesheet" type="text/css" href="debugh.css">
 <title>Run part</title>
 </head>
 <body >
-<a href="debug005.html"><img src="previous_motif.gif" alt="Previous"></a>
+<a href="debugh006.html"><img src="previous_motif.gif" alt="Previous"></a>
 <a href="index.html"><img src="contents_motif.gif" alt="Up"></a>
-<a href="debug007.html"><img src="next_motif.gif" alt="Next"></a>
+<a href="debugh008.html"><img src="next_motif.gif" alt="Next"></a>
 <hr>
-Gedb &#X2013; The Gec debugger<h3 id="sec13" class="subsection">3.3&#XA0;&#XA0;Run part</h3>
+Gedb &#X2013; The Gec debugger<h3 id="sec13" class="subsection">3.4&#XA0;&#XA0;Run part</h3>
 <p><a id="S:run"></a>
 The <span style="font-family:sans-serif">Run</span> part is available only if the debugger is used as runtime analyser 
 (otherwise, the part is hidden). 
 The elements of the part control the stop-and-go behaviour of the debuggee.
 </p><blockquote class="figure"><div class="center"><hr style="width:80%;height:2"></div>
-<div class="center"><img src="debug002.png"></div>
+<div class="center"><img src="debugh002.png"></div>
 <div class="caption"><table style="border-spacing:6px;border-collapse:separate;" class="cellpading0"><tr><td style="vertical-align:top;text-align:left;" >Figure 2: The <span style="font-family:sans-serif">Run</span> part.</td></tr>
 </table></div><a id="F:run"></a>
 <div class="center"><hr style="width:80%;height:2"></div></blockquote><p>When the debugger gets invoked then the expression list (if any) 
 in text field <span style="font-family:sans-serif">Print on stop</span> will be evaluated and its values will 
-printed on the <span style="font-family:sans-serif">Console</span> part (see Sec.&#XA0;<a href="debug009.html#S%3Aconsole">3.6</a>). 
+printed on the <span style="font-family:sans-serif">Console</span> part (see Sec.&#XA0;<a href="debugh010.html#S%3Aconsole">3.7</a>). 
 The expressions are evaluated in the routine of the topmost call stack level. 
 If the routine changed after a stop then the expression list disappears 
 (names of local variables in the expressions are now invalid, 
 maybe also query names) and reappears as soon as the routine 
 is entered again with the same target type. </p>
-<h4 id="sec14" class="subsubsection">3.3.1&#XA0;&#XA0;Stop-and-go behaviour</h4>
+<h4 id="sec14" class="subsubsection">3.4.1&#XA0;&#XA0;Stop-and-go behaviour</h4>
 <p><a id="S:stopAndGo"></a>
 Control switches forth and back between debugger and debuggee. 
 More precisely, the debugger regains control for any of the following reasons: 
@@ -36,7 +36,7 @@ More precisely, the debugger regains control for any of the following reasons:
 </li><li class="li-itemize">when the program reaches the target condition of a dynamic command 
 (see below);
 </li><li class="li-itemize">when a <span style="font-family:monospace">debug</span> instruction is reached 
-(and stopping there is enabled, see Sec.&#XA0;<a href="debug007.html#S%3AbreakpointManipulation">3.4.3</a>); 
+(and stopping there is enabled, see Sec.&#XA0;<a href="debugh008.html#S%3AbreakpointManipulation">3.5.3</a>); 
 </li><li class="li-itemize">when the debuggee is interrupted by pressing the <span style="font-family:sans-serif">Stop</span> button 
 (same effect as interrupt from keyboard); 
 </li><li class="li-itemize">after program end. 
@@ -57,7 +57,7 @@ In particular they have the following effect
 </td></tr>
 </table></div><p>
 If some classes have been compiled without debugger information 
-(see Sec.&#XA0;<a href="debug003.html#S%3Ausage">2.3</a>) 
+(see Sec.&#XA0;<a href="debugh003.html#S%3Ausage">2.3</a>) 
 then the continuation commands stop at the first possible position 
 for which debugger information is available, 
 in particular, the <span style="font-family:sans-serif">Step</span> command stops at the first nested routine call 
@@ -71,13 +71,17 @@ Moreover the effect of <span style="font-family:sans-serif">Cont</span> is modif
 </p><dl class="description"><dt class="dt-description"><span style="font-family:sans-serif">break</span></dt><dd class="dd-description"> treat breakpoints and tracepoints as defined;
 </dd><dt class="dt-description"><span style="font-family:sans-serif">trace</span></dt><dd class="dd-description"> treat breakpoints as tracepoints, i.e. do not stop;
 </dd><dt class="dt-description"><span style="font-family:sans-serif">ignore</span></dt><dd class="dd-description"> ignore breakpoints and tracepoints at all.
-</dd></dl><p>The effect of button <span style="font-family:sans-serif">Stop</span> <sup><a id="text1" href="debug020.html#note1">1</a></sup> 
+</dd></dl><p>The effect of button <span style="font-family:sans-serif">Stop</span> 
 is complementary to that of the other buttons. 
 Quite naturally, also its sensitivity is complementary:
 if the debuggee has stopped for some reason then <span style="font-family:sans-serif">Stop</span> is insensitive 
 while the other &#X201C;dynamic&#X201D; buttons are sensitive, 
 but if the debuggee is running then <span style="font-family:sans-serif">Stop</span> is sensitive while 
 the dynamic buttons (and most GUI elements) are insensitive.
+(The button label <span style="font-family:sans-serif">Stop</span> is suppressed on some platforms 
+in favour of the keyboard accelerator <span style="font-family:sans-serif">Pause</span>. 
+You may need to read <span style="font-family:sans-serif">Pause</span> for <span style="font-family:sans-serif">Stop</span>.
+)
 </p><p>Some remarks seem to be in order to explain when the <span style="font-family:sans-serif">Next</span> 
 and <span style="font-family:sans-serif">Step</span> commands actually stop. 
 Command <span style="font-family:sans-serif">Next</span> stops before the next instruction. 
@@ -123,7 +127,7 @@ the program is ready to enter the procedure by one more <span style="font-family
 A similar role as the call instructions play for stepping 
 into their argument expressions 
 do the keywords <span style="font-family:monospace">create</span>, <span style="font-family:monospace">if</span>, <span style="font-family:monospace">inspect</span>, <span style="font-family:monospace">until</span> play for the expressions following them. </p>
-<h4 id="sec15" class="subsubsection">3.3.2&#XA0;&#XA0;Mark and reset</h4>
+<h4 id="sec15" class="subsubsection">3.4.2&#XA0;&#XA0;Mark and reset</h4>
 <p><a id="S:markReset"></a>
 If the program stopped at a point where a breakpoint can be set 
 (underlined in the <span style="font-family:sans-serif">Source</span> part) then the program state 
@@ -176,8 +180,8 @@ under <span style="font-style:oblique">Posix</span> compliant operating systems,
 otherwise it is rather poor. 
 </blockquote>
 <hr>
-<a href="debug005.html"><img src="previous_motif.gif" alt="Previous"></a>
+<a href="debugh006.html"><img src="previous_motif.gif" alt="Previous"></a>
 <a href="index.html"><img src="contents_motif.gif" alt="Up"></a>
-<a href="debug007.html"><img src="next_motif.gif" alt="Next"></a>
+<a href="debugh008.html"><img src="next_motif.gif" alt="Next"></a>
 </body>
 </html>

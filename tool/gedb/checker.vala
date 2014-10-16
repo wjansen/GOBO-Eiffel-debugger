@@ -50,7 +50,7 @@ public class ExpressionChecker : Expander {
 		add(msg);
 		msg.set_alignment(0.0F, 0.5F);
 		msg.selectable = true;
-		expanded = true;
+		expanded = false;
 		parser = new Eval.Parser();
 	}
 

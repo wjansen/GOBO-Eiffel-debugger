@@ -105,6 +105,9 @@ feature {} -- Initialization
 			if s.needs_routines then
 				declare_routines (s)
 			end
+			if s.needs_effectors then
+				declared_type.add_effector (Current)
+			end
 			fast_name := out
 		ensure
 			origin_set: orig_agent = o
@@ -132,13 +135,15 @@ feature {} -- Initialization
 			if s.needs_routines then
 				declare_routines (s)
 			end
+			if s.needs_effectors then
+				declared_type.add_effector (Current)
+			end
 		end
 	
 feature -- Initialization 
 
 	define (s: ET_IS_SYSTEM)
 		local
-			str: READABLE_STRING_8
 			f: like field_at
 			k: INTEGER
 		do
@@ -148,7 +153,6 @@ feature -- Initialization
 				declared_type.define (s)
 				closed_operands_tuple.define (s)
 				routine.define (s)
-				str := name
 			end
 		end
 

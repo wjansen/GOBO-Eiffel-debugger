@@ -1,9 +1,9 @@
 CC ?= cc
-CFLAGS ?= $(DG) `pkg-config --cflags glib-2.0 gobject-2.0 gio-2.0 gee-0.8 gtk+-3.0`
+CFLAGS ?= $(CG) `pkg-config --cflags glib-2.0 gobject-2.0 gio-2.0 gee-0.8 gtk+-3.0`
 LIBS ?= `pkg-config --libs glib-2.0 gobject-2.0 gtk+-3.0 gio-2.0 gee-0.8`
 LEX ?= lex
 LEMON ?= lemon
-CFLAGS_VALA ?= $(DG) -X "-I."
+CFLAGS_VALA ?= $(VG) -X "-I."
 SOBJECT = eval_parser.o _EvalParserParser.o
 
 all : ${SOBJECT} eval_parser.vapi

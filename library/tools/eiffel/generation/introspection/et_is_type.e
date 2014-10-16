@@ -128,7 +128,9 @@ feature -- Initialization
 			action: "Complete construction of `Current'."
 		local
 			list: ET_DYNAMIC_TYPE_SET
-			i: INTEGER
+			ee: like effectors
+			e: like effector_at
+			i, j: INTEGER
 			detach: BOOLEAN
 		do
 			if not defined then
@@ -168,12 +170,40 @@ feature -- Initialization
 				end
 				if s.needs_effectors then
 					list := origin.conforming_dynamic_types
-					effectors := s.type_set (Current, list, is_subobject)
+					ee := s.type_set (Current, list, is_subobject)
+					if effector_count = 0 then
+						effectors := ee;
+					elseif ee /= Void then
+						-- Eiffel ROUTINE types may have already got ET_IS_AGENT_TYPE 
+						-- effectors, merge them with the effectors aka Gobo:
+						from
+							i := ee.count
+						until i = 0 loop
+							i := i - 1
+							e := ee [i]
+							if not effectors.has (e) then
+								effectors.add (e)
+							end
+						end
+					end
 					from
 						i := effector_count
 					until i = 0 loop
 						i := i - 1
-						effector_at (i).define (s)
+						e := effector_at (i)
+						e.define (s)
+						from
+							j := e.effector_count
+						until j = 0 loop
+							-- Add potential nested ET_IS_AGENT_TYPE effectors
+							-- (other effectors were in `ee'). Since `e.define'
+							-- has already been called, the effector set of `e'
+							-- is complete. 
+							j := j - 1
+							if attached {ET_IS_AGENT_TYPE} e.effector_at (j) as ea then
+								effectors.add (ea)
+							end
+						end
 					end
 				end
 				fast_name := out
@@ -225,9 +255,9 @@ feature -- Status setting
 	
 	add_effector (e: like effector_at)
 		do
-			if not attached effectors then
+			if effectors = Void then
 				create effectors.make_1 (e)
-			else
+			elseif not effectors.has (e) then 
 				effectors.add (e)
 			end
 		ensure

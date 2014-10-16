@@ -125,7 +125,8 @@ public enum ClassEnum {
 public delegate bool ClassFilterFunc(ClassText* ct, void* data=null);
 
 public Gtk.ListStore new_class_list(System* s, ClassFilterFunc filter=null,
-									void* filter_data=null) {
+									void* filter_data=null) 
+requires (s!=null) {
 	ClassText* cls;
 	uint n;
 	Gee.ArrayList<ClassText*> list = new Gee.ArrayList<ClassText*>();

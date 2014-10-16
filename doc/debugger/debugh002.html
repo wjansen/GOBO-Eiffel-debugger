@@ -3,13 +3,13 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
 <meta name="generator" content="hevea 2.09">
-<link rel="stylesheet" type="text/css" href="debug.css">
+<link rel="stylesheet" type="text/css" href="debugh.css">
 <title>Installation</title>
 </head>
 <body >
-<a href="debug001.html"><img src="previous_motif.gif" alt="Previous"></a>
+<a href="debugh001.html"><img src="previous_motif.gif" alt="Previous"></a>
 <a href="index.html"><img src="contents_motif.gif" alt="Up"></a>
-<a href="debug003.html"><img src="next_motif.gif" alt="Next"></a>
+<a href="debugh003.html"><img src="next_motif.gif" alt="Next"></a>
 <hr>
 Gedb &#X2013; The Gec debugger<h3 id="sec5" class="subsection">2.2&#XA0;&#XA0;Installation</h3>
 <p>Installation consists of two steps. 
@@ -29,20 +29,17 @@ while <span style="font-family:monospace">gedb</span> is ignored.
 operation system specific options are to be provided in files 
 <span style="font-family:monospace">$GOBO/tool/gec/config/c/*.cfg</span>. 
 For example, in case of <span style="font-style:oblique">Linux</span> using <span style="font-style:oblique">gcc</span> 
-the following lines have to be added.
-To section <span style="font-family:monospace">Command lines</span> 
-(for creating a loadable library instead of an executable):
-</p><pre class="verbatim">linklib: gcc $lflags $libflags -o $exe $objs $libs $gc_libs -lm
-</pre><p>to section <span style="font-family:monospace">File extensions</span> 
-(library extension and <span style="font-style:oblique">Posix</span> specific prefix):
-</p><pre class="verbatim">lib: .so
-prelib: lib
-</pre><p>to section <span style="font-family:monospace">Variables</span> (additional flags to create the library):
+the following lines have to be modified or added. 
+In section <span style="font-family:monospace">Command lines</span> 
+line 
+</p><pre class="verbatim">link: gcc $lflags -o $exe $objs $libs $gc_libs -lm
+</pre><p>becomes
+</p><pre class="verbatim">link: gcc $lflags -o $exe $objs $libs $gc_libs $dg_libs -lm
+</pre><p>in section <span style="font-family:monospace">Variables</span> (additional flags to link the debugger library):
 </p><pre class="verbatim">#ifdef EIF_DEBUGGER
-cflags: -fPIC
-libflags: -shared 
+dg_libs: -L${GOBO}/bin -lgedb
 #else
-libflags:
+dg_libs:
 #endif
 </pre><p>These settings have to be adapted for the other configuration files 
 if they are to be used. 
@@ -53,8 +50,8 @@ switch to directory <span style="font-family:monospace">$GOBO/library/tools/debu
 and run <span style="font-family:monospace">make</span> before installing <span style="font-style:oblique">Gec</span>. 
 </blockquote>
 <hr>
-<a href="debug001.html"><img src="previous_motif.gif" alt="Previous"></a>
+<a href="debugh001.html"><img src="previous_motif.gif" alt="Previous"></a>
 <a href="index.html"><img src="contents_motif.gif" alt="Up"></a>
-<a href="debug003.html"><img src="next_motif.gif" alt="Next"></a>
+<a href="debugh003.html"><img src="next_motif.gif" alt="Next"></a>
 </body>
 </html>

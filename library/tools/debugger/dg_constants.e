@@ -68,9 +68,9 @@ feature -- Constants
 
 	Debug_break: INTEGER = -4
 
-	Begin_scope_break: INTEGER = -5
+	End_scope_break: INTEGER = -5
 
-	End_scope_break: INTEGER = -6
+	End_routine_break: INTEGER = -6
 
 	Start_program_break: INTEGER = -7
 

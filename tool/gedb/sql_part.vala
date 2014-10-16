@@ -104,6 +104,7 @@ public class SqlPart : Window {
 
 	private Debuggee dg;
 	private DataPart data;
+	private Status status;
 
 	private Entry select;
 	private Entry from;
@@ -302,14 +303,27 @@ public class SqlPart : Window {
 		string nm = ex!=null ?
 			ex.top().append_qualified_name(null, null, fmt) : name;
 		int tnl = tn.length;
-		if (tnl>24) 
-			tn = tn.substring(0,11) + "..." + tn.substring(tnl-11);
-		label.set_tooltip_text(nm + ":\n" + tn);
-		label.has_tooltip = true;
+//		if (tnl>24) 
+//			tn = tn.substring(0,11) + "..." + tn.substring(tnl-11);
+//		label.set_tooltip_text(nm + ":\n" + tn);
+//		label.has_tooltip = true;
+		label.motion_notify_event.connect((ev) => 
+			{ return do_header_info(@"$nm: $tn"); });
+		label.leave_notify_event.connect((ev) =>
+			{ return do_header_info(null); });
 		label.show();
 		column.max_width = width;
 		view.append_column(column);
 		return tt;
+	}
+
+	private bool do_header_info(string? h) {
+		uint id;
+		id = status.get_context_id("stop-reason");
+		status.remove_all(id);
+		if (h!=null) 
+		status.push (id, h);
+		return false;
 	}
 
 	private GLib.Type[] expand_type(Gedb.Type* t, ClassText* ct,
@@ -423,12 +437,12 @@ public class SqlPart : Window {
 
 	private void do_refresh(StackFrame* f) {
 		frame = f;
-		if (f==null) {
+		if (f==null || dg==null) {
 			if (store!=null) store.clear();
 			return;
 		}
 		if (actual.from!=null) {
-			data.refill_known_objects();
+			data.refill_known_objects(dg.rts);
 			do_update();
 		}
 	}
@@ -455,7 +469,7 @@ public class SqlPart : Window {
 		int n = 0;
 		if (store!=null) store.clear();
 		if (obsolete) build_view();
-		data.refill_known_objects();
+		data.refill_known_objects(dg.rts);
 		Gee.HashMap<void*,uint> ko = data.known_objects;
 		Gee.MapIterator<void*,uint> iter;
 		bool conform = this.conform.active;
@@ -778,6 +792,7 @@ public class SqlPart : Window {
 		this.dg = dg;
 		this.data = data;
 		this.aliases = aliases;
+		this.status = status;
 
 		title = compose_title("SQL", dg.rts);
 		id_cell = new CellRendererText();
@@ -892,7 +907,6 @@ public class SqlPart : Window {
 		close.clicked.connect((b) => { do_close(); });
 		delete_event.connect((e) => { return do_close(); });
 
-		dg.new_executable.connect((g) => { do_new_exe(g); });
 		dg.notify["is-running"].connect(
 			(g,p) => { do_set_sensitive(dg.is_running); });
  		stack.level_selected.connect(

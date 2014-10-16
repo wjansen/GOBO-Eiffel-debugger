@@ -49,21 +49,22 @@ td p{margin:0px;}
 .theorem{text-align:left;margin:1ex auto 1ex 0ex;}
 .part{margin:2ex auto;text-align:center}
 </style>
-<title>A debugger for the GOBO Eiffel compiler 
---- User's guide --- 
+<title>A debugger for the Gobo Eiffel compiler  
+User's guide 
+ 
 Version: 2.0
-
 </title>
 </head>
 <body >
-<!--HEVEA command line is: /usr/bin/hevea -fix debug -->
+<!--HEVEA command line is: /usr/bin/hevea -fix debugh -->
 <!--CUT STYLE article--><!--HTMLHEAD-->
 Gedb &#X2013; The Gec debugger<!--ENDHTML-->
-<!--CUT DEF subsection 1 --><table class="title"><tr><td style="padding:1ex"><h1 class="titlemain">A debugger for the GOBO Eiffel compiler<br>
-&#X2014; User&#X2019;s guide &#X2014;<br>
-<span style="font-size:large">Version: 2.0
-</span></h1><h3 class="titlerest"><span style="font-size:large">Wolfgang Jansen</span></h3></td></tr>
-</table><!--TOC section id="sec1" Contents-->
+<!--CUT DEF subsection 1 --><table class="title"><tr><td style="padding:1ex"><h1 class="titlemain">A debugger for the Gobo Eiffel compiler <br>
+User&#X2019;s guide 
+<br>
+<span style="font-size:large">Version: 2.0</span></h1><h3 class="titlerest"><span style="font-size:large">Wolfgang Jansen</span></h3></td></tr>
+</table><p><code>(A printable version of this manual &lt;a href="debug.pdf"&gt;is here&lt;/a&gt;.)</code>
+</p><!--TOC section id="sec1" Contents-->
 <h2 id="sec1" class="section">Contents</h2><!--SEC END --><ul class="toc"><li class="li-toc">
 <a href="#sec2">1&#XA0;&#XA0;Introduction</a>
 </li><li class="li-toc"><a href="#sec3">2&#XA0;&#XA0;Installation and Usage</a>
@@ -75,44 +76,42 @@ Gedb &#X2013; The Gec debugger<!--ENDHTML-->
 </li><li class="li-toc"><a href="#sec7">3&#XA0;&#XA0;GUI</a>
 <ul class="toc"><li class="li-toc">
 <a href="#sec8">3.1&#XA0;&#XA0;Overview</a>
+</li><li class="li-toc"><a href="#sec9">3.2&#XA0;&#XA0;Specialized fields</a>
+</li><li class="li-toc"><a href="#sec12">3.3&#XA0;&#XA0;Menu bar</a>
+</li><li class="li-toc"><a href="#sec13">3.4&#XA0;&#XA0;Run part</a>
 <ul class="toc"><li class="li-toc">
-<a href="#sec9">3.1.1&#XA0;&#XA0;Specialized fields</a>
+<a href="#sec14">3.4.1&#XA0;&#XA0;Stop-and-go behaviour</a>
+</li><li class="li-toc"><a href="#sec15">3.4.2&#XA0;&#XA0;Mark and reset</a>
 </li></ul>
-</li><li class="li-toc"><a href="#sec12">3.2&#XA0;&#XA0;Menu bar</a>
-</li><li class="li-toc"><a href="#sec13">3.3&#XA0;&#XA0;Run part</a>
+</li><li class="li-toc"><a href="#sec16">3.5&#XA0;&#XA0;Breakpoints part</a>
 <ul class="toc"><li class="li-toc">
-<a href="#sec14">3.3.1&#XA0;&#XA0;Stop-and-go behaviour</a>
-</li><li class="li-toc"><a href="#sec15">3.3.2&#XA0;&#XA0;Mark and reset</a>
+<a href="#sec17">3.5.1&#XA0;&#XA0;Breakpoints table</a>
+</li><li class="li-toc"><a href="#sec18">3.5.2&#XA0;&#XA0;Editing</a>
+</li><li class="li-toc"><a href="#sec19">3.5.3&#XA0;&#XA0;Create and remove</a>
 </li></ul>
-</li><li class="li-toc"><a href="#sec16">3.4&#XA0;&#XA0;Breakpoints part</a>
+</li><li class="li-toc"><a href="#sec20">3.6&#XA0;&#XA0;Source part</a>
 <ul class="toc"><li class="li-toc">
-<a href="#sec17">3.4.1&#XA0;&#XA0;Breakpoints table</a>
-</li><li class="li-toc"><a href="#sec18">3.4.2&#XA0;&#XA0;Editing</a>
-</li><li class="li-toc"><a href="#sec19">3.4.3&#XA0;&#XA0;Create and remove</a>
+<a href="#sec21">3.6.1&#XA0;&#XA0;Highlighted text</a>
+</li><li class="li-toc"><a href="#sec22">3.6.2&#XA0;&#XA0;Class selection</a>
+</li><li class="li-toc"><a href="#sec23">3.6.3&#XA0;&#XA0;Cursor movement</a>
+</li><li class="li-toc"><a href="#sec24">3.6.4&#XA0;&#XA0;Searching</a>
+</li><li class="li-toc"><a href="#sec25">3.6.5&#XA0;&#XA0;Other actions</a>
 </li></ul>
-</li><li class="li-toc"><a href="#sec20">3.5&#XA0;&#XA0;Source part</a>
+</li><li class="li-toc"><a href="#sec26">3.7&#XA0;&#XA0;Console part</a>
+</li><li class="li-toc"><a href="#sec27">3.8&#XA0;&#XA0;Stack part</a>
+</li><li class="li-toc"><a href="#sec28">3.9&#XA0;&#XA0;Data part</a>
 <ul class="toc"><li class="li-toc">
-<a href="#sec21">3.5.1&#XA0;&#XA0;Highlighted text</a>
-</li><li class="li-toc"><a href="#sec22">3.5.2&#XA0;&#XA0;Class selection</a>
-</li><li class="li-toc"><a href="#sec23">3.5.3&#XA0;&#XA0;Cursor movement</a>
-</li><li class="li-toc"><a href="#sec24">3.5.4&#XA0;&#XA0;Searching</a>
-</li><li class="li-toc"><a href="#sec25">3.5.5&#XA0;&#XA0;Other actions</a>
+<a href="#sec29">3.9.1&#XA0;&#XA0;Data representation</a>
+</li><li class="li-toc"><a href="#sec30">3.9.2&#XA0;&#XA0;Actions</a>
+</li><li class="li-toc"><a href="#sec31">3.9.3&#XA0;&#XA0;More data windows</a>
 </li></ul>
-</li><li class="li-toc"><a href="#sec26">3.6&#XA0;&#XA0;Console part</a>
-</li><li class="li-toc"><a href="#sec27">3.7&#XA0;&#XA0;Stack part</a>
-</li><li class="li-toc"><a href="#sec28">3.8&#XA0;&#XA0;Data part</a>
+</li><li class="li-toc"><a href="#sec32">3.10&#XA0;&#XA0;SQL part</a>
+</li><li class="li-toc"><a href="#sec33">3.11&#XA0;&#XA0;Evaluation part</a>
 <ul class="toc"><li class="li-toc">
-<a href="#sec29">3.8.1&#XA0;&#XA0;Data representation</a>
-</li><li class="li-toc"><a href="#sec30">3.8.2&#XA0;&#XA0;Actions</a>
-</li><li class="li-toc"><a href="#sec31">3.8.3&#XA0;&#XA0;More data windows</a>
+<a href="#sec34">3.11.1&#XA0;&#XA0;Evaluation</a>
+</li><li class="li-toc"><a href="#sec35">3.11.2&#XA0;&#XA0;Assignment</a>
 </li></ul>
-</li><li class="li-toc"><a href="#sec32">3.9&#XA0;&#XA0;SQL part</a>
-</li><li class="li-toc"><a href="#sec33">3.10&#XA0;&#XA0;Evaluation part</a>
-<ul class="toc"><li class="li-toc">
-<a href="#sec34">3.10.1&#XA0;&#XA0;Evaluation</a>
-</li><li class="li-toc"><a href="#sec35">3.10.2&#XA0;&#XA0;Assignment</a>
-</li></ul>
-</li><li class="li-toc"><a href="#sec36">3.11&#XA0;&#XA0;Status bar</a>
+</li><li class="li-toc"><a href="#sec36">3.12&#XA0;&#XA0;Status bar</a>
 </li></ul>
 </li><li class="li-toc"><a href="#sec37">4&#XA0;&#XA0;Expressions</a>
 <ul class="toc"><li class="li-toc">
@@ -136,35 +135,33 @@ while <U>debugger</U> means both, post mortem analyser and runtime analyser).
 The effect is that the post mortem analyser 
 gets invoked if the program crashes for some reason. 
 This way, the call stack as well as data on stack and heap can be analysed. 
-The post mortem analyser provides functionality for the following topics: 
+The post mortem analyser has been inspired by the <span style="font-family:monospace">core</span> file 
+written by <span style="font-style:oblique">Unix</span> in case of a program crash: 
+the file can then be used by a debugger to analyse the program state 
+at the point of the crash. So, why not invoking the debugger at once? 
+The post mortem analyser of <span style="font-style:oblique">Gedb</span> gives a positive answer. 
+In more detail, 
+the post mortem analyser provides functionality for the following topics: 
 </p><ul class="itemize"><li class="li-itemize">moving up and down the call stack 
-(see Sec.&#XA0;<a href="#S%3Astack">3.7</a>); 
+(see Sec.&#XA0;<a href="#S%3Astack">3.8</a>); 
 </li><li class="li-itemize">computing and displaying data 
-(see Secs.&#XA0;<a href="#S%3Adata">3.8</a>, <a href="#S%3Aeval">3.10</a> except <a href="#S%3Aassign">3.10.2</a>); 
-</li><li class="li-itemize">listing source code (see Sec.&#XA0;<a href="#S%3Asource">3.5</a>). 
+(see Secs.&#XA0;<a href="#S%3Adata">3.9</a>, <a href="#S%3Asql">3.10</a>, <a href="#S%3Aeval">3.11</a> except <a href="#S%3Aassign">3.11.2</a>); 
+</li><li class="li-itemize">listing source code (see Sec.&#XA0;<a href="#S%3Asource">3.6</a>). 
 </li></ul><p>
 Additionally, the runtime analyser provides functionality for 
-</p><ul class="itemize"><li class="li-itemize">defining and manipulating breakpoints (see Sec.&#XA0;<a href="#S%3Abreakpoints">3.4</a>); 
+</p><ul class="itemize"><li class="li-itemize">defining and manipulating breakpoints (see Sec.&#XA0;<a href="#S%3Abreakpoints">3.5</a>); 
 </li><li class="li-itemize">running the program in a stop-and-go manner 
-(see Sec.&#XA0;<a href="#S%3Arun">3.3</a>); 
-</li><li class="li-itemize">assigning values to variables (see Sec.&#XA0;<a href="#S%3Aassign">3.10.2</a>). 
+(see Sec.&#XA0;<a href="#S%3Arun">3.4</a>); 
+</li><li class="li-itemize">assigning values to variables (see Sec.&#XA0;<a href="#S%3Aassign">3.11.2</a>). 
 </li></ul><p>In contrast to debuggers like <span style="font-style:oblique">gdb</span> that run debugger and debuggee 
 in two different processes, 
 the <span style="font-style:oblique">Gedb</span> follows a poor man&#X2019;s approach: 
-at many instructions of the generated <span style="font-style:oblique">C</span> code 
+at many places of the generated <span style="font-style:oblique">C</span> code 
 calls to the debugger are inserted during compilation to check 
 whether the debugger should become active, 
 in particular checking for breakpoints. 
-The more intelligent approach of <span style="font-style:oblique">dbx</span>, <span style="font-style:oblique">gdb</span> and the like 
-which run the debuggee between breakpoints at full speed is not possible. 
-This approach required, among others, 
-that information about the generated machine code 
-(precisely, the correspondence of machine addresses and program lines) 
-is provided by the compiler to be known to the debugger. 
-But this is not the case here, 
-since the <span style="font-style:oblique">Gec</span> compiles to <span style="font-style:oblique">C</span> code, not to machine code. 
-The chosen technique increases dramatically the run time between breakpoints, 
-the relation 1:1200 or worse is often observed 
+Depending on the number and complexity of breakpoints, 
+the chosen technique increases dramatically the run time between breakpoints 
 (but does not detectable slow down the debuggee 
 when progressing the system step by step 
 since then most time is consumed by user interactions). 
@@ -173,16 +170,6 @@ at the places in <span style="font-style:oblique">C</span> code where the runtim
 it simply sets a local variable to the program position. 
 Together, with the meta-information linked into the debuggee 
 this is sufficient for the <span style="font-style:oblique">Gedb</span> to do its job after crash.
-The chosen approach also determines 
-the master/slave relation of debugger and debuggee. 
-In case of the post mortem analyser the debuggee contains the main routine 
-and is the master while the debuggee is merely a library to be linked to 
-and that is called at the dramatic end of the debuggee&#X2019;s run. 
-By contrast, the runtime analyser is the master that drives the debuggee 
-by user interactions, here, the debuggee is a library 
-(a <span style="font-family:monospace">.dll</span> in case of <span style="font-style:oblique">Windows</span>, 
-a <span style="font-family:monospace">.so</span> in case of <span style="font-style:oblique">Posix</span> compliant systems) 
-to be linked to the debugger on request. 
 </p><p>To integrate the debugger into the <span style="font-style:oblique">Gec</span> compiler 
 the compiler had to be modified. But this concerns the code generation 
 and command line analysis only, 
@@ -197,8 +184,11 @@ for the graphical user interface (GUI for short).
 are written in <span style="font-style:oblique">C</span> and are intended to be used from <span style="font-style:oblique">C</span> programs. 
 This is a hard job for an <span style="font-style:oblique">Eiffel</span> programmer. 
 But there is the OO programming language <span style="font-style:oblique">Vala</span> 
-that is a shell for <span style="font-style:oblique">GLib</span> and <span style="font-style:oblique">GTK+</span>, 
+that is a shell for <span style="font-style:oblique">GLib</span> and <span style="font-style:oblique">GTK+</span> 
 so the debugger has been written in <span style="font-style:oblique">Vala</span>. 
+The result is a library (a shared object under <span style="font-style:oblique">POSIX</span> compliant 
+operation systems, a <span style="font-style:oblique">DLL</span> under <span style="font-style:oblique">Windows</span>) that is to be linked 
+to the <span style="font-style:oblique">Gec</span> generated program. 
 </p><p>So far it has been described what the debugger is and what it does. 
 Another question is what the debugger does not. 
 On the lower end, some traditional debuggers like the <span style="font-style:oblique">gdb</span> 
@@ -277,20 +267,17 @@ while <span style="font-family:monospace">gedb</span> is ignored.
 operation system specific options are to be provided in files 
 <span style="font-family:monospace">$GOBO/tool/gec/config/c/*.cfg</span>. 
 For example, in case of <span style="font-style:oblique">Linux</span> using <span style="font-style:oblique">gcc</span> 
-the following lines have to be added.
-To section <span style="font-family:monospace">Command lines</span> 
-(for creating a loadable library instead of an executable):
-</p><pre class="verbatim">linklib: gcc $lflags $libflags -o $exe $objs $libs $gc_libs -lm
-</pre><p>to section <span style="font-family:monospace">File extensions</span> 
-(library extension and <span style="font-style:oblique">Posix</span> specific prefix):
-</p><pre class="verbatim">lib: .so
-prelib: lib
-</pre><p>to section <span style="font-family:monospace">Variables</span> (additional flags to create the library):
+the following lines have to be modified or added. 
+In section <span style="font-family:monospace">Command lines</span> 
+line 
+</p><pre class="verbatim">link: gcc $lflags -o $exe $objs $libs $gc_libs -lm
+</pre><p>becomes
+</p><pre class="verbatim">link: gcc $lflags -o $exe $objs $libs $gc_libs $dg_libs -lm
+</pre><p>in section <span style="font-family:monospace">Variables</span> (additional flags to link the debugger library):
 </p><pre class="verbatim">#ifdef EIF_DEBUGGER
-cflags: -fPIC
-libflags: -shared 
+dg_libs: -L${GOBO}/bin -lgedb
 #else
-libflags:
+dg_libs:
 #endif
 </pre><p>These settings have to be adapted for the other configuration files 
 if they are to be used. 
@@ -370,24 +357,13 @@ then these classes are automatically excluded from debugging.
 If debugging code for some classes or subclusters should be generated 
 anyway then the appropriate options have to be set 
 in the <span style="font-style:oblique">geant</span> generated file <span style="font-family:monospace">ge.xace</span>. 
-</p><p>To start a session of the runtime analyser the debugger is started 
-from command line by command <span style="font-family:monospace">gedb</span> or from a desktop element 
-(such an element is <U>not</U> automatically created). 
-The command line may include the library name of the debuggee 
-followed by any command line arguments for it. 
-If no library is specified (in particular when running the debugger 
-from a desktop element) then the library is to be loaded 
-by menu item <span style="font-family:sans-serif">File</span> &#X2192; <span style="font-family:sans-serif">Load</span>. 
-After loading control switches to the debugger immediately 
-after debuggee&#X2019;s start and the debugger GUI is shown waiting 
-for user interactions. 
+</p><p>The generated program is started as usually. 
+Then after program start (in case of the runtime analyser) 
+or program crash (in case of the post mortem analyser)
+the debugger GUI is shown waiting for user interactions. 
 Debugger work (and running the debuggee) is terminated by menu item 
 <span style="font-family:sans-serif">File</span> &#X2192; <span style="font-family:sans-serif">Quit</span> or simply by pressing <span style="font-family:monospace">Control-q</span> 
 when the debugger&#X2019;s main window has the keyboard focus. 
-</p><p>In case of the post mortem analyser things are much simpler. 
-The debuggee (now an executable) is started as usually. 
-The debugger is invoked when the debuggee crashes (hopefully never). 
-If so then work continues as in case of the runtime analyser. 
 </p>
 <!--TOC section id="sec7" GUI-->
 <h2 id="sec7" class="section">3&#XA0;&#XA0;GUI</h2><!--SEC END --><p><a id="S:gui"></a>
@@ -395,7 +371,7 @@ If so then work continues as in case of the runtime analyser.
 <!--TOC subsection id="sec8" Overview-->
 <h3 id="sec8" class="subsection">3.1&#XA0;&#XA0;Overview</h3><!--SEC END --><p><a id="S:guiOverview"></a>
 </p><blockquote class="figure"><div class="center"><hr style="width:80%;height:2"></div>
-<div class="center"><img src="debug001.png"></div>
+<div class="center"><img src="debugh001.png"></div>
 <div class="caption"><table style="border-spacing:6px;border-collapse:separate;" class="cellpading0"><tr><td style="vertical-align:top;text-align:left;" >Figure 1:  Overview of the main window 
 (here, overlaid by artificial background colors). 
 The <span style="font-style:oblique">Eiffel</span> system shown in the screenshots has root class <span style="font-family:monospace">XREGEXP</span> 
@@ -414,8 +390,8 @@ a poor <span style="font-family:sans-serif">Source</span> part called <span styl
 and several additional data windows. 
 </p><p>The manual will describe the parts in the in the order 
 from left to right and within each half from top to bottom. </p>
-<!--TOC subsubsection id="sec9" Specialized fields-->
-<h4 id="sec9" class="subsubsection">3.1.1&#XA0;&#XA0;Specialized fields</h4><!--SEC END --><p><a id="S:specialFields"></a>
+<!--TOC subsection id="sec9" Specialized fields-->
+<h3 id="sec9" class="subsection">3.2&#XA0;&#XA0;Specialized fields</h3><!--SEC END --><p><a id="S:specialFields"></a>
 </p>
 <!--TOC paragraph id="sec10" Class and type names-->
 <h4 id="sec10" class="paragraph">Class and type names</h4><!--SEC END --><p><a id="S:typenameField"></a>
@@ -452,15 +428,12 @@ showing in red the part where the error has been detected.
 In other words, this is the debugger&#X2019;s way to issue error massages, 
 the heavy way of opening a dialogue window is avoided. </p>
 <!--TOC subsection id="sec12" Menu bar-->
-<h3 id="sec12" class="subsection">3.2&#XA0;&#XA0;Menu bar</h3><!--SEC END --><p><a id="S:menubar"></a>
+<h3 id="sec12" class="subsection">3.3&#XA0;&#XA0;Menu bar</h3><!--SEC END --><p><a id="S:menubar"></a>
 The menu bar contains the entries <span style="font-family:sans-serif"><U>F</U></span><span style="font-family:sans-serif">ile</span>, 
 <span style="font-family:sans-serif"><U>W</U></span><span style="font-family:sans-serif">indow</span>, <span style="font-family:sans-serif"><U>P</U></span><span style="font-family:sans-serif">references</span>, 
 and <span style="font-family:sans-serif"><U>H</U></span><span style="font-family:sans-serif">elp</span>. 
 Menu <span style="font-family:sans-serif">File</span> has the following items:
-</p><dl class="description"><dt class="dt-description"><span style="font-family:sans-serif"><U>L</U></span><span style="font-family:sans-serif">oad</span></dt><dd class="dd-description"> 
-release the current debuggee (if any) and load a new one 
-from a <span style="font-style:oblique">DLL</span> or a shared object;
-</dd><dt class="dt-description"><span style="font-family:sans-serif"><U>S</U></span><span style="font-family:sans-serif">ave</span></dt><dd class="dd-description"> 
+</p><dl class="description"><dt class="dt-description"><span style="font-family:sans-serif"><U>S</U></span><span style="font-family:sans-serif">ave</span></dt><dd class="dd-description"> 
 store the alias name and breakpoint definitions to file 
 <span style="font-style:italic">debuggee</span><span style="font-family:monospace">.edg</span> in the directory where the debuggee is located; 
 </dd><dt class="dt-description"><span style="font-family:sans-serif">Save </span><span style="font-family:sans-serif"><U>a</U></span><span style="font-family:sans-serif">s ...</span></dt><dd class="dd-description"> 
@@ -504,31 +477,31 @@ about the debuggee, e.g. the root class name;
 about the debugger itself. 
 </dd></dl>
 <!--TOC subsection id="sec13" Run part-->
-<h3 id="sec13" class="subsection">3.3&#XA0;&#XA0;Run part</h3><!--SEC END --><p><a id="S:run"></a>
+<h3 id="sec13" class="subsection">3.4&#XA0;&#XA0;Run part</h3><!--SEC END --><p><a id="S:run"></a>
 The <span style="font-family:sans-serif">Run</span> part is available only if the debugger is used as runtime analyser 
 (otherwise, the part is hidden). 
 The elements of the part control the stop-and-go behaviour of the debuggee.
 </p><blockquote class="figure"><div class="center"><hr style="width:80%;height:2"></div>
-<div class="center"><img src="debug002.png"></div>
+<div class="center"><img src="debugh002.png"></div>
 <div class="caption"><table style="border-spacing:6px;border-collapse:separate;" class="cellpading0"><tr><td style="vertical-align:top;text-align:left;" >Figure 2: The <span style="font-family:sans-serif">Run</span> part.</td></tr>
 </table></div><a id="F:run"></a>
 <div class="center"><hr style="width:80%;height:2"></div></blockquote><p>When the debugger gets invoked then the expression list (if any) 
 in text field <span style="font-family:sans-serif">Print on stop</span> will be evaluated and its values will 
-printed on the <span style="font-family:sans-serif">Console</span> part (see Sec.&#XA0;<a href="#S%3Aconsole">3.6</a>). 
+printed on the <span style="font-family:sans-serif">Console</span> part (see Sec.&#XA0;<a href="#S%3Aconsole">3.7</a>). 
 The expressions are evaluated in the routine of the topmost call stack level. 
 If the routine changed after a stop then the expression list disappears 
 (names of local variables in the expressions are now invalid, 
 maybe also query names) and reappears as soon as the routine 
 is entered again with the same target type. </p>
 <!--TOC subsubsection id="sec14" Stop-and-go behaviour-->
-<h4 id="sec14" class="subsubsection">3.3.1&#XA0;&#XA0;Stop-and-go behaviour</h4><!--SEC END --><p><a id="S:stopAndGo"></a>
+<h4 id="sec14" class="subsubsection">3.4.1&#XA0;&#XA0;Stop-and-go behaviour</h4><!--SEC END --><p><a id="S:stopAndGo"></a>
 Control switches forth and back between debugger and debuggee. 
 More precisely, the debugger regains control for any of the following reasons: 
 </p><ul class="itemize"><li class="li-itemize">just after loading the debuggee;
 </li><li class="li-itemize">when the program reaches the target condition of a dynamic command 
 (see below);
 </li><li class="li-itemize">when a <span style="font-family:monospace">debug</span> instruction is reached 
-(and stopping there is enabled, see Sec.&#XA0;<a href="#S%3AbreakpointManipulation">3.4.3</a>); 
+(and stopping there is enabled, see Sec.&#XA0;<a href="#S%3AbreakpointManipulation">3.5.3</a>); 
 </li><li class="li-itemize">when the debuggee is interrupted by pressing the <span style="font-family:sans-serif">Stop</span> button 
 (same effect as interrupt from keyboard); 
 </li><li class="li-itemize">after program end. 
@@ -563,13 +536,17 @@ Moreover the effect of <span style="font-family:sans-serif">Cont</span> is modif
 </p><dl class="description"><dt class="dt-description"><span style="font-family:sans-serif">break</span></dt><dd class="dd-description"> treat breakpoints and tracepoints as defined;
 </dd><dt class="dt-description"><span style="font-family:sans-serif">trace</span></dt><dd class="dd-description"> treat breakpoints as tracepoints, i.e. do not stop;
 </dd><dt class="dt-description"><span style="font-family:sans-serif">ignore</span></dt><dd class="dd-description"> ignore breakpoints and tracepoints at all.
-</dd></dl><p>The effect of button <span style="font-family:sans-serif">Stop</span> <sup><a id="text1" href="#note1">1</a></sup> 
+</dd></dl><p>The effect of button <span style="font-family:sans-serif">Stop</span> 
 is complementary to that of the other buttons. 
 Quite naturally, also its sensitivity is complementary:
 if the debuggee has stopped for some reason then <span style="font-family:sans-serif">Stop</span> is insensitive 
 while the other &#X201C;dynamic&#X201D; buttons are sensitive, 
 but if the debuggee is running then <span style="font-family:sans-serif">Stop</span> is sensitive while 
 the dynamic buttons (and most GUI elements) are insensitive.
+(The button label <span style="font-family:sans-serif">Stop</span> is suppressed on some platforms 
+in favour of the keyboard accelerator <span style="font-family:sans-serif">Pause</span>. 
+You may need to read <span style="font-family:sans-serif">Pause</span> for <span style="font-family:sans-serif">Stop</span>.
+)
 </p><p>Some remarks seem to be in order to explain when the <span style="font-family:sans-serif">Next</span> 
 and <span style="font-family:sans-serif">Step</span> commands actually stop. 
 Command <span style="font-family:sans-serif">Next</span> stops before the next instruction. 
@@ -616,7 +593,7 @@ A similar role as the call instructions play for stepping
 into their argument expressions 
 do the keywords <span style="font-family:monospace">create</span>, <span style="font-family:monospace">if</span>, <span style="font-family:monospace">inspect</span>, <span style="font-family:monospace">until</span> play for the expressions following them. </p>
 <!--TOC subsubsection id="sec15" Mark and reset-->
-<h4 id="sec15" class="subsubsection">3.3.2&#XA0;&#XA0;Mark and reset</h4><!--SEC END --><p><a id="S:markReset"></a>
+<h4 id="sec15" class="subsubsection">3.4.2&#XA0;&#XA0;Mark and reset</h4><!--SEC END --><p><a id="S:markReset"></a>
 If the program stopped at a point where a breakpoint can be set 
 (underlined in the <span style="font-family:sans-serif">Source</span> part) then the program state 
 (variables on heap and stack, once function values, and program point) 
@@ -668,18 +645,18 @@ under <span style="font-style:oblique">Posix</span> compliant operating systems,
 otherwise it is rather poor. 
 </blockquote>
 <!--TOC subsection id="sec16" Breakpoints part-->
-<h3 id="sec16" class="subsection">3.4&#XA0;&#XA0;Breakpoints part</h3><!--SEC END --><p><a id="S:breakpoints"></a>
+<h3 id="sec16" class="subsection">3.5&#XA0;&#XA0;Breakpoints part</h3><!--SEC END --><p><a id="S:breakpoints"></a>
 The <span style="font-family:sans-serif">Breakpoints</span> part is available only if the debugger is used as runtime analyser 
 (otherwise, the part is hidden). 
 The part consists of a table showing all defined breakpoints 
 and a row of buttons. 
 </p><blockquote class="figure"><div class="center"><hr style="width:80%;height:2"></div>
-<div class="center"><img src="debug003.png"></div>
+<div class="center"><img src="debugh003.png"></div>
 <div class="caption"><table style="border-spacing:6px;border-collapse:separate;" class="cellpading0"><tr><td style="vertical-align:top;text-align:left;" >Figure 3: The <span style="font-family:sans-serif">Breakpoints</span> part.</td></tr>
 </table></div><a id="F:break"></a>
 <div class="center"><hr style="width:80%;height:2"></div></blockquote>
 <!--TOC subsubsection id="sec17" Breakpoints table-->
-<h4 id="sec17" class="subsubsection">3.4.1&#XA0;&#XA0;Breakpoints table</h4><!--SEC END --><p><a id="S:breakpointTable"></a>
+<h4 id="sec17" class="subsubsection">3.5.1&#XA0;&#XA0;Breakpoints table</h4><!--SEC END --><p><a id="S:breakpointTable"></a>
 The columns of the table have the following meaning, 
 most of them denote restricting conditions: the breakpoint becomes active 
 when all specified conditions are satisfied 
@@ -726,7 +703,7 @@ the program point shown in the <span style="font-family:sans-serif">Source</span
 is the point where the exception occurs, not that of a <span style="font-family:monospace">rescue</span> clause 
 catching the exception, in particular, not the <span style="font-family:sans-serif">At</span> location. </p>
 <!--TOC subsubsection id="sec18" Editing-->
-<h4 id="sec18" class="subsubsection">3.4.2&#XA0;&#XA0;Editing</h4><!--SEC END --><p><a id="S:breakpointEditing"></a>
+<h4 id="sec18" class="subsubsection">3.5.2&#XA0;&#XA0;Editing</h4><!--SEC END --><p><a id="S:breakpointEditing"></a>
 Breakpoints may (and should!) be edited. 
 To this end, clicking the right mouse button on a field in the table 
 starts an editing cycle for this field. According to the column type 
@@ -736,18 +713,18 @@ the &#X201C;editor&#X201D; is as follows.
 </dd><dt class="dt-description"><span style="font-family:sans-serif">Catch</span></dt><dd class="dd-description"> a combobox with the possible values; 
 </dd><dt class="dt-description"><span style="font-family:sans-serif">At</span></dt><dd class="dd-description"> a combobox with values <span style="font-family:monospace">set from source</span> and <span style="font-family:monospace">clear</span>, 
 in the first case the new value is the cursor position in the <span style="font-family:sans-serif">Source</span> part 
-(see Sec.&#XA0;<a href="#S%3AsourceActions">3.5.5</a> item <span style="font-family:monospace">Control-b</span> for details);
+(see Sec.&#XA0;<a href="#S%3AsourceActions">3.6.5</a> item <span style="font-family:monospace">Control-b</span> for details);
 </dd><dt class="dt-description"><span style="font-family:sans-serif">Depth</span></dt><dd class="dd-description"> a spinbox with the possible values;
 </dd><dt class="dt-description"><span style="font-family:sans-serif">Watch</span></dt><dd class="dd-description"> 
 a combobox with values <span style="font-family:monospace">set from data</span> and <span style="font-family:monospace">clear</span>, 
 in the first case the new value is the address of the variable 
 selected in the <span style="font-family:sans-serif">Data</span> part; </dd><dt class="dt-description"><span style="font-family:sans-serif">Type</span></dt><dd class="dd-description"> a text entry for entering a type name 
-(see Sec.&#XA0;<a href="#S%3AtypenameField">3.1.1</a> for details), 
+(see Sec.&#XA0;<a href="#S%3AtypenameField">3.2</a> for details), 
 there is also the entry <span style="font-family:monospace">clear</span> to remove an already present type; 
 </dd><dt class="dt-description"><span style="font-family:sans-serif">If</span></dt><dd class="dd-description"> a text field to be filled manually 
-(lazy evaluation, see Sec.&#XA0;<a href="#S%3AexpressionField">3.1.1</a>);
+(lazy evaluation, see Sec.&#XA0;<a href="#S%3AexpressionField">3.2</a>);
 </dd><dt class="dt-description"><span style="font-family:sans-serif">Print</span></dt><dd class="dd-description"> a text field to be filled manually
-(lazy evaluation, see Sec.&#XA0;<a href="#S%3AexpressionField">3.1.1</a>). 
+(lazy evaluation, see Sec.&#XA0;<a href="#S%3AexpressionField">3.2</a>). 
 </dd></dl><p>
 The editors have been chosen such that most input errors can be avoided. 
 Unfortunately, in case of <span style="font-family:sans-serif">At</span> and <span style="font-family:sans-serif">Watch</span> conditions 
@@ -758,10 +735,18 @@ and then in the <span style="font-family:sans-serif">Breakpoints</span> part to 
 </p><blockquote class="quote">
 <div class="center"><span style="font-weight:bold">Hint</span></div>
 For convenience, there is also the possibility to set and remove breakpoints 
-directly in the <span style="font-family:sans-serif">Source</span> part, see Sec.&#XA0;<a href="#S%3AsourceActions">3.5.5</a>. 
+directly in the <span style="font-family:sans-serif">Source</span> part, see Sec.&#XA0;<a href="#S%3AsourceActions">3.6.5</a>. 
+</blockquote><blockquote class="quote">
+<div class="center"><span style="font-weight:bold">Recommendation</span></div>
+The check for breakpoint matches is very time consuming 
+if there are breakpoints without <span style="font-family:sans-serif">Catch</span> and <span style="font-family:sans-serif">At</span> conditions. 
+So it is recommended that all breakpoints have one of these conditions set 
+and, for reasons of implementation, 
+that there are no more than 20 breakpoints with the <span style="font-family:sans-serif">At</span> condition. 
+Unfortunately, this excludes watchpoints. 
 </blockquote>
 <!--TOC subsubsection id="sec19" Create and remove-->
-<h4 id="sec19" class="subsubsection">3.4.3&#XA0;&#XA0;Create and remove</h4><!--SEC END --><p><a id="S:breakpointManipulation"></a>
+<h4 id="sec19" class="subsubsection">3.5.3&#XA0;&#XA0;Create and remove</h4><!--SEC END --><p><a id="S:breakpointManipulation"></a>
 A new breakpoint without any conditions is created 
 by clicking button <span style="font-family:sans-serif">New</span>. 
 One or more breakpoints may be selected by singly left clicking 
@@ -771,13 +756,17 @@ when clicking the corresponding buttons.
 Finally, the <span style="font-family:sans-serif">Debug clauses</span> check button controls whether 
 debug clauses in the <span style="font-style:oblique">Eiffel</span> code are to be treated like breakpoints. </p>
 <!--TOC subsection id="sec20" Source part-->
-<h3 id="sec20" class="subsection">3.5&#XA0;&#XA0;Source part</h3><!--SEC END --><p><a id="S:source"></a>
+<h3 id="sec20" class="subsection">3.6&#XA0;&#XA0;Source part</h3><!--SEC END --><p><a id="S:source"></a>
 The <span style="font-family:sans-serif">Source</span> part consists of the main text field 
 that is the overlay of several source texts 
-(and the <span style="font-family:sans-serif">Console</span> part, see Sec.&#XA0;<a href="#S%3Aconsole">3.6</a>) 
+(and the <span style="font-family:sans-serif">Console</span> part, see Sec.&#XA0;<a href="#S%3Aconsole">3.7</a>) 
 and of the bottom fields to enter a search string or a line number. 
+The text field is not editable to preserve the consistence 
+of shown class texts with the ones the debuggee was compiled with 
+(of course, the source texts must also not be edited by an external editor 
+as long as the debugging session runs). 
 </p><blockquote class="figure"><div class="center"><hr style="width:80%;height:2"></div>
-<div class="center"><img src="debug004.png"></div>
+<div class="center"><img src="debugh004.png"></div>
 <div class="caption"><table style="border-spacing:6px;border-collapse:separate;" class="cellpading0"><tr><td style="vertical-align:top;text-align:left;" >Figure 4: The <span style="font-family:sans-serif">Source</span> part
 showing a breakpoint (red) and the actual stop point (green).
 The underlined characters represent possible positions 
@@ -785,12 +774,12 @@ for breakpoints.</td></tr>
 </table></div><a id="F:source"></a>
 <div class="center"><hr style="width:80%;height:2"></div></blockquote>
 <!--TOC subsubsection id="sec21" Highlighted text-->
-<h4 id="sec21" class="subsubsection">3.5.1&#XA0;&#XA0;Highlighted text</h4><!--SEC END --><p><a id="S:highlights"></a>
+<h4 id="sec21" class="subsubsection">3.6.1&#XA0;&#XA0;Highlighted text</h4><!--SEC END --><p><a id="S:highlights"></a>
 Within the displayed source code a few small parts may be highlighted 
 (besides syntax highlighting) as follows:
 </p><dl class="description"><dt class="dt-description"><span style="font-family:sans-serif">green background</span></dt><dd class="dd-description"> actual stop position if the class is that 
 of the actual stack level or belongs otherwise to the call stack
-(see remark in Sec.&#XA0;<a href="#S%3AsourceActions">3.5.5</a>); 
+(see remark in Sec.&#XA0;<a href="#S%3AsourceActions">3.6.5</a>); 
 </dd><dt class="dt-description"><span style="font-family:sans-serif">light green background</span></dt><dd class="dd-description"> line of actual stop position 
 (to make the stop position better detectable);
 </dd><dt class="dt-description"><span style="font-family:sans-serif">red background</span></dt><dd class="dd-description"> 
@@ -800,17 +789,17 @@ possible positions for the <span style="font-family:sans-serif">At</span> condit
 (classes not compiled for debugging or routines without generated <span style="font-style:oblique">C</span> code
 don&#X2019;t have those positions);
 </dd><dt class="dt-description"><span style="font-family:sans-serif">orange background</span></dt><dd class="dd-description"> string found by a search 
-(see Sec.&#XA0;<a href="#S%3Asearching">3.5.4</a>); 
+(see Sec.&#XA0;<a href="#S%3Asearching">3.6.4</a>); 
 </dd><dt class="dt-description"><span style="font-family:sans-serif">medium blue background</span></dt><dd class="dd-description"> 
 name of the class under the mouse pointer that can be displayed 
-(see Sec.&#XA0;<a href="#S%3AsourceActions">3.5.5</a>);
+(see Sec.&#XA0;<a href="#S%3AsourceActions">3.6.5</a>);
 </dd><dt class="dt-description"><span style="font-family:sans-serif">light blue background</span></dt><dd class="dd-description"> 
 name of the feature under the mouse pointer that can be listed 
-(see Sec.&#XA0;<a href="#S%3AsourceActions">3.5.5</a>);
+(see Sec.&#XA0;<a href="#S%3AsourceActions">3.6.5</a>);
 </dd><dt class="dt-description"><span style="font-family:sans-serif">light pink background</span></dt><dd class="dd-description"> 
 name of the feature under the mouse pointer that can be listed and computed, 
 the enclosing routine must belong to the call stack 
-(see Sec.&#XA0;<a href="#S%3AsourceActions">3.5.5</a>);
+(see Sec.&#XA0;<a href="#S%3AsourceActions">3.6.5</a>);
 </dd><dt class="dt-description"><span style="font-family:sans-serif">light gray background</span></dt><dd class="dd-description"> line of the insertion cursor 
 (to make the cursor position better detectable).
 </dd></dl><p>
@@ -819,25 +808,25 @@ orange, red, green, light pink, light blue, medium blue,
 light green, light gray. 
 </p>
 <!--TOC subsubsection id="sec22" Class selection-->
-<h4 id="sec22" class="subsubsection">3.5.2&#XA0;&#XA0;Class selection</h4><!--SEC END --><p><a id="S:classSelection"></a>
+<h4 id="sec22" class="subsubsection">3.6.2&#XA0;&#XA0;Class selection</h4><!--SEC END --><p><a id="S:classSelection"></a>
 The class is selected (and added to the tag fields bar if not yet there) by 
 </p><ul class="itemize"><li class="li-itemize">choosing a tag from the tag fields bar 
 (the tag can also be selected by right clicking somewhere 
 in the tag fields bar: 
 a pop-up menu opens from which the class can be chosen); 
 </li><li class="li-itemize">choosing a class from the text entry at the left of the tag field bar 
-(see Sec.&#XA0;<a href="#S%3AtypenameField">3.1.1</a> for details on class name selection);
-</li><li class="li-itemize">choosing a stack level in the <span style="font-family:sans-serif">Call stack</span> part (see Sec.&#XA0;<a href="#S%3Astack">3.7</a>), 
+(see Sec.&#XA0;<a href="#S%3AtypenameField">3.2</a> for details on class name selection);
+</li><li class="li-itemize">choosing a stack level in the <span style="font-family:sans-serif">Call stack</span> part (see Sec.&#XA0;<a href="#S%3Astack">3.8</a>), 
 in this case the source code around the actual stop point is displayed;
 </li><li class="li-itemize">the class of the additional <span style="font-family:sans-serif">Feature</span> window 
 when clicking <span style="font-family:sans-serif">To source</span> there 
-(see Sec.&#XA0;<a href="#S%3AsourceActions">3.5.5</a>). 
+(see Sec.&#XA0;<a href="#S%3AsourceActions">3.6.5</a>). 
 </li></ul><p>
 If a class is selected that has been excluded from debugging 
 then this fact will be indicated by striking through the class name 
 in the tag fields bar. </p>
 <!--TOC subsubsection id="sec23" Cursor movement-->
-<h4 id="sec23" class="subsubsection">3.5.3&#XA0;&#XA0;Cursor movement</h4><!--SEC END --><p><a id="S:textCursor"></a>
+<h4 id="sec23" class="subsubsection">3.6.3&#XA0;&#XA0;Cursor movement</h4><!--SEC END --><p><a id="S:textCursor"></a>
 Within the text field a special location is indicated 
 by the insertion cursor (not to be confused with the mouse pointer): 
 a small bar that sits between two characters of a line 
@@ -850,7 +839,7 @@ It can be moved by
 </dd><dt class="dt-description"><span style="font-weight:bold"><span style="font-family:monospace">Page Up, Page Down </span></span>keys</dt><dd class="dd-description"> move up or down as many lines 
 as are shown in the source text.
 </dd><dt class="dt-description"><span style="font-weight:bold"><span style="font-family:monospace">Control-l</span></span></dt><dd class="dd-description"> select a line directly (see below); 
-</dd><dt class="dt-description"><span style="font-weight:bold"><span style="font-family:monospace">Control-f</span></span></dt><dd class="dd-description"> search for a string (see Sec.&#XA0;<a href="#S%3Asearching">3.5.4</a>).
+</dd><dt class="dt-description"><span style="font-weight:bold"><span style="font-family:monospace">Control-f</span></span></dt><dd class="dd-description"> search for a string (see Sec.&#XA0;<a href="#S%3Asearching">3.6.4</a>).
 </dd></dl><p>
 A specific line can be selected by entering a number 
 into the entry on bottom right of the <span style="font-family:sans-serif">Source</span> part. 
@@ -867,7 +856,7 @@ The entered number <span style="font-style:italic">n</span> may be
 </dd><dt class="dt-description"><span style="font-family:sans-serif">zero</span></dt><dd class="dd-description"> the line of the previous show line action is selected. 
 </dd></dl>
 <!--TOC subsubsection id="sec24" Searching-->
-<h4 id="sec24" class="subsubsection">3.5.4&#XA0;&#XA0;Searching</h4><!--SEC END --><p><a id="S:searching"></a>
+<h4 id="sec24" class="subsubsection">3.6.4&#XA0;&#XA0;Searching</h4><!--SEC END --><p><a id="S:searching"></a>
 The text field is not writeable but searchable: two methods are provided.
 First, enter the string (generally: regular expression) to be searched 
 into the search field at the part&#X2019;s bottom, 
@@ -891,7 +880,7 @@ In any case,
 the search is case insensitive and regular expressions are not supported.
 </p>
 <!--TOC subsubsection id="sec25" Other actions-->
-<h4 id="sec25" class="subsubsection">3.5.5&#XA0;&#XA0;Other actions</h4><!--SEC END --><p><a id="S:sourceActions"></a>
+<h4 id="sec25" class="subsubsection">3.6.5&#XA0;&#XA0;Other actions</h4><!--SEC END --><p><a id="S:sourceActions"></a>
 The actions of the <span style="font-family:sans-serif">Source</span> part described so far 
 work completely inside the GUI without interacting the debuggee 
 and these actions are available even when the debuggee is running. 
@@ -945,7 +934,7 @@ The various control characters may be read as &#X201C;show actual&#X201D;,
 </p><p>Some final remarks on the phrases &#X201C;routine in the call stack&#X201D;
 and &#X201C;next to the insertion cursor&#X201D;. 
 A routine belongs to the call stack if it is the routine 
-of the selected level in the <span style="font-family:sans-serif">Call stack</span> part (see Sec.&#XA0;<a href="#S%3Astack">3.7</a>)
+of the selected level in the <span style="font-family:sans-serif">Call stack</span> part (see Sec.&#XA0;<a href="#S%3Astack">3.8</a>)
 or the routine of a higher level 
 (for implementation reasons, routines on lower levels are not accessible). 
 If the routine occurs several times then action <span style="font-family:monospace">Control-.</span> 
@@ -955,7 +944,7 @@ closest to the selected level.
 text position <U>left</U> or <U>above</U> the insertion cursor, 
 it is at the same time a position where a <span style="font-family:sans-serif">Next</span> command stops. </p>
 <!--TOC subsection id="sec26" Console part-->
-<h3 id="sec26" class="subsection">3.6&#XA0;&#XA0;Console part</h3><!--SEC END --><p><a id="S:console"></a>
+<h3 id="sec26" class="subsection">3.7&#XA0;&#XA0;Console part</h3><!--SEC END --><p><a id="S:console"></a>
 The <span style="font-family:sans-serif">Console</span> part is available only if the debugger is used 
 as runtime analyser (otherwise, it stays hidden). 
 </p><p>The <span style="font-family:sans-serif">Console</span> part is a text field of (nearly) black background 
@@ -991,11 +980,11 @@ Output to <span style="font-family:monospace">io.output</span> or <span style="f
 of the <span style="font-family:sans-serif">Console</span> part. 
 </p>
 <!--TOC subsection id="sec27" Stack part-->
-<h3 id="sec27" class="subsection">3.7&#XA0;&#XA0;Stack part</h3><!--SEC END --><p><a id="S:stack"></a>
+<h3 id="sec27" class="subsection">3.8&#XA0;&#XA0;Stack part</h3><!--SEC END --><p><a id="S:stack"></a>
 The <span style="font-family:sans-serif">Call stack</span> part simply contains a table of the nested routine calls 
 leading to the actual stop point. 
 </p><blockquote class="figure"><div class="center"><hr style="width:80%;height:2"></div>
-<div class="center"><img src="debug005.png"></div>
+<div class="center"><img src="debugh005.png"></div>
 <div class="caption"><table style="border-spacing:6px;border-collapse:separate;" class="cellpading0"><tr><td style="vertical-align:top;text-align:left;" >Figure 5: The <span style="font-family:sans-serif">Call stack</span> part.</td></tr>
 </table></div><a id="F:stack"></a>
 <div class="center"><hr style="width:80%;height:2"></div></blockquote><p>The table has the following columns:
@@ -1018,11 +1007,11 @@ the source code of the class is displayed in the <span style="font-family:sans-s
 and the values of <span style="font-family:monospace">Current</span> and of the local variables 
 is displayed in the <span style="font-family:sans-serif">Data</span> part. </p>
 <!--TOC subsection id="sec28" Data part-->
-<h3 id="sec28" class="subsection">3.8&#XA0;&#XA0;Data part</h3><!--SEC END --><p><a id="S:data"></a>
+<h3 id="sec28" class="subsection">3.9&#XA0;&#XA0;Data part</h3><!--SEC END --><p><a id="S:data"></a>
 The <span style="font-family:sans-serif">Data</span> part consists of two subparts: 
 a tree displaying objects and their fields and a row of buttons. 
 </p><blockquote class="figure"><div class="center"><hr style="width:80%;height:2"></div>
-<div class="center"><img src="debug006.png"></div>
+<div class="center"><img src="debugh006.png"></div>
 <div class="caption"><table style="border-spacing:6px;border-collapse:separate;" class="cellpading0"><tr><td style="vertical-align:top;text-align:left;" >Figure 6: The <span style="font-family:sans-serif">Data</span> part.
 The <span style="font-family:monospace">*</span> in the second column denotes the <span style="font-family:monospace">Current</span> object 
 and <span style="font-family:monospace">A</span> denotes a routine argument, 
@@ -1030,7 +1019,7 @@ the other contents should be clear.</td></tr>
 </table></div><a id="F:data"></a>
 <div class="center"><hr style="width:80%;height:2"></div></blockquote>
 <!--TOC subsubsection id="sec29" Data representation-->
-<h4 id="sec29" class="subsubsection">3.8.1&#XA0;&#XA0;Data representation</h4><!--SEC END --><p><a id="S:dataTree"></a>
+<h4 id="sec29" class="subsubsection">3.9.1&#XA0;&#XA0;Data representation</h4><!--SEC END --><p><a id="S:dataTree"></a>
 The tree displays the result of expressions in hierarchical order: 
 fields of an object may be displayed as subtrees.
 The nodes of the tree contain the name of the object or field, 
@@ -1043,7 +1032,7 @@ The category is a single letter meaning
 </dd><dt class="dt-description"><span style="font-family:sans-serif">S</span></dt><dd class="dd-description"> scope dependent variable: variable of an object test 
 or iterator of an <span style="font-family:monospace">across</span> clause; 
 </dd><dt class="dt-description"><span style="font-family:sans-serif">X</span></dt><dd class="dd-description"> the result of an expression evaluation 
-(see Sec.&#XA0;<a href="#S%3Aeval">3.10</a>). 
+(see Sec.&#XA0;<a href="#S%3Aeval">3.11</a>). 
 </dd></dl><p>The tree is filled the following ways:
 </p><ul class="itemize"><li class="li-itemize">by the values of <span style="font-family:monospace">Current</span> and the local variables 
 when a stack frame has been selected, 
@@ -1060,7 +1049,7 @@ empty of other expanded types
 </dd><dt class="dt-description"><span style="font-family:sans-serif">ident</span></dt><dd class="dd-description"> objects of a reference type are represented 
 by a unique integer number, the number has a leading underscore 
 to distinguish it from common integer numbers
-(see Sec.&#XA0;<a href="#S%3Asql">3.9</a> how the numbers are obtained);
+(see Sec.&#XA0;<a href="#S%3Asql">3.10</a> how the numbers are obtained);
 </dd><dt class="dt-description"><span style="font-family:sans-serif">hex</span></dt><dd class="dd-description"> values of basic expanded types are shown by their 
 hexadecimal representations and values of any reference type 
 by their address. 
@@ -1114,7 +1103,7 @@ and across iterators are not shown, only <span style="font-family:monospace">Cur
 (that in turn has no attributes). 
 </p>
 <!--TOC subsubsection id="sec30" Actions-->
-<h4 id="sec30" class="subsubsection">3.8.2&#XA0;&#XA0;Actions</h4><!--SEC END --><p><a id="S:dataActions"></a>
+<h4 id="sec30" class="subsubsection">3.9.2&#XA0;&#XA0;Actions</h4><!--SEC END --><p><a id="S:dataActions"></a>
 A single row in the data tree (provided its category is an attribute 
 or a local variable) can be selected by left clicking. 
 The associated value may then become the source 
@@ -1141,7 +1130,7 @@ if assignment is supported and if this set is not trivial
 The menu is for information display only, 
 selecting an item has no effect. </p>
 <!--TOC subsubsection id="sec31" More data windows-->
-<h4 id="sec31" class="subsubsection">3.8.3&#XA0;&#XA0;More data windows</h4><!--SEC END --><p><a id="S:moreData"></a> 
+<h4 id="sec31" class="subsubsection">3.9.3&#XA0;&#XA0;More data windows</h4><!--SEC END --><p><a id="S:moreData"></a> 
 More <span style="font-family:sans-serif">Data</span> windows can be opened from menu <span style="font-family:sans-serif">Window </span>&#X2192;<span style="font-family:sans-serif"> New data</span>, 
 they contain the data tree and additionally a combobox on top 
 to select a stack level and the buttons <span style="font-family:sans-serif">manually/automatic</span>, 
@@ -1151,7 +1140,7 @@ These windows and the <span style="font-family:sans-serif">Data</span> part on t
 of each other. 
 After stopping the debuggee the main <span style="font-family:sans-serif">Data</span> part is automatically 
 updated, not the additional <span style="font-family:sans-serif">Data</span> windows if <span style="font-family:sans-serif">manually</span> is selected 
-(in case of <span style="font-family:sans-serif">automatic</span> it is updated like the main <span style="font-family:sans-serif">Data</span> window). 
+(in case of <span style="font-family:sans-serif">automatic</span> they are updated like the main <span style="font-family:sans-serif">Data</span> window). 
 This way, it is possible to have at the same time a look 
 at the actual values and at previous values. 
 An additional <span style="font-family:sans-serif">Data</span> window is synchronized to the main <span style="font-family:sans-serif">Data</span> window 
@@ -1180,9 +1169,9 @@ where a string can be entered,
 then any constant attribute and once routine whose name starts 
 with this string will be highlighted. </p>
 <!--TOC subsection id="sec32" SQL part-->
-<h3 id="sec32" class="subsection">3.9&#XA0;&#XA0;SQL part</h3><!--SEC END --><p><a id="S:sql"></a>
+<h3 id="sec32" class="subsection">3.10&#XA0;&#XA0;SQL part</h3><!--SEC END --><p><a id="S:sql"></a>
 </p><blockquote class="figure"><div class="center"><hr style="width:80%;height:2"></div>
-<div class="center"><img src="debug007.png"></div>
+<div class="center"><img src="debugh007.png"></div>
 <div class="caption"><table style="border-spacing:6px;border-collapse:separate;" class="cellpading0"><tr><td style="vertical-align:top;text-align:left;" >Figure 7: An <span style="font-family:sans-serif">SQL select</span> part. 
 <span style="font-family:monospace">_1</span>, &#X2026;, <span style="font-family:monospace">_35</span> are object idents 
 while <span style="font-family:monospace">4</span> and <span style="font-family:monospace">0</span> in the last column are the values themselves.</td></tr>
@@ -1226,7 +1215,7 @@ as expression list (empty means all attributes);
 </dd><dt class="dt-description"><span style="font-family:sans-serif">where</span></dt><dd class="dd-description"> (optional) a boolean expression to be satisfied 
 by the objects of the table (empty means <span style="font-family:monospace">True</span>)
 </dd></dl><p>
-(see Sec.&#XA0;<a href="#S%3AspecialFields">3.1.1</a> for entering a type name or expressions).
+(see Sec.&#XA0;<a href="#S%3AspecialFields">3.2</a> for entering a type name or expressions).
 The expressions of any nested level may refer to the matching object 
 by a leading placeholder &#X201C;<span style="font-family:monospace">?</span>&#X201D;. This is particularly important 
 if a name clash of a <span style="font-family:sans-serif">from</span> type&#X2019;s query with a local variable occurs: 
@@ -1238,7 +1227,7 @@ that expression validation of the two other entries can be successful
 Further, the expression list in the <span style="font-family:sans-serif">select</span> field is always extended 
 by a leading element (i.e. a leading column in the table shown): 
 the ident of the row&#X2019;s object. </p><blockquote class="quote">
-<div class="center"><span style="font-weight:bold">Restrictiona</span></div>
+<div class="center"><span style="font-weight:bold">Restrictions</span></div>
 <ul class="itemize"><li class="li-itemize">
 The expressions in the <span style="font-family:sans-serif">select</span> field must not contain ranges
 (precisely, they are silently ignored): 
@@ -1257,17 +1246,27 @@ this must be an alive type;
 </dd><dt class="dt-description"><span style="font-family:sans-serif">conform</span></dt><dd class="dd-description"> 
 the object type conforms to the one specified in the <span style="font-family:sans-serif">from</span> field, 
 this may be a not alive (or even a deferred) type, 
-additional attributes of descendant types are not shown. 
-</dd></dl><p>It was not intended to implement a full database, 
+additional attributes of descendant types are not shown 
+and additional queries are not available in the <span style="font-family:sans-serif">select</span>, <span style="font-family:sans-serif">where</span> 
+expressions. 
+</dd></dl><blockquote class="quote">
+<div class="center"><span style="font-weight:bold">Known deficiency</span></div>
+In case that a descendant type renames attributes or other queries 
+then the output does not follow the renaming, 
+the output may look very spurious. 
+The reason is that the meta information generated by the compiler 
+for use of the debugger does not (not yet?) include information 
+about renamings. No such problems occur for the <span style="font-family:sans-serif">precise</span> type policy. 
+</blockquote><p>It was not intended to implement a full database, 
 so the debugger&#X2019;s <span style="font-family:monospace">SELECT</span> query is rather poor: 
-only one table is supported (no <span style="font-family:monospace">JOIN</span>), 
+only one table is supported at one time (no <span style="font-family:monospace">JOIN</span>), 
 no grouping (no <span style="font-family:monospace">GROUP BY</span>, <span style="font-family:monospace">HAVING</span>), 
 and no explicit sorting (no <span style="font-family:monospace">ORDER BY</span>, 
 but there is implicit sorting by GUI manipulation). </p>
 <!--TOC subsection id="sec33" Evaluation part-->
-<h3 id="sec33" class="subsection">3.10&#XA0;&#XA0;Evaluation part</h3><!--SEC END --><p><a id="S:eval"></a>
+<h3 id="sec33" class="subsection">3.11&#XA0;&#XA0;Evaluation part</h3><!--SEC END --><p><a id="S:eval"></a>
 </p><blockquote class="figure"><div class="center"><hr style="width:80%;height:2"></div>
-<div class="center"><img src="debug008.png"></div>
+<div class="center"><img src="debugh008.png"></div>
 <div class="caption"><table style="border-spacing:6px;border-collapse:separate;" class="cellpading0"><tr><td style="vertical-align:top;text-align:left;" >Figure 8: The <span style="font-family:sans-serif">Evaluation</span> part: 
 an expression list entered in the <span style="font-family:sans-serif">Expr</span> field 
 and its value in the <span style="font-family:sans-serif">Value</span> field. 
@@ -1278,7 +1277,7 @@ into the <span style="font-family:sans-serif">Expr</span> field have been correc
 <a id="F:eval"></a>
 <div class="center"><hr style="width:80%;height:2"></div></blockquote>
 <!--TOC subsubsection id="sec34" Evaluation-->
-<h4 id="sec34" class="subsubsection">3.10.1&#XA0;&#XA0;Evaluation</h4><!--SEC END --><p><a id="S:compute"></a>
+<h4 id="sec34" class="subsubsection">3.11.1&#XA0;&#XA0;Evaluation</h4><!--SEC END --><p><a id="S:compute"></a>
 The <span style="font-family:sans-serif">Evaluation</span> part consists of two text fields: <span style="font-family:sans-serif">Expr</span> and <span style="font-family:sans-serif">Value</span>. 
 Field <span style="font-family:sans-serif">Expr</span> may be filled 
 </p><ul class="itemize"><li class="li-itemize">manually with an expression list;
@@ -1310,7 +1309,7 @@ of the items of the expression list to the tree of the <span style="font-family:
 thereby expanding expression ranges and and their details. 
 There the expressions will indicated by an <span style="font-family:monospace">X</span>. </p>
 <!--TOC subsubsection id="sec35" Assignment-->
-<h4 id="sec35" class="subsubsection">3.10.2&#XA0;&#XA0;Assignment</h4><!--SEC END --><p><a id="S:assign"></a>
+<h4 id="sec35" class="subsubsection">3.11.2&#XA0;&#XA0;Assignment</h4><!--SEC END --><p><a id="S:assign"></a>
 Clicking the left icon in the <span style="font-family:sans-serif">Value</span> field 
 (if sensitive) assigns the shown value to the selected tree item
 of the <span style="font-family:sans-serif">Data</span> part. 
@@ -1322,9 +1321,9 @@ any <span style="font-family:monospace">REAL_*</span> values can be assigned to 
 the conversion is done along the rules of the <span style="font-style:oblique">C</span> type casting. 
 In all other cases the item is assignable if its type set contains
 the type of the expression in the <span style="font-family:sans-serif">Value</span> field 
-(see Sec.&#XA0;<a href="#S%3AdataActions">3.8.2</a> for displaying the typeset of an entity). </p>
+(see Sec.&#XA0;<a href="#S%3AdataActions">3.9.2</a> for displaying the typeset of an entity). </p>
 <!--TOC subsection id="sec36" Status bar-->
-<h3 id="sec36" class="subsection">3.11&#XA0;&#XA0;Status bar</h3><!--SEC END --><p><a id="S:status"></a>
+<h3 id="sec36" class="subsection">3.12&#XA0;&#XA0;Status bar</h3><!--SEC END --><p><a id="S:status"></a>
 The intention of the status bar is to show whether the debuggee is running 
 or not, i.e. whether commands can be issued. 
 The status bar is not exhausted by this purpose, 
@@ -1345,7 +1344,7 @@ for the related object is shown.
 </p><p>The mouse pointer has a similar effect in the <span style="font-family:sans-serif">Source</span> part. 
 When the mouse hovers over a feature name whose definition can be displayed
 it is not only highlighted with light blue or light pink background 
-(see Sec.&#XA0;<a href="#S%3Ahighlights">3.5.1</a>), 
+(see Sec.&#XA0;<a href="#S%3Ahighlights">3.6.1</a>), 
 also the name of its defining class is shown in the status bar 
 if this class is not the actual class. 
 Moreover if the feature can be computed (highlighted light pink) 
@@ -1359,7 +1358,7 @@ then it displays the status of the debuggee:
 <h2 id="sec37" class="section">4&#XA0;&#XA0;Expressions</h2><!--SEC END --><p><a id="S:expression"></a>
 <span style="font-style:oblique">Eiffel</span> expressions have to be entered in several debugger fields. 
 The expressions can be rather complex 
-and are in any case the most complex keyboard inputs required,
+and are by far the most complex keyboard inputs required,
 so they may need a special explanation.
 The first section describes their general format, the following one describes 
 how to format <span style="font-family:monospace">SPECIAL</span> objects or to select entries. 
@@ -1617,14 +1616,7 @@ Finally, &#X201C;immediate evaluation&#X201D; is applied in the first place
 for expressions entered in the <span style="font-family:sans-serif">Expr</span> field of the <span style="font-family:sans-serif">Evaluation</span> part. 
 Here, the shown stack level determines the routine and the type 
 as the type of <span style="font-family:monospace">Current</span>. 
-</p><!--BEGIN NOTES document-->
-<hr class="footnoterule"><dl class="thefootnotes"><dt class="dt-thefootnotes">
-<a id="note1" href="#text1">1</a></dt><dd class="dd-thefootnotes"><div class="footnotetext">The button label <span style="font-family:sans-serif">Stop</span> is suppressed on some platforms 
-in favour of the keyboard accelerator <span style="font-family:sans-serif">Pause</span>. 
-You may need to read <span style="font-family:sans-serif">Pause</span> for <span style="font-family:sans-serif">Stop</span> in the following.</div>
-</dd></dl>
-<!--END NOTES-->
-<!--CUT END -->
+</p><!--CUT END -->
 <!--HTMLFOOT-->
 <!--ENDHTML-->
 <!--FOOTER-->

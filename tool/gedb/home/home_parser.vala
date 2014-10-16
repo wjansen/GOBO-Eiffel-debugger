@@ -963,11 +963,14 @@ namespace Gedb {
 		[Lemon(pattern="ONCE Compound(c) Ensure(e) Rescue(r) END")]
 		public Body._2(Parser h, Compound c, Ensure e, Rescue r) {}
 
-		[Lemon(pattern="EXTERNAL STRING Ensure(e) END")]
+		[Lemon(pattern="DEFERRED Ensure(e) END")]
 		public Body._3(Parser h, Ensure e) {}
 
-		[Lemon(pattern="EXTERNAL STRING ALIAS STRING Ensure(e) END")]
+		[Lemon(pattern="EXTERNAL STRING Ensure(e) END")]
 		public Body._4(Parser h, Ensure e) {}
+
+		[Lemon(pattern="EXTERNAL STRING ALIAS STRING Ensure(e) END")]
+		public Body._5(Parser h, Ensure e) {}
 	}
 	
 	public class Ensure : Object {
