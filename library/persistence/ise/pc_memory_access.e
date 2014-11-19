@@ -60,7 +60,7 @@ feature {PC_DRIVER} -- Object location
 			offset := i.to_integer_32
 		end
 
-feature {} -- Implementation 
+feature {NONE} -- Implementation 
 
 	field: detachable IS_ENTITY [INTEGER]
 

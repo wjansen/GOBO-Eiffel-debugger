@@ -8,39 +8,74 @@ public class ConsolePart : ScrolledWindow {
 	private IOChannel in_channel;
 	private IOChannel out_channel;
 	private IOChannel err_channel;
-	private TextView view;
 	private TextBuffer buffer;
 	private TextMark end_mark;
+	private TextMark input_mark;
+	private weak Searcher source;
+	private StringBuilder in_line;
+	private StringBuilder out_line;
 
-	private void fill_tag_table() {
+
+	private void fill_tag_table(TextBuffer buf) {
 		TextTag tag; 
-		tag = buffer.create_tag("go", "foreground", "green",
-								"foreground-set", true, null);
-		tag = buffer.create_tag("info", "foreground", "yellow", 
-								"foreground-set", true, null);
-		tag = buffer.create_tag("stop", "foreground", "red", 
-								"foreground-set", true, null);
-		tag = buffer.create_tag("input", "foreground", "#83caff",
-								"foreground-set", true, null);
-		tag = buffer.create_tag("error", "foreground", "#ed72dc",
-								"foreground-set", true, null);
+		tag = buf.create_tag("go", 
+							 "foreground", "green", "foreground-set", true, 
+							 null);
+		tag = buf.create_tag("info", 
+							 "foreground", "yellow", "foreground-set", true, 
+							 null);
+		tag = buf.create_tag("stop", 
+							 "foreground", "red", "foreground-set", true, 
+							 null);
+		tag = buf.create_tag("input", 
+							 "foreground", "#83caff", "foreground-set", true, 
+							 null);
+		tag = buf.create_tag("error", 
+							 "foreground", "#ed72dc", "foreground-set", true, 
+							 null);
 		tag.underline = Pango.Underline.SINGLE;
+		tag = buf.create_tag("searched", 
+							 "background", "#85593f", "background-set", true, 
+							 null);
+		tag = buf.create_tag("found", 
+							 "background", "orange", "background-set", true, 
+							 "foreground", "black", "foreground-set", true, 
+							 null);
+	}
+
+	private void flush_out(IOStatus status) {
+		TextIter end;
+		buffer.get_iter_at_mark(out end, end_mark);
+		if (status==IOStatus.NORMAL) 
+			buffer.insert(ref end, out_line.str, -1); 
+		else 
+			buffer.insert_with_tags_by_name(end, out_line.str, -1, "error", null);
+		out_line.erase();
+		buffer.get_iter_at_mark(out end, end_mark);
+		buffer.move_mark(input_mark, end);
+		view.scroll_mark_onscreen(end_mark);
 	}
 
 	private bool do_input(Gdk.EventKey e, IOChannel ch) {
-		TextMark insert;
 		TextIter left, right;
+		TextMark insert;
 		string line;
 		uint code;
 		uint l, r;
 		if (e.type != Gdk.EventType.KEY_PRESS) return false;
-		if (e.is_modifier>0 && (e.state & Gdk.ModifierType.CONTROL_MASK)>0)
-			return false;
-		TextIter end;
-		view.buffer.get_end_iter(out end);
-		end.backward_char();
-		view.scroll_to_iter(end, 0.0, false, 1.0, 0.0);
 		code = e.keyval;
+		if ((e.state & Gdk.ModifierType.CONTROL_MASK)>0) {
+			switch (code) {
+			case 'f':
+			case 'r':
+				return source.handle_key(e, view);
+			}
+			return false;
+		}
+		if (source.search_state!=source.SearchMode.NO_SEARCH) 
+			return source.handle_key(e, view);
+//		end.backward_char();
+//		view.scroll_to_iter(end, 0.0, false, 1.0, 0.0);
 		if (code>'~')  {
 			switch (code) {
 			case Gdk.Key.Return:
@@ -58,14 +93,13 @@ public class ConsolePart : ScrolledWindow {
 			}
 		}
 		lock (buffer) {
-			buffer.get_iter_at_mark(out left, end_mark);
+			buffer.get_iter_at_mark(out left, input_mark);
 			l = left.get_offset();
 			insert = buffer.get_insert();
 			buffer.get_iter_at_mark(out right, insert);
 			r = right.get_offset();
 			if (r<l) {
-				right.assign(left);
-				buffer.move_mark(insert, right);
+				buffer.move_mark(insert, left);
 				r = l;
 			}
 			if (code=='\b') {
@@ -73,11 +107,12 @@ public class ConsolePart : ScrolledWindow {
 			} else {
 				if (code=='\n') {
 					size_t n;
-					buffer.get_end_iter(out right);
-					buffer.place_cursor(right);
+					buffer.get_iter_at_mark(out right, end_mark);
+					buffer.move_mark(insert, right);
 					buffer.insert_at_cursor("\n", 1);
-					buffer.get_iter_at_mark(out right, insert);
-					buffer.get_iter_at_mark(out left, end_mark);
+					buffer.get_iter_at_mark(out right, end_mark);
+					buffer.get_iter_at_mark(out left, input_mark);
+					buffer.move_mark(input_mark, right);
 					line = buffer.get_text(left, right, true);
 					try {
 						ch.write_chars(line.to_utf8(), out n);
@@ -87,8 +122,7 @@ public class ConsolePart : ScrolledWindow {
 					}
 				} else {
 					line = string.nfill(1, (char)code);
-					buffer.get_iter_at_mark(out left, insert);
-					buffer.insert_with_tags_by_name(left, line, 1, "input", null);
+					buffer.insert_with_tags_by_name(right, line, 1, "input", null);
 				}
 			}
 			return true;
@@ -96,45 +130,27 @@ public class ConsolePart : ScrolledWindow {
 	}
 
 	private bool do_output(IOChannel ch, IOCondition cond) {
-		TextIter start, end;
 		unichar uni;
-		var chars = new char[80];
 		size_t n;
 		IOStatus status;
 		if (cond!=IOCondition.IN) return false;
 		lock (buffer) {
-			buffer.get_end_iter(out end);
-			buffer.place_cursor(end);
 			try {
 				status = ch.read_unichar(out uni);
+//				status = ch.read_line(out line, out n, null);
 			} catch (Error e) {
 				status = IOStatus.ERROR;
+				flush_out(status);
 			}
 			if (status==IOStatus.NORMAL) {
-				buffer.insert_at_cursor(uni.to_string(), -1); 
-				buffer.get_end_iter(out end);
-				start = end;
-				start.backward_char();
-				buffer.move_mark(end_mark, end); 
-				if (ch==err_channel) 
-					buffer.apply_tag_by_name("error", start, end);
-				view.scroll_mark_onscreen(end_mark);
+				out_line.append_unichar(uni);
+				if (uni=='\n') flush_out(status);
 				return true;
 			}
 		}
 		return false;
 	}
 
-	private bool do_enter(Widget w, Gdk.EventCrossing ev) {
-		w.has_focus = true;
-		return false;
-	}
-
-	private bool do_leave(Widget w, Gdk.EventCrossing ev) {
-		w.has_focus = false;
-		return false;
-	}
-	
 	private bool do_focus(Widget w, Gdk.EventFocus ev) {
 		if (ev.@in!=0) 
 			view.override_background_color(0, active_bg);
@@ -169,11 +185,13 @@ public class ConsolePart : ScrolledWindow {
 		this.basic(new TextBuffer(null));
 		IOCondition c;
 		TextIter iter;
-		fill_tag_table();
+		fill_tag_table(buffer);
 		buffer.get_start_iter(out iter);
-		end_mark = buffer.create_mark("console", iter, true);
+		end_mark = buffer.create_mark("console", iter, false);
+		input_mark = buffer.create_mark("input", iter, true);
 		shadow_type = ShadowType.OUT;
-		
+		in_line = new StringBuilder();		
+		out_line = new StringBuilder();		
 		int in_id, out_id;
 		int pfd[2];
 		
@@ -205,9 +223,6 @@ public class ConsolePart : ScrolledWindow {
 		c = IOCondition.IN|IOCondition.HUP;
 		err_channel.add_watch(c, (ch,c) => { return do_output(ch,c); });
 */
-		view.events |= Gdk.EventMask.ENTER_NOTIFY_MASK;
-		view.enter_notify_event.connect(do_enter);
-		view.leave_notify_event.connect(do_leave);
 	}
 
 	public ConsolePart.as_separate(ConsolePart main) {
@@ -220,7 +235,7 @@ public class ConsolePart : ScrolledWindow {
 	}
 	
 	public void init_input() {
-		lock (buffer) { view.scroll_mark_onscreen(end_mark); }
+		lock (buffer) { flush_out(IOStatus.NORMAL); }
 		view.grab_focus();
 	}
 
@@ -229,7 +244,7 @@ public class ConsolePart : ScrolledWindow {
 		TextMark insert;
 		TextIter at;
 		lock (buffer) {
-			TextTagTable tags = buffer.get_tag_table();
+			var tags = buffer.get_tag_table();
 			switch (type) {
 			case Log.GO:
 				tag = tags.lookup("go");
@@ -255,6 +270,13 @@ public class ConsolePart : ScrolledWindow {
 		lock (buffer) {
 			buffer.set_text("");
 		}		
+	}
+
+	public TextView view;
+
+	public void set_searcher(Searcher s) { 
+		source = s; 
+		s.prepare_client(view);
 	}
 
 	public signal void watch_input();

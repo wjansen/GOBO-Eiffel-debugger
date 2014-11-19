@@ -8,7 +8,7 @@ inherit
 
 	ITERATION_CURSOR [V_]
 
-feature {} -- Initalization
+feature {NONE} -- Initalization
 
 	make (t: like target)
 		do
@@ -17,7 +17,7 @@ feature {} -- Initalization
 			target_set: target = t
 		end
 	
-feature {} -- Implementation
+feature {NONE} -- Implementation
 
 	target: PC_TABLE [V_ , K_]
 	

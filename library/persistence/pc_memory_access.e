@@ -21,7 +21,7 @@ inherit
 			out
 		end
 
-feature {} -- Initialization 
+feature {NONE} -- Initialization 
 
 	make_memory (s: like system)
 		local
@@ -246,7 +246,7 @@ feature {PC_DRIVER} -- Object location
 			set_indexed_offset (s, i)
 		end
 
-feature {} -- Implementation 
+feature {NONE} -- Implementation 
 
 	address: POINTER
 	
@@ -266,7 +266,7 @@ feature {} -- Implementation
 			offset := s.item_offset (n.to_integer_32)
 		end
 
-feature {} -- Implementation 
+feature {NONE} -- Implementation 
 
 	offset, offset_sum: INTEGER
 

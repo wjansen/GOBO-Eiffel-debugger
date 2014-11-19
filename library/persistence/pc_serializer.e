@@ -20,7 +20,7 @@ inherit
 			default_create
 		end
 
-feature {} -- Initialization
+feature {NONE} -- Initialization
 	
 	default_create
 		do
@@ -220,7 +220,7 @@ feature -- Basic operation
 			serialize_by_order (obj, target, Forward_flag, opts, Void)
 		end
 
-feature {} -- Implementation 
+feature {NONE} -- Implementation 
 
 	actual_order: INTEGER
 		do

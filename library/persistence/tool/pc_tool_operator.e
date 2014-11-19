@@ -15,7 +15,7 @@ create
 
 	make, make_1
 	
-feature {} -- Initialization
+feature {NONE} -- Initialization
 
 	make (op: INTEGER; l, r: PC_TOOL_VALUE)
 		require

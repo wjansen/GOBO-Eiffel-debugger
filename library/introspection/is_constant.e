@@ -12,7 +12,7 @@ create
 
 	make
 
-feature {} -- Initialization 
+feature {NONE} -- Initialization 
 
 	make (nm: READABLE_STRING_8; fl: INTEGER; h: like home;
 			t: like type; f: like text)
@@ -263,7 +263,7 @@ feature {IS_BASE} -- Access
 	ms: detachable STRING
 		-- Value if `type.is_string', UTF8 of value if `type.is_unicode'.
 	
-feature {} -- External implementation
+feature {NONE} -- External implementation
 
 	c_double(p: POINTER): REAL_64
 		external "C inline"

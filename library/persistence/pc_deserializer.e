@@ -30,7 +30,7 @@ create
 	
 	default_create
 
-feature {} -- Initialization
+feature {NONE} -- Initialization
 
 	default_create
 		do
@@ -256,7 +256,7 @@ feature -- Basic operation
 			retry
 		end
 
-feature {} -- Traversal 
+feature {NONE} -- Traversal 
 
 	source (mode, order: INTEGER): PC_BASIC_SOURCE
 		local
@@ -452,7 +452,7 @@ feature -- Output
 			end
 		end
 
-feature {} -- Implementation 
+feature {NONE} -- Implementation 
 
 	Basic_store: INTEGER = 1
 	

@@ -37,7 +37,7 @@ create
 
 	default_create
 
-feature {} -- Initialization
+feature {NONE} -- Initialization
 
 	default_create
 		do
@@ -96,7 +96,7 @@ feature -- Comparison
 			end
 		end
 	
-feature {} -- Implementation 
+feature {NONE} -- Implementation 
 
 	keywords: DS_HASH_TABLE [READABLE_STRING_8, READABLE_STRING_8]
 	

@@ -25,7 +25,7 @@ create
 
 	make_from_tables
 
-feature {} -- Initialization 
+feature {NONE} -- Initialization 
 
 	make_from_tables
 		local
@@ -375,7 +375,7 @@ feature -- Low level access
 
 	initialized_onces: detachable IS_SEQUENCE [IS_ONCE]
 
-feature {} -- Factory 
+feature {NONE} -- Factory 
 
 	class_name (id: INTEGER): STRING
 		do
@@ -462,7 +462,7 @@ feature {} -- Factory
 			Result := c_typeset_elem (ts, i)
 		end
 	
-feature {} -- Implementation 
+feature {NONE} -- Implementation 
 
 	names: SPECIAL [READABLE_STRING_8]
 	
@@ -597,7 +597,7 @@ feature {} -- Implementation
 			end
 		end
 
-feature {} -- Implementation
+feature {NONE} -- Implementation
 	
 	any_name: STRING = "ANY"
 
@@ -605,7 +605,7 @@ feature {} -- Implementation
 
 	is_target_closed: STRING = "is_target_closed"
 	
-feature {} -- Guru section 
+feature {NONE} -- Guru section 
 
 	make_guru
 		note
@@ -778,7 +778,7 @@ feature {} -- Guru section
 			Result := root_creation_procedure.var_at(0)
 		end
 	
-feature {} -- External implementation 
+feature {NONE} -- External implementation 
 	
 	c_system: ANY
 		external "C inline"
@@ -865,7 +865,7 @@ feature {} -- External implementation
 			"(EIF_INTEGER)((size_t)$f - (size_t)$t)"
 		end
 
-feature {} -- External implementation
+feature {NONE} -- External implementation
 	
 	c_type_exists (id: INTEGER): BOOLEAN
 		external "C inline"

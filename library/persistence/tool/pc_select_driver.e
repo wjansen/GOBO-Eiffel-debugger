@@ -38,7 +38,7 @@ create
 
 	make
 
-feature {} -- Initialization
+feature {NONE} -- Initialization
 
 	make (src: like source; sel: like selection)
 		local
@@ -246,7 +246,7 @@ feature -- Basic operation
 			Result := vals [f.offset]
 		end
 	
-feature {} -- Scanning structures 
+feature {NONE} -- Scanning structures 
 
 	process_announcement (si: NATURAL)
 		local
@@ -284,7 +284,7 @@ feature {} -- Scanning structures
 			end
 		end
 
-feature {} -- Implementation
+feature {NONE} -- Implementation
 
 	where: PC_TOOL_VALUE
 		

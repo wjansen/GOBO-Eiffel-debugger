@@ -75,7 +75,7 @@ internal class History : Dialog {
 		label = new Label(
 """Search patterns
 (<span><i>Regular expression</i>
-of <b>Source/Console</b>)  </span>"""
+of <b>Source/Console</b>) </span>"""
 			);
 		label.use_markup = true;
 		grid.attach_next_to(label, prev, PositionType.BOTTOM, 1, 1);
@@ -251,7 +251,7 @@ internal class Menus : GLib.Object {
 		var list = gui.brk.breakpoints(true);
 		for (var iter=list.list_iterator(); iter.next();) {
 			bp = iter.@get();
-			if (bp.watch!=null)  continue;
+			if (bp.watch!=null) continue;
 			str = "break";
 			if (bp.exc>0) 
 				str += " catch " + bp.catch_to_short_string();
@@ -260,7 +260,7 @@ internal class Menus : GLib.Object {
 											 bp.pos/256, bp.pos%256);
 			if (bp.depth>0)
 				str += " depth %u".printf(bp.depth);
-			if (bp.tid>0)  
+			if (bp.tid>0) 
 				str += " type %s".printf(((Gedb.Name*)rts.type_at(bp.tid)).fast_name);
 			if (bp.iff!=null)
 				str = bp.iff.append_name(str + " if ");
@@ -343,6 +343,8 @@ internal class Menus : GLib.Object {
 		if (fs!=null) gui.restore(fs);
 	}
 
+	private void do_cont(Gtk.Action a) { gui.cont(); }	
+
 	private void do_quit(Gtk.Action a) { gui.quit(); }	
 
 	private void do_stack_data(Gtk.Action a) {
@@ -386,8 +388,8 @@ internal class Menus : GLib.Object {
 	private const Gtk.ActionEntry[] entries = {
 		{ "FileMenu", null, "_File" },   
 		{"Load", null, "_Load", null, "Load debuggee", do_load},
-		{"Cont", null, "_Continue", null, "Continue debugge", null},
-		{"Store_def", null, "_Store", null, 
+		{"Cont", null, "_Continue", null, "Continue debuggee", do_cont},
+		{"Store_def", null, "_Store", "<control>S", 
 		 "Store breakpoints and alias definitions \nto default path", 
 		 do_store_def},
 		{"Store", null, "Store _as ...", null, 
@@ -399,13 +401,13 @@ internal class Menus : GLib.Object {
 		{"Quit", null, "_Quit", "<control>Q", "Quit debugger", do_quit},
 		
 		{ "WindowMenu", null, "_Window" },   
-		{"Data", null, "New _data", null, 
+		{"Data", null, "New _data", "<control>D", 
 		 "Open new data window", do_stack_data},
-		{"Global", null, "_Global data", null, 
+		{"Global", null, "_Global data", "<control>G", 
 		 "Open window showing constants\nand once routines", 
 		 do_global},
-		{"Sql", null, "SQL _select", null, "Open SQL window", do_sql},
-		{"Alias", null, "_Alias definition", null, 
+		{"Sql", null, "SQL _table", "<control>T", "Open SQL window", do_sql},
+		{"Alias", null, "_Alias definition", "<control>A", 
 		 "Manipulat definitions\nof alias names", do_alias},
 		
 		{"PreferenceMenu", null, "_Preferences" },   
@@ -467,6 +469,10 @@ internal class Menus : GLib.Object {
 	private HelpPart help;
 	private Gee.ArrayList<Widget> preserve_list;
 
+	internal void set_continue(bool b) {
+		cont.set_sensitive(b);		
+	}
+
 	internal void do_set_sensitive(bool is_running) {
 		set_deep_sensitive(menubar, !is_running, preserve_list);
 	}
@@ -479,24 +485,24 @@ internal class Menus : GLib.Object {
 		ui.insert_action_group(actions, 0);
 		accel = ui.get_accel_group();
 		string info = ui_info_head;
-		if (with_cont) {
-			info += ui_info_cont;
-			cont = ui.get_widget("/Menubar/FileMenu/Cont") as Gtk.MenuItem;
-			cont.set_sensitive(false);
-		}
-		if (with_load) {
-			info += ui_info_load;
-			load = ui.get_widget("/Menubar/FileMenu/Load") as Gtk.MenuItem;
-		}
+		if (with_cont) info += ui_info_cont;
+		if (with_load) info += ui_info_load;
 		info += ui_info_tail;
 		ui.add_ui_from_string(info, -1);
 		menubar = ui.get_widget("/Menubar") as MenuBar;
 		help = new HelpPart();
 
 		preserve_list = new Gee.ArrayList<Widget>();
-		preserve_list.@add(ui.get_widget("/Menubar/FileMenu/Quit"));
 		preserve_list.@add(ui.get_widget("/Menubar/PreferenceMenu"));
 		preserve_list.@add(ui.get_widget("/Menubar/HelpMenu"));
+		if (with_cont) {
+			cont = ui.get_widget("/Menubar/FileMenu/Cont") as Gtk.MenuItem;
+			cont.set_sensitive(false);
+			preserve_list.@add(cont);
+		}
+		if (with_load) {
+			load = ui.get_widget("/Menubar/FileMenu/Load") as Gtk.MenuItem;
+		}
 		if (gui.dg!=null)
 			gui.dg.notify["is-running"].connect(
 				(g,p) => { do_set_sensitive(gui.dg.is_running); });
@@ -821,6 +827,10 @@ public class GUI : Window {
 		if (dg!=null) title = compose_title(null, dg.rts);
 	}
 		
+	internal void set_continue(bool b) {
+		menus.set_continue(b);
+	}
+
 	internal GUI(Debuggee dg, bool as_rta, bool loadable) {
 		Frame frame;
 		Label label;
@@ -863,6 +873,7 @@ public class GUI : Window {
 		// Set part members which could not be set during construction
 		// because of cyclic dependencies:
 		if (brk!=null) brk.source = source;
+		if (console!=null) console.set_searcher(source);
 
 		MenuBar menubar = menus.menubar;
 		vbox.pack_start(menubar, false, false, 0);
@@ -881,7 +892,16 @@ public class GUI : Window {
 		if (brk!=null) {
 			frame = new_frame("Breakpoints");
 			frame.@add(brk);
+#if HIDDEB_BP
+			var exp = new Expander("Show breakpoints");
+			exp.@add(frame);
+			exp.resize_toplevel = false;
+			exp.notify["expanded"].connect((e,p) => 
+				{ exp.label = exp.expanded ? "" : "Show breakpoints"; });
+			left.pack_start(exp, false, false, 0);
+#else
 			left.pack_start(frame, false, false, 0);
+#endif
 		}
 		var src = console!=null ? "Source/Console" : "Source";
 		frame = new_frame(src);
@@ -899,7 +919,7 @@ public class GUI : Window {
 		box.pack_start(frame, false, false, 0);
 		right.add2(box);
 		has_resize_grip = true;
-//		set_default_size(1080,800);
+//		set_default_size(1024,800);
 		destroy.connect(quit);
 
 		new_exe(dg);
@@ -920,6 +940,14 @@ public class GUI : Window {
 	internal Appearance appearance { get; private set; }
 	internal History history { get; private set; }
 
+	internal bool interrupt;
+
+	internal void cont() { 
+		interrupt = true;
+		hide();
+		Gtk.main_quit();
+	}
+
 	internal void restore(FileStream fs) {
 		Eval.Parser parser;
 		Eval.Alias? al;
@@ -927,18 +955,20 @@ public class GUI : Window {
 		string? line="";
 		for (line=fs.read_line(); line!=null; line=fs.read_line()) {
 			int l = line.index_of("--");
-			if (l>=0)  line = line.substring(0, l);
+			if (l>=0) line = line.substring(0, l);
 			line = line.strip();
-			if (line.length==0)  continue;
+			if (line.length==0) continue;
 			parser = new Eval.Parser.as_command(dg.rts);
 			parser.set_aliases(alias_list);
 			parser.add_string(line);
 			parser.end();
 			al = parser.al;
 			if (al==null) {
-				bp = parser.bp;
-				if (bp==null) brk.set_debug_clause(true);
-				else if (brk!=null) brk.add_breakpoint(bp);
+				if (brk!=null) {
+					bp = parser.bp;
+					if (bp==null) brk.set_debug_clause(true);
+					else brk.add_breakpoint(bp);
+				}
 			} else {
 				alias_list.@set(al.name, al.expr);
 			}
@@ -983,11 +1013,17 @@ public class GUI : Window {
 
 namespace Gedb {
 
+
+	private static void interrupt_handler(int sig) {
+		crash(IseCode.Signal_exception, sig);
+	}
+
 	internal GUI the_gui;
-	
-	public void make_rta(string[]args, AddressFunc af) {
-		var dr = new Driver.with_args(args, af);
+
+	public void make_rta(int* argc, uint8*** argv, AddressFunc af) {
+		var dr = new Driver.with_args(argc, argv, af);
 		if (the_gui==null) {
+			unowned string[] args = dr.args;
 			Gtk.init(ref args);
 			the_gui = new GUI.rta(dr, false);
 		}
@@ -999,40 +1035,59 @@ namespace Gedb {
 			Gtk.init(ref args);
 			the_gui = new GUI.pma(dg);
 			the_gui.new_exe(dg);
+			Process.@signal(ProcessSignal.INT, interrupt_handler);
 		}
 	}
 	
-	public void* crash(int reason) { 
+	public void* crash(int reason, uint sig=0) { 
 		var dr = the_gui.dg as Driver;
 		if (dr!=null) 
 			return dr.treat_stop(reason);
+		bool ctrl_c = reason==IseCode.Signal_exception && sig==ProcessSignal.INT;
+		if (!ctrl_c && the_gui.dg.has_rescue()) return null;
 		var rts = the_gui.dg.rts;
 		var bp = new Breakpoint();
 		bp.exc = reason;
 		string msg = bp.catch_to_string();
+		string comment;
 		uint id = the_gui.status.get_context_id("stop-reason");
-		var str = "Program crashed: ";
-		the_gui.status.push(id, str+msg);
-		str = "Eiffel system <span><b>";
-		str += ((Gedb.Name*)rts).fast_name;
-		str += "</b></span> has crashed.";
-		var dialog = new MessageDialog(the_gui, DialogFlags.MODAL,
-									   MessageType.ERROR,
-									   ButtonsType.YES_NO, str);
-		dialog.use_markup = true;
-		dialog.secondary_use_markup = true;
-		dialog.secondary_text =
-		"Reason: <span foreground='red'>" + msg + "</span>"
-			+ "\n\nYoy may now run the Post Mortem Analyser:  ";
-		dialog.title = compose_title("Crash", rts);
-		dialog.response.connect((ans) => { 
-				dialog.destroy(); 
-				if (ans==Gtk.ResponseType.NO) GLib.Process.exit(0);
-			});
-		dialog.run();
-		the_gui.dg.crash_response();
+		if (!the_gui.interrupt) {
+			if (ctrl_c) {
+				comment = "Program interrupted";
+				the_gui.status.push(id, comment);
+				comment = "Eiffel system <span><b>";
+				comment += ((Gedb.Name*)rts).fast_name;
+				comment += "</b></span> has been interrupted.";
+				the_gui.set_continue(true);
+			} else {
+				comment = "Program crashed: ";
+				the_gui.status.push(id, comment+msg);
+				comment = "Eiffel system <span><b>";
+				comment += ((Gedb.Name*)rts).fast_name;
+				comment += "</b></span> has crashed.";
+			}
+			var dialog = new MessageDialog(the_gui, DialogFlags.MODAL,
+										   MessageType.ERROR,
+										   ButtonsType.YES_NO, comment);
+			dialog.use_markup = true;
+			dialog.secondary_use_markup = true;
+			if (ctrl_c) 
+				comment = "";
+			else 
+				comment = "Reason: <span foreground='red'>" + msg + "</span>\n\n";
+			comment += "You may now run the Post Mortem Analyser";
+			dialog.secondary_text = comment;
+			dialog.title = compose_title("Crash", rts);
+			dialog.response.connect((ans) => { 
+					dialog.destroy(); 
+					if (ans==Gtk.ResponseType.NO) GLib.Process.exit(0);
+				});
+			dialog.run();
+		}
+		the_gui.dg.crash_response(ctrl_c);
 		the_gui.show_all();
 		Gtk.main();
+		if (the_gui.interrupt) return null;
 		the_gui = null;
 		GLib.Process.exit(0);
 	}

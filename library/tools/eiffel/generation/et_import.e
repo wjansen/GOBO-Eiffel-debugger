@@ -33,7 +33,7 @@ create
 
 	default_create
 	
-feature {} -- Initialization
+feature {NONE} -- Initialization
 
 	default_create
 		do
@@ -141,7 +141,7 @@ feature -- Access
 
 	infix_name: STRING
 
-feature {} -- Implementation 
+feature {NONE} -- Implementation 
 	
 	make_c_names (an_infix: READABLE_STRING_8)
 		do

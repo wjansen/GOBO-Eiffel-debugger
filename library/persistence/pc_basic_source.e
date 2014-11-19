@@ -294,7 +294,7 @@ feature {PC_DRIVER, PC_HEADER} -- Reading elementary data
 			last_unicode := last_str
 		end
 
-feature {} -- Implementation
+feature {NONE} -- Implementation
 
 	start_position: INTEGER
 
@@ -772,7 +772,7 @@ feature {} -- Implementation
 			end
 		end
 
-feature {} -- Implementation
+feature {NONE} -- Implementation
 
 	scoop: BOOLEAN
 
@@ -782,7 +782,7 @@ feature {} -- Implementation
 		do
 		end
 
-feature {} -- External implementation
+feature {NONE} -- External implementation
 
 	c_32_float (n: NATURAL_32): REAL_32
 		external

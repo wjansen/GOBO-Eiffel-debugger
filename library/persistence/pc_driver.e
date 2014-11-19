@@ -15,7 +15,7 @@ inherit
 
 	MEMORY
 
-feature {} -- Initialization 
+feature {NONE} -- Initialization 
 
 	common_make (t: like target; s: like source; opts: INTEGER;
 			oo: like known_objects)
@@ -114,7 +114,7 @@ feature -- Basic operation
 			known_objects.do_pairs (action)
 		end
 	
-feature {} -- Scanning structures 
+feature {NONE} -- Scanning structures 
 
 	common_traverse
 		note
@@ -461,7 +461,7 @@ feature {} -- Scanning structures
 			end
 		end
 
-feature {} -- Implementation 
+feature {NONE} -- Implementation 
 
 	deep, forward: BOOLEAN
 

@@ -44,7 +44,7 @@ create
 
 	make
 
-feature {} -- Initialization 
+feature {NONE} -- Initialization 
 
 	default_create
 		do
@@ -120,7 +120,7 @@ feature -- Status setting
 			source_system: source_system = s
 		end
 
-feature {} -- Push and pop types 
+feature {NONE} -- Push and pop types 
 
 	put_once (cls: detachable IS_CLASS_TEXT; nm: STRING; id: like void_ident)
 		local
@@ -202,7 +202,7 @@ feature -- Auxiliary routines of factory
 		do
 		end
 	
-feature {} -- Auxiliary routines of factory 
+feature {NONE} -- Auxiliary routines of factory 
 
 	new_normal_type (id, fl: INTEGER; bc: attached like class_at)
 		do
@@ -363,7 +363,7 @@ feature {} -- Auxiliary routines of factory
 		do
 		end
 
-feature {} -- Implementation 
+feature {NONE} -- Implementation 
 
 	Known_class: INTEGER_8 = 1
 

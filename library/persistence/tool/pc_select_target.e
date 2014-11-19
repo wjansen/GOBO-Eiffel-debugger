@@ -23,7 +23,7 @@ create
 
 	make
 
-feature {} -- Initialization 
+feature {NONE} -- Initialization 
 
 	make
 		do
@@ -181,7 +181,7 @@ feature {PC_DRIVER} -- Object location
 			last_ident := id
 		end
 	
-feature {} -- Implementation 
+feature {NONE} -- Implementation 
 
  	field_value: detachable PC_TOOL_VALUE
 

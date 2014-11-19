@@ -54,7 +54,7 @@ create
 	
 	declare, declare_from_pattern
 
-feature {} -- Initialization 
+feature {NONE} -- Initialization 
 
 	declare (o: like origin; id: INTEGER; s: ET_IS_SYSTEM)
 		local
@@ -148,7 +148,7 @@ feature {IS_BASE} -- Implementation
 
 	generics: IS_SEQUENCE [like generic_at]
 
-feature {} -- Implementation 
+feature {NONE} -- Implementation 
 
 	count_feature (s: ET_IS_SYSTEM): ET_IS_FEATURE_TEXT
 		local
@@ -178,7 +178,7 @@ feature {} -- Implementation
 			create Result.declare_from_feature (base_class, df.static_feature, s)
 		end
 	
-feature {} -- Implementation 
+feature {NONE} -- Implementation 
 
 note
 

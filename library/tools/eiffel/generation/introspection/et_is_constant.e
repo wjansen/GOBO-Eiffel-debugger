@@ -21,7 +21,7 @@ create
 
 	declare
 
-feature {} -- Initialization 
+feature {NONE} -- Initialization 
 
 	declare (o: like origin; s: ET_IS_SYSTEM)
 		note

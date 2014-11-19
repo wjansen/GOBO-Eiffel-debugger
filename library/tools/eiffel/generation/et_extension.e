@@ -9,7 +9,7 @@ inherit
 	
 	PC_BASE
 	
-feature {} -- Initialization
+feature {NONE} -- Initialization
 	
 	make (a_generator: like c_generator; a_compilee: like compilee;
 			a_c_names: like c_names)
@@ -39,7 +39,7 @@ feature -- Basic operation
 		deferred
 		end
          
-feature {} -- Extension parts
+feature {NONE} -- Extension parts
          
 	print_extension 
 		do
@@ -67,7 +67,7 @@ feature {} -- Extension parts
 		do
 		end
 
-feature {} -- Elementary IO 
+feature {NONE} -- Elementary IO 
 	
 	put_global_integer (n: INTEGER_64; name: STRING; long: BOOLEAN)
 		note
@@ -382,7 +382,7 @@ feature {} -- Elementary IO
 			end
 		end
 	
-feature {} -- Implementation
+feature {NONE} -- Implementation
 	
 	c_file, h_file: KI_TEXT_OUTPUT_STREAM
 	

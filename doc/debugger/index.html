@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
-<meta name="generator" content="hevea 2.09">
+<meta name="generator" content="hevea 2.16">
 <title>A debugger for the Gobo Eiffel compiler  
 User's guide 
  
@@ -87,7 +87,8 @@ not in finalized mode and without the proper debugger
 (which will be called <U>runtime analyser</U> in the following 
 while <U>debugger</U> means both, post mortem analyser and runtime analyser). 
 The effect is that the post mortem analyser 
-gets invoked if the program crashes for some reason. 
+gets invoked if the program crashes for some reason 
+or when the program is interrupted from keyboard. 
 This way, the call stack as well as data on stack and heap can be analysed. 
 The post mortem analyser has been inspired by the <span style="font-family:monospace">core</span> file 
 written by <span style="font-style:oblique">Unix</span> in case of a program crash: 
@@ -131,7 +132,7 @@ so the compiler&#X2019;s integrity is preserved.
 The debuggee&#X2019;s integrity is preseved as well since only additions 
 to the <span style="font-style:oblique">C</span> code are made that do not modify the behaviour 
 of the normally generated code 
-(surely, the additions cause the longer runtime).
+(of course, the additions cause the longer runtime).
 </p><p>The debugger uses the <span style="font-style:oblique">GTK+</span> graphics library 
 for the graphical user interface (GUI for short). 
 <span style="font-style:oblique">GTK+</span> and related libraries as <span style="font-style:oblique">GLib</span> etc.

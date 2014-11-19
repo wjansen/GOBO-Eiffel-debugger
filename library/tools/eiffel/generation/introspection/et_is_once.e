@@ -37,7 +37,7 @@ create
 
 	declare
 
-feature {} -- Initialization 
+feature {NONE} -- Initialization 
 
 	declare (o: attached like origin; where: like target; s: ET_IS_SYSTEM)
 		require

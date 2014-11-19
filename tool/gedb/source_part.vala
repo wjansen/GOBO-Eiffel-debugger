@@ -5,7 +5,14 @@ internal ConsolePart the_console;
 
 private const string regexp_string = "Regular expression to search";
 
-public class SourcePart : Box, AbstractPart, ClassPosition { 
+public class SourcePart : Box, AbstractPart, ClassPosition, Searcher { 
+
+	private Entry search;
+	private ToggleButton precise;
+	private string hot_needle;
+	private string strong_needle;
+	private bool is_hot;
+	private bool forward = true;
 
 	internal SourceView feature_view;
 	internal Label feature_class;
@@ -26,15 +33,10 @@ public class SourcePart : Box, AbstractPart, ClassPosition {
 	internal ListStore class_list;
 	internal TextTagTable tags;
 	internal Pango.FontDescription? font;
-	internal string needle;
 	internal int mono_width;
-	internal bool active; 
-
-	internal Entry plus;
-	internal Entry search;
-	internal ToggleButton precise;
 	internal Entry go_to;
-	internal bool forward = true;
+	internal Entry plus;
+	internal bool active; 
 
 	private bool _wrap_mode;
 	public bool wrap_mode { 
@@ -94,39 +96,45 @@ public class SourcePart : Box, AbstractPart, ClassPosition {
 		tag.background = "#e0ffc4";	
 		tag.background_set = true; 
 		tags.@add(tag);
-		tag = new TextTag("classname");
-		tag.background = "#abc4ff";	//"#bad9ff";
-		tag.background_set = true; 
-		tags.@add(tag);
 		tag = new TextTag("listable");
-		tag.background = "#d9e9ff";
+		tag.background = "#cbe1ff";
 		tag.background_set = true;
 		tags.@add(tag);
 		tag = new TextTag("computable");
-		tag.background = "#fce4fa";
+		tag.background = "#fcc3f7";
 		tag.background_set = true; 
 		tags.@add(tag);
 		tag = new TextTag("paren-mark");
 		tags.@add(tag);
 		tag = new TextTag("paren");
-		tag.background = "yellow";
-		tag.background_set = true; 
+		tag.foreground = "magenta";
+		tag.foreground_set = true; 
+		tag.weight = 1000;
+		tag.weight_set = true;
 		tags.@add(tag);
 		tag = new TextTag("actual");
-		tag.background = "#00d600";
+		tag.background = "#228b22";
 		tag.background_set = true; 
+		tag.foreground = "white";
+		tag.foreground_set = true; 
 		tags.@add(tag);
 		tag = new TextTag("stoppable"); 
 		tag.underline = Pango.Underline.DOUBLE;
 		tag.underline_set = true;
 		tags.@add(tag);
 		tag = new TextTag("break");
-		tag.background = "red"; 
+		tag.background = "#ec0000";
 		tag.background_set = true; 
-		tags.@add(tag);
-		tag = new TextTag("search");
-		tag.background = "#ffd475";
+		tag.foreground = "white";
 		tag.foreground_set = true; 
+		tags.@add(tag);
+		tag = new TextTag("searched");
+		tag.background = "#fff670";
+		tag.foreground_set = true; 
+		tags.@add(tag);
+		tag = new TextTag("found");
+		tag.background = "#ffa500";
+		tag.background_set = true; 
 		tags.@add(tag);
 	}
 	
@@ -202,7 +210,7 @@ public class SourcePart : Box, AbstractPart, ClassPosition {
 			var button = new Button();
 			button.set_relief(ReliefStyle.NONE);
 			button.set_image(new Image.from_stock(Stock.CLOSE, IconSize.MENU));
-			button.clicked.connect((b) => { 
+			button.clicked.connect((b) => {
 					int ip = pages.page_num(src);
 					if (ip==pages.page) return;
 					pages.remove_page(ip);
@@ -228,20 +236,18 @@ public class SourcePart : Box, AbstractPart, ClassPosition {
 
 	private void show_console() {
 		if (console==null) return;
-		if (the_console==separate_console)  return;
+		if (the_console==separate_console) return;
 		Widget page = pages.get_nth_page(-1);
 		page.hide();
-		Widget w = separate_console;
-		for (Widget p=w.parent; p!=null; p=p.parent)  w = p;
-		w.show_all();
+		var top = separate_console.get_toplevel();
+		top.show_all();
 		the_console = separate_console;
 	}
 
 	private void close_console(Widget top) {
-		if (console==null) return;
-		if (the_console==console)  return;
+		if (console==null || console==the_console) return;
 		Widget w = top;
-		for (Widget p=top; p!=null; p=p.parent)  w = p;
+		for (Widget p=top; p!=null; p=p.parent) w = p;
 		w.hide();
 		Widget page = pages.get_nth_page(-1);
 		page.show();
@@ -252,37 +258,156 @@ public class SourcePart : Box, AbstractPart, ClassPosition {
 		top.hide();
 		string c_name = feature_class.get_text();
 		ClassText* cls = dg.rts.class_by_name(c_name);
-		if (cls==null)  return;
+		if (cls==null) return;
 		string[] l_names = feature_lines.get_text().split(" -");
 		int first = int.parse(l_names[0]);
 		int last = int.parse(l_names[1]);
 		do_actual(null, cls.ident, (uint)256*first);
 	}
 
+	public int search_state { get; set; } 
+
+	internal void prepare_client(TextView view) {
+		TextIter iter;
+ 		var buf = view.buffer;
+		buf.get_iter_at_mark(out iter, buf.get_insert());
+		
+		view.events |= Gdk.EventMask.ENTER_NOTIFY_MASK;
+		view.enter_notify_event.connect(do_enter);
+		view.leave_notify_event.connect(do_leave);
+		view.focus_in_event.connect(do_focus);		
+		view.focus_out_event.connect(do_focus);	
+	}
+
+	public bool handle_key(Gdk.EventKey ev, TextView view) {
+		if (ev.type != Gdk.EventType.KEY_PRESS) return false;
+		ClassText* cls;
+		Breakpoint bp;
+		var text = view.buffer;
+		var src = text as SourceBuffer;
+		uint code = ev.keyval;
+		string value;
+		uint l, p;
+		if ((ev.state & Gdk.ModifierType.CONTROL_MASK) > 0) {
+			switch (code) {
+			case 'f':
+				adjust_up_down();
+				precise.set_active(false);
+				adjust_mark(view);
+				switch (search_state) {
+				case SearchMode.NO_SEARCH:
+				case SearchMode.GO_TO:
+					search_state = SearchMode.INIT_SEARCH;
+					break;
+				default:
+					if (hot_needle.length>0) {
+						search_state = SearchMode.SEARCHING;
+						forward = true;
+						adjust_up_down();
+						simple_search(view, true);
+					}
+					break;
+				}
+				break;
+			case 'r':
+				if (search_state==SearchMode.SEARCHING) {
+					forward = false;
+					adjust_up_down();
+					simple_search(view, true);
+				}
+				break;
+			default:
+				return false;
+			}
+		} else if (code==Gdk.Key.Escape) {
+			end_search(view, true);
+		} else if (ev.is_modifier==0) {
+			string str="";
+			switch (search_state) {
+			case SearchMode.INIT_SEARCH:
+			case SearchMode.SEARCHING:
+				if (code==Gdk.Key.BackSpace) { 
+					l = hot_needle.length;
+					if (l>0) {
+						hot_needle = hot_needle.substring(0, l-1);
+						forward = false;
+						adjust_up_down();
+						simple_search(view, false);
+					}
+				} else if (code<' ' || code>'~') {
+					end_search(view, code==Gdk.Key.Escape);
+					return false;
+				} else {
+					if (search_state==SearchMode.INIT_SEARCH) hot_needle = "";
+					hot_needle = "%s%c".printf(hot_needle, (int)code);
+					search_state = SearchMode.SEARCHING;
+					forward = true;
+					adjust_up_down();
+					simple_search(view, false);
+				}
+				break;
+			default:
+				end_search(view);
+				return false;
+				break;
+			}
+		}
+		return true;
+	}
+	
+	private bool do_focus(Widget w, Gdk.EventFocus ev) {
+		var scroll = w.get_parent() as ScrolledWindow;
+		if (scroll==null) return false;
+		var window = scroll.get_window();
+		scroll.shadow_type = ev.@in!=0 ? ShadowType.OUT : ShadowType.NONE;
+		return false;
+	}
+
+	private bool do_enter(Widget w, Gdk.EventCrossing ev) {
+		w.has_focus = true;
+		search.placeholder_text = "Simple search string";
+		search.set_text("");
+		return false;
+	}
+
+	private bool do_leave(Widget w, Gdk.EventCrossing ev) {
+		w.has_focus = false;
+		search.placeholder_text = regexp_string;
+		search.set_text(strong_needle);
+		return false;
+	}
+
 	private void do_search() {
 		var e = pattern_history.get_child() as Entry;
-		needle = e.get_text();
 		TreeIter iter;
 		TreePath path = null;
-		pattern_history.add_item(needle);
+		string str = e.get_text();
+		bool same = str==strong_needle;
+		strong_needle = str;
+		pattern_history.add_item(strong_needle);
 		var full = act_source();
 		if (full!=null)
-			full.complex_expression(needle, forward, precise.active);
+			complex_expression(full.text_view, same);
+		else if (the_console!=separate_console)
+			complex_expression(the_console.view, same);
+		search.override_color(StateFlags.NORMAL, 
+							  found ? found_bg : not_found_bg);
 	}
 	
 	private void do_search_icon(EntryIconPosition pos) {
 		if (pos==EntryIconPosition.PRIMARY) {
-			search.set_text("");
-			search.grab_focus(); 
-		} else {
 			forward = !forward;
+		} else {
+			strong_needle = "";
+			search.set_text(strong_needle);
+			search.grab_focus(); 
 		}
 		adjust_up_down();
 	}
 
 	internal void adjust_up_down() {
 		string up_down = forward ? Stock.GO_DOWN : Stock.GO_UP;
-		search.set_icon_from_stock(EntryIconPosition.SECONDARY, up_down);
+		search.set_icon_from_stock(EntryIconPosition.PRIMARY, up_down);
 	}
 
 	internal void do_toggle(ToggleButton toggle) {
@@ -293,6 +418,143 @@ public class SourcePart : Box, AbstractPart, ClassPosition {
 	private void do_goto(Entry entry) {
 		var full = act_source();
 		if (full!=null) full.do_goto(entry);
+	}
+
+	internal void end_search(TextView view, bool clear=false) {
+		if (clear) {
+			TextIter start, end;
+			var text = view.buffer;
+			text.get_bounds(out start, out end);
+			text.remove_tag_by_name("searched", start, end);
+			text.remove_tag_by_name("found", start, end);
+		}
+		search_state = SearchMode.NO_SEARCH; 
+		search.placeholder_text = regexp_string;
+		search.set_text(strong_needle);
+	}
+
+	private void adjust_mark(TextView view) {
+		var text = view.get_buffer();
+		var insert = text.get_insert();
+		var mark = text.get_selection_bound();
+		TextIter at;
+		text.get_iter_at_mark(out at, mark);
+		text.move_mark(insert, at);
+	}
+
+	private Gdk.RGBA? found_bg;
+	private Gdk.RGBA not_found_bg;
+	private bool found;
+
+	private void simple_search(TextView view, bool same) {
+		var text = view.get_buffer();
+		var insert = text.get_insert();
+		TextIter at, start, end, first, last;
+		search.override_color(StateFlags.NORMAL, found_bg);
+		search.set_text(hot_needle);
+		text.get_bounds(out start, out end);
+		same &= is_hot;
+		is_hot = true;
+		if (same && !found) text.move_mark(insert, forward ? start : end);
+ 		text.get_iter_at_mark(out at, insert);
+		if (forward) {
+			if (same) at.forward_chars(1);
+			found = at.forward_search(hot_needle,
+									  TextSearchFlags.CASE_INSENSITIVE,
+									  out first, out last, null);
+		} else {
+			if (same) at.backward_chars(1);
+			found = at.backward_search(hot_needle,
+									   TextSearchFlags.CASE_INSENSITIVE, 
+									   out last, out first, null);
+		}
+		if (found) {
+			text.remove_tag_by_name("found", start, end);
+			if (!same) {
+				text.remove_tag_by_name("searched", start, end);
+				int n = text.get_line_count();
+				bool ok;
+				for (int i=0; i<n; ++i) {
+					text.get_iter_at_line(out start, i);
+					ok = start.forward_search(hot_needle,
+											  TextSearchFlags.CASE_INSENSITIVE,
+											  out start, out end, null);
+					if (ok) text.apply_tag_by_name("searched", start, end);
+				}
+			} 
+			text.apply_tag_by_name("found", first, last);
+			text.move_mark(insert, first);
+			text.place_cursor(forward ? first : last);
+			view.scroll_to_mark(insert, 0.05, false, 0.0, 0.0);
+		} else {
+			search.override_color(StateFlags.NORMAL, not_found_bg);
+		}
+	}
+	
+	internal void complex_expression(TextView view, bool same) {
+		var text = view.get_buffer();
+		var insert = text.get_insert();
+		var f_tag = text.tag_table.lookup("found");
+		var s_tag = text.tag_table.lookup("searched");
+		TextIter at, start, end;
+		GLib.MatchInfo match = null;
+		string all;
+		text.get_bounds(out start, out end);
+		same &= !is_hot;
+		is_hot = false;
+		if (same && !found) text.move_mark(insert, forward ? start : end);
+		text.get_iter_at_mark(out at, insert);
+		int now = at.get_offset();
+		if (same) now += forward ? 1 : -1;
+		all = text.get_text(start, end, false);
+		try {
+			GLib.RegexCompileFlags flags = (GLib.RegexCompileFlags)0;
+			if (precise.active) flags |= GLib.RegexCompileFlags.CASELESS;
+			var regex = new GLib.Regex(strong_needle, flags, 0);
+			found = regex.match(all, 0, out match);
+		} catch (GLib.Error e) {
+			found = false;
+		}
+		int left = -1, right = -1;
+		if (found) {
+			found = false;
+			text.remove_tag(f_tag, start, end);
+			text.remove_tag(s_tag, start, end);
+			int l, r;
+			for (bool ok=true; ok; ok=match.next()) {
+				match.fetch_pos(0, out l, out r);
+				text.get_iter_at_offset(out start, l);
+				text.get_iter_at_offset(out end, r);
+				text.apply_tag(s_tag, start, end); 
+				if (!found) {
+					if (forward && l>=now) {
+						left = l;
+						right = r;
+						found = true;
+					} else if (!forward && r>=now) {
+						found = true;
+					} else {
+						left = l;
+						right = r;
+					}
+				}
+			}
+		}
+		if (found) {
+			text.get_iter_at_offset(out start, left);
+			text.get_iter_at_offset(out end, right);
+			text.apply_tag(f_tag, start, end); 
+			if (forward) {
+				text.place_cursor(start);
+				text.move_mark(insert, start);
+			} else {
+				text.place_cursor(end);
+				text.move_mark(insert, end);
+			}
+			view.scroll_to_mark(insert, 0.05, false, 0.0, 0.0);	
+		} else {
+			search.override_color(StateFlags.NORMAL, not_found_bg);
+		}
 	}
 
 	private void do_set_sensitive(bool is_running) { active = !is_running; }
@@ -330,11 +592,13 @@ public class SourcePart : Box, AbstractPart, ClassPosition {
 			menu.xalign = 0.0F;
 			pages.append_page_menu(console, cb, menu);
 			console_window = new Window();
+			console_window.deletable = false;
 			var sb = new Box(Orientation.VERTICAL, 0);
 			console_window.@add(sb);
-			console_window.set_border_width(5);
+			console_window.delete_event.connect((e) => 
+				{ close_console(separate_console); return true; });
 			separate_console = new ConsolePart.as_separate(console);
-			sb.pack_start(separate_console, true, true, 3);
+			sb.pack_start(separate_console, true, true, 0);
 			var buttons = new ButtonBox(Orientation.HORIZONTAL);
 			sb.pack_end(buttons);
 			buttons.set_layout(ButtonBoxStyle.END);
@@ -346,8 +610,7 @@ public class SourcePart : Box, AbstractPart, ClassPosition {
 back to source window.""");
 			button.has_tooltip = true;
 			button.clicked.connect(() => { close_console(separate_console); });
-			separate_console.delete_event.connect(
-				() => { close_console(separate_console); return true; });
+			separate_console.set_searcher(this);
 		}
 		return pages;
 	}
@@ -399,7 +662,8 @@ and close feature window.""");
 		console = c;
 		the_console = console;
 		this.status = status;
-		needle = "";
+		hot_needle = "";
+		strong_needle = "";
 
 		orientation = Orientation.VERTICAL;
 		font = Pango.FontDescription.from_string("Inconsolata 11");
@@ -428,19 +692,21 @@ and close feature window.""");
 		pattern_history = new HistoryBox(null);
 		search = pattern_history.get_child() as Entry;
 		search_box.pack_start(pattern_history, true, true, 0);
-		search.set_icon_from_stock(EntryIconPosition.PRIMARY, Stock.FIND);
-		search.set_icon_from_stock(EntryIconPosition.SECONDARY, Stock.GO_DOWN);
+		search.set_icon_from_stock(EntryIconPosition.SECONDARY, Stock.FIND);
+		search.set_icon_from_stock(EntryIconPosition.PRIMARY, Stock.GO_DOWN);
 		search.icon_release.connect(do_search_icon);
 		search.placeholder_text = regexp_string;
 		search.set_tooltip_markup(
 """Pattern to search, may be a regular expression.
-Shortcut: use <span><i>&lt;CTRL&gt;S, &lt;CTRL&gt;R </i></span> for Emacs like 
-incremental search (but no regular expressions).""");
+Shortcut: press <span><i>&lt;Control&gt;f</i></span>  in the text field to start
+fast incremental search (but no regular expressions).""");
 		search.has_tooltip = true;
+		not_found_bg = new Gdk.RGBA();
+		not_found_bg.parse("#ef2929");
 
 		precise = new ToggleButton.with_label("precise");
 		search_box.pack_start(precise, false, false, 3);
-		precise.set_active(false);
+		precise.active = false;
 		precise.set_tooltip_text("Case sensitive search?");
 		precise.has_tooltip = true;
 
@@ -476,7 +742,7 @@ Shortcut: <span><i>&lt;CTRL&gt;L</i></span>""");
 	
 	public void switch_to_top() {
 		StackFrame* f = stack.top;
-		if (f==null)  return;
+		if (f==null) return;
 		FullSource src=null;
 		uint cid = f.class_id;
 		int i;
@@ -542,7 +808,7 @@ public class SingleSource : Box {
 							SourceBuffer buf, int first, int last,
 							Gee.List<int> lparen) {
 		var ln = scanner.line_count+1;
-		if (ln<first || ln>last)  return;
+		if (ln<first || ln>last) return;
 		TextIter end;
 		int lpos, rpos;
 		int code = scanner.in_note 
@@ -551,6 +817,8 @@ public class SingleSource : Box {
 		buf.get_end_iter(out end);
 		switch (code) {
 		case ScannerParser.TokenCode.KEYWORD:
+		case ScannerParser.TokenCode.OPERATOR:
+		case ScannerParser.TokenCode.ASSIGN:
 			buf.insert_with_tags_by_name(end, match, -1, "keyword", null);
 			break;
 		case ScannerParser.TokenCode.INTEGER:
@@ -630,7 +898,10 @@ public class SingleSource : Box {
 		ScrolledWindow tbox = new ScrolledWindow(null, null);
 		tbox.@add(text_view);
 		tbox.set_min_content_width(86*s.mono_width);
+#if HIDDEN_BP
+#else
 		tbox.set_min_content_height(320);
+#endif
 		tbox.shadow_type = ShadowType.OUT;
 		pack_start(tbox);
 
@@ -674,6 +945,7 @@ public class FullSource : SingleSource {
 	private StackFrame* frame;
 	private uint pos;
 	private uint actual_pos;
+	private int other_paren = -1;
 	private SourceMark? actual_line; 
 
 	public bool show_line(int ln) {
@@ -689,20 +961,14 @@ public class FullSource : SingleSource {
 
 	private void show_feature(SourcePart s) {
 		var buf = text_view.get_buffer() as SourceBuffer;
-		var tag1 = buf.tag_table.lookup("listable");
-		var tag2 = buf.tag_table.lookup("classname");
+		var tag = buf.tag_table.lookup("listable");
 		bool all;
 		TextIter start, end;
 		string word, name="";
 		uint i, j;
 		int pos;
 		buf.get_bounds(out start, out end);
-		all = start.forward_to_tag_toggle(tag2);
-		if (!all) {
-			buf.get_bounds(out start, out end);
-			if (!start.forward_to_tag_toggle(tag1)) return;
-		}
-		var tag = all ? tag2 : tag1;
+		start.forward_to_tag_toggle(tag);
 		end.assign(start);
 		end.forward_to_tag_toggle(tag);
 		word = buf.get_text(start, end, false);
@@ -711,41 +977,35 @@ public class FullSource : SingleSource {
 		if (q==null)
 			return;
 		ClassText* cls;
-		if (all) {
-			cls = q.cls;
-			if (cls==null) return;
-			source.do_actual(null, cls.ident, 1);
-		} else {
-			FeatureText* ft = q.ft;
-			RoutineText* rt = null;
-			if (ft==null) return;
-			if (ft.renames!=null) ft = ft.renames;
-			int m, n;
-			string cn = ft.home._name.fast_name;
-			s.feature_view.get_toplevel().show_all();
-			s.feature_class.set_text(cn);
-			m = (int)ft.first_pos/256;
-			if (m==0) return;
-			n = (int)ft.last_pos/256;
-			name = ft._name.fast_name;
-			s.feature_lines.set_text("%d - %d".printf(m, n));
-			buf = s.feature_view.get_buffer() as SourceBuffer;
-			show_class(buf, ft.home, m, n);
-			buf.get_start_iter(out start);
-			bool ok=false;
-			do {
-				ok = start.forward_search(name, TextSearchFlags.CASE_INSENSITIVE,
-										  out start, out end, null);
-				if (!ok) break;
-				unichar c = end.get_char();
-				ok = !c.isalnum() && c!='_';
+		FeatureText* ft = q.ft;
+		RoutineText* rt = null;
+		if (ft==null) return;
+		if (ft.renames!=null) ft = ft.renames;
+		int m, n;
+		string cn = ft.home._name.fast_name;
+		s.feature_view.get_toplevel().show_all();
+		s.feature_class.set_text(cn);
+		m = (int)ft.first_pos/256;
+		if (m==0) return;
+		n = (int)ft.last_pos/256;
+		name = ft._name.fast_name;
+		s.feature_lines.set_text("%d - %d".printf(m, n));
+		buf = s.feature_view.get_buffer() as SourceBuffer;
+		show_class(buf, ft.home, m, n);
+		buf.get_start_iter(out start);
+		bool ok=false;
+		do {
+			ok = start.forward_search(name, TextSearchFlags.CASE_INSENSITIVE,
+									  out start, out end, null);
+			if (!ok) break;
+			unichar c = end.get_char();
+			ok = !c.isalnum() && c!='_';
 				if (ok) {
 					buf.apply_tag(tag, start, end);
 				} else {
 					start.assign(end);
 				}
-			} while (!ok);
-		}
+		} while (!ok);
 	}
 	
 	private bool compute_value(bool now) {
@@ -766,7 +1026,7 @@ public class FullSource : SingleSource {
 		after = (int)(pos+q.size);
 		end.assign(start);
 		end.forward_chars(after);	// after name and args
-		for (q=q.p; q!=null; q=q.p)  pos = (int)q.pos;
+		for (q=q.p; q!=null; q=q.p) pos = (int)q.pos;
 		start.forward_chars(pos);	// at left most target
 		word = buf.get_text(start, end, true);
 		word = word.delimit("\t\r\n", ' '); 
@@ -774,110 +1034,6 @@ public class FullSource : SingleSource {
 			data.eval.compute(word, true); 
 		} else {
 			data.eval.insert(word); 
-		}
-		return true;
-	}
-
-	enum SearchMode {
-		NO_SEARCH, INIT_SEARCH, SEARCHING, NOT_FOUND, GO_TO }
-
-	private void end_search(bool clear=false) {
-		if (clear) {
-			TextIter start, end;
-			var text = text_view.get_buffer();
-			text.get_bounds(out start, out end);
-			text.remove_tag_by_name("search", start, end);
-		}
-		search_mode = SearchMode.NO_SEARCH; 
-		source.search.placeholder_text = regexp_string;
-		source.search.set_text("");
-	}
-
-	private void adjust_mark() {
-		var text = text_view.get_buffer() as SourceBuffer;
-		var search = text.get_mark("search");
-		var mark = text.get_selection_bound();
-		TextIter at;
-		text.get_iter_at_mark(out at, mark);
-		text.move_mark(search, at);
-	}
-
-	private bool simple_search(bool same) {
-		var text = text_view.get_buffer() as SourceBuffer;
-		var search = text.get_mark("search");
-		TextIter at, first, last;
-		bool ok;
-		int k, m, mc, n, nc;
-		text.get_iter_at_mark(out at, search);
-		source.search.set_text(source.needle);
-		if (source.forward) {
-			if (same) at.forward_chars(1);
-			ok = at.forward_search(source.needle,
-								   TextSearchFlags.CASE_INSENSITIVE,
-								   out first, out last, null);
-		} else {
-			if (same) at.backward_chars(1);
-			ok = at.backward_search(source.needle,
-									TextSearchFlags.CASE_INSENSITIVE, 
-									out last, out first, null);
-		}
-		if (ok) {
-			TextIter start, end;
-			text.get_bounds(out start, out end);
-			text.remove_tag_by_name("search", start, end);
-			k = at.get_line();
-			m = first.get_line();
-			mc = first.get_line_offset();
-			n = last.get_line();
-			nc = last.get_line_offset();
-			text.move_mark(search, first);
-			text.apply_tag_by_name("search", first, last);
-			text.place_cursor(source.forward ? first : last);
-			text_view.scroll_to_mark(search, 0.05, false, 0.0, 0.0);
-		}
-		return ok;
-	}
-	
-	internal bool complex_expression(string needle, bool forward, bool prec) {
-		var text = text_view.get_buffer() as SourceBuffer;
-		var insert = text.get_insert();
-		var tag = text.tag_table.lookup("search");
-		TextIter at, first, last;
-		GLib.Regex regex;
-		GLib.MatchInfo match;
-		string all;
-		int left, right, off;
-		int flags = 0;	//G_REGEX_MULTILINE;
-		if (!prec) flags |= GLib.RegexCompileFlags.CASELESS;
-		if (forward) {
-			text.get_iter_at_mark(out first, insert);
-			if (first.has_tag(tag)) 
-				first.forward_to_tag_toggle(tag);
-			text.get_end_iter(out last);
-			off = first.get_offset();
-		} else {
-			text.get_start_iter(out first);
-			text.get_iter_at_mark(out last, insert);
-			if (last.has_tag(tag)) 
-				last.backward_to_tag_toggle(tag);
-			off = 0;
-		}
-		all = text.get_text(first, last, false);
-		try {
-			regex = new GLib.Regex(needle,
-								   (GLib.RegexCompileFlags)flags, 0);
-			if (regex.match(all, 0, out match)) {
-				match.fetch_pos(0, out left, out right);
-				var search = text.get_mark("search");
-				text.get_iter_at_offset(out first, left+off);
-				text.get_iter_at_offset(out last, right+off);
-				text.move_mark(search, first);
-				text.apply_tag_by_name("search", first, last);
-				text.place_cursor(source.forward ? first : last);
-				text_view.scroll_to_mark(search, 0.05, false, 0.0, 0.0);
-			}
-		} catch (GLib.Error e) {
-			return false;
 		}
 		return true;
 	}
@@ -965,7 +1121,7 @@ public class FullSource : SingleSource {
 		int ln = text.get_line_count();
 		int n = int.parse(entry.get_text());
 		int now;
-		if (n<0)  n = ln+n;
+		if (n<0) n = ln+n;
 		--n;
 		bool ok = text_view.place_cursor_onscreen();
 		text.get_iter_at_mark(out start, text.get_insert());
@@ -980,7 +1136,7 @@ public class FullSource : SingleSource {
 	}
 	
 	private bool do_motion (Gdk.EventMotion ev, SourcePart s) {
-		if ((int)cid<0 || source.dg==null)  return false;
+		if ((int)cid<0 || source.dg==null) return false;
 		ClassText* cls = source.dg.rts.class_at(cid);
 		FeatureText* ft = null;
 		int[] pos;
@@ -989,11 +1145,9 @@ public class FullSource : SingleSource {
 		TextIter start, end, loc;
 		TextTag id_op = text.tag_table.lookup("ident-or-op");
 		TextTag list = text.tag_table.lookup("listable");
-		TextTag cn = text.tag_table.lookup("classname");
 		TextTag comp = text.tag_table.lookup("computable");
 		TextTag pm = text.tag_table.lookup("paren-mark");
 		TextTag paren = text.tag_table.lookup("paren");
-		TextTag tag;
 		int x, y;
 		uint i, j;
 		int p = 0, at;
@@ -1003,11 +1157,11 @@ public class FullSource : SingleSource {
 		text.get_bounds(out start, out end);
 		text.remove_tag(paren, start, end);
 		text.remove_tag(list, start, end);
-		text.remove_tag(cn, start, end);
 		text.remove_tag(comp, start, end);
 		text_view.window_to_buffer_coords(TextWindowType.TEXT,
 			(int)ev.x, (int)ev.y, out x,out y);
 		text_view.get_iter_at_location(out loc, x, y);
+		other_paren = -1;
 		if (loc.has_tag(id_op)) {
 			start.assign(loc);
 			if (!start.begins_tag(id_op)) start.backward_to_tag_toggle(id_op);
@@ -1017,15 +1171,8 @@ public class FullSource : SingleSource {
 			Qualified? q = identifier_table.@get(at);	
 			end.assign(start);
 			end.forward_to_tag_toggle(id_op);
-			start.forward_char();
-			start.backward_to_tag_toggle(id_op);
-			if (q.cls!=null) {
-				tag =  cn; 
-			} else {
-				tag = list;
-				ft = q.ft;
-			}
-			text.apply_tag(tag, start, end);
+			if (q.cls==null) ft = q.ft;
+			text.apply_tag(list, start, end);
 			if (ft==null && (q==null || q.cls==null)) return false;
 			if (ft==null) return true;
 			string name = "";
@@ -1035,6 +1182,8 @@ public class FullSource : SingleSource {
 			if (s.active && frame!=null && ft.result_text!=null) {
 				RoutineText* rt = frame.routine.routine_text();
 				if (rt.has_position(line, col)) {
+					end.assign(start);
+					end.forward_chars((int)q.size);
 					text.apply_tag(comp, start, end);
 					ex = simple_value(q);
 					if (ex!=null) {
@@ -1063,8 +1212,8 @@ public class FullSource : SingleSource {
 			end.assign(start);
 			end.forward_chars(single ? 1 : 2);
 			text.apply_tag(paren, start, end);
-			off = parenths.@get(off);
-			start.set_offset(off);
+			other_paren = parenths.@get(off);
+			start.set_offset(other_paren);
 			end.assign(start);
 			end.forward_chars(single ? 1 : 2);
 			text.apply_tag(paren, start, end);
@@ -1072,31 +1221,6 @@ public class FullSource : SingleSource {
 		return false;
 	}
 	
-	private bool do_focus(Widget w, Gdk.EventFocus ev) {
-		var scroll = w.get_parent() as ScrolledWindow;
-		if (scroll==null) return false;
-		var window = scroll.get_window();
-		scroll.shadow_type = ev.@in!=0 ? ShadowType.OUT : ShadowType.NONE;
-		return false;
-	}
-
-	private bool do_enter(Widget w, Gdk.EventCrossing ev) {
-		w.has_focus = true;
-		return false;
-	}
-
-	private bool do_leave(Widget w, Gdk.EventCrossing ev) {
-		var text = text_view.get_buffer() as SourceBuffer;
-		var tag = text.tag_table.lookup("listable");
-		TextIter start, end;
-		w.has_focus = false;
-		text.get_bounds(out start, out end);
-		if (start.forward_to_tag_toggle(tag)) 
-			text.remove_tag(tag, start, end);	
-		end_search();
-		return false;
-	}
-
 	private Expression? simple_value(Qualified? q) {
 		if (q==null || q.ft==null) return null;
 		Expression? ex = null;
@@ -1104,7 +1228,7 @@ public class FullSource : SingleSource {
 		Entity* e = null;
 		string name = q.ft._name.fast_name;
 		uint n;
-		if (q.ft.is_routine())  return null;
+		if (q.ft.is_routine()) return null;
 		if (q.p!=null) {
 			pex = simple_value(q.p);
 			if (pex==null) return null;
@@ -1129,7 +1253,7 @@ public class FullSource : SingleSource {
 			return;
 		}
 		Breakpoint bp = new Breakpoint.with_location(class_id, pos, false);
-		bp.depth = frame.depth;
+		bp.depth = frame.depth;	
 		bp.enabled = true;
 		Gee.List<Breakpoint> list = source.brk.breakpoints(false);
 		list.insert(0, bp);
@@ -1177,30 +1301,31 @@ public class FullSource : SingleSource {
 		return true;
 	}
 
-	private bool do_key(Gdk.EventKey ev, SourcePart s) {
+	private bool do_key(Gdk.EventKey ev, SourcePart s ) {
 		if (ev.type != Gdk.EventType.KEY_PRESS) return false;
 		ClassText* cls;
 		Breakpoint bp;
 		Gdk.Window w;
-		var text = text_view.get_buffer() as SourceBuffer;
+		var text = text_view.buffer as SourceBuffer;
 		uint code = ev.keyval;
 		string value;
-		uint l, p;
+		uint l, p, x, y;
 		if ((ev.state & Gdk.ModifierType.CONTROL_MASK) > 0) {
 			if (!s.active) {
 				switch (code) {
 				case '.':
 				case 'b':
-				case 'd':
-				case 'g':
-				case 'G':
+				case 'k':
+				case 'c':
+				case 'C':
 				case 'e':
 				case 'E':
+				case 'p':
 					return false;
 				}
 			}
 			switch (code) {
-			case 't':
+			case 'x':
 				b3_count = 1;
 				do_b3(source);
 				break;
@@ -1218,6 +1343,15 @@ public class FullSource : SingleSource {
 				if (frame!=null) 
 					highlight_actual(frame, frame.pos);
 				break;
+			case 'p':
+				if (other_paren>=0) {
+					TextIter iter;
+					text.get_iter_at_offset(out iter, other_paren);
+					var mark = text.get_insert();
+					text.place_cursor(iter);
+					text_view.scroll_to_mark(mark, 0.05, false, 0.0, 0.0);
+				}
+				break;
 			case 'b': 
 				if (brk!=null) {
 					cls = current_class();
@@ -1227,75 +1361,32 @@ public class FullSource : SingleSource {
 					brk.add_breakpoint(bp);
 				}
 				break;
-			case 'd':
+			case 'k':
 				if (brk!=null) {
 					actual_pos = insert_position(true);
 					cls = current_class();
 					brk.kill_breakpoint(cls.ident, actual_pos);
 				}
 				break;
-			case 'g': 
-			case 'G': 
+			case 'c': 
+			case 'C': 
 				cls = current_class();
 				p = insert_position(true);
-				set_once_breakpoint(cls.ident, p, code=='G');
+				set_once_breakpoint(cls.ident, p, code=='C');
 				break;
 			case 'l':
-				search_mode = SearchMode.GO_TO;
+				s.search_state = s.SearchMode.GO_TO;
 				break;
 			case 'f':
-				source.adjust_up_down();
-				source.precise.set_active(false);
-				adjust_mark();
-				switch (search_mode) {
-				case SearchMode.NO_SEARCH:
-				case SearchMode.GO_TO:
-					search_mode = SearchMode.INIT_SEARCH;
-					w = (text_view as Widget).get_window();
-					source.search.placeholder_text = "Simple search string";
-					break;
-				default:
-					if (source.needle.length>0) {
-						search_mode = SearchMode.SEARCHING;
-						simple_search(false);
-					}
-					break;
-				}
-				break;
+			case 'r':
+				return s.handle_key(ev,text_view);
 			default:
 				return false;
 			}
-		} else if (code==Gdk.Key.Escape) {
-			end_search(true);
 		} else if (ev.is_modifier==0) {
 			string str="";
-			switch (search_mode) {
-			case SearchMode.INIT_SEARCH:
-			case SearchMode.SEARCHING:
-				if (code==Gdk.Key.BackSpace) { 
-					l = source.needle.length;
-					if (l>0) {
-						source.needle = source.needle.substring(0, l-1);
-						simple_search(false);
-					}
-				} else if (code==Gdk.Key.Up) {
-					source.forward = false;
-					source.adjust_up_down();
-					simple_search(true);
-				} else if (code==Gdk.Key.Down) {
-					source.forward = true;
-					source.adjust_up_down();
-					simple_search(true);
-				} else if (code<' ' || code>'~') {
-					end_search(code==Gdk.Key.Escape);
-				} else {
-					if (search_mode==SearchMode.INIT_SEARCH) source.needle = "";
-					source.needle = "%s%c".printf(source.needle, (int)code);
-					search_mode = SearchMode.SEARCHING;
-					simple_search(false);
-				}
-				break;
-			case SearchMode.GO_TO:
+			switch (s.search_state) {
+			case s.SearchMode.GO_TO:
 				value = source.go_to.get_text();
 				l = value.length;
 				switch (code) {
@@ -1327,21 +1418,30 @@ public class FullSource : SingleSource {
 				case Gdk.Key.Return:
 				case Gdk.Key.KP_Enter:
 					do_goto(source.go_to);
-					end_search();
+					s.end_search(text_view);
 					break;
 				default:
 					break;
 				}
 				break;
 			default:
-				end_search();
-				return false;
-				break;
+				return s.handle_key(ev,text_view);
 			}
 		}
 		return true;
 	}
 	
+	private bool do_leave(Widget w, Gdk.EventCrossing ev) {
+		var text = text_view.get_buffer() as SourceBuffer;
+		var tag = text.tag_table.lookup("listable");
+		TextIter start, end;
+		text.get_bounds(out start, out end);
+		if (start.forward_to_tag_toggle(tag)) 
+			text.remove_tag(tag, start, end);	
+		source.end_search(text_view);
+		return false;
+	}
+
 	public FullSource(Debuggee dg, SourcePart s) {
 		base(s);
 		TextIter iter;
@@ -1369,31 +1469,24 @@ public class FullSource : SingleSource {
 		text_view.show_line_marks = true;
 		text_view.cursor_visible = true;
 
- 		var buf = text_view.get_buffer() as SourceBuffer;
-		buf.get_iter_at_mark(out iter, buf.get_insert());
-		buf.create_mark("search", iter, false);
-		buf.highlight_matching_brackets = true;
-
-		text_view.events |= Gdk.EventMask.ENTER_NOTIFY_MASK;
 		text_view.button_press_event.connect(
 			(eb) => { return do_button(eb, s); });
 		text_view.key_press_event.connect((ek) => { return do_key(ek,s); });
 		text_view.motion_notify_event.connect((e) => { return do_motion(e,s);});
-		text_view.enter_notify_event.connect(do_enter);
-		text_view.leave_notify_event.connect(do_leave);
-		text_view.focus_in_event.connect(do_focus);		
-		text_view.focus_out_event.connect(do_focus);		
+		text_view.leave_notify_event.connect((e) => 
+			{ return do_leave(text_view,e);});
+ 		var buf = text_view.buffer as SourceBuffer;
+		buf.highlight_matching_brackets = false;
+		source.prepare_client(text_view);
 		if (brk!=null) {
 			brk.edited.connect((b,o,n) => { highlight_one_breakpoint(o,n); });
 			brk.set_changed.connect((b,l) => { highlight_all_breakpoints(l); });
 		}
 	}
 
-	private int search_mode;
-
 	public void set_frame(StackPart stack) {
-		if (frame!=null && !stack.has_frame(frame))  frame = null;
-		if (frame==null)  frame = stack.frame_of_class(cid);
+		if (frame!=null && !stack.has_frame(frame)) frame = null;
+		if (frame==null) frame = stack.frame_of_class(cid);
 	}
 
 	public void show_main_class(ClassText* cls) {
@@ -1415,10 +1508,12 @@ public class FullSource : SingleSource {
 		identifier_table.clear();
 		for (i=cls.features.length; i-->0;) {
 			ft = cls.features[i];
-			if (ft.home!=cls || ft.renames!=null)  continue;
+			if (ft.home!=cls || ft.renames!=null) continue;
 			if (ft.is_routine()) {
 				rt = (RoutineText*)ft;
 				pos = rt.instruction_positions;
+				if (pos==null && ft.renames!=null)
+					rt = (RoutineText*)ft.renames;
 				n = rt.instruction_positions.length;
 				for (j=n; j-->0;) {
 					p = pos[j];
@@ -1434,7 +1529,7 @@ public class FullSource : SingleSource {
 			}
 			text.get_bounds(out before, out iter);
 			p = ft.first_pos;
-			if (p==0)  continue;
+			if (p==0) continue;
 			line = (int)p/256-1;
 			len = (int)p%256;
 			before.set_line(line);

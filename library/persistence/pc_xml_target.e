@@ -21,7 +21,7 @@ create
 
 	make
 
-feature {} -- Initialization 
+feature {NONE} -- Initialization 
 
 	make (f: like file; c: detachable READABLE_STRING_8; top: STRING; s: IS_SYSTEM)
 		note
@@ -217,7 +217,7 @@ feature {PC_DRIVER} -- Put elementary data
 			end
 		end
 
-feature {} -- Implementation 
+feature {NONE} -- Implementation 
 
 	closure_tag: STRING = "closure"
 

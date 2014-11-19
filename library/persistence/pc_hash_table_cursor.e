@@ -11,7 +11,7 @@ inherit
 			make
 		end
 
-feature {} -- Initalization
+feature {NONE} -- Initalization
 
 	make (t: like target)
 		do
@@ -49,7 +49,7 @@ feature -- Cursor movement
 			end
 		end
 	
-feature {} -- Implementation
+feature {NONE} -- Implementation
 
 	index: INTEGER
 	

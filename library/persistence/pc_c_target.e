@@ -33,7 +33,7 @@ create {IS_NAME}
 
 	default_create
 
-feature {} -- Initialization 
+feature {NONE} -- Initialization 
 
 	make (c: like c_file; h: like h_file;
 			type_prefix, value_prefix: STRING; top_name: detachable STRING;
@@ -483,7 +483,7 @@ feature {PC_DRIVER} -- Handling of elementary data
 			c_file.put_character (',')
 		end
 	
-feature {} -- Implementation 
+feature {NONE} -- Implementation 
 
 	c_file: PLAIN_TEXT_FILE
 

@@ -29,7 +29,7 @@ create
 
 	default_create
 	
-feature {} -- Initialization
+feature {NONE} -- Initialization
 
 	default_create
 		do
@@ -244,7 +244,7 @@ feature -- Output
 			end
 		end
 	
-feature {} -- DISPOSABLE
+feature {NONE} -- DISPOSABLE
 
 	dispose
 		do
@@ -252,13 +252,13 @@ feature {} -- DISPOSABLE
 			ptr := default_pointer
 		end
 
-feature {} -- Implementation
+feature {NONE} -- Implementation
 
 	Void_name: STRING = "Void"
 	False_name: STRING = "False"
 	True_name: STRING = "True"
 	
-feature {} -- External implementation
+feature {NONE} -- External implementation
 
 	ptr: POINTER
 

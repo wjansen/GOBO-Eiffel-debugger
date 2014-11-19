@@ -37,7 +37,7 @@ create
 
 	make
 
-feature {} -- Initialization 
+feature {NONE} -- Initialization 
 
 	make
 		local
@@ -207,7 +207,7 @@ feature -- Basic operation
 			not_open: not f.is_open
 		end
 	
-feature {} -- Command implementation 
+feature {NONE} -- Command implementation 
 	
 	load (fn: STRING)
 		do
@@ -546,7 +546,7 @@ feature {} -- Command implementation
 --			f_in.close
 		end
 	
-feature {} -- Error handling 
+feature {NONE} -- Error handling 
 
 	raise_no_file (fn: STRING)
 		do
@@ -558,7 +558,7 @@ feature {} -- Error handling
 			raise ("Type " + (id.out) + " is not present.")
 		end
 
-feature {} -- Implementation 
+feature {NONE} -- Implementation 
 
 	command_prompt: STRING = "pc> "
 

@@ -211,7 +211,7 @@ feature -- Factory
 			end
 		end
 
-feature {} -- Implementation
+feature {NONE} -- Implementation
 
 	actual_ident: like last_ident
 

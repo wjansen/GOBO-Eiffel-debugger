@@ -187,7 +187,7 @@ feature -- IS_FACTROY
 			end
 		end
 	
-feature {} -- Implementation
+feature {NONE} -- Implementation
 	
 	origin: IS_SYSTEM
 

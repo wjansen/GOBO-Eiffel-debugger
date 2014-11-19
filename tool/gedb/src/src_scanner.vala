@@ -40,14 +40,22 @@ namespace Gedb {
 			scanned(value);
 		}
 		
-		[Flex(pattern="[-+*^/<>=~$]")]
+		[Flex(pattern="[-+*^<>=~$]")]
 		public void op1(string value, int value_len) {
 			token_code = TokenCode.OPERATOR;
 			scanned(value);
 		} 
 
-		[Flex(pattern="<=|>=|\\/=|\\/~|\\/\\/|\\\\\\\\|\\.\\.")]
+		[Flex(pattern="\\/")]
 		public void op2(string value, int value_len) {
+			token_code = TokenCode.OPERATOR;
+			if (value[0].isalpha()) 
+				stderr.printf("%s\n", value);
+			scanned(value);
+		} 
+
+		[Flex(pattern="<=|>=|\\/=|\\/~|\\/\\/|\\\\\\\\|\\.\\.")]
+		public void op3(string value, int value_len) {
 			token_code = TokenCode.OPERATOR;
 			scanned(value);
 		}

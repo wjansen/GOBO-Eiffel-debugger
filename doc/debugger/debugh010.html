@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
-<meta name="generator" content="hevea 2.09">
+<meta name="generator" content="hevea 2.16">
 <link rel="stylesheet" type="text/css" href="debugh.css">
 <title>Console part</title>
 </head>
@@ -13,8 +13,12 @@
 <hr>
 Gedb &#X2013; The Gec debugger<h3 id="sec26" class="subsection">3.7&#XA0;&#XA0;Console part</h3>
 <p><a id="S:console"></a>
-The <span style="font-family:sans-serif">Console</span> part is available only if the debugger is used 
+The <span style="font-family:sans-serif">Console</span> part collects the <span style="font-style:oblique">Eiffel</span> system&#X2019;s I/O. 
+It is available only if the debugger is used 
 as runtime analyser (otherwise, it stays hidden). 
+In case of the post mortem analyser the <span style="font-family:sans-serif">Console</span> part is meaningless: 
+before crash the debugger graphics is not shown and all I/O is done 
+in the usual console window, after crash further I/O won&#X2019;t happen. 
 </p><p>The <span style="font-family:sans-serif">Console</span> part is a text field of (nearly) black background 
 containing the debuggee&#X2019;s output by <span style="font-family:monospace">io.output</span> (white), 
 <span style="font-family:monospace">io.error</span> (light pink), and the user input read by <span style="font-family:monospace">io.input</span> (light blue). 
@@ -31,22 +35,31 @@ for practical reasons only. The default size of the <span style="font-family:san
 such that as many source code can be shown as is visible in a terminal window.
 The console window has naturally the same size and to save space 
 of the debugger outlay, the <span style="font-family:sans-serif">Console</span> part has been made 
-an alternative &#X201C;source&#X201D;. Its tag name is <span style="font-family:sans-serif">Console</span> and it is always 
+an alternative &#X201C;source text&#X201D;. Its tag name is <span style="font-family:sans-serif">Console</span> and it is always 
 located at the right end of the tag fields bar. 
 The different roles of source code and console are distinguishable 
 by their complementary backgrounds:
 white versus black. Nevertheless, if there is enough space on screen 
 then the <span style="font-family:sans-serif">Console</span> part may be become a separate window: 
-click on the icon of its tag. Pressing the <span style="font-family:sans-serif">Close</span> button of that window 
+click on the icon of its tag. Clicking the <span style="font-family:sans-serif">Close</span> button of that window 
 puts the <span style="font-family:sans-serif">Console</span> part back into the <span style="font-family:sans-serif">Source</span> part. 
 </p><p>If the <span style="font-family:sans-serif">Console</span> part is not displayed in a separate window 
 then the following show/hide policy applies. 
 The part is shown (i.e. automatically selected among all sources 
 of the <span style="font-family:sans-serif">Source</span> part) as soon as the debuggee requests user input, 
-it is hidden if the debugger regains control. 
+it is hidden when the debugger regains control to show the source text 
+of the actual stop point. 
 Output to <span style="font-family:monospace">io.output</span> or <span style="font-family:monospace">io.error</span> has no effect on the visibility 
 of the <span style="font-family:sans-serif">Console</span> part. 
-</p>
+</p><p>Finally, if the <span style="font-family:sans-serif">Console</span> part is shown within the <span style="font-family:sans-serif">Source</span> part 
+then it is searchable as any source text, 
+if it shown as a separate window then incremental search is still available 
+(this is possible because this search mode relies only on key presses 
+in the window itself, 
+i.e. interactions with the main window are not involved). 
+In any case, the background colour of the string found is, 
+adapted to the window&#X2019;s dark background, 
+different from that used in the <span style="font-family:sans-serif">Source</span> part. </p>
 <hr>
 <a href="debugh009.html"><img src="previous_motif.gif" alt="Previous"></a>
 <a href="index.html"><img src="contents_motif.gif" alt="Up"></a>

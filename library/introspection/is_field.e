@@ -18,7 +18,7 @@ create
 	make,
 	make_in_system
 
-feature {} -- Initialization 
+feature {NONE} -- Initialization 
 
 	make (nm: READABLE_STRING_8; t: like type; ts: like type_set; f: like text)
 		note

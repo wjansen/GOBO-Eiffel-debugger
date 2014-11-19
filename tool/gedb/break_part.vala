@@ -405,8 +405,8 @@ public class BreakPart : Box, AbstractPart {
 				foreach (var bp in match) {
 					if (bp.id==id) {
 						sel.select_iter(i); 
+						match.@remove(bp);
 						bp0 = bp;
-						set_breakpoint(bp, i);
 						--n;
 						break;
 					}
@@ -521,7 +521,7 @@ public class BreakPart : Box, AbstractPart {
 			col.add_attribute(cell, "strikethrough-set", Item.DISABLED);
 			col.set_cell_data_func(cell, 
 								   (l,r,m,i) => do_format_catch(r,m,i));
-			col.set_min_width(20);
+			col.set_min_width(40);
 			view.append_column(col);
 		}
 		{/* "At" column */
@@ -616,7 +616,7 @@ public class BreakPart : Box, AbstractPart {
 													 "text", Item.TYPE, null);
 			col.add_attribute(cell, "strikethrough-set", Item.DISABLED);
 			col.set_data<uint>("column", Item.TYPE);
-			col.set_min_width(100);
+			col.set_min_width(50);
 			col.set_resizable(true);
 			col.set_expand(true);
 			col.set_sort_column_id(Item.TYPE);
@@ -635,7 +635,7 @@ public class BreakPart : Box, AbstractPart {
 				(l,r,m,i) => do_format_expr(r,m,i,Item.IF));
 			col.set_data<uint>("column", Item.IF_TEXT);
 			col.add_attribute(cell, "strikethrough-set", Item.DISABLED);
-			col.set_min_width(40);
+			col.set_min_width(80);
 			col.set_resizable(true);
 			// col.set_expand(true);
 			view.append_column(col);
@@ -654,18 +654,18 @@ public class BreakPart : Box, AbstractPart {
 				(l,r,m,i) => do_format_expr(r,m,i,Item.PRINT));
 			col.set_data<uint>("column", Item.PRINT_TEXT);
 			col.add_attribute(cell, "strikethrough-set", Item.DISABLED);
-			col.set_min_width(40);
+			col.set_min_width(80);
 			col.set_resizable(true);
 			// col.set_expand(true);
 			view.append_column(col);
-
 		}
 
 		ScrolledWindow scroll = new ScrolledWindow(null, null);
 		pack_start(scroll, true, true, 3);
 		scroll.set_policy(PolicyType.AUTOMATIC, PolicyType.ALWAYS);
 		scroll.@add(view);
-		scroll.set_min_content_height(125);
+		scroll.set_min_content_width(610);
+		scroll.set_min_content_height(99);
 		
 		checker = new ExpressionChecker();
 		pack_start(checker);
@@ -679,7 +679,7 @@ public class BreakPart : Box, AbstractPart {
 		button = new Button.with_label("New");
 		buttons.@add(button);
 		buttons.set_child_secondary(button, true);
-		button.set_tooltip_text("Button a new breakpoint.");
+		button.set_tooltip_text("Create a new empty breakpoint.");
 		button.has_tooltip = true;
 		button.clicked.connect(() => { do_create(); });
 		button = new Button.with_label("Enable");
@@ -702,6 +702,7 @@ public class BreakPart : Box, AbstractPart {
 		debug.set_tooltip_text(
 """Are debug clauses to be
 treated as breakpoints?""");
+		debug.active = false;
 		debug.clicked.connect((b) => { do_debug(b); });
 		
 		Gee.List<uint> list = new Gee.ArrayList<uint>();

@@ -13,7 +13,7 @@ inherit
 			hash_code
 		end
 
-feature {} -- Initialization 
+feature {NONE} -- Initialization 
 
 	make_1 (d: D_)
 		do
@@ -208,7 +208,7 @@ feature {IS_ARRAY, IS_BASE} -- Implementation
 
 	data: detachable SPECIAL [D_]
 
-feature {} -- Implementation 
+feature {NONE} -- Implementation 
 
 	internal_hash_code: like hash_code
 

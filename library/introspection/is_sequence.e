@@ -24,7 +24,7 @@ create
 	make,
 	make_from_array
 	
-feature {} -- Initialization 
+feature {NONE} -- Initialization 
 
 	make (n: INTEGER; pattern: D_)
 		note
@@ -305,7 +305,7 @@ feature {IS_SEQUENCE} -- Implementation
 
 	is_explicitly_sorted: BOOLEAN
 
-feature {} -- Implementation 
+feature {NONE} -- Implementation 
 
 	default_heap_sort
 		local

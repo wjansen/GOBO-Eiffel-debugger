@@ -39,7 +39,7 @@ feature {PC_DRIVER} -- Reading
 			shift := shift + 1
 		end
 
-feature {} -- Implementation 
+feature {NONE} -- Implementation 
 
 	item_4: NATURAL_32
 
@@ -58,7 +58,7 @@ feature {} -- Implementation
 			end
 		end
 
-feature {} -- External implementation 
+feature {NONE} -- External implementation 
 
 	c_item (b, i: INTEGER): NATURAL_32
 		external

@@ -20,7 +20,7 @@ create
 
 	make
 
-feature {} -- Initialization
+feature {NONE} -- Initialization
 
 	make (nm: READABLE_STRING_8; t: like type; ts: like type_set;
 			as_object_test: BOOLEAN; f: like text)

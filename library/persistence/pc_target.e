@@ -536,7 +536,7 @@ feature -- Object finalization
 			-- Procedure to be applied to all objects after 
 			-- end of traversal (may be `Void'). 
 
-feature {} -- Implementation 
+feature {NONE} -- Implementation 
 
 	field_type: detachable IS_TYPE
 		note
@@ -544,7 +544,7 @@ feature {} -- Implementation
 		deferred
 		end
 
-feature {} -- Implementation 
+feature {NONE} -- Implementation 
 
 	tmp_str: STRING = "..............................................."
 

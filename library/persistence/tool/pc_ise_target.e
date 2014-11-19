@@ -45,7 +45,7 @@ create
 
 	make
 
-feature {} -- Initialization
+feature {NONE} -- Initialization
 
 	make (m: like medium; src: like source; t: like types; c: like capacities)
 		do
@@ -177,7 +177,7 @@ feature {PC_DRIVER} -- Writing elementary data
 			end
 		end
 
-feature {} -- Implementation
+feature {NONE} -- Implementation
 
 	file: FILE
 	

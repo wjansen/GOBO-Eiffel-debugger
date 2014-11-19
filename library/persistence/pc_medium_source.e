@@ -21,7 +21,7 @@ inherit
 			copy, is_equal, out
 		end 
 	
-feature {} -- Initialization 
+feature {NONE} -- Initialization 
 
 	make (flags: INTEGER)
 		do

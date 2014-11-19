@@ -26,7 +26,7 @@ create
 
 	default_create
 
-feature {} -- Initialization
+feature {NONE} -- Initialization
 
 	default_create
 		local
@@ -192,7 +192,7 @@ feature {IS_TYPE} -- Factory
 			-- Not yet implemented
 		end
 	
-feature {} -- Auxiliary routines of factory 
+feature {NONE} -- Auxiliary routines of factory 
 
 	type_flags (tid: INTEGER): INTEGER
 		do

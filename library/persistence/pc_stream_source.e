@@ -31,7 +31,7 @@ create
 
 	make
 
-feature {} -- Initialization 
+feature {NONE} -- Initialization 
 
 	default_create
 		do
@@ -112,7 +112,7 @@ feature {PC_BASE} -- Reading header information
 			read_int	-- once_count
 		end
 
-feature {} -- Implementation 
+feature {NONE} -- Implementation 
 
 	read_type (tid: INTEGER)
 		do
@@ -135,7 +135,7 @@ feature -- Auxiliary routines of factory
 			Result := True
 		end
 
-feature {} -- Auxiliary routines of factory 
+feature {NONE} -- Auxiliary routines of factory 
 
 	type_flags (id: INTEGER): INTEGER
 		do
@@ -230,7 +230,7 @@ feature {} -- Auxiliary routines of factory
 		do
 		end
 	
-feature {} -- Implementation
+feature {NONE} -- Implementation
 
 	any_name: STRING = "ANY"
 	

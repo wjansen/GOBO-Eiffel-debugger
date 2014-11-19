@@ -26,7 +26,7 @@ create {ET_IS_CLASS_TEXT}
 	declare_from_feature,
 	declare_renamed
 
-feature {} -- Initialization 
+feature {NONE} -- Initialization 
 
 	declare_from_declaration (o: attached like origin; nm: STRING;
 			d: ET_DECLARED_TYPE; h: like home; s: ET_IS_SYSTEM)
@@ -164,6 +164,8 @@ feature -- Access
 
 	home: ET_IS_CLASS_TEXT
 
+	renames: like Current
+
 	tuple_labels: detachable IS_SEQUENCE [ET_IS_FEATURE_TEXT]
 
 feature -- Status Setting
@@ -221,9 +223,7 @@ feature -- Basic operation
 		do
 		end
 
-feature {} -- Implementation 
-
-	renames: like Current
+feature {NONE} -- Implementation 
 
 	labels_table: DS_HASH_TABLE [IS_SEQUENCE [ET_IS_FEATURE_TEXT], ET_BASE_TYPE]
 		once

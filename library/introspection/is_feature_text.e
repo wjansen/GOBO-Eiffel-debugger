@@ -17,7 +17,7 @@ create
 
 	make
 
-feature {} -- Initialization 
+feature {NONE} -- Initialization 
 
 	make (nm: READABLE_STRING_8; anm: detachable STRING_8; fl, l, c: INTEGER)
 		note
@@ -56,6 +56,9 @@ feature -- Access
 	result_text: detachable like home
 			-- Class of `Result' type (if any). 
 
+	renames: detachable IS_FEATURE_TEXT
+		-- Feature text in base class renamed by `Current'
+	
 	flags: INTEGER
 	
 	definition: like Current
@@ -250,10 +253,6 @@ feature -- HASHABLE
 feature {IS_NAME} -- Implementation
 
 	fast_name: STRING_8
-
-feature {} -- Implementation
-
-	renames: detachable IS_FEATURE_TEXT
 
 invariant
 

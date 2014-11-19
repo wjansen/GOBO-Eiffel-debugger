@@ -17,7 +17,7 @@ create
 
 	make
 
-feature {} -- Initialization
+feature {NONE} -- Initialization
 
 	make (nm: READABLE_STRING_8; anm: like alias_name; fl, l, c: INTEGER;
 			vv: like vars; ac, lc, cc: INTEGER; inline: like inline_texts)
@@ -159,7 +159,7 @@ feature {IS_BASE} -- Implementation
 
 	vars: IS_SEQUENCE [like var_at]
 
-feature {} -- Implementation
+feature {NONE} -- Implementation
 
 	inline_texts: detachable IS_SEQUENCE [like inline_text_at]
 	

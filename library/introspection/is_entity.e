@@ -15,7 +15,7 @@ inherit
 			hash_code
 		end
 
-feature {} -- Initialization 
+feature {NONE} -- Initialization 
 
 	make_entity (nm: READABLE_STRING_8; t: like text)
 		note

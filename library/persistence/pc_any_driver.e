@@ -20,7 +20,7 @@ create
 
 	make
 	
-feature {} -- Initialization
+feature {NONE} -- Initialization
 	
 	make (t: like target; s: like source; opts: INTEGER)
 		note
@@ -71,7 +71,7 @@ feature -- Basic operation
 			common_traverse 
 		end
 
-feature {} -- Scanning structures 
+feature {NONE} -- Scanning structures 
 
 	process_closure
 		local
@@ -95,7 +95,7 @@ feature {} -- Scanning structures
 			todo_objects.extend (si)
 		end
 
-feature {} -- Implementation 
+feature {NONE} -- Implementation 
 
 	todo_objects: detachable DISPENSER [SI_]
 	

@@ -230,7 +230,7 @@ namespace Gedb {
 					source.set_index(st, k, id);
 					target.set_index(st, k, od);
 					last_id = id;
-					last_e = f;
+					last_e = null;
 					last_idx = (int)k;
 					process_entity(f);
 				}

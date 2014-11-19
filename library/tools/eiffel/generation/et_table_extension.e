@@ -50,13 +50,13 @@ feature -- Basic operation
 			c_generator.flush_to_c_file
 		end
 	
-feature {} -- Extension parts
+feature {NONE} -- Extension parts
 
 	print_defines
 		do
 		end
 	
-feature {} -- Print C structs 
+feature {NONE} -- Print C structs 
 
 	print_typedefs 
 		once
@@ -753,7 +753,7 @@ feature -- Building runtime descriptors
 			put_global_integer (n, c_names.c_ms_count_name, False)
 		end
 	
-feature {} -- Implementation 
+feature {NONE} -- Implementation 
 
 	put_struct_declaration (struct: STRING; c_name: detachable STRING;
 													declaration: STRING)

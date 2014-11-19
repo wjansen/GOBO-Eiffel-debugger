@@ -18,7 +18,7 @@ create {IS_SYSTEM, IS_TYPE}
 	make,
 	make_in_system
 
-feature {} -- Initialization 
+feature {NONE} -- Initialization 
 
 	make (id: INTEGER; bc: like base_class; fl: INTEGER;
 			g: like generics; e: like effectors;

@@ -20,7 +20,7 @@ inherit
 			default_create
 		end
 
-feature {} -- Initialization 
+feature {NONE} -- Initialization 
 
 	default_create
 		do
@@ -832,7 +832,7 @@ feature {IS_NAME} -- Implementation
 
 	fast_name: STRING_8
 
-feature {} -- Implementation 
+feature {NONE} -- Implementation 
 
 	type_stack: IS_STACK [attached like type_at]
 

@@ -150,7 +150,7 @@ feature -- Routine flags
 			Result := c_time			
 		end
 	
-feature {} -- POINTER conversion 
+feature {NONE} -- POINTER conversion 
 
 	to_any (p: POINTER): ANY
 		require

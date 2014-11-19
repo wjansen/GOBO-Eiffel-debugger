@@ -49,7 +49,7 @@ create
 
 	make
 
-feature {} -- Initialization 
+feature {NONE} -- Initialization 
 
 	default_create
 		do
@@ -141,7 +141,7 @@ feature {PC_DRIVER} -- Object location
 			Precursor {PC_QUALIFIER_TARGET} (s, i, in)
 		end
 	
-feature {} -- Implementation 
+feature {NONE} -- Implementation 
 
 	file: FILE
 

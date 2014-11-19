@@ -22,7 +22,7 @@ create
 	make_2,
 	make
 
-feature {} -- Initialization
+feature {NONE} -- Initialization
 
 	make (n: INTEGER; p: D_)
 		note

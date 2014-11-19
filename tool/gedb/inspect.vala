@@ -112,7 +112,7 @@ namespace Gedb {
 
 /* ---------------------------------------------------------------------- */
 	
-	public void add<N> (N[] list, N d) {
+	public void @add<N> (N[] list, N d) {
 		list.resize(list.length+1);
 		list[list.length++] = d;
 	}
@@ -180,6 +180,7 @@ namespace Gedb {
 	internal Name* query_from_list(string name, Name*[] list, out uint n) {
 		Name* best=null;
 		int l0, l=int.MAX, count=0;
+		n = 0;
 		foreach (var x in list) {
 			if (x.has_name(name)) {
 				n = 1;
@@ -2566,12 +2567,6 @@ other value means `other' is a parent class.
 		return *(uint8**)obj;
 	}
 		
-	internal void* stack_address(StackFrame* f, uint i) { 
-		uint8* addr = (uint8*)f;
-		addr += f.routine.vars[i].offset;
-		return addr;
-	}
-
 	internal uint c_ident(void *a) { return a!=null ? *(int*)a : 0; }
 	
 	private delegate void* NewObject(bool init);
@@ -2594,4 +2589,4 @@ other value means `other' is a parent class.
 	
 } /* namespace */
 
-private Object dummy;	// Make the compiler happy!
+public Object dummy;	/* Make the compiler happy! */

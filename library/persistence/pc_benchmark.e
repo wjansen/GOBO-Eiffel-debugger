@@ -13,7 +13,7 @@ inherit
 			out
 		end
 
-feature {} -- Initialization 
+feature {NONE} -- Initialization 
 
 	default_create
 		do
@@ -197,7 +197,7 @@ feature -- Output
 			end
 		end
 
-feature {} -- Implementation 
+feature {NONE} -- Implementation 
 
 	basic_store_test (obj: ANY)
 		local
@@ -372,7 +372,7 @@ feature {} -- Implementation
 			end
 		end
 
-feature {} -- External implemetation 
+feature {NONE} -- External implemetation 
 
 	c_clock: REAL_64
 		external

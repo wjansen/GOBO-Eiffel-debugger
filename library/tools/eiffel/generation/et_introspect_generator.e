@@ -33,7 +33,7 @@ create
 	make_all,
 	make_self
 
-feature {} -- Initialization 
+feature {NONE} -- Initialization 
 
 	make_all (a_system: like current_dynamic_system; a_rts: ET_DYNAMIC_TYPE)
 		note
@@ -212,7 +212,7 @@ feature -- Basic operation
 			end
 		end
 
-feature {} -- Feature generation 
+feature {NONE} -- Feature generation 
 
   print_agent_declaration (i: INTEGER; an_agent: ET_AGENT)
 		local
@@ -259,7 +259,7 @@ feature {} -- Feature generation
 			flush_to_c_file
 		end
 
-feature {} -- 
+feature {NONE} -- 
 		
 	close_c_args: STRING = ");%N" 
 
@@ -322,7 +322,7 @@ feature -- Searching
 			end
 		end
 
-feature {} -- Implementation 
+feature {NONE} -- Implementation 
 
 	actual_agent_ident: INTEGER
 

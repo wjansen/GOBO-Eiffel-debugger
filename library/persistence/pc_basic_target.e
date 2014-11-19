@@ -41,7 +41,7 @@ create
 
 	default_create
 
-feature {} -- Initialization 
+feature {NONE} -- Initialization 
 
 	default_create
 		do
@@ -171,7 +171,7 @@ feature {PC_DRIVER} -- Forward  data
 			end
 		end
 
-feature {} -- Type components 
+feature {NONE} -- Type components 
 
 	put_no_once
 		do
@@ -278,7 +278,7 @@ feature {PC_BASE} -- Writing of header information
 			end
 		end
 
-feature {} -- Implementation 
+feature {NONE} -- Implementation 
 
 	write_int (i: INTEGER_32)
 		note
@@ -485,7 +485,7 @@ feature {} -- Implementation
 			end
 		end
 
-feature {} -- Implementation 
+feature {NONE} -- Implementation 
 
 	file: detachable FILE
 
@@ -543,7 +543,7 @@ feature {} -- Implementation
 			write_int (id)
 		end
 
-feature {} -- External implementation 
+feature {NONE} -- External implementation 
 
 	c_32_int (r: REAL_32): NATURAL_32
 		external

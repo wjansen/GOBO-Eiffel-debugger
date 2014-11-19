@@ -29,7 +29,7 @@ create
 
 	declare
 
-feature {} -- Initialization
+feature {NONE} -- Initialization
 
 	declare (id: ET_IDENTIFIER; t: ET_DYNAMIC_TYPE; as_object_test: BOOLEAN;
 			h: like home; x: like text; s: ET_IS_SYSTEM)

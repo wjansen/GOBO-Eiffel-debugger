@@ -155,9 +155,9 @@ feature {} -- Initialization
 			field_declaration.append (l_type.c_name)
 			field_declaration.append ("* e = 0;%N")
 			c1 := c_clock
-			io.error.put_string("Compile time: ")
-			io.error.put_double((c1-c0)/c_factor)
-			io.error.put_new_line
+--		io.-rror.put_string("Compile time: ")
+--		io.error.put_double((c1-c0)/c_factor)
+--		io.error.put_new_line
 		end
 
 feature -- Access 
@@ -287,9 +287,9 @@ feature {} -- Feature generation
 				c1 := c_clock
 				l_extension.save_system (rts)
 				c2 := c_clock
-				io.error.put_string("Store DG time:   ")
-				io.error.put_double((c2-c1)/c_factor)
-				io.error.put_new_line
+--			io.error.put_string("Store DG time:   ")
+--			io.error.put_double((c2-c1)/c_factor)
+--			io.error.put_new_line
 			end
 		end
 
@@ -444,22 +444,24 @@ feature {} -- Debugging code
 			if attached {ET_IS_AGENT_TYPE} l_type as l_agent then
 				l_type := l_agent.declared_type
 			end
-			if attached l_type as t then
-				actual_routine := t.routine_by_origin (current_feature, debuggee)
-				if as_create and then attached actual_routine as act then
-					l_name := act.fast_name
-					actual_routine := t.routine_by_name (l_name, True)
+			if l_type /= Void then
+				actual_routine := l_type.routine_by_origin (current_feature, debuggee)
+				if actual_routine /= Void
+					and then actual_routine.is_creation /= as_create 
+				 then
+					l_name := actual_routine.fast_name
+					actual_routine := l_type.routine_by_name (l_name, as_create)
 				end
 			else
 				actual_routine := Void
 			end
-			if attached actual_routine as act and then act.is_external then
+			if actual_routine /= Void and then actual_routine.is_external then
 				actual_routine := Void
 			end
-			if attached actual_routine as act
-				and then attached act.target.routines as rr
+			if actual_routine /= Void
+				and then attached actual_routine.target.routines as rr
 			 then
-				print_stack_initialization (rr.index_of (act))
+				print_stack_initialization (rr.index_of (actual_routine))
 			end
 		end
 
@@ -480,7 +482,7 @@ feature {} -- Debugging code
 						actual_routine := ag.routine
 					end
 				end
-				if attached actual_routine as act and then act.is_external then
+				if actual_routine /= Void and then actual_routine.is_external then
 					actual_routine := Void
 				end
 				if attached actual_routine then
@@ -493,18 +495,18 @@ feature {} -- Debugging code
 		local
 			l_keyword: detachable ET_KEYWORD
 		do
-			if attached actual_routine as act then
-				if attached act.origin as orig then
+			if actual_routine /= Void then
+				if attached actual_routine.origin as orig then
 					if attached {ET_ROUTINE} orig.static_feature as r then
 						l_keyword := r.end_keyword
 					end
-				elseif attached act.inline_agent as inline then
+				elseif attached actual_routine.inline_agent as inline then
 					if attached {ET_ROUTINE_INLINE_AGENT} inline.orig_agent as orig then
 						l_keyword := orig.end_keyword
 					end
 				end
 				check
-					attached l_keyword
+					attached l_keyword then
 				end
 				print_stack_termination (l_keyword)
 			end
@@ -565,7 +567,7 @@ feature {} -- Debugging code
 			current_file.put_new_line
 			indent			
 			print_indentation
-			current_file.put_string (entity_declaration)
+			current_file.put_string (entity_declaration)			
 			print_indentation
 			current_file.put_string (once "if (!e) {%N")
 			indent
@@ -740,12 +742,6 @@ feature {} -- Debugging code
 			print_indentation
 			current_file.put_string (import.c_stacktop_name)
 			current_file.put_string (address_s)
-			actual_text := Void
-			if attached l_routine.text as text
-				and then text.home = l_routine.in_class
-			 then
-				actual_text := text
-			end
 			if attached l_compound as c then
 				if l_routine.is_creation then
 					delayed_enter := c
@@ -757,10 +753,10 @@ feature {} -- Debugging code
 
 	print_stack_termination (a_keyword: ET_KEYWORD)
 		do
-			if attached actual_routine as ar then
+			if actual_routine /= Void then
 				leave_scope (a_keyword)
 				-- force printing of possibly repeated position:
-				if ar = debuggee.root_creation_procedure then
+				if actual_routine = debuggee.root_creation_procedure then
 					print_indentation
 					current_file.put_string ("if (")
 					current_file.put_string ("s.caller==0) {%N")
@@ -785,8 +781,8 @@ feature {} -- Debugging code
 					print_position_handling(a_keyword, End_routine_break)					
 				end
 				actual_position := 0
-				if actual_debugged and then attached actual_text as x then
-					x.copy_instruction_positions(positions_buffer)
+				if actual_debugged and then actual_text /= Void then
+					actual_text.copy_instruction_positions(positions_buffer)
 				end
 			end
 			positions_buffer.wipe_out
@@ -904,10 +900,10 @@ feature {} -- Debugging code
 			end
 			pos := position (a_node).as_natural_32
 			if --pos /= actual_position and then
-				attached actual_routine as ar
+				actual_routine /= Void
 			 then
 				pure_pos := pma_only or else not actual_debugged
-				for_instruction := ar.uses_current
+				for_instruction := actual_routine.uses_current
 				inspect code
 				when Call_break then
 					pos := (pos - 1).max (1)

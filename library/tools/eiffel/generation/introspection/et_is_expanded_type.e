@@ -35,7 +35,7 @@ create
 
 	declare, declare_from_pattern
 
-feature {} -- Initialization 
+feature {NONE} -- Initialization 
 
 	declare (o: like origin; id: INTEGER; s: ET_IS_SYSTEM)
 		do
@@ -57,7 +57,7 @@ feature -- Access
 
 	base_class: ET_IS_CLASS_TEXT
 	
-feature {} -- Implementation
+feature {NONE} -- Implementation
 
 	standard_operators: DS_HASH_SET[STRING]
 		once

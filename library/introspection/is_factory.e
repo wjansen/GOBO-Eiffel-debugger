@@ -320,7 +320,7 @@ feature {IS_TYPE,IS_FIELD} -- Factory
 			end
 		end
 	
-feature {} -- Auxiliary routines of factory 
+feature {NONE} -- Auxiliary routines of factory 
 
 	new_normal_type (id, fl: INTEGER; bc: attached like class_at)
 		require
@@ -508,7 +508,7 @@ feature {IS_TYPE} -- Auxiliary routines of factory
 		deferred
 		end
 	
-feature {} -- Implementation 
+feature {NONE} -- Implementation 
 
 	item_names: ARRAY [READABLE_STRING_8]
 		once

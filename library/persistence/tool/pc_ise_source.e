@@ -69,7 +69,7 @@ create
 
 	make
 
-feature {} -- Initialization
+feature {NONE} -- Initialization
 
 	make (m: like medium)
 		do
@@ -249,13 +249,13 @@ feature {PC_DRIVER, PC_HEADER} -- Reading elementary data
 		do
 		end
 
-feature {} -- Implementation
+feature {NONE} -- Implementation
 
 	process_ident (id: like last_ident)
 		do
 		end
 	
-feature {} -- Implementation
+feature {NONE} -- Implementation
 
 	object_count: NATURAL
 

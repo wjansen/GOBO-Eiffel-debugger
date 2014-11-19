@@ -28,7 +28,7 @@ create {ET_IS_TYPE, IS_FACTORY}
 
 	make_in_system
 
-feature {} -- Initialization 
+feature {NONE} -- Initialization 
 
 	declare (o: attached like origin; h: like target; s: ET_IS_SYSTEM)
 		note
@@ -149,7 +149,7 @@ feature -- ET_IS_ORIGIN
 			end
 		end
 
-feature {} -- Implentation
+feature {NONE} -- Implentation
 
 	declare_text (static: ET_FEATURE; s: ET_IS_SYSTEM)
 		require

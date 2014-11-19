@@ -34,7 +34,7 @@ create
 	make,
 	default_create
 
-feature {} -- Initialization 
+feature {NONE} -- Initialization 
 
 	make (s: like system; act: BOOLEAN)
 		do
@@ -473,7 +473,7 @@ feature {PC_DRIVER} -- Writing array data
 			end
 		end
 	
-feature {} -- Implementation 
+feature {NONE} -- Implementation 
 
 	dummy_string: STRING = ""
 

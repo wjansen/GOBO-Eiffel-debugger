@@ -51,7 +51,7 @@ create
 
 	declare, declare_from_pattern
 
-feature {} -- Initialization 
+feature {NONE} -- Initialization 
 
 	declare (o: like origin; id: INTEGER; s: ET_IS_SYSTEM)
 		local
@@ -170,7 +170,7 @@ feature -- ET_IS_ORIGIN
 			g.print_attribute_tuple_item_name (i, origin, file)
 		end
 
-feature {} -- Implementation
+feature {NONE} -- Implementation
 
 	item_ids: ARRAY [detachable ET_IDENTIFIER]
 		once

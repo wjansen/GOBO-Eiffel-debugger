@@ -154,15 +154,17 @@ public class RunPart : Box, AbstractPart {
 						   -1);
 	}
 
-	private void do_set_args(string text) {
+	private void do_set_args() {
 		GLib.FileStream p;
 		string cmd = null;
 		bool ok = false;
+		var args = arg_history.get_child() as Entry;
+		string text = args.get_text();
 #if POSIX
 		string str = null;
 		try {
 			cmd = Environment.get_variable("GOBO");
-			cmd = @"$cmd/bin/gedb.sh ";
+			cmd += "/bin/gedb.sh ";
 			cmd += text;
 			p = (GLib.FileStream)Posix.FILE.popen(cmd, "r");
 			ok = true;
@@ -191,7 +193,7 @@ public class RunPart : Box, AbstractPart {
 		arg_list = new string[n+1];
 		arg_list[0] = cmd;
 		for (uint i=0; i<n; ++i) arg_list[i+1] = args[i];
-#endif
+#endif	
 		arg_history.add_item(text);
 	}
 
@@ -313,7 +315,8 @@ public class RunPart : Box, AbstractPart {
 		item.add_accelerator("clicked", accel, key, 0, AccelFlags.VISIBLE);
 		item.set_tooltip_markup(comment);
 		buttons.@add(item);
-		if (cmd>=Driver.RunCommand.stop) buttons.set_child_secondary(item, true);
+		if (cmd>=Driver.RunCommand.stop) 
+			buttons.set_child_secondary(item, true);
 		return item;
 	}
 	
@@ -340,7 +343,7 @@ public class RunPart : Box, AbstractPart {
 		add_button("Step", Driver.RunCommand.step, accel, 
 				   "Continue to next instruction\nor expression, enter called routines.");
 		add_button("Back", Driver.RunCommand.back, accel, 
-		 		   "Finish called routines\nuntil back at caller. ");
+		 		   "Finish called routines until\nback at current stack level. ");
 		stop = add_button("Stop", Driver.RunCommand.stop, accel, 
 						 "Stop running system.");
 		
@@ -398,38 +401,49 @@ continuation commands.""");
 		var me = marks.get_child() as Entry;
 		me.editable = false;
 		me.placeholder_text = "Reset";
-		me.width_chars = 3;
+		me.width_chars = 4;
 		marks.popup_fixed_width = false;
 		marks.set_active(-1);
-		marks.set_tooltip_text("Select previously marked\nposition for reset.");
+		marks.tooltip_text = 
+"""Select previously marked position,
+and reset the program to this position.""";
 		marks.has_tooltip = true;
 		marks.changed.connect(() => { do_reset(marks); });
 		
-		label = new Label(" ");
+		label = new Label("");
 		buttons.@add(label);
 		Button restart = new Button.with_label("Restart");
 		buttons.@add(restart);
+//		var restart = add_button("Rerun", Driver.RunCommand.restart, accel, "") as Button;
+//		restart.reparent(buttons);
 		restart.clicked.connect(do_restart);
-		label = new Label("Arguments:");
-		buttons.@add(label);
+		restart.tooltip_text = 
+"""Restart debuggee with argumets
+from field to the right.""";
+		restart.has_tooltip = true;
+
 		arg_history = new HistoryBox("Command line arguments");
-		box.pack_end(arg_history, true, true, 0);
+		arg_history.selected.connect((h) => { do_set_args(); });
+		box.pack_start(arg_history, true, true, 0);
 		var args = arg_history.get_child() as Entry;
-		args.activate.connect((e) => 
-			{ do_set_args(e.get_text()); });
+		args.activate.connect((e) => { do_set_args(); });
 		args.set_icon_from_stock(EntryIconPosition.SECONDARY, Stock.CLEAR);
-		args.icon_release.connect((e) => { args.set_text(""); });
+		args.icon_release.connect((e) => 
+			{ args.set_text(""); args.grab_focus(); });
 		args.button_press_event.connect(do_show_args);
-		args.set_tooltip_text(
+		args.placeholder_text = "Arguments";
+		args.tooltip_text = 
 """Command line arguments.
-Click right mouse button to show parsed argument list.""");
+Click right mouse button 
+to show the parsed argument list.""";
 		args.has_tooltip = true;
+
+		var group = new SizeGroup(SizeGroupMode.HORIZONTAL);
 		box = new Box(Orientation.HORIZONTAL, 0); 
-		pack_end(box);
-		buttons = new ButtonBox(Orientation.HORIZONTAL); 
-		box.pack_start(buttons, false, false, 0);
+		pack_end(box, false, false, 0);
 		label = new Label("");
-		buttons.@add(label);
+		box.pack_start(label, false, false, 0);
+		group.add_widget(label);
 		checker = new ExpressionChecker();
 		box.pack_end(checker, true, true, 0);
 
@@ -439,6 +453,7 @@ Click right mouse button to show parsed argument list.""");
 		box.pack_start(buttons, false, false, 0);
 		label = new Label("Print on stop");
 		buttons.@add(label);
+		group.add_widget(label);
 		total_list = new ListStore(PrintItem.NUM_COLS, 
 									  typeof(string),		// TEXT
 									  typeof(Expression?),	// EXPR
@@ -451,8 +466,7 @@ Click right mouse button to show parsed argument list.""");
 			});
 		print_history = new MergedHistoryBox("Print expression", filter);
 		box.pack_end(print_history, true, true, 0);
-		print_history.selected.connect(
-			(h) => { do_check_expression(); });
+		print_history.selected.connect((h) => { do_check_expression(); });
 		print = print_history.get_child() as Entry;
 		print.activate.connect((e) => { do_check_expression(); });
 		print.set_icon_from_stock(EntryIconPosition.SECONDARY, Stock.CLEAR);
@@ -497,7 +511,7 @@ Click right mouse button to show parsed argument list.""");
 		string aa = "";
 		arg_list = dr!=null ? dr.args : arg_list = {};
 		for (int j=1; j<arg_list.length; ++j) aa += arg_list[j] + " ";
-		do_set_args(aa);
+		arg_history.add_item(aa);
 		at_end = false;
 		do_set_sensitive(dr!=null);
 		if (dr!=null) {

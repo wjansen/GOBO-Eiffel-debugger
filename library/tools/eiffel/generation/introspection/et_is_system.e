@@ -62,7 +62,7 @@ create
 
 	declare, declare_from_pattern
 
-feature {} -- Initialization 
+feature {NONE} -- Initialization 
 
 	declare (o: like origin; fl: INTEGER; a: NATURAL;
 			needs: like needed_categories)
@@ -875,7 +875,7 @@ feature -- DS_EQUALITY_TESTER
 			end
 		end
 
-feature {} -- PC_ACTIONABLE
+feature {NONE} -- PC_ACTIONABLE
 
 	pre_store
 		do

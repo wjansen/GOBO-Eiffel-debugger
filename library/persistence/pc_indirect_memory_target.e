@@ -44,7 +44,7 @@ create
 
 	make
 
-feature {} -- Initialization 
+feature {NONE} -- Initialization 
 
 	make (s: like system; act: BOOLEAN)
 		local
@@ -445,7 +445,7 @@ feature {PC_DRIVER} -- Object location
 			end
 		end
 
-feature {} -- Implementation 
+feature {NONE} -- Implementation 
 
 	field: detachable IS_FIELD
 		-- Field as defined in the source.

@@ -25,7 +25,7 @@ create
 
 	make
 
-feature {} -- Initialization
+feature {NONE} -- Initialization
 	
 	make (t: like target; s: like source; oo: like known_objects)
 		note
@@ -46,7 +46,7 @@ feature -- Access
 			Result := f & Forward_flag = Forward_flag
 		end
 
-feature {}
+feature {NONE}
 
 	process_announcement (si: SI_)
 		note
@@ -86,7 +86,7 @@ feature {}
 			end
 		end
 
-feature {} -- Implementation 
+feature {NONE} -- Implementation 
 
 	forward_data(t: IS_TYPE; count, cap: NATURAL; si: SI_)
 		local

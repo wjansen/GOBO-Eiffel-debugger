@@ -24,7 +24,7 @@ create
 	make_1,
 	make
 	
-feature {} -- Initialization 
+feature {NONE} -- Initialization 
 
 	make (n: INTEGER; pattern: D_)
 		do

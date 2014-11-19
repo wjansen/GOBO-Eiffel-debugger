@@ -262,7 +262,7 @@ feature {PC_DRIVER} -- Writing array data
 			end
 		end
 	
-feature {} -- Implementation 
+feature {NONE} -- Implementation 
 
 	max_ident: NATURAL
 

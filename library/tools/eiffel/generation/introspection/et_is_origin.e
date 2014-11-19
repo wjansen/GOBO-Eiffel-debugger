@@ -16,7 +16,7 @@ inherit
 			out
 		end
 
-feature {} -- Initialization 
+feature {NONE} -- Initialization 
 
 	make_origin (o: attached like origin)
 		do
@@ -45,7 +45,7 @@ feature -- Printing
 		deferred
 		end
 
-feature {} -- PC_ACTIONABLE
+feature {NONE} -- PC_ACTIONABLE
 
 	pre_store
 		local
@@ -59,7 +59,7 @@ feature {} -- PC_ACTIONABLE
 			restore
 		end
 	
-feature {} -- Implementation
+feature {NONE} -- Implementation
 
 note
 

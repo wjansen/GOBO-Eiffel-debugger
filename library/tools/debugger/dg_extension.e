@@ -98,11 +98,13 @@ feature -- Basic operation
 			l_name := compilee.name
 			create l_filename.make_current
 			l_filename := l_filename.extended(l_name + "0.c")
-			create c0_file.make_open_write (l_filename.out)
+			create c0_file.make (l_filename.out)
+			c0_file.open_write
 			c_generator.c_filenames.force_last (".c", l_name + "0")
 			c0_file.put_string ("#include %"")
 			c0_file.put_string (l_name)
 			c0_file.put_string (".h%"%N%N")
+			put_structs (False)
 			create l_filename.make_from_string(get("GOBO"))
 			l_filename := l_filename.extended("library")
 			l_filename := l_filename.extended("tools")
@@ -153,9 +155,9 @@ feature {} -- Extension parts
 			-- Define system and frame struct
 			print_forward_variable (True, c_names.frame_struct_name,
 															c_names.c_stacktop_name, "0")
-			h_file.put_string ("void ")
+			h_file.put_string ("extern void ")
 			h_file.put_string (c_names.c_crash_name)
-			h_file.put_string ("(EIF_NATURAL_32 code);%N")
+			h_file.put_string ("(EIF_NATURAL_32 code,EIF_NATURAL_32 sig);%N")
 			if not c_generator.pma_only then
 				-- Define `break'
 				h_file.put_string ("DllImport ")
@@ -482,11 +484,11 @@ feature {} -- Print C structs
 				end
 				j := j + 1
 			end
-			put_structs
+			put_structs (True)
 			h_file.flush
 		end
 
-	put_structs
+	put_structs (as_stack: BOOLEAN)
 		local
 			s: IS_SYSTEM
 			j, n: INTEGER
@@ -500,24 +502,29 @@ feature {} -- Print C structs
 					if t.is_normal and then not t.is_basic and then t.c_name /= Void
 						and then attached {IS_NORMAL_TYPE} t as nt
 					 then
-						put_struct (nt)
 						if nt.base_class.has_name ("STACKFRAME") then
-							-- only this C struct is needed in the header file
-							h_file.put_string ("typedef struct _")
-							h_file.put_string (nt.c_name)
-							h_file.put_character (' ')
-							h_file.put_string ( c_names.frame_struct_name)
-							h_file.put_character (';')
-							h_file.put_new_line
+							if as_stack then
+								put_struct (nt, h_file)
+								-- only this C struct is needed in the header file
+								h_file.put_string ("typedef struct _")
+								h_file.put_string (nt.c_name)
+								h_file.put_character (' ')
+								h_file.put_string ( c_names.frame_struct_name)
+								h_file.put_character (';')
+								h_file.put_new_line
+								h_file.flush
+							end
+						elseif not as_stack then
+							put_struct (nt, c0_file)
+							h_file.flush
 						end
-						h_file.flush
 					end
 				end
 				j := j + 1
 			end
 		end
 
-	put_struct (nt: IS_NORMAL_TYPE)
+	put_struct (nt: IS_NORMAL_TYPE; f: KI_TEXT_OUTPUT_STREAM)
 		local
 			cls: IS_CLASS_TEXT
 			ft: IS_TYPE
@@ -526,50 +533,50 @@ feature {} -- Print C structs
 			i, m: INTEGER
 		do
 			if not nt.is_subobject then
---				h_file.put_string ("typedef ")
+--				f.put_string ("typedef ")
 			end
-			h_file.put_string ("struct ")
-			h_file.put_character ('_')
-			h_file.put_string (nt.c_name)
-			h_file.put_character (' ')
-			h_file.put_character ('{')
-			h_file.put_new_line
+			f.put_string ("struct ")
+			f.put_character ('_')
+			f.put_string (nt.c_name)
+			f.put_character (' ')
+			f.put_character ('{')
+			f.put_new_line
 			from
 				m := nt.field_count
 				i := 0
 			until i = m loop
 				a := nt.field_at (i)
 				ft := a.type
-				h_file.put_character (' ')
-				h_file.put_character (' ')
-				h_file.put_string (ft.c_name)
+				f.put_character (' ')
+				f.put_character (' ')
+				f.put_string (ft.c_name)
 				if not ft.is_subobject then
-					h_file.put_character ('*')
+					f.put_character ('*')
 				end
 				if ft.is_special and then attached {IS_SPECIAL_TYPE} ft as st
 					and then not st.item_type.is_subobject
 				 then
-					h_file.put_character ('*')
+					f.put_character ('*')
 				end
-				h_file.put_character (' ')
-				h_file.put_string (a.name)
-				h_file.put_character (';')
-				h_file.put_new_line
+				f.put_character (' ')
+				f.put_string (a.name)
+				f.put_character (';')
+				f.put_new_line
 				if ft.is_special then
-					h_file.put_string ("  int32_t ")
-					h_file.put_string (a.name)
-					h_file.put_string ("_length;%N")
+					f.put_string ("  int32_t ")
+					f.put_string (a.name)
+					f.put_string ("_length;%N")
 				end
 				i := i + 1
 			end
-			h_file.put_character ('}')
+			f.put_character ('}')
 --			if not nt.is_subobject then
---				h_file.put_character (' ')
---				h_file.put_string (nt.c_name)
+--				f.put_character (' ')
+--				f.put_string (nt.c_name)
 --			end			
-			h_file.put_character (';')
-			h_file.put_new_line
-			h_file.flush
+			f.put_character (';')
+			f.put_new_line
+			f.flush
 		end
 		
 	put_wrappers
@@ -723,7 +730,7 @@ feature {} -- Print C structs
 			
 feature {} -- Implemantation
 
-	c0_file: PLAIN_TEXT_FILE
+	c0_file: KL_TEXT_OUTPUT_FILE
 
 invariant
 

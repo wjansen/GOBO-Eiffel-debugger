@@ -26,7 +26,7 @@ create
 
 	make
 
-feature {} -- Initialization
+feature {NONE} -- Initialization
 
 	make (fl: INTEGER)
 		do
@@ -35,7 +35,7 @@ feature {} -- Initialization
 			to_fill := False
 		end
 	
-feature {} -- Auxiliary routines of factory 
+feature {NONE} -- Auxiliary routines of factory 
 
 	new_normal_type (id, fl: INTEGER; bc: attached like class_at)
 		do

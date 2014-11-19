@@ -17,7 +17,7 @@ inherit
 			is_equal
 		end
 
-feature {} -- Initialization 
+feature {NONE} -- Initialization 
 
 	make (n: INTEGER)
 		note
@@ -286,7 +286,7 @@ feature -- Traversal
 			end
 		end
 			
-feature {} -- Hash function 
+feature {NONE} -- Hash function 
 
 	hash (key: K_): INTEGER
 		require

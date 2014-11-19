@@ -37,7 +37,7 @@ inherit
 			out
 		end
 
-feature {} -- Initialization 
+feature {NONE} -- Initialization 
 
 	declare (o: like origin; id: INTEGER; s: ET_IS_SYSTEM)
 		note
@@ -468,7 +468,7 @@ feature {ET_IS_TYPE} -- Additional construction
 												s.force_once (dynamic, Current)
 												r := s.last_once
 											else
-												create r.declare (dynamic, Current, s)
+												create r.declare (dynamic, target (dynamic, s), s)
 											end
 										end
 									end
@@ -498,7 +498,7 @@ feature {ET_IS_TYPE} -- Additional construction
 									and then dynamic.is_built
 								 then
 									if not attached r then
-										create r.declare (dynamic, Current, s)
+										create r.declare (dynamic, target (dynamic, s), s)
 									end
 									check attached r end
 									buffer.push (r)
@@ -520,7 +520,7 @@ feature {ET_IS_TYPE} -- Additional construction
 							static.has_seed (s.origin.current_system.default_create_seed)
 						 then
 							if not s.origin_table.has (dynamic) then
-								create rc.declare (dynamic, Current, s)
+								create rc.declare (dynamic, target (dynamic, s), s)
 								s.origin_table.force (rc, dynamic)
 								buffer.push (rc)
 							end
@@ -540,7 +540,7 @@ feature {ET_IS_TYPE} -- Additional construction
 			end
 		end
 	
-feature {} -- Implementation 
+feature {NONE} -- Implementation 
 
 	compute_flags (id: INTEGER): INTEGER
 		do
@@ -551,6 +551,16 @@ feature {} -- Implementation
 				 then
 					Result := Result | Reference_flag
 				end
+			end
+		end
+
+	target (dyn: ET_DYNAMIC_FEATURE; s: ET_IS_SYSTEM): ET_IS_TYPE
+		do
+			if attached {ET_DYNAMIC_PRECURSOR} dyn as prec then
+				s.force_type (prec.parent_type)
+				Result := s.last_type
+			else
+				Result := Current
 			end
 		end
 	

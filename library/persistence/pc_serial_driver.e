@@ -26,7 +26,7 @@ create
 
 	make
 	
-feature {} -- Initialization
+feature {NONE} -- Initialization
 	
 	make (t: like target; s: like source; opts: INTEGER)
 		note
@@ -59,7 +59,7 @@ feature -- Access
 			Result := f & Forward_flag < Forward_flag
 		end
 
-feature {} -- Scanning structures 
+feature {NONE} -- Scanning structures 
 	
 	process_closure
 		local

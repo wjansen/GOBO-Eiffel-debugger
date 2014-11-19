@@ -25,7 +25,7 @@ create
 	make,
 	make_in_system
 
-feature {} -- Initialization 
+feature {NONE} -- Initialization 
 
 	make (id: INTEGER; nm: READABLE_STRING_8; fl: INTEGER; fn: like path;
 			f: like features; p: like parents)

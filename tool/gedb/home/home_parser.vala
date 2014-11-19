@@ -1,5 +1,5 @@
 /**
-   Scenner/Parser of Eiffel source code to produce tags in the debugger's 
+   Scanner/Parser of Eiffel source code to produce tags in the debugger's 
    text buffer. 
  */
 
@@ -36,7 +36,7 @@ namespace Gedb {
 		   left="PLUS MINUS",
 		   left="TIMES DIV IDIV IMOD", right="POWER", 
 		   left="FREE_OP", right="NOT ADDRESS OLD",
-		   right="LPAREN LBRACKET LBRACE   ",
+		   right="LPAREN LBRACKET LBRA   ",
 		   left="DOT AS"
 			)]
 	public class Parser : ParserParser {
@@ -56,9 +56,9 @@ namespace Gedb {
 		
 		public override void on_syntax_error() {
 //		public override void on_parse_failed() {
-			stderr.printf("Syntax: `%s'\t%s:%u, off=%d\n", 
-						  token.name, ((Gedb.Name*)ft.home).fast_name,
-						  ft.first_pos/256, n_chars_read-line_count);
+//			stderr.printf("Syntax: `%s'\t%s:%u, off=%d\n", 
+//						  token.name, ((Gedb.Name*)ft.home).fast_name,
+//						  ft.first_pos/256, n_chars_read-line_count);
 		}
 		
 /* ------------------- Scanner ------------------- */
@@ -1389,7 +1389,6 @@ namespace Gedb {
 			var c = t as Classified;
 			q = new Qualified(t);
 			q.size = c!=null ? c.q.size : size;
-			if (arg!=null)  q.size += (arg.at-at) + (arg.size-1);
 			ClassText* home = null;
 			RoutineText* rt = null;
 			uint n;
@@ -1408,6 +1407,8 @@ namespace Gedb {
 			base(v.name, v.at, v.size); 
 			q = v.q;
 		}
+
+		protected void end_by(Token t) { q.size = t.size+(t.at-q.pos); }
 
 		public void set_parent(Classified p) {
 			ClassText* home = p.q.ft!=null ? p.q.ft.result_text : p.q.cls;
@@ -1449,6 +1450,7 @@ namespace Gedb {
 		[Lemon(pattern="Identifier(i) LPAREN Args(aa) RPAREN(r)")]
 		public Query._2(Parser h, Identifier i, Args aa, Token r) { 
 			base.from_token(h.ft, i, null, aa);
+			end_by(r);
 		}
 				
 		[Lemon(pattern="CREATE ExplicitTyp(ct) DOT Query(q)")]
@@ -1508,6 +1510,7 @@ namespace Gedb {
 		[Lemon(pattern="MultiDot(m) LBRACKET Args(aa) RBRACKET(r)")]
 		public MultiDot._6(Parser h, MultiDot m, Args aa, Token r) {
 			base.from_token(h.ft, m, null, aa);
+			end_by(r);
 		}
 	}
 	
@@ -1526,6 +1529,7 @@ namespace Gedb {
 		[Lemon(pattern="Parenthesized(p) LBRACKET Args(aa) RBRACKET(r)")]
 		public Parenthesized._3(Parser h, Parenthesized p, Args aa, Token r) {
 			base.from_token(h.ft, p, null, aa);
+			end_by(r);
 			h.ident_matched(this);
 		}
 		
@@ -1843,7 +1847,21 @@ namespace Gedb {
 			base.from_token(h.ft, x); 
 		}
 	}
-	
+/*	
+	public class Constant : Token {
+		
+		private Constant(Token t) { base(t.name, t.at, t.size); }
+
+		[Lemon(pattern="Manifest(m)"]
+		 public Constant._1(Parser h, Manifest m) { base(m); }
+		
+		[Lemon(pattern="PLUS Manifest(m)"]
+		 public Constant._2(Parser h, Manifest m) { base(m); }		
+
+		[Lemon(pattern="MINUS Manifest(m)"]
+		 public Constant._3(Parser h, Manifest m) { base(m); }		
+	}
+*/	
 	public class Manifest : Token {
 		
 		private Manifest(Token t) { base(t.name, t.at, t.size); }
@@ -1860,8 +1878,20 @@ namespace Gedb {
 		[Lemon(pattern="INTEGER(i)")]
 		public Manifest._5(Parser h, Token i) { this(i); }
 
+		[Lemon(pattern="PLUS INTEGER(i)")]
+		public Manifest._6(Parser h, Token i) { this(i); }
+
+		[Lemon(pattern="MINUS INTEGER(i)")]
+		public Manifest._7(Parser h, Token i) { this(i); }
+
 		[Lemon(pattern="REAL(r)")]
-		public Manifest._6(Parser h, Token r) { this(r); }
+		public Manifest._8(Parser h, Token r) { this(r); }
+
+		[Lemon(pattern="PLUS REAL(r)")]
+		public Manifest._9(Parser h, Token r) { this(r); }
+
+		[Lemon(pattern="MINUS REAL(r)")]
+		public Manifest._10(Parser h, Token r) { this(r); }
 	}
 	
 } /* namespace*/

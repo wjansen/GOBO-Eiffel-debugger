@@ -11,7 +11,7 @@ inherit
 			default_create
 		end
 
-feature {} -- Initialization
+feature {NONE} -- Initialization
 
 	default_create
 		do
@@ -154,7 +154,7 @@ feature -- Status setting
 			pos_set: pos = row * 256 + col \\ 256
 		end
 
-feature {} -- Implementation 
+feature {NONE} -- Implementation 
 
 	pos: INTEGER
 

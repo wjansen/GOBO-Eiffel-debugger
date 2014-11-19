@@ -220,6 +220,13 @@ public class HistoryBox : ComboBoxText {
 			);
 	}
 
+	public HistoryBox.with_list(string? title, ListStore ls, int col) {
+		Object(has_entry: true, 
+			   model: ls, id_column: col, list: ls,
+			   add_tearoffs: title!=null, tearoff_title: title
+			);
+	}
+
 	construct {}
 
 	public TreePath add_item(string item, bool set_entry=true) {
@@ -294,9 +301,9 @@ public class MergedHistoryBox : HistoryBox {
 
 	public MergedHistoryBox(string? title, TreeModelFilter f, int id=0) 
 	requires (f.child_model is ListStore) {
-		ListStore l = (!) f.child_model as ListStore;
+		var store = f.child_model as ListStore;
 		Object(has_entry: true, 
-			   model: f, id_column: id, list: l,
+			   model: f, id_column: id, list: store,
 			   add_tearoffs: title!=null, tearoff_title: title
 			);
 	}
@@ -362,6 +369,7 @@ public static string format_value(uint8* addr, int off, bool is_home_addr,
 								  Gedb.Type* t, FormatStyle fmt,
 								  Gee.HashMap<void*,uint>? idents=null) {
 	string str = "";
+	if (t==null) return "";
 	if (addr==null) return is_home_addr ? str : "Void";
 	if (t.is_nonbasic_expanded()) return "";
 	if (is_home_addr && t.is_nonbasic_expanded()) return str;
@@ -474,8 +482,7 @@ public static string format_value(uint8* addr, int off, bool is_home_addr,
 			} else {
 				cc = chars_func(addr, &nc);
 				str = (string)cc;
-				str = str.substring(0, nc);
-				str =  cc!=null ? "\"" + str + "\"" : "\"\"";
+				str = cc!=null ? "\"" + str.substring(0, nc) + "\"" : "\"\"";
 			}
 			break;
 		case 18:
@@ -538,6 +545,16 @@ public string format_type(uint8* addr, int off, bool is_home_addr,
 
 public interface ClassPosition {
 	public abstract void get_position(out uint cid, out uint pos);
+}
+
+public interface Searcher {
+
+	public enum SearchMode {
+		NO_SEARCH, INIT_SEARCH, SEARCHING, NOT_FOUND, GO_TO }
+
+	public abstract void prepare_client (TextView view);
+	public abstract bool handle_key(Gdk.EventKey ev, TextView view);
+	public abstract int search_state { get; set; } 
 }
 
 public class DataItem {

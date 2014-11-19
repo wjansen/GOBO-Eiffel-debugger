@@ -22,7 +22,7 @@ inherit
 			out
 		end
 
-feature {} -- Initialization 
+feature {NONE} -- Initialization 
 
 	make_source
 		local

@@ -20,7 +20,7 @@ create
 
 	make
 
-feature {} -- Initialization 
+feature {NONE} -- Initialization 
 
 	make (nm: READABLE_STRING_8; anm: detachable READABLE_STRING_8;
 				ia: like inline_agent; fl: INTEGER; t: like target;
@@ -495,7 +495,7 @@ feature {IS_BASE} -- Implementation
 
 	vars: IS_SEQUENCE [like var_at]
 
-feature {} -- Implementation 
+feature {NONE} -- Implementation 
 
 	inline_routines: detachable IS_SEQUENCE [like inline_routine_at]
 

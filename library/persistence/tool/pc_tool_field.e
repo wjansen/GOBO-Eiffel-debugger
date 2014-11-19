@@ -15,7 +15,7 @@ create
 
 	make_qualified
 
-feature {} -- Initialization
+feature {NONE} -- Initialization
 
 	make_qualified (p: like parent; nm: READABLE_STRING_8)
 		do

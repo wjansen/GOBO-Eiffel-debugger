@@ -32,7 +32,7 @@ create
 
 	make
 
-feature {} -- Initialization 
+feature {NONE} -- Initialization 
 
 	make (full: BOOLEAN)
 		do
@@ -277,7 +277,7 @@ feature {PC_DRIVER} -- Writing elementary data
 			memory_size := memory_size + pointer_bytes
 		end
 
-feature {} -- Implementation 
+feature {NONE} -- Implementation 
 
 	append_formatted_integer (i: INTEGER; l: INTEGER; to: STRING)
 		local

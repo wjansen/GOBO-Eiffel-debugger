@@ -102,10 +102,10 @@ public class SqlPart : Window {
 	private ListStore all_types;
 	private ListStore alive_types;
 
-	private Debuggee dg;
-	private DataPart data;
-	private Status status;
-
+	private Gtk.Menu menu;
+	private TargetsData? targets;
+	private uint8* target_object;
+	
 	private Entry select;
 	private Entry from;
 	private Entry where;
@@ -127,6 +127,10 @@ public class SqlPart : Window {
 	private SqlQuery actual;
 	private Gedb.Type* base_type;
 	private bool as_default;
+
+	internal Debuggee dg;
+	internal DataPart data;
+	internal Status status;
 
 	public bool obsolete { get; private set; }
 
@@ -303,27 +307,15 @@ public class SqlPart : Window {
 		string nm = ex!=null ?
 			ex.top().append_qualified_name(null, null, fmt) : name;
 		int tnl = tn.length;
-//		if (tnl>24) 
-//			tn = tn.substring(0,11) + "..." + tn.substring(tnl-11);
-//		label.set_tooltip_text(nm + ":\n" + tn);
-//		label.has_tooltip = true;
-		label.motion_notify_event.connect((ev) => 
-			{ return do_header_info(@"$nm: $tn"); });
-		label.leave_notify_event.connect((ev) =>
-			{ return do_header_info(null); });
+		if (tnl>24) 
+			tn = tn.substring(0,11) + "..." + tn.substring(tnl-11);
+		label.set_tooltip_text(nm + ":\n" + tn);
+		label.has_tooltip = true;
+		nm += ": " + tn;
 		label.show();
 		column.max_width = width;
 		view.append_column(column);
 		return tt;
-	}
-
-	private bool do_header_info(string? h) {
-		uint id;
-		id = status.get_context_id("stop-reason");
-		status.remove_all(id);
-		if (h!=null) 
-		status.push (id, h);
-		return false;
 	}
 
 	private GLib.Type[] expand_type(Gedb.Type* t, ClassText* ct,
@@ -473,8 +465,10 @@ public class SqlPart : Window {
 		Gee.HashMap<void*,uint> ko = data.known_objects;
 		Gee.MapIterator<void*,uint> iter;
 		bool conform = this.conform.active;
+		bool found = false;
 		for (iter = ko.map_iterator(); iter.next();) {
 			obj = iter.get_key();
+			found |= obj==target_object;
 			od = iter.get_value();
 			t = dg.rts.type_of_any(obj, actual.from);
 			if (t!=actual.from) {
@@ -547,6 +541,14 @@ public class SqlPart : Window {
 		var screen = get_screen();
 		int h = (int)(0.5*screen.height());
 		scroll.set_min_content_height(int.min(n*24+30,h));
+		if (targets!=null) {
+			if (found) {
+				targets.reset_ident();
+			} else {
+				targets.do_close();
+				targets = null;
+			}
+		}
 	}
 
 	private uint scan_fields(TreeIter at, uint first_col,
@@ -666,10 +668,12 @@ public class SqlPart : Window {
 	}
 
 	private bool do_button(Gdk.EventButton e) {
-		if (e.type!=Gdk.EventType.BUTTON_PRESS || e.button!=3) return false;
+		if (e.type!=Gdk.EventType.BUTTON_PRESS) return false;
 		TreePath path;
 		TreeIter iter;
 		TreeViewColumn col;
+		uint8* obj;
+		uint od;
 		int i, n, x, y;
 		view.get_path_at_pos((int)e.x, (int)e.y, 
 							 out path, out col, out x, out y);
@@ -678,19 +682,56 @@ public class SqlPart : Window {
 		n = col.sort_column_id;
 		for (i=ident_col.length; i-->0;) 
 			if (ident_col[i]==n) break;
-		if (i<0) return true;
-		if (i>0 && ident_col[i-1]==n-1) return true;
-		var info = data.deep_info;
-		uint8* obj = null;
-		uint od;
-		store.@get(iter, n, out od, n-1, out obj, -1);
-		if (obj==null) return true;
-		var menu = new FeatureMenu(info[od], obj, data, 0, dg.rts);
-		menu.popup(null, null, null, e.button, e.time);
-		return true;
+		if (i<0) return true;	// column not found, should not happen
+		if (e.button==1) {
+			if (i>0 && ident_col[i-1]==n-1) return true;
+			store.@get(iter, n, out od, n-1, out obj, -1);
+			if (obj==null) return true;
+			if (targets==null) {
+				targets = new TargetsData(this);
+			}
+			targets.fill(data.deep_info[od]);
+			target_object = obj;
+			(targets.get_toplevel() as Window).present();
+			return true;
+		} else if (e.button==3) {
+			Gedb.Type* t;
+			string name;
+			if (i>0 && ident_col[i-1]==n-1) {
+				// not an ident column
+				var ex = actual.flat_exs[i];
+				if (ex!=null) {
+					ex = ex.bottom();
+					name = ex.top().append_qualified_name(null, ex);
+					t = ex.dynamic_type;
+				} else {
+					var f = actual.flat_fields[i];
+					if (f==null) return true;
+					name = ((Name*)f).fast_name;
+					t = ((Entity*)f).type;
+				}
+				store.@get(iter, 1, out od, -1);
+				string dot = name[0].isalpha() ? "." : "";
+				name = @"_$od$dot$name";
+			} else {
+				// ident column
+				store.@get(iter, n, out od, n-1, out obj, -1);
+				if (obj==null) return true;
+				name = @"_$od";
+				t = dg.rts.type_of_any(obj);
+			}
+			menu = new FeatureMenu(name, 0, t, data, dg.rts);
+			menu.popup(null, null, null, e.button, e.time);
+			return true;
+		}
+		return false;
 	}
 
 	private bool do_close() { 
+		if (targets!=null) {
+			targets.do_close();
+			targets = null;
+		}
 		hide(); 
 		if (store!=null) store.clear();
 		return true; 
@@ -891,7 +932,7 @@ public class SqlPart : Window {
 		conform.active = false;
 		buttons.@add(conform);
 		buttons.set_child_secondary(conform, true);
-		conform.set_tooltip_text("Precise or corforming types?");
+		conform.set_tooltip_text("Precise or conforming types?");
 		conform.has_tooltip = true;
 		conform.clicked.connect((b) => { do_toggle(); });
 		conform.active = false;
@@ -902,8 +943,6 @@ public class SqlPart : Window {
 		update.clicked.connect((b) => { do_update(); });
 		Button close = new Button.with_label("Close");
 		buttons.@add(close);
-		close.set_tooltip_text("Close window.");
-		close.has_tooltip = true;
 		close.clicked.connect((b) => { do_close(); });
 		delete_event.connect((e) => { return do_close(); });
 
@@ -924,6 +963,7 @@ public class SqlPart : Window {
 		do_new_exe(dg);
 		do_refresh(stack.frame());
 		show_all();
+
 	}
 
 	public HistoryBox where_history { get; private set; }
@@ -933,6 +973,69 @@ public class SqlPart : Window {
 		select.sensitive = !is_running;
 		from.sensitive = !is_running;
 		where.sensitive = !is_running;
+	}
+
+}
+
+public class TargetsData : DataCore {
+
+	private SqlPart sql;
+	private uint8* object;
+
+	internal bool do_close() {
+		get_toplevel().hide();
+		store.clear();
+		return true;
+	}
+
+	public TargetsData(SqlPart sql) { 
+		base.additionally(sql.data, sql.data.stack, 
+						{FormatStyle.ADDRESS,FormatStyle.IDENT});
+		this.sql = sql; 
+		main = sql.data;
+		known_objects = main.known_objects;
+
+		var w = new Window();
+		w.delete_event.connect((e) => { return do_close(); });
+		w.@add(this);
+		sql.notify["obsolete"].connect(
+			(t,p) => { if (sql.obsolete) do_close(); });
+		var buttons = new ButtonBox(Orientation.HORIZONTAL);
+		buttons.set_layout(ButtonBoxStyle.END);
+		pack_end(buttons, false, false, 3);
+		Button close = new Button.with_label("Close");
+		buttons.@add(close);
+		close.clicked.connect((b) => { do_close(); });
+		w.show_all();
+	}
+	
+	public void fill(DeepInfo info) {
+		TreeIter iter;
+		Entity* e;
+		uint8* addr;
+		string name;
+		int idx, off;
+		store.clear();
+		object = info.addr;
+		reset_ident();
+		main.id_to_expr(main.known_objects[object]);
+		for (; info!=null; info=info.parent) {
+			e = info.field;
+			idx = info.index;
+			SpecialType* st = idx>=0 ? (SpecialType*)info.parent.tp : null;
+			addr = info.parent.addr;
+			off = e!=null ? ((Field*)e).offset : 0;
+			name = e!=null ? ((Name*)e).fast_name : @"[$idx]";
+			store.prepend(out iter, null);
+			addr = info.addr;
+			set_value(iter, addr, false, e, st, idx, ' ', name, info.expr);
+		}
+	}
+
+	public void reset_ident() {
+		uint od = main.known_objects[object];
+		var w = get_toplevel() as Window;
+		w.title = compose_title(@"Targets path for object _$od", dg.rts);
 	}
 
 }

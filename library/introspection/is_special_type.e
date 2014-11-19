@@ -34,7 +34,7 @@ create {IS_SYSTEM, IS_TYPE}
 	make,
 	make_in_system
 
-feature {} -- Initialization 
+feature {NONE} -- Initialization 
 
 	make (id: INTEGER; fl: INTEGER; ct: IS_CLASS_TEXT; it: like item_type;
 				a: attached like fields; e: like effectors; r: like routines)

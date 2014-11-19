@@ -30,7 +30,7 @@ create
 	default_create,
 	make_from_source
 
-feature {} -- Initialization
+feature {NONE} -- Initialization
 
 	default_create
 		do
@@ -155,7 +155,7 @@ feature -- Basic operation
 											s.actual_time_as_integer)
 		end
 
-feature {} -- Implementation
+feature {NONE} -- Implementation
 
 	Manifest: STRING = "EIFFEL_OBJECT"
 

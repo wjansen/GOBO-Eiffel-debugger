@@ -63,7 +63,7 @@ create
 
 	make
 	
-feature {} -- Initialization 
+feature {NONE} -- Initialization 
 
 	make (s: like system)
 		do
@@ -326,7 +326,7 @@ feature {PC_DRIVER} -- Reading object definitions
 			pop_offset
 		end
 
-feature {} -- Implementation 
+feature {NONE} -- Implementation 
 
 	process_ident (id: like last_ident)
 		do

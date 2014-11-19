@@ -63,7 +63,7 @@ create
 
 	declare, declare_from_pattern
 
-feature {} -- Initialization 
+feature {NONE} -- Initialization 
 
 	declare (o: like orig_agent; dt: ET_DYNAMIC_TYPE;
 					 w: like where; t: like in_type; i: INTEGER;
@@ -220,7 +220,7 @@ feature -- Basic operation
 			end
 		end
 
-feature {} -- Implementation 
+feature {NONE} -- Implementation 
 
 	current_id (s: ET_IS_SYSTEM): ET_IDENTIFIER
 		once
@@ -337,7 +337,7 @@ feature {} -- Implementation
 			end
 		end
 
-feature {} -- Implementation 
+feature {NONE} -- Implementation 
 
 	tmp_str: STRING = "................................................"
 

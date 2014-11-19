@@ -5,7 +5,6 @@ public delegate void PositionFunc(uint id, uint l, uint c);
 public delegate void LimitsFunc(uint d, uint s);
 public delegate void OffsetFunc();
 public delegate void* AddressFunc(char* name);
-public delegate int MainFunc(int argc, char **argv);
 public delegate void RaiseFunc(int code);
 
 internal JumpBufferFunc jump_buffer_func;
@@ -218,6 +217,7 @@ public class Debuggee : Object {
 		chars_func = (CharsFunc)af("chars");
 		unichars_func = (UnicharsFunc)af("unichars");
 		offset_func = (OffsetFunc)af("set_offsets");
+		wrap_func = (WrapFunc)af("wrap");
 		offset_func();
 	}
 
@@ -237,9 +237,23 @@ public class Debuggee : Object {
 
 	public StackFrame* frame() { return top0!=null ? *top0 : null; }
 
-	public void crash_response() {
+	public bool has_rescue() {
+		StackFrame* rescue;
+		Routine* r;
+		for (rescue=frame(); rescue!=null; rescue=rescue.caller) {
+			r = rescue.routine;
+			if (r==null) break;
+			RoutineText* rt = r.routine_text();
+			if (rt.rescue_pos!=0) return true; 
+		}
+		return false;
+	}
+
+	public void crash_response(bool interrupt) {
 		is_running = false;
-		response(Driver.ProgramState.Crash, null, *top0, 0);
+		int reason = interrupt ? 
+			Driver.ProgramState.Interrupt : Driver.ProgramState.Crash;
+		response(reason, null, *top0, 0);
 	}
 
 	public signal void response(int reason, Gee.List<Breakpoint>? match,
@@ -266,9 +280,9 @@ public class Driver : Debuggee {
 		next,
 		step,
 		back,
+		restart,
 		mark,
 		reset,
-		restart,
 		load,
 		edit_bp,
 		bp_set, 
@@ -320,9 +334,10 @@ public class Driver : Debuggee {
 	private int stop_code;
 	private int os_signal;
 	private uint timeout;
+	private bool ignore_bp_table;
 	private int* step;
 
-	private void* argv;
+	private void*** argv;
 	private int* argc;
 
 	private SourceFunc cb = null;
@@ -332,22 +347,27 @@ public class Driver : Debuggee {
 	
 	public void update_breakpoints(Gee.List<Breakpoint>? list) {
 		breakpoints = list;
+		uint depth = int.MAX;
 		int n = 0;
 		bool ok = true;
-		set_pos_func(0, 0, 1);
+		set_pos_func(depth, 0, 0);
+		ignore_bp_table = false;
 		if (list==null) return;
 		foreach (var bp in list) {
-			if (bp.exc==0) {
-				if (bp.pos==0) {
-					ok = false;
-					break;
-				} else {
-					set_pos_func(bp.cid, bp.pos/256, bp.pos%256);
-					++n;
+			if (bp.exc!=0) {
+			} else if (bp.pos!=0) {
+				set_pos_func(bp.cid, bp.pos/256, bp.pos%256);
+				++n;
+			} else if (bp.depth>0) {
+				if (bp.depth<depth) {
+					depth = bp.depth;
+					set_pos_func(depth, 0, 0);
 				}
+			} else {
+				ok = false;
 			}
 		}
-		if (!ok || n>20) set_pos_func(0, 0, 0);
+		ignore_bp_table = !ok || n>20;
 	}
 
 	public void target_go(uint run, uint mode, uint repeat) {
@@ -535,14 +555,14 @@ public class Driver : Debuggee {
 			switch (cmd) {
 			case RunCommand.cont:
 				interactive = false;
-				*step = 0;
+				*step = ignore_bp_table ? 1 : 0;
 				set_limits_func(0, 0);
 				break;
 			case RunCommand.next:
 				target_depth = ss;
-				interactive = false;
-				*step = 1;
-				set_limits_func(0, 0);
+				interactive = false;	
+				*step = ignore_bp_table ? 1 : 0;
+				set_limits_func(target_depth, 0);
 				break;
 			case RunCommand.step:
 				target_depth = int.MAX;
@@ -555,13 +575,13 @@ public class Driver : Debuggee {
 				compound_limit = top.scope_depth-(int)repeat;
 				if (compound_limit<0) compound_limit = 0;
 				interactive = false;
-				*step = 0;
-				set_limits_func(0, compound_limit);
+				*step = ignore_bp_table ? 1 : 0;
+				set_limits_func(target_depth, compound_limit);
 				break;
 			case RunCommand.back:
 				target_depth = ss-(int)repeat;
 				interactive = false;
-				*step = 0;
+				*step = ignore_bp_table ? 1 : 0;
 				set_limits_func(target_depth, 0);
 				break;
 			case RunCommand.mark:
@@ -584,7 +604,8 @@ public class Driver : Debuggee {
 				m = Marker.at(0);
 				top = m.restore(rts);
 				just_marked = true;
-// Set args
+				*argc = args.length;
+				*argv = args;
 				intern = old_intern;
 				longjmp_func(m.buffer, 2);
 				break;
@@ -640,17 +661,12 @@ public class Driver : Debuggee {
 				if (n<code) continue;  
 				at = rescue;
 				if (found==null) found = new Breakpoint.with_ident(bp.id);
-				found.exc = code + 256*os_signal;
+				found.exc = code + (os_signal<<8);
 			}
 			n = bp.depth;
 			if (n>0) {
 				int d = frame.depth;
-				if (bp.id==0) {
-					if (n<=d) continue;
-					else bp.pos = 0;
-				} else {
-					if (n>d) continue;
-				}
+				if (n>d) continue;
 				if (found==null) found = new Breakpoint.with_ident(bp.id);
 				found.depth = bp.depth;
 			}
@@ -789,10 +805,19 @@ public class Driver : Debuggee {
 		the_driver = this;
 	}
 
-	public Driver.with_args(string[] args, AddressFunc af) {
+	public Driver.with_args(int* argc, void*** argv, AddressFunc af) {
 		this();
-		this.args = args;
-		set_addresses_and_offsets(af);		
+		this.argc = argc;
+		this.argv = argv;
+		uint8** addr = *argv;
+		int n = *argc;
+		args = new string[n];
+		for (int i=0; i<n; ++i, addr = addr+1) {
+			uint8* ai = *addr;
+			args[i] = (string)ai;
+		}
+		set_addresses_and_offsets(af); 
+		*step = 1;
 	}
 
 	public StackFrame* top { get; private set; }

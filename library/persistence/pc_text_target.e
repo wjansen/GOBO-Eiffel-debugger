@@ -28,7 +28,7 @@ create
 
 	make
 
-feature {} -- Initialization 
+feature {NONE} -- Initialization 
 
 	make (f: like file; s: like system)
 		do
@@ -500,7 +500,7 @@ feature {PC_DRIVER} -- Writing elementary data
 			end
 		end
 
-feature {} -- Implementation 
+feature {NONE} -- Implementation 
 
 	append_simple_string (s: STRING; to: STRING)
 		do
@@ -529,7 +529,7 @@ feature {} -- Implementation
 			end
 		end
 
-feature {} -- Implementation 
+feature {NONE} -- Implementation 
 
 	file: PLAIN_TEXT_FILE
 
@@ -581,7 +581,7 @@ feature {} -- Implementation
 
 	value_printed: BOOLEAN
 
-feature {} -- Filling strings 
+feature {NONE} -- Filling strings 
 
 	append_ident (i: NATURAL; to: STRING)
 		do

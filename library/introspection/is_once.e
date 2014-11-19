@@ -20,7 +20,7 @@ create
 
 	make
 
-feature {} -- Initialization 
+feature {NONE} -- Initialization 
 
 	make (nm: READABLE_STRING_8; anm: detachable READABLE_STRING_8;
 				ia: like inline_agent; fl: INTEGER; t: like target;
@@ -95,7 +95,7 @@ feature -- Low level implementation
 			not_longer_initialized: not is_initialized
 		end
 
-feature {} -- External implementation 
+feature {NONE} -- External implementation 
 
 	c_status (s: POINTER): BOOLEAN
 		external

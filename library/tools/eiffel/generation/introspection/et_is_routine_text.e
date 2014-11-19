@@ -40,7 +40,7 @@ create {ET_IS_CLASS_TEXT}
 	declare_from_feature,
 	declare_renamed
 
-feature {} -- Initialization 
+feature {NONE} -- Initialization 
 
 	declare_from_feature (f: ET_FEATURE; h: like home; s: ET_IS_SYSTEM)
 		local
@@ -106,6 +106,8 @@ feature -- Access
 
 	home: ET_IS_CLASS_TEXT
 
+	renames: ET_IS_ROUTINE_TEXT
+
 	tuple_labels: detachable IS_SEQUENCE [ET_IS_FEATURE_TEXT]
 
 	var_at (i: INTEGER): detachable ET_IS_FEATURE_TEXT
@@ -137,6 +139,9 @@ feature -- Status setting
 				instruction_positions.insert_data(pos, 0, 0, n)
 			else
 				instruction_positions := Void
+			end
+			if renames /= Void then
+				renames.set_instruction_positions (instruction_positions)
 			end
 		end
 
@@ -188,9 +193,14 @@ feature -- Status setting
 			end
 		end
 		
-feature {} -- Implementation 
+feature {ET_IS_ROUTINE_TEXT} -- Implementation 
 
-	renames: ET_IS_FEATURE_TEXT
+	set_instruction_positions (pos: SPECIAL[NATURAL])
+		do
+			instruction_positions := pos
+		end
+			
+feature {NONE} -- Implementation 
 
 	set_compound_positions (c, r: detachable ET_COMPOUND; e: detachable ET_KEYWORD)
 		do

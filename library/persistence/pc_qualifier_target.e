@@ -21,7 +21,7 @@ inherit
 			set_index
 		end
 
-feature {} -- Initialization 
+feature {NONE} -- Initialization 
 
 	default_create
 		do
@@ -181,7 +181,7 @@ feature {PC_DRIVER} -- Object location
 			actual_ident := in
 		end
 	
-feature {} -- Implementation 
+feature {NONE} -- Implementation 
 
 	actual_ident: NATURAL
 

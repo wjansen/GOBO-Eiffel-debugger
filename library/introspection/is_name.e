@@ -205,7 +205,7 @@ feature {IS_NAME} -- Implementation
 			Result := ""
 		end
 
-feature {} -- Implementation 
+feature {NONE} -- Implementation 
 
 	internal_hash_code: INTEGER
 

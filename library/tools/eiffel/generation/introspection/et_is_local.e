@@ -20,7 +20,7 @@ create
 
 	declare
 
-feature {} -- Initialization 
+feature {NONE} -- Initialization 
 
 	declare (n: detachable ET_AST_NODE; nm: detachable STRING;
 			t: ET_DYNAMIC_TYPE; h: like home; x: like text; 
@@ -105,7 +105,7 @@ feature -- Basic operation
 			g.print_local_name (l.name, a_file) 
 		end
 
-feature {} -- Implentation 
+feature {NONE} -- Implentation 
 
 	declare_labels (t: ET_TYPE; x: attached like text; s: ET_IS_SYSTEM)
 		local

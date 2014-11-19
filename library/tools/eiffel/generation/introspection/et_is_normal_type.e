@@ -33,7 +33,7 @@ create
 
 	declare, declare_from_pattern
 
-feature {} -- Initialization 
+feature {NONE} -- Initialization 
 
 	declare (o: like origin; id: INTEGER; s: ET_IS_SYSTEM)
 		note
@@ -78,7 +78,7 @@ feature -- Access
 
 	base_class: ET_IS_CLASS_TEXT
 
-feature {} -- Implementation 
+feature {NONE} -- Implementation 
 
 	declare_constants (s: ET_IS_SYSTEM)
 		note

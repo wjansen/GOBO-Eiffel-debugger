@@ -33,7 +33,7 @@ create {IS_SYSTEM, IS_TYPE}
 	make,
 	make_in_system
 
-feature {} -- Initialization 
+feature {NONE} -- Initialization 
 
 	make (id: INTEGER; fl: INTEGER; ct: IS_CLASS_TEXT;
 			g: like generics; e: like effectors; a: like fields; r: like routines)
@@ -204,7 +204,7 @@ feature -- Output
 			end
 		end
 
-feature {} -- Implementation
+feature {NONE} -- Implementation
 
 	item_names: ARRAY [detachable READABLE_STRING_8]
 		once

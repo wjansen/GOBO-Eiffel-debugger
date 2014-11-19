@@ -59,7 +59,7 @@ feature {PC_BASE} -- Object modification and repair.
 		do
 		end
 
-feature {} -- Implementation 
+feature {NONE} -- Implementation 
 
 	frozen backup_stack: ARRAYED_STACK [PC_ACTIONABLE]
 		note

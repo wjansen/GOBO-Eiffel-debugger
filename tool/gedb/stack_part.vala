@@ -94,32 +94,24 @@ public class StackPart : Box, AbstractPart {
 		if (main==null && store.iter_n_children(null)>0) {
 			sel = view.get_selection();
 			if (store.get_iter_first(out iter)) sel.select_iter(iter);
-			else do_list_select(sel);
 		} else if (store.get_iter_first(out iter)) {
 			combo.set_active_iter(iter);
 			combo.changed();
 		}
-		if (main==null)  depth_label.set_text(depth.to_string());
+		if (main==null) depth_label.set_text(depth.to_string());
 	}
 	
 	private void do_list_select(TreeSelection sel) {
 		TreeModel model=null;
 		TreeIter iter;
 		int l = sel.count_selected_rows();
-		uint id=0, line=0, col=0;
 		if (l!=1) return;
 		sel.get_selected(out model, out iter);
-		l = model.iter_n_children(null);
-		if (l==0) return;
 		model.@get(iter, Column.LEVEL, out l, -1);
-		model.@get(iter, 
-				   Column.CLASS_ID, out id, 
-				   Column.LINE, out line, 
-				   Column.COL, out col, -1);
 		this.level = l;
 		StackFrame* f;
-		for (f=top; f!=null && l>0; --l)  f = f.caller;
-		level_selected(f, id, line*256+col);
+		for (f=top; f!=null && l>0; --l) f = f.caller;
+		if (f!=null) level_selected(f, f.class_id, f.pos);
 	}
 	
 	private void do_row_activated(TreePath path) {
@@ -129,21 +121,14 @@ public class StackPart : Box, AbstractPart {
 	}
 
 	private void do_combo_select(ComboBox combo) requires (main!=null) {
+		if (top==null) return;
 		TreeIter iter;
 		int l = combo.get_active();
-		uint id=0, line=0, col=0;
-		if (l>=0) {
-			combo.get_active_iter(out iter);
-			store.@get(iter, 
-					   Column.CLASS_ID, out id, 
-					   Column.LINE, out line, 
-					   Column.COL, out col, -1);
-		}
 		this.level = l;
 		depth_label.label = @"Level $l:";
 		StackFrame* f;
-		for (f=top; l-->0;)  f = f.caller;
-		level_selected(f, id, line*256+col);// !!
+		for (f=top; f!=null && l>0; --l) f = f.caller;
+		level_selected(f, f.class_id, f.pos);// !!
 	}
 	
 	private Widget new_list_stack() {
@@ -267,7 +252,7 @@ public class StackPart : Box, AbstractPart {
 		combo.changed.connect((c) => { do_combo_select(c); });
 		top = main.top;
 		GLib.Idle.@add(() => { refresh(top); return false; });
-		add(box);
+		@add(box);
 	}
 	
 	public StackPart(Status s) { 
@@ -306,34 +291,23 @@ public class StackPart : Box, AbstractPart {
 	public void update_policy(ToggleButton toggle) {
 		bool active = toggle.get_active();
 		toggle.set_label(active ? "automatic" : "manually");
-		if (active && !automatic)  update();
+		if (active && !automatic) update();
 		automatic = active;
 	}
 
 	private void do_refresh(int reason) { 
-		if (main!=null && !automatic || dg==null)  return;
-		StackFrame* f = dg.frame();
+		if (main!=null && !automatic || dg==null) return;
 		Driver? dr = dg as Driver;
-		if (dr!=null) {
-			switch (reason) { 
-			case dr.ProgramState.Program_start:
-				refresh(f);
-				level_selected(f, f.class_id, f.pos);
-				return;
-			case dr.ProgramState.Running:
-				return;
-			case dr.ProgramState.Still_waiting:
-				refresh(f);
-				return;
-			}
-		}
+		if (dr!=null && reason==dr.ProgramState.Running) return;
+		StackFrame* f = dg.frame();
 		refresh(f);
+		level = 0;
 	}
 	
 	public bool has_frame(StackFrame* f) {
 		StackFrame* sf;
 		for (sf=top; sf!=null; sf=sf.caller) {
-			if (sf==f)  return true;
+			if (sf==f) return true;
 		}
 		return false;
 	}
@@ -345,7 +319,7 @@ public class StackPart : Box, AbstractPart {
 		if (store.get_iter_first(out iter)) {
 			while (f!=null && store.iter_next(ref iter)) {
 				store.@get(iter, Column.CLASS_ID, out id, -1);
-				if (id==cid)  return f;
+				if (id==cid) return f;
 				f = f.caller;
 			} 
 		}
