@@ -20,7 +20,7 @@ public enum ConstCode {
 
 public enum RangeCode { interval, dollar, all, iff }
 
-public const string  bullet = "⚫"; // "●" "⚫" "•"
+public const string  bullet = "•"; // "●" "⚫" "•"
 
 
 public void copy_value(uint8* left, uint8* right, size_t size) {
@@ -1593,8 +1593,10 @@ public abstract class Expression : Object {
 				}
 			}
 		}
-		var ft = ct.query_by_name(out n, name(), arg==null, rt);
-		if (n!=1) return false;
+		if (!(this is EqualityExpression)) {
+			ct.query_by_name(out n, name(), arg==null, rt);
+			if (n!=1) return false;
+		}
 		Expression? ci;
 		for (uint i=0; i<Child.COUNT; ++i) {
 			ci = children[i] as AliasExpression;
@@ -1902,7 +1904,7 @@ public abstract class Expression : Object {
 	requires (e!=null && !e.type.is_subobject() 
 			  && s.type_of_any(obj).conforms_to(e.type)) {
 		this.typed(e);
-		copy_value(result, obj, sizeof(void*));
+		*(void**)result = obj;
 	}
 
 	public override string name() { 
@@ -2465,9 +2467,14 @@ public abstract class Expression : Object {
 
  public class ConstantExpression : TextExpression {
 
-	public ConstantExpression(Constant* c) {
-		base.typed((Entity*)c);
+	public ConstantExpression(Constant* c) { base.typed((Entity*)c); }
+
+	protected override bool set_dyn_type(Gedb.Type* pt, StackFrame* f) {
+		return true;
 	}
+
+	protected override void compute(uint8* obj, Gedb.Type* t, System* s) 
+	throws ExpressionError {}
 
 	public override uint8* address() { 
 		var c = (Constant*)entity;
@@ -2758,8 +2765,9 @@ public abstract class Expression : Object {
 	protected override bool set_dyn_type(Gedb.Type* pt, StackFrame* f) {
 		return true;
 	}
+
 	protected override void compute(uint8* obj, Gedb.Type* t, System* s) 
-	throws ExpressionError { }
+	throws ExpressionError {}
 
 	public ManifestExpression(Gedb.Type *t, string value) 
 	requires (t.is_basic()) {

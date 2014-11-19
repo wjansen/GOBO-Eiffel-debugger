@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
-<meta name="generator" content="hevea 2.09">
+<meta name="generator" content="hevea 2.16">
 <link rel="stylesheet" type="text/css" href="debugh.css">
 <title>Installation</title>
 </head>
@@ -17,14 +17,8 @@ First, installing the extended <span style="font-style:oblique">Gec</span> compi
 (this is done the usual way), thereby the debugger is installed, too. 
 The result is, besides the common programs <span style="font-family:monospace">gec</span> etc., 
 the library <span style="font-family:monospace">libgedb.so</span> (or <span style="font-family:monospace">gedb.dlls</span> on <span style="font-style:oblique">Windows</span>) 
-that contains the bulk of debugger code 
-and the executable <span style="font-family:monospace">gedb</span> (or <span style="font-family:monospace">gedb.exe</span>). 
-Both debugger parts are put into directory <span style="font-family:monospace">$GOBO/bin</span>. 
-When the debugger acts as runtime analyser then <span style="font-family:monospace">gedb</span> is the main program 
-that links <span style="font-family:monospace">libgedb.so</span> as well as the debuggee library, 
-but when the debugger acts as post mortem analyser 
-then the debuggee is the main program linking <span style="font-family:monospace">libgedb.so</span> 
-while <span style="font-family:monospace">gedb</span> is ignored.
+that contains the bulk of debugger code. 
+The debuggee is the main program linking <span style="font-family:monospace">libgedb.so</span>. 
 </p><p>Second, to prepare an <span style="font-style:oblique">Eiffel</span> system for debugging 
 operation system specific options are to be provided in files 
 <span style="font-family:monospace">$GOBO/tool/gec/config/c/*.cfg</span>. 
@@ -43,10 +37,15 @@ dg_libs:
 #endif
 </pre><p>These settings have to be adapted for the other configuration files 
 if they are to be used. 
-</p><blockquote class="quote">
+Moreover, in case of <span style="font-style:oblique">Unix</span> like operation systems 
+the environment variable <span style="font-family:monospace">LD_LIBRARY_PATH</span> 
+must point (among others) to <span style="font-family:monospace">$GOBO/bin</span>, 
+alternatively, you may add the cryptic flag <span style="font-family:monospace">-Wl,-rpath,$GOBO/bin</span> 
+(no internal spaces!)
+to variable <span style="font-family:monospace">dg_libs</span>. </p><blockquote class="quote">
 <div class="center"><span style="font-weight:bold">Hint</span></div>
 If the debugger is to be installed form the <span style="font-style:oblique">Vala</span> source code
-switch to directory <span style="font-family:monospace">$GOBO/library/tools/debugger/gui</span> 
+switch to directory <span style="font-family:monospace">$GOBO/tool/gedb</span> 
 and run <span style="font-family:monospace">make</span> before installing <span style="font-style:oblique">Gec</span>. 
 </blockquote>
 <hr>

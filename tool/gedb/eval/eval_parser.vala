@@ -198,7 +198,7 @@ namespace Eval {
 			if (to_compute && !syntax_only) {
 				if (ex is AliasExpression) {
 					var aex = ex as AliasExpression;
-					if (aex.alias!=null) return; //ex = aex.alias.top();
+					if (aex.alias!=null) return;
 				}
 				if (now) {
 					try {
@@ -837,8 +837,8 @@ namespace Eval {
 	
 	public class Break : Breakpoint {
 		
-		[Lemon(pattern="BREAK_CMD Cmd(e) At(a) Depth(d) Typ(t) Iff(i) Print(p) Cont(c) Dis(n)")]
-		public Break._1(Parser h, Cmd e, At a, Depth d, Typ t, Iff i, Print p, Cont c, Dis n) {
+		[Lemon(pattern="BREAK_CMD Catch(e) At(a) Depth(d) Typ(t) Iff(i) Print(p) Cont(c) Dis(n)")]
+		public Break._1(Parser h, Catch e, At a, Depth d, Typ t, Iff i, Print p, Cont c, Dis n) {
 			base();
 			exc = e.exc;
 			cid = a.cid;
@@ -852,13 +852,37 @@ namespace Eval {
 		}
 	}
 	
-	public class Cmd : Breakpoint {
+	public class Catch : Breakpoint {
 		
 		[Lemon(pattern="")]
-		public Cmd._0(Parser h) { base.with_ident(0); }
+		public Catch._0(Parser h) { base.with_ident(0); }
 		
 		[Lemon(pattern="EXC IDENTIFIER(e)")]
-		public Cmd._1(Parser h, Token e) {
+		public Catch._1(Parser h, Token e) {
+			base.with_ident(0);
+			var name = e.name.down();
+			exc = code_of_catch(name);
+		}
+		[Lemon(pattern="EXC VOID(e)")]
+		public Catch._2(Parser h, Token e) {
+			base.with_ident(0);
+			var name = e.name.down();
+			exc = code_of_catch(name);
+		}
+		[Lemon(pattern="EXC CHECK(e)")]
+		public Catch._3(Parser h, Token e) {
+			base.with_ident(0);
+			var name = e.name.down();
+			exc = code_of_catch(name);
+		}
+		[Lemon(pattern="EXC WHEN(e)")]
+		public Catch._4(Parser h, Token e) {
+			base.with_ident(0);
+			var name = e.name.down();
+			exc = code_of_catch(name);
+		}
+		[Lemon(pattern="EXC ALL(e)")]
+		public Catch._5(Parser h, Token e) {
 			base.with_ident(0);
 			var name = e.name.down();
 			exc = code_of_catch(name);
@@ -1081,7 +1105,7 @@ namespace Eval {
 			return best;
 		}
 
-		protected void end_by(Token t) { size = (t.at+t.size) - at; }
+		protected void end_by(Token t) { size = t.size+(t.at-at); }
 		
 		protected void set_down(Parser h, Nonterm d) {
 			if (!h.is_match) return;
@@ -1255,7 +1279,7 @@ namespace Eval {
 		}
 		
 		protected Nonterm.from_manifest(Parser h, Token t, 
-									   string value, TypeIdent tid, 
+									   string value, uint tid, 
 									   Token? end=null) { 
 			token = t;
 			at = t.at;
@@ -1878,7 +1902,7 @@ namespace Eval {
 				h.not_unique = n>0;
 				h.last_token = op;
 				h.error = ErrorCode.UNKNOWN;
-				h.is_match = false;	  		
+				h.is_match = false;
 			}
 		}
 		
@@ -1917,18 +1941,44 @@ namespace Eval {
 			base.from_token(h, i);
 		}
 		
+		[Lemon(pattern="CURRENT(c)")]
+		public Unqualified._1(Parser h, Token c) { 
+			Gedb.Type* t = h.root_type;
+			uint tid = t!=null ? t.ident : TypeIdent.ANY;
+			base.from_manifest(h, c, c.name, tid); 
+		}
+		
+		[Lemon(pattern="RESULT(r)")]
+		public Unqualified._2(Parser h, Token r) { 
+			base.from_manifest(h, r, r.name, TypeIdent.REAL_64); 
+		}
+		
+		[Lemon(pattern="FALSE(f)")]
+		public Unqualified._3(Parser h, Token f) { 
+			base.from_manifest(h, f, f.name, TypeIdent.BOOLEAN); 
+		}
+		
+		[Lemon(pattern="TRUE(t)")]
+		public Unqualified._4(Parser h, Token t) { 
+			base.from_manifest(h, t, t.name, TypeIdent.BOOLEAN); 
+		}
+		
+		[Lemon(pattern="VOID(v)")]
+		public Unqualified._5(Parser h, Token v) { 
+			base.from_manifest(h, v, v.name, TypeIdent.NONE); 
+		}
+		
 		[Lemon(pattern="ALIAS(a)")]
-		public Unqualified._1(Parser h, Token a) {
+		public Unqualified._6(Parser h, Token a) {
 			base.from_alias(h, a);
 		}
 		
 		[Lemon(pattern="IDENT_LPAREN(l) Args(aa) RPAREN(r)")]
-		public Unqualified._2(Parser h, Token l, Args aa, Token r) {
+		public Unqualified._7(Parser h, Token l, Args aa, Token r) {
 			this(h, l);
 			end_by(r);
 			args = aa;
 		}
-
 	}
 
 	public class Brackets : Nonterm {
@@ -1965,33 +2015,7 @@ namespace Eval {
 		[Lemon(pattern="REAL(r)")]
 		public Manifest._6(Parser h, Token r) { 
 			base.from_manifest(h, r, r.name, TypeIdent.REAL_64); 
-		}
-		
-		[Lemon(pattern="CURRENT(c)")]
-		public Manifest._7(Parser h, Token c) { 
-			base.from_manifest(h, c, c.name, TypeIdent.ANY); 
-		}
-		
-		[Lemon(pattern="RESULT(r)")]
-		public Manifest._8(Parser h, Token r) { 
-			base.from_manifest(h, r, r.name, TypeIdent.REAL_64); 
-		}
-		
-		[Lemon(pattern="FALSE(f)")]
-		public Manifest._9(Parser h, Token f) { 
-			base.from_manifest(h, f, f.name, TypeIdent.BOOLEAN); 
-		}
-		
-		[Lemon(pattern="TRUE(t)")]
-		public Manifest._10(Parser h, Token t) { 
-			base.from_manifest(h, t, t.name, TypeIdent.BOOLEAN); 
-		}
-		
-		[Lemon(pattern="VOID(v)")]
-		public Manifest._11(Parser h, Token v) { 
-			base.from_manifest(h, v, v.name, TypeIdent.NONE); 
-		}
-		
+		}		
 	}
 /*
   public class Alias : Nonterm {

@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
-<meta name="generator" content="hevea 2.09">
+<meta name="generator" content="hevea 2.16">
 <link rel="stylesheet" type="text/css" href="debugh.css">
 <title>Evaluation part</title>
 </head>
@@ -29,24 +29,35 @@ into the <span style="font-family:sans-serif">Expr</span> field have been correc
 The <span style="font-family:sans-serif">Evaluation</span> part consists of two text fields: <span style="font-family:sans-serif">Expr</span> and <span style="font-family:sans-serif">Value</span>. 
 Field <span style="font-family:sans-serif">Expr</span> may be filled 
 </p><ul class="itemize"><li class="li-itemize">manually with an expression list;
-</li><li class="li-itemize">by right click on a tree node in the <span style="font-family:sans-serif">Data</span> part: 
+</li><li class="li-itemize">by right click on a tree node in the various data parts: 
 a pop-up menu is opened whose entries 
 are the query names of the node, and selecting a query inserts this 
-at the insertion cursor; 
+near the insertion cursor; 
 </li><li class="li-itemize">by multiple right click when the mouse pointer is in <span style="font-family:sans-serif">Source</span> part 
 over a light pink highlighted feature name (in any case a query): 
 the query together with its targets and arguments is inserted 
-at the insertion but not yet computed (double click)
+near the insertion but not yet computed (double click)
 or the field is first cleared and then the query is computed immediately 
 (triple click). 
 </li></ul><p>
-The expression is computed when <span style="font-family:monospace">Enter</span> is pressed 
+The term &#X201C;near the insertion cursor&#X201D; needs an explanation. 
+If there are bullets (denoting not yet written function arguments 
+that may come from a data window) 
+right to the insertion cursor then the first one is replaced 
+by the selected query, if there is no bullet to the right 
+then the query is appended to the existing string. 
+Then the cursor moves rightward to the next bullet, if any, 
+or to the string end. 
+This way the natural left-to-right writing of expressions is supported 
+and cursor positioning on bullets to be replaced is rather automatic. 
+The insertion cursor is not visible if the text field has not the input focus. 
+To make the target position of a clicked query visible, 
+the bullet right to the insertion cursor is larger than the others. </p><p>The expression is computed when <span style="font-family:monospace">Enter</span> is pressed 
 (except for the triple click just mentioned). 
 The value is shown in the non-editable field <span style="font-family:sans-serif">Value</span>. 
-Precisely, the part of the expression list where the insertion cursor 
-of the <span style="font-family:sans-serif">Expr</span> field resides
-(the expression nearest to the left of the cursor 
-up to its leftmost target) is shown. 
+Precisely, the part of the expression list is shown 
+where the insertion cursor of the <span style="font-family:sans-serif">Expr</span> field resides
+(the expression nearest to the left of the cursor up to its leftmost target). 
 This way, values of even very long expression lists can be shown 
 in the one line field. 
 Not shown are expression ranges and their details 
@@ -66,7 +77,7 @@ In case of numeric basic expanded types: any <span style="font-family:monospace"
 <span style="font-family:monospace">NATURAL_*</span> values can be assigned to <span style="font-family:monospace">INTEGER_*</span>, <span style="font-family:monospace">NATURAL_*</span>, 
 or <span style="font-family:monospace">REAL_*</span> items, 
 any <span style="font-family:monospace">REAL_*</span> values can be assigned to <span style="font-family:monospace">REAL_*</span> items; 
-the conversion is done along the rules of the <span style="font-style:oblique">C</span> type casting. 
+the conversion is done along the lines of the <span style="font-style:oblique">C</span> type casting. 
 In all other cases the item is assignable if its type set contains
 the type of the expression in the <span style="font-family:sans-serif">Value</span> field 
 (see Sec.&#XA0;<a href="debugh012.html#S%3AdataActions">3.9.2</a> for displaying the typeset of an entity). </p>

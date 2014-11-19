@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
-<meta name="generator" content="hevea 2.09">
+<meta name="generator" content="hevea 2.16">
 <link rel="stylesheet" type="text/css" href="debugh.css">
 <title>Data part</title>
 </head>
@@ -59,13 +59,13 @@ to distinguish it from common integer numbers
 hexadecimal representations and values of any reference type 
 by their address. 
 </dd></dl><p>The fields of a value of a <span style="font-family:monospace">SPECIAL</span> type get a <span style="font-style:oblique">C</span> inspired name: 
-the field index enclosed in brackets. Also the type name <span style="font-style:oblique">C</span> inspired:
+the field index enclosed in brackets. Also the type name is <span style="font-style:oblique">C</span> inspired:
 the field type name and the value&#X2019;s count enclosed in brackets. 
 For practical reasons the arrangement of both parts has been reversed, 
-first the count then the type name. The reason is that the count at the 
+first the count then the item type name. The reason is that the count at the 
 end would often not be visible in case of a long type name, 
 so it would not be clear that the value is of a <span style="font-family:monospace">SPECIAL</span> type. 
-</p><p>The fields of value of a <span style="font-family:monospace">TUPLE</span> type get the name of their label 
+</p><p>The fields of a value of a <span style="font-family:monospace">TUPLE</span> type get the name of their label 
 if the object itself has been declared as <span style="font-family:monospace">TUPLE</span> type 
 with labels, otherwise the names are <span style="font-family:monospace">item_1</span> etc.
 </p><p>Values of <span style="font-family:monospace">agent</span> objects are more peculiar. 
@@ -120,7 +120,7 @@ then all queries of its dynamic type.
 Selecting a menu item inserts it into the <span style="font-family:sans-serif">Expr</span> field 
 of the <span style="font-family:sans-serif">Evaluation</span> part. 
 There the query may be treated as any other expression. 
-In particular, arguments of functions are indicated as bullets, 
+Arguments of functions are indicated as bullets, 
 they have to be replaced by meaningful expressions 
 before the resulting expression can be computed. 
 In particular, the right operand of infix operators is indicated 
@@ -139,8 +139,7 @@ selecting an item has no effect. </p>
 More <span style="font-family:sans-serif">Data</span> windows can be opened from menu <span style="font-family:sans-serif">Window </span>&#X2192;<span style="font-family:sans-serif"> New data</span>, 
 they contain the data tree and additionally a combobox on top 
 to select a stack level and the buttons <span style="font-family:sans-serif">manually/automatic</span>, 
-<span style="font-family:sans-serif">Update</span>, <span style="font-family:sans-serif">Close</span> on bottom, but they do not contain the radio buttons
-for format selection. 
+<span style="font-family:sans-serif">Update</span>, <span style="font-family:sans-serif">Close</span> on bottom. 
 These windows and the <span style="font-family:sans-serif">Data</span> part on the main window work independently 
 of each other. 
 After stopping the debuggee the main <span style="font-family:sans-serif">Data</span> part is automatically 
@@ -169,8 +168,7 @@ The data are arranged class by class,
 and the window&#X2019;s table has an additional column showing the name 
 of the defining class. 
 The table can be searched for items: 
-after pressing <span style="font-family:monospace">Control-f</span> a text field opens 
-where a string can be entered, 
+pressing <span style="font-family:monospace">Control-f</span> opens a text field where a string can be entered, 
 then any constant attribute and once routine whose name starts 
 with this string will be highlighted. </p>
 <hr>

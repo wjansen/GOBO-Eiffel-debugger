@@ -236,14 +236,14 @@ feature -- ET_IS_ORIGIN
 		do
 			if attached origin as o then
 				if is_precursor or else is_inlined or else not o.is_generated then
+				elseif o.is_creation then
+					g.print_creation_procedure_name (o, target.origin, file)
+					done := True
 				elseif o.is_regular then
 					g.print_routine_name (o, target.origin, file)
 					done := True
 				elseif o.is_static then
 					g.print_static_routine_name (o, target.origin, file)
-					done := True
-				elseif o.is_creation then
-					g.print_creation_procedure_name (o, target.origin, file)
 					done := True
 				end
 			elseif is_anonymous then
@@ -501,13 +501,10 @@ feature {} -- Implementation
 
 	declare_precursor (p: ET_DYNAMIC_PRECURSOR; s: ET_IS_SYSTEM)
 		local
-			t: ET_IS_TYPE
 			r: ET_IS_ROUTINE
 		do
-			s.force_type (p.parent_type)
-			t := s.last_type
-			create r.declare (p, t, s)
-			t.force_precursor_routine (r)
+			create r.declare (p, target, s)
+			target.force_precursor_routine (r)
 			s.origin_table.force (r, p)
 		end
 

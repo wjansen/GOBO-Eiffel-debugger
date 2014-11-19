@@ -5,11 +5,15 @@
 extern GedbSystem* gedb_rts;
 void* gedb_address_by_name(const char* name);
 
+static int scope_limit = 0;
+static int depth_limit = 0;
+
 void gedb_init() {
 #if GEDB_D == 1
   gedb_make_pma(GE_argv, GE_argc, gedb_address_by_name);
 #else
-  gedb_make_rta(GE_argv, GE_argc, gedb_address_by_name);
+  depth_limit = 1;
+  gedb_make_rta(&GE_argc, &GE_argv, gedb_address_by_name);
 #endif
 }
 
@@ -34,20 +38,16 @@ void gedb_local_offset(void* r, int off, u_int32_t l_id) {
   local->offset = off;
 }
 
-static int scope_limit = 0;
-static int depth_limit = 0;
-
 void* gedb_inform1(int reason) {
 #if GEDB_D == 2
   switch (reason) {
   case -5: /* End_compound_break */
     return gedb_top->scope_depth<=scope_limit ? gedb_inform(reason) : 0;
-    break;
   case -6: /* End_routine_break */
     return gedb_top->depth<=depth_limit ? gedb_inform(reason) : 0;
-    break;
+  default:
+    return gedb_inform(reason);
   }
-  return gedb_inform(reason);
 #endif
 }
 
@@ -59,13 +59,12 @@ static void set_limits_(int d, int s) {
 #define TAB_SIZE 89
 static u_int32_t bp_table[TAB_SIZE] = {0};
 static int bp_table_size = 0;
-static int bp_check_table = 1;
+static int bp_depth = 0;
 
 int gedb_stop1(u_int32_t pos, int reason) {
   u_int32_t i, val;
-  int n = 0;
-  if (!gedb_step && bp_check_table && reason!=-7) { /* Start_program_break) */
-    if (bp_table_size==0) return 0;
+  if (gedb_step || gedb_top->depth<=depth_limit) return 1;
+  if (bp_table_size!=0) {
     i = pos % TAB_SIZE;
     val = bp_table[i];
     while (val!=0) {
@@ -73,11 +72,9 @@ int gedb_stop1(u_int32_t pos, int reason) {
       ++i;
       i %= TAB_SIZE;
       val = bp_table[i];
-      ++n;
     }
-    return 0;
   }
-  return 1;
+  return gedb_top->depth >= bp_depth;
 }
 
 static void* results_ = 0;
@@ -124,14 +121,12 @@ static void set_bp_pos_(int id, int l, int c) {
 #if GEDB_D == 2
   u_int32_t i, pos, val;
   pos = id<<GEDB_IDSH | l<<GEDB_LSH | c;
-  if (pos<=1) {
+  if (pos==0) { // clear table
     for (i=TAB_SIZE; i-->0;) bp_table[i] = 0;
-    /* pos==1: empty table means no breakpoints at all
-       pos==0: empty table means nontrivial breakpoints exist
-    */
-    bp_check_table = pos;
     bp_table_size = 0;
     return;
+  } else if (l==0) { // not a position but a depth
+    bp_depth = id;
   }
   i = pos % TAB_SIZE;
   val = bp_table[i];
@@ -142,7 +137,6 @@ static void set_bp_pos_(int id, int l, int c) {
   }
   bp_table[i] = pos;
   ++bp_table_size;
-  bp_check_table = 1;
 #endif
 }
 

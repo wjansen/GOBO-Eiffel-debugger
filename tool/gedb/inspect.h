@@ -741,7 +741,6 @@ guint gedb_stack_frame_column (GedbStackFrame *self);
 void gedb_stack_frame_set_position (GedbStackFrame *self, gint l, gint c);
 GedbType* gedb_stack_frame_target_type (GedbStackFrame *self);
 guint8* gedb_target (GedbStackFrame* f);
-void* gedb_stack_address (GedbStackFrame* f, guint i);
 guint gedb_c_ident (void* a);
 void* gedb_c_new_object (void* call);
 void* gedb_c_new_boxed_object (void* call);

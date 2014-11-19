@@ -44,7 +44,7 @@ $(EXE): $(DLL) main$o
 	$(CC) -o $@ main$o $(LDFLAGS) $(DLL) $(GLIB) -ldl
 
 $(DLL): $(OBJ) 
-	$(CC) -o $@ $(OBJ) $(LIBFLAGS) $(LDFLAGS) $(EXTLIB) $(GLIB) -lm
+	$(CC) -o $@ $(LIBFLAGS) $(OBJ) $(EXTLIB) $(GLIB) -lm
 
 src: $(VLE)
 	cd src && $(MAKE)
@@ -98,7 +98,7 @@ info_part$o: info_part.vala
 	valac -c $(VFLAGS) --vapi=info_part.vapi -h info_part.h $(PKG) $^
 info_part.vapi: info_part.vala
 
-console_part$o: console_part.vala
+console_part$o: console_part.vala misc.vapi inspect.vapi
 	valac -c $(VFLAGS) --vapi=console_part.vapi -h console_part.h $(PKG) --pkg=posix $^
 console_part.vapi: console_part.vala
 

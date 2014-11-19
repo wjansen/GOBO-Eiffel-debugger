@@ -7,9 +7,10 @@ public class DataCore : Box, AbstractPart {
 	protected Status status;
 	public DataPart? main;
 	public Debuggee? dg;
+	public FormatStyle style { get; protected set; }
 
 	protected TreeStore store;
-	protected TreeView view {get; protected set; }
+	protected TreeView view { get; protected set; }
 	protected CellRendererText cell;
 	protected Gee.List<uint> info_list;
 	public bool tree_lines { get; set; }
@@ -17,24 +18,33 @@ public class DataCore : Box, AbstractPart {
 	public StackFrame* frame { get; protected set; }
 	protected Routine* routine;
 	
-	protected virtual FormatStyle format_style() { return FormatStyle.ADDRESS; }
-
-	protected void set_value(TreeIter iter, uint8* addr, 
+	protected void set_value(TreeIter iter, uint8* addr, bool is_home,
 							 Entity* e, SpecialType* st, uint idx,
-							 char mode, string? name, string value,
+							 char mode, string? name=null, 
 							 Expression? ex=null) 
 	requires (e!=null || st!=null || ex!=null || dg==null) {
 		Gedb.Type* t = st!=null 
 			? st.item_type()
 			: (e!=null ? e.type : ex.dynamic_type);
-		int off = e.is_local() ? ((Local*)e).offset : ((Field*)e).offset;
-		string nm = name!=null ? name : e._name.fast_name; 
+		string nm = name!=null ? name : ((Name*)e).fast_name; 
+		int off = 0;
+		if (is_home) {
+			if (idx<0) {
+				if (e.is_field()) off = ((Field*)e).offset;
+				if (e.is_local()) off = ((Local*)e).offset;
+			} else {
+				off = st.item_offset(idx);
+			}
+			addr += off;
+			addr = t.dereference(addr);
+		}
 		if (!t.is_subobject()) t = dg.rts.type_of_any(addr, t);
-		var tid = dg.rts.object_type_id(addr, false, t);
+		var value = format_value(addr, 0, false, t, style, known_objects);
 		var type = format_type(addr, 0, false, t, e!=null ? e.text:null);
+		var tid = dg.rts.object_type_id(addr, false, t);
 		store.@set(iter, 
 				   ItemFlag.EXPR, ex,
-				   ItemFlag.FIELD, e,
+				   ItemFlag.FIELD, st==null ? e : null,
 				   ItemFlag.ADDR, addr,
 				   ItemFlag.INDEX, st!=null ? idx : -1,
 				   ItemFlag.MODE, (int)mode,
@@ -55,11 +65,10 @@ public class DataCore : Box, AbstractPart {
 		int i, n;
 		char c;
 		if (dg==null) return;
-		FormatStyle fmt = format_style(); 
 		store.@get(iter, ItemFlag.ADDR, out addr, 
 				   ItemFlag.TYPE_ID, out tid, -1);
 		t = dg.rts.type_at(tid);
-		var value = format_value(addr, 0, false, t, fmt, known_objects);
+		var value = format_value(addr, 0, false, t, style, known_objects);
 		store.@set(iter, ItemFlag.VALUE, value, -1);
 		n = store.iter_n_children(iter);
 		for (i=0; i<n; ++i) {
@@ -86,13 +95,12 @@ public class DataCore : Box, AbstractPart {
 		Expression? ex;
 		TreePath path = store.get_path(iter);
 		TreeIter child = iter;
-		string str, old_val, old_type, value, type;
+		string str, old_val, value, old_type, type;
 		uint8* old_addr, heap;
 		uint n, n_old, tid, tid_old, step;
 		int i, off, idx;
 		char mode;
 		bool ok=true, changed;
-		FormatStyle fmt = format_style();
 		store.@get(iter, 
 				   ItemFlag.MODE, out i,
 				   ItemFlag.EXPR, out ex,
@@ -116,7 +124,7 @@ public class DataCore : Box, AbstractPart {
 			if (!t.is_subobject()) t = dg.rts.type_of_any(addr, t);
 		}
 		tid = t!=null ? t.ident : 0;
-		value = format_value(addr, 0, false, t, fmt, known_objects);
+		value = format_value(addr, 0, false, t, style, known_objects);
 		type = format_type(addr, 0, false, t, e!=null ? e.text : null);
 		changed = value!=old_val || type!=old_type;
 		if (changed) {
@@ -128,10 +136,12 @@ public class DataCore : Box, AbstractPart {
 		if (t.is_special()) {
 			SpecialType* st = (SpecialType*)t;				
 			n = st.special_count(addr);
+			if (n>0 && n_old==0) 
+				add_dummy_item(iter, t);
 		} else {
 			n = t.field_count();
 		}
-		bool expand = tid==tid_old;
+		bool expand = n>0 && tid==tid_old;
 		if (!expand) do_collapse(iter);
 		else expand &= view.is_row_expanded(path);
 		if (!expand) {
@@ -155,10 +165,8 @@ public class DataCore : Box, AbstractPart {
 				} else {
 					store.append(out child, iter);
 					ft = dg.rts.type_of_any(heap, e.type);
-					str = "[%d]".printf(i);
-					value = format_value(faddr, 0, true, ft, 
-										 fmt, known_objects);
-					set_value(child, heap, e, st, i, mode, str, value);
+					str = @"[$i]";
+					set_value(child, faddr, true, e, st, i, mode, str);
 					store.@set(child, ItemFlag.CHANGED, true, -1);
 					add_dummy_item(child, ft);
 				}
@@ -167,9 +175,9 @@ public class DataCore : Box, AbstractPart {
 				store.iter_nth_child(out child, iter, (int)n);
 				store.@remove(ref child);
 			}
-			for (; i<n_old; ++i) {
-				store.iter_nth_child(out child, iter, i);
-				store.@remove(ref child);
+			if (n==0) {	// remove the dummy ident
+				while (store.iter_nth_child(out child, iter, (int)n))
+					store.@remove(ref child);
 			}
 		} else if (!t.is_string()) {
 			if (t.is_agent()) {
@@ -215,9 +223,8 @@ public class DataCore : Box, AbstractPart {
 		int i, j=0, k, off, mode;
 		char ch = ' ';
 		bool ok=false, exp;
-		FormatStyle fmt = format_style();
 		known_objects = null;
-		if (fmt==FormatStyle.IDENT) {
+		if (style==FormatStyle.IDENT) {
 			refill_known_objects(dg.rts);
 		}
 		for (n=store.iter_n_children(null); n-->0;) {
@@ -257,10 +264,10 @@ public class DataCore : Box, AbstractPart {
 			update_subtree(iter, target);
 		} else {
 			clear_subtree(null);
-			value = format_value(addr, off, true, lt, fmt, known_objects);
+			value = format_value(addr, off, true, lt, style, known_objects);
 			store.append(out iter, null);
-			set_value(iter, target, (Entity*)loc, null, -1, 
-					  DataMode.CURRENT, null, value);
+			set_value(iter, target, false, (Entity*)loc, null, -1, 
+					  DataMode.CURRENT, null);
 			store.@set(iter, ItemFlag.CHANGED, true, -1);
 			add_dummy_item(iter, lt); 
 			path = store.get_path(iter);
@@ -305,12 +312,11 @@ public class DataCore : Box, AbstractPart {
 				}
 			}
 			lt = dg.rts.type_of_any(laddr, loc._entity.type);
-			value = format_value(laddr, 0, false, lt, fmt, known_objects);
 			if (ok && loc==e) {
 				update_subtree(iter, laddr);
 			} else {
 				store.insert(out iter, null, j);
-				set_value(iter, laddr, (Entity*)loc, null, -1, ch, null, value);
+				set_value(iter, laddr, false, (Entity*)loc, null, -1, ch, null);
 				store.@set(iter, ItemFlag.CHANGED, true, -1);
 				add_dummy_item(iter, lt); 
 			}
@@ -320,6 +326,13 @@ public class DataCore : Box, AbstractPart {
 
 	protected void add_dummy_item(TreeIter iter, Gedb.Type* t) {
 		if (t.is_string() || t.is_unicode() || t.field_count()==0) return;
+		if (t.is_special()) {
+			var st = (SpecialType*)t;
+			uint8* addr;
+			store.@get(iter, ItemFlag.ADDR, out addr, -1);
+			uint n = st.special_count(addr);
+			if (n==0) return;
+		}
 		TreeIter child;
 		store.append(out child, iter);
 		store.@set(child, ItemFlag.MODE, DataMode.DUMMY, -1);
@@ -336,12 +349,11 @@ public class DataCore : Box, AbstractPart {
 		Entity* e, pe;
 		Expression? ex;
 		TreeIter child;
-		string str, value, type;
+		string str;
 		uint8* addr, heap;
 		uint i, n, tid;
 		DataMode mode;
 		bool more;
-		FormatStyle fmt = format_style();
 		n = store.iter_n_children(iter);
 		if (n>1) return;
 		if (n==1) {
@@ -383,12 +395,8 @@ public class DataCore : Box, AbstractPart {
 					store.iter_nth_child(out child, iter, 0);
 				ft = dg.rts.type_of_any(heap, e.type);
 				str = "[%u]".printf(i);
-				value = format_value(heap, 0, false, ft, fmt, known_objects);
-				set_value(child, heap, e, st, i, mode, str, value);
-				if (ft.is_nonbasic_expanded()) 
-					view.expand_row(store.get_path(child), false);
-				else 
-					add_dummy_item(child, ft);
+				set_value(child, heap, false, e, st, i, mode, str);
+				if (ft.field_count()>0) add_dummy_item(child, ft);
 				more = true;
 			}
 		} else if (!t.is_string() && !t.is_unicode()) {
@@ -424,6 +432,25 @@ public class DataCore : Box, AbstractPart {
 		}
 	}
 
+	protected void do_reformat() {
+		if (dg==null) return;
+		switch (style) {
+		case FormatStyle.IDENT: 
+			refill_known_objects(dg.rts);
+			break;
+		default:
+			known_objects = null;
+			break;
+		}
+		TreeIter iter;
+		if (store.get_iter_first(out iter)) {
+			do { 
+				reformat_tree(iter);
+			} while (store.iter_next(ref iter));	
+		}
+		reformatted(style);
+	}
+
 	private void adjust_visibility(TreeIter iter) {
 		TreePath path;
 		TreeIter child;
@@ -441,10 +468,9 @@ public class DataCore : Box, AbstractPart {
 						  int replace=-1, int array_idx=-1, int tuple_idx=-1) {
 		if (dg==null) return;
 		TreeIter child;
-		FormatStyle fmt = format_style();
 		int off = e.is_local() ? ((Local*)e).offset : ((Field*)e).offset;
 		var ft = dg.rts.type_of_any(addr, e.type);
-		string str, value, type;
+		string str;
 		if (replace>=0) 
 			store.iter_nth_child(out child, iter, replace);
 		else
@@ -454,7 +480,6 @@ public class DataCore : Box, AbstractPart {
 		} else {
 			str = e._name.fast_name;
 		}
-		value = format_value(addr, 0, false, ft, fmt, known_objects);
 		str = null;
 		if (tuple_idx>=0) {
 			Entity* pe;
@@ -462,7 +487,7 @@ public class DataCore : Box, AbstractPart {
 			if (pe.text!=null && pe.text.tuple_labels!=null) 
 				str = pe.text.tuple_labels[tuple_idx]._name.fast_name;
 		}
-		set_value(child, addr, e, null, -1, DataMode.FIELD, str, value);
+		set_value(child, addr, false, e, null, -1, DataMode.FIELD, str);
 		add_dummy_item(child, ft);
 	}
 
@@ -572,15 +597,15 @@ public class DataCore : Box, AbstractPart {
 					   -1);
 			if (name==null || name=="") break;
 			pinfo = ex!=null && ex.bottom().address()!=null 
-			? new DeepInfo.from_expression(ex) 
-			: new DeepInfo(null, e, i, addr, dg.rts.type_at(tid));
+				? new DeepInfo.from_expression(ex) 
+				: new DeepInfo(null, e, i, addr, dg.rts.type_at(tid));
 			if (info==null) last = pinfo;
 			else  info.parent = pinfo;
 			info = pinfo;
 		}
 		uint up = (main!=null && frame!=null) ? 
 			main.frame.depth-frame.depth : 0;
-		menu = new FeatureMenu(last, addr, this, up, dg.rts);
+		menu = new FeatureMenu(dotted_name(last), up, last.tp, this, dg.rts);
 		menu.popup(null, null, null, ev.button, ev.time);
 		return true;
 	}
@@ -594,18 +619,17 @@ public class DataCore : Box, AbstractPart {
 		set_deep_sensitive(this, !is_running);
 	}
 
-	private string do_deep(TreeModel model, TreeIter at, uint col) {
+	public string do_deep(TreeModel model, TreeIter at, uint col) {
 		string text;
 		store.@get(at, col, out text, -1);	
-		if (col==ItemFlag.VALUE && format_style()==FormatStyle.IDENT) {
+		if (col==ItemFlag.VALUE && style==FormatStyle.IDENT) {
 			if (text.length<1 || text[0]!='_') return text;
 			text = text.substring(1);
 			int id = int.parse(text);
 			if (id<=0) return "";
 			var info = deep_info[id];
 			text = dotted_name(info);
-			bool valued = false;	// TODO: for future use
-			if (!valued || info.addr==null) return text;
+			if (info.addr==null) return text;
 			text += " = " + format_value(info.addr, 0, false, info.tp, 0);
 			text += " : " + format_type(info.addr, 0, false, info.tp);
 			return text;
@@ -623,7 +647,7 @@ public class DataCore : Box, AbstractPart {
 		}
 	}
 	
-	internal DataCore(StackPart stack, Status state, bool as_main) {
+	protected DataCore(StackPart stack, Status state, FormatStyle[] ff) {
 		this.stack = stack;
 		status = state;
 		orientation = Orientation.VERTICAL;
@@ -641,6 +665,7 @@ public class DataCore : Box, AbstractPart {
 							  typeof(bool));		// changed
 		view = new TreeView.with_model(store);
 		view.headers_visible = true;
+		view.headers_clickable = false;
 		view.enable_search = true;
 		view.search_column = ItemFlag.NAME;
 
@@ -691,7 +716,7 @@ public class DataCore : Box, AbstractPart {
 		ScrolledWindow scroll = new ScrolledWindow(null, null);
 		pack_start(scroll, true, true, 3);
 		scroll.min_content_width = 400;
-		scroll.min_content_height = 240;
+		scroll.min_content_height = 360;
 		scroll.@add(view);
 
 		view.row_expanded.connect((i,p)=> { do_expand(i); });
@@ -705,6 +730,54 @@ public class DataCore : Box, AbstractPart {
 			{ return status.set_long_string(ev, view, info_list, do_deep); });
 		view.leave_notify_event.connect((ev) =>
 			{ return status.remove_long_string(); });
+
+		if (ff==null || ff.length==0) return;
+		ButtonBox buttons = new ButtonBox(Orientation.HORIZONTAL); 
+		buttons.set_layout(ButtonBoxStyle.START);
+		buttons.@add(new Label("Format:"));
+		pack_start(buttons, false, false, 3);
+		unowned GLib.SList<RadioButton> group = null;
+		RadioButton rb = null;
+		foreach (var f in ff) {
+			switch (f) {
+			case FormatStyle.ADDRESS:
+				rb = add_format(buttons, rb!=null ? rb.get_group() : null, 
+								f, "natural", 
+								"Show address\nof reference objects.");
+				break;
+			case FormatStyle.IDENT:
+				rb = add_format(buttons, rb!=null ? rb.get_group() : null, 
+								f, "ident", 
+								"Show internal ident\nof reference objects.");
+				break;
+			case FormatStyle.HEX:
+				rb = add_format(buttons, rb!=null ? rb.get_group() : null, 
+								f, "hex", 
+								"Show hexadecimal form\nof all values.");
+				break;
+			}
+		}
+	}
+
+	protected DataCore.additionally(DataPart d, StackPart s, FormatStyle[] ff) {
+		this(s, d.status, ff);
+		main = d;
+		dg = d.dg;
+	}
+	
+	private RadioButton add_format(ButtonBox bb, GLib.SList<RadioButton>? g,
+								   FormatStyle f, string name, string tt) {
+		var rb = new RadioButton.with_label(g, name);
+		rb.active = g==null;
+		bb.@add(rb);
+		rb.set_tooltip_text(tt);
+		rb.has_tooltip = true;
+		rb.toggled.connect((b) => { 
+				if (style==f) return;
+				style=f; 
+				do_reformat();
+			});
+		return rb;
 	}
 
 	private EvalPart _eval;
@@ -741,25 +814,35 @@ public class DataCore : Box, AbstractPart {
 		}
 	}
 
-	public string dotted_name(DeepInfo info) {
+	public string dotted_name(DeepInfo info, bool with_current=false) {
 		if (info==null) return "";
-		DeepInfo? pinfo = info.parent;
-		string name = info.field._name.fast_name;
-		if (name==null) name = "";
-		if (info.field.is_once()) {
-			var o = (Gedb.Once*)info.field;
-			name = "{" + o.home._name.fast_name + "}." + name;
+		int idx = info.index;
+		Entity* f = info.field;
+		string name;
+		if (f!=null) {
+			name = ((Name*)f).fast_name;
+			if (info.field.is_once()) {
+				var o = (Gedb.Once*)info.field;
+				name = "{" + ((Name*)o.home).fast_name + "}." + name;
+			} else if (info.field.is_constant()) {
+				var o = (Gedb.Constant*)info.field;
+				name = "{" + ((Name*)o.home).fast_name + "}." + name;
+			}
+		} else {
+			name = @"$idx";
 		}
+		if (name==null) name = "";
+		DeepInfo? pinfo = info.parent;
 		if (pinfo!=null) {
-			int i = info.index;
 			string text = dotted_name(pinfo);
-			return i<0 ? @"$text.$name" : @"$text[$i]";
+			if (!with_current && text=="Current") return name;
+			return idx<0 ? @"$text.$name" : @"$text[$name]";
 		}
 		return name;
 	}
 
 	public void refill_known_objects(System* s) {
-		if (main!=null || known_objects!=null) return;
+		if (known_objects!=null) return;
 		deep_info = new DeepInfo[99];
 		var d = new Persistence<uint,void*>();
 		known_objects = d.known_objects;
@@ -790,26 +873,7 @@ public class DataCore : Box, AbstractPart {
 		if (id>=_deep_info.length) return null;
 		var info = _deep_info[id];
 		if (info==null) return null;
-		var iex = id2expr(info);
-		if (iex==null) return null;
-		var tex = iex.top() as TextExpression;
-		if (tex!=null) {
-			var e = tex.entity;
-			try {
-				if (e!=null && e.is_once()) {
-					var o = (Gedb.Once*)e;
-					var addr = o.value_address;
-					var t = ((Entity*)o).type;
-					addr = t.dereference(addr);
-					tex.compute_in_object(addr, t, dg.rts, frame);
-				} else {
-					tex.compute_in_stack(frame, dg.rts);
-				}
-			} catch (ExpressionError e) {
-				return null;
-			}
-		}
-		return tex;
+		return id2expr(info);
 	}
 
 	public void set_debuggee(Debuggee? dg) { 
@@ -825,36 +889,13 @@ public class DataCore : Box, AbstractPart {
 	}
 
 	public signal void item_selected(DataItem? item);
-	public signal void reformatted(FormatStyle fmt);
+	public signal void reformatted(FormatStyle style);
 }
 
 public class DataPart : DataCore {
 
-	private RadioButton addr;
-	private RadioButton ident;
-	private RadioButton hex;
 	internal Gee.List<MoreDataPart> more_data;
 	internal Gee.Map<string,Expression> aliases;
-
-	private void do_reformat(ToggleButton b) {
-		if (!b.active || dg==null) return;
-		FormatStyle fmt = format_style();
-		switch (fmt) {
-		case FormatStyle.IDENT: 
-			refill_known_objects(dg.rts);
-			break;
-		default:
-			known_objects = null;
-			break;
-		}
-		TreeIter iter;
-		if (store.get_iter_first(out iter)) {
-			do { 
-				reformat_tree(iter);
-			} while (store.iter_next(ref iter));	
-		}
-		reformatted(fmt);
-	}
 
 	private bool do_select(TreeSelection s, TreeModel m, TreePath p, bool yes) {
 		TreeIter iter;
@@ -864,14 +905,9 @@ public class DataPart : DataCore {
 		return mode!=DataMode.CURRENT && mode!=DataMode.EXTERN;
 	}
 
-	protected override FormatStyle format_style() {
-		return hex.active ? FormatStyle.HEX :
-			addr.active ? FormatStyle.ADDRESS : FormatStyle.IDENT;
-	}
-
 	public DataPart(StackPart sp, Status state,
 					Gee.Map<string,Expression> aliases) {
-		base(sp, state, true);
+		base(sp, state, {FormatStyle.ADDRESS,FormatStyle.IDENT,FormatStyle.HEX});
 		main = null;
 		more_data = new Gee.ArrayList<MoreDataPart>();
 		this.aliases = aliases;
@@ -879,32 +915,7 @@ public class DataPart : DataCore {
 		TreeSelection sel = view.get_selection();
 		sel.mode = SelectionMode.SINGLE;
 		sel.set_select_function(do_select);
-		ButtonBox buttons = new ButtonBox(Orientation.HORIZONTAL); 
-		pack_start(buttons, false, false, 3);
-		buttons.set_layout(ButtonBoxStyle.START);
-		buttons.@add(new Label("Format:"));
-		addr = new RadioButton.with_label(null, "natural");
-		buttons.@add(addr);
-		addr.set_tooltip_text(
-"""Show address 
-of reference objects.""");
-		addr.has_tooltip = true;
-		addr.toggled.connect(do_reformat);
-		ident = new RadioButton.with_label(addr.get_group(), "ident");
-		buttons.@add(ident);
-		ident.set_tooltip_text(
-"""Show internal ident
-of reference objects.""");
-		ident.has_tooltip = true;
-		ident.toggled.connect(do_reformat);
-		hex = new RadioButton.with_label(addr.get_group(), "hex");
-		buttons.@add(hex);
-		hex.set_tooltip_text(
-"""Use hexadecimal form
-in print commands.""");
-		hex.has_tooltip = true;
-		hex.toggled.connect(do_reformat);
-		
+
 		notify["tree-lines"].connect((d,p) => { do_tree_lines(); });
 		sel.changed.connect((s) => { 
 				TreeModel model;
@@ -1052,7 +1063,7 @@ in print commands.""");
 				left = right;
 			break;
 		}
-		string value = format_value(right, 0, false, t, format_style(),
+		string value = format_value(right, 0, false, t, style,
 									known_objects);
 		string type = format_type(right, 0, false, t);
 		store.@set(lhs.iter, 
@@ -1078,9 +1089,8 @@ in print commands.""");
 		uint8* addr;
 		TreePath path;
 		TreeIter iter;
-		string name, val, type;
+		string name;
 		char c = DataMode.EXTERN;
-		FormatStyle style = format_style();
 		uint fmt = expr.Format.INDEX_VALUE;
 		for (ex=expr; ex!=null; ex=ex.next) {
 			exb = ex.bottom();
@@ -1088,8 +1098,7 @@ in print commands.""");
 			if (exa!=null) exb = exa.alias;
 			t = exb.dynamic_type;
 			addr = exb.address(); 
-			name = ex.append_qualified_name(null, null, fmt);
-			val = format_value(addr, 0, false, t, style, known_objects);
+			name = ex.append_qualified_name(null, null, style);
 			store.append(out iter, at);
 			ext = exb as TextExpression;
 			exi = exb as ItemExpression;
@@ -1097,7 +1106,7 @@ in print commands.""");
 			e = exi!=null 
 				? (Entity*)exi.special_type.item_0() 
 				: (ext!=null ? ext.entity : null);
-			set_value(iter, addr, e, null, -1, c, name, val, exb);
+			set_value(iter, addr, false, e, null, -1, c, name, exb);
 			exr = exb.range;
 			exd = exb.detail;
 			if (exr!=null) {
@@ -1149,9 +1158,8 @@ public class ExtraData : DataCore {
 		view.sensitive = true;
 	}
 
-	public ExtraData(Debuggee dg, DataPart main, StackPart own) {
-		base(own, main.status, false);
-		this.main = main;
+	public ExtraData(DataPart main, StackPart own) {
+		base.additionally(main, own, {FormatStyle.ADDRESS,FormatStyle.HEX});
 		++part_count;
 		id = part_count;
 		updated = true;
@@ -1177,7 +1185,7 @@ public class MoreDataPart : Window {
 		add(box);
 		StackPart sp = new StackPart.additionally(dg, s);
 		box.pack_start(sp, false, false, 0);
-		ExtraData dp = new ExtraData(dg, d, sp);
+		ExtraData dp = new ExtraData(d, sp);
 		set_title(compose_title(@"Data $(dp.id)", dg.rts));
 		box.pack_start(dp, true, true, 0);
 		Box hbox = new Box(Orientation.HORIZONTAL, 3);
@@ -1191,6 +1199,10 @@ public class MoreDataPart : Window {
 		ToggleButton policy = new ToggleButton();
 		buttons.@add(policy);
 		buttons.set_child_secondary(policy, true);
+		policy.set_tooltip_text
+("""How are the data updated
+when the program state changes?""");
+		policy.has_tooltip = true;
 		policy.toggled.connect((t) => { sp.update_policy(t); });
 		sp.update_policy(policy);
 
@@ -1227,7 +1239,7 @@ public class FixedPart : DataCore {
 
 	private bool do_close() { w.destroy(); return true; }
 
-	private void set_once_value(TreeIter at, Gedb.Once* o, FormatStyle fmt) 
+	private void set_once_value(TreeIter at, Gedb.Once* o, FormatStyle style) 
 	requires (o!=null) {
 		Gedb.Type* t = null;
 		Entity* e = (Entity*)o;
@@ -1242,21 +1254,18 @@ public class FixedPart : DataCore {
 				addr = t.dereference(addr);
 				if (!t.is_subobject()) t = dg.rts.type_of_any(addr, t);
 				value = format_value(addr, 0, false, t, 
-									 fmt, main.known_objects);
+									 style, main.known_objects);
 				type = t._name.fast_name;
 			} else {
 				value = "";
 				type = t._name.fast_name;
 			}
 		}
-		store.@set(at, ItemFlag.FIELD, o, ItemFlag.ADDR, addr, 
+		store.@set(at, ItemFlag.FIELD, o, ItemFlag.INDEX, -1, 
+				   ItemFlag.ADDR, addr, 
 				   ItemFlag.VALUE, value, ItemFlag.TYPE, type, 
 				   Item.FRESH, fresh, -1);
 		if (!fresh) add_dummy_item(at, t);
-	}
-
-	protected override FormatStyle format_style() {
-		return main.format_style();
 	}
 
 	protected override bool valid_feature(TreeIter iter) { 
@@ -1274,7 +1283,6 @@ public class FixedPart : DataCore {
 		int k, n;
 		int m;
 		bool fresh;
-		FormatStyle fmt = format_style();
 		bool ok = store.get_iter_first(out iter);
 		n = store.iter_n_children(iter);
 		if (store.get_iter_first(out iter)) {
@@ -1291,7 +1299,7 @@ public class FixedPart : DataCore {
 					o = (Gedb.Once*)e;
 					if (fresh==o.is_initialized()) {
 						fresh = !fresh;
-						set_once_value(child, o, fmt);
+						set_once_value(child, o, style);
 						store.@set(child, Item.FRESH, fresh,
 								   ItemFlag.CHANGED, true, -1);
 					} else {
@@ -1326,14 +1334,14 @@ public class FixedPart : DataCore {
 		if (path.get_depth()<=1) return;
 	}
 
-	private void do_reformat(FormatStyle fmt) {
+	private void do_reformat(FormatStyle style) {
 		Entity* e;
 		TreeIter iter, child;
 		int k, n;
 		int m;
 		bool fresh;
 		bool ok = store.get_iter_first(out iter);
-		known_objects = fmt==FormatStyle.IDENT ? main.known_objects : null;
+		known_objects = style==FormatStyle.IDENT ? main.known_objects : null;
 		if (store.get_iter_first(out iter)) {
 			do { 
 				n = store.iter_n_children(iter);
@@ -1346,7 +1354,7 @@ public class FixedPart : DataCore {
 					if (fresh) continue;
 					if (m==DataMode.CONSTANT) { // to be improved 
 					} else {
-						set_once_value(child, (Gedb.Once*)e, fmt);
+						set_once_value(child, (Gedb.Once*)e, style);
 					}
 				}
 			} while (store.iter_next(ref iter)); 
@@ -1391,8 +1399,9 @@ public class FixedPart : DataCore {
 
 	public FixedPart(Debuggee dg, StackPart stack, DataPart data, 
 					 Status status) {
-		base(stack, status, false);
+		base(stack, status, {FormatStyle.ADDRESS,FormatStyle.HEX});
 		main = data;
+		this.dg = dg;
 		w = new Window();
 		w.title = compose_title("Fixed data", dg.rts);
 		w.@add(this);
@@ -1441,7 +1450,6 @@ public class FixedPart : DataCore {
 		uint8* addr = null;
 		char m;
 		bool is_const, fresh;
-		FormatStyle fmt = format_style();
 		while (i<nc || k<no) {
 			if (i<nc && c==null) {
 				c = dg.rts.all_constants[i++];
@@ -1512,6 +1520,7 @@ public class FixedPart : DataCore {
 			}
 			store.append(out child, iter);
 			store.@set(child, ItemFlag.FIELD, e, 
+					   ItemFlag.INDEX, -1,
 					   ItemFlag.ADDR, addr, 
 					   ItemFlag.NAME, name,
 					   ItemFlag.VALUE, value, 
@@ -1523,7 +1532,7 @@ public class FixedPart : DataCore {
 			if (is_const) {
 				c = null;
 			} else {
-				if (!fresh) set_once_value(child, o, fmt);
+				if (!fresh) set_once_value(child, o, style);
 				o = null;
 			}
 		}
@@ -1564,7 +1573,7 @@ public class DeepInfo {
 
 	public DeepInfo(DeepInfo? p, Entity* e, int i=-1, uint8* obj, Gedb.Type* t)
 	//	requires (p==null || ((i>=0) == p.tp.is_special()))
-		{ // workaround
+	{ // workaround
 		addr = obj;
 		tp = t;
 		reparent(p, e, i);
@@ -1573,10 +1582,10 @@ public class DeepInfo {
 	public DeepInfo.from_expression(Expression ex) 
 	requires (ex.bottom().address()!=null) {
 		var tex = ex.bottom() as TextExpression;
-		assert (tex!=null);
+		var f = tex!=null ? tex.entity : null;
 		var iex = tex as ItemExpression;
 		int idx = iex!=null ? iex.index : -1;
-		this(null, tex.entity, idx, ex.address(), ex.dynamic_type);
+		this(null, f, idx, ex.address(), ex.dynamic_type);
 		expr = ex;
 		tp = ex.dynamic_type;
 		assert (addr==ex.address());
@@ -1630,46 +1639,22 @@ public class FeatureMenu : Gtk.Menu {
 
 	private DataCore data;
 	private EvalPart eval;
-	private Gee.HashMap<Gtk.MenuItem,DeepInfo> items;
+	private Gee.HashMap<Gtk.MenuItem,string> names;
+	private string prefix;
 	private uint up;
 
 	private void do_feature(Gtk.MenuItem item) { 
-		Entity* e;
-		DeepInfo deep, right=null;
-		string name, all="", prefix=null;
-		int i = -1;
-		for (deep=items.@get(item); deep!=null; deep=deep.parent) {
-			e = deep.field;
-			i = deep.index;
-			if (right==null) {
-				// extract name from menu item
-				all = item.label;
-				if (all=="") {
-					all = deep.expr!=null ?
-						deep.expr.append_name() : e._name.fast_name;
-				} else { 
-					var l = all.index_of_char(':');
-					all = all.substring(0,l).strip();
-					if (e.is_routine()) {
-						var r = (Routine*)e;
-						if (r.is_prefix()) {
-							prefix = all;
-							all = "";
-						}
-					}
-				}
-			} else {
-				// compose name from parent
-				name = deep.expr!=null 
-					? deep.expr.append_name()
-					: (i<0 ? e._name.fast_name : "[%u]".printf(i));
-				if (name=="Current") ;
-				else if (right.index<0 && right.field.text.alias_name==null) 
-					all = name + "." + all;
-				else 
-					all = name + all;
-			}
-			right = deep;
+		bool is_prefix = false;
+		string name = names[item];
+		string all = prefix;
+		char c = name[0];
+		if (c=='_' || c.isalpha()) { // query or placeholder
+			if (prefix.length>0) all += "." + name;
+			else all = name;
+		} else if (name.index_of(bullet)<0) { // prefix operator
+			is_prefix = true;
+		} else { // infix or bracket operator
+			all = prefix + " " + name;
 		}
 		switch (up) {
 		case 0:
@@ -1687,7 +1672,7 @@ public class FeatureMenu : Gtk.Menu {
 			all = @"^$up^$all";
 			break;
 		}
-		if (prefix!=null) all = @"$prefix($all)";
+		if (is_prefix) all = name + " " + all;
 		eval.insert(all); 
 	}
 
@@ -1702,64 +1687,32 @@ public class FeatureMenu : Gtk.Menu {
 		return  ((Entity*)u).is_less((Entity*)v) ? -1 : 1;
 	}
 
-	public FeatureMenu(DeepInfo deep, uint8* obj,
-					   DataCore data, uint up, System* s) {
+	public FeatureMenu(string prefix, uint up, Gedb.Type* t,
+					   DataCore data, System* s) {
 		ClassText* ct;
-		Gedb.Type* t, et;
 		Entity* e;
 		Routine* r;
 		FeatureText* x;
-		DeepInfo down;
 		Expression ex, arg, prev;
 		Gtk.MenuItem item;
-		string name;
-		uint8* addr;
-		uint tid;
+		string name, typed_name;
 		uint i, j, m, n;
 		bool alias;
 
 		this.data = data;
+		this.prefix = prefix!="Current" ? prefix : "";
 		this.up = up;
 		eval = data.main!=null ? 
 			data.main.eval : (data as DataPart).eval;
-		items = new Gee.HashMap<Gtk.MenuItem,DeepInfo>();
-		t = deep.tp;
+		names = new Gee.HashMap<Gtk.MenuItem,string>();
 
 		item = new Gtk.MenuItem.with_label("");	// self
 		append(item);
-		++size;
 		item.show();
+		names.@set(item,"");
 		item.activate.connect(do_feature);
-		items.@set(item, deep);
 
-		ct = t.base_class;
 		i = 0;
-		for (j=t.constant_count(); j-->0;) {
-			Constant* c = t.constant_at(j);
-			e = (Entity*)c;
-			if (i==0) {
-				item = new SeparatorMenuItem();
-				append(item);
-				item.show();
-				item = new Gtk.MenuItem.with_label("Constants");
-				append(item);
-				item.show();
-				item.sensitive = false;	
-			}
-			x = e.text;
-			alias = x.alias_name!=null;
-			name = alias ? x.alias_name : e._name.fast_name;
-			name = add_short_type(name, e);
-			item = new Gtk.MenuItem.with_label(name);
-			append(item);
-			++size;
-			item.show();
-			item.activate.connect(do_feature);
-			down = new DeepInfo(deep, e, -1, null, e.type);
-			items.@set(item, down);
-			++i;
-		}
-
 		n = t.field_count();
 		if (n>0) {
 			item = new SeparatorMenuItem();
@@ -1774,22 +1727,14 @@ public class FeatureMenu : Gtk.Menu {
 				e = (Entity*)t.fields[i];
 				x = e.text;
 				if (x==null) continue;
-				addr = obj+((Field*)e).offset;
-				et = e.type;
-				if (!et.is_subobject()) {
-					addr = et.dereference(addr);
-					et = s.type_of_any(addr);
-				}
 				alias = x.alias_name!=null;
 				name = alias ? x.alias_name : e._name.fast_name;
-				name = add_short_type(name, e);
-				item = new Gtk.MenuItem.with_label(name);
+				typed_name = add_short_type(name, e);
+				item = new Gtk.MenuItem.with_label(typed_name);
 				append(item);
-				++size;
 				item.show();
 				item.activate.connect(do_feature);
-				down = new DeepInfo(deep, e, -1, addr, et);
-				items.@set(item, down);
+				names.@set(item,name);
 			}
 		}
 
@@ -1819,11 +1764,7 @@ public class FeatureMenu : Gtk.Menu {
 				if (x==null) continue;
 				item = new Gtk.MenuItem();
 				append(item);
-				++size;
 				item.show();
-				item.activate.connect(do_feature);
-				down = new DeepInfo(deep, e, -1, null, e.type);
-				items.@set(item, down);
 				m = r.argument_count;
 				if (x.alias_name=="[]") {
 					name = "["; 
@@ -1832,15 +1773,16 @@ public class FeatureMenu : Gtk.Menu {
 				} else {
 					name = e._name.fast_name;
 					if (m>1) name += "(";
-				}
+					}
 				for (j=1; j<m; ++j) {
 					if (j>1) name += ",";
 					name += bullet;
 				}
 				if (x.alias_name=="[]") name += "]";
 				else if (m>1 && x.alias_name==null) name += ")";
-				name = add_short_type(name, e);
-				item.label = name;
+				item.activate.connect(do_feature);
+				item.label = add_short_type(name, e);
+				names.@set(item,name);
 			}
 		}
 
@@ -1862,20 +1804,37 @@ public class FeatureMenu : Gtk.Menu {
 			x = e.text;
 			alias = x.alias_name!=null;
 			name = alias ? x.alias_name : x._name.fast_name;
-			name = add_short_type(name, e);
-			item = new Gtk.MenuItem.with_label(name);
+			typed_name = add_short_type(name, e);
+			item = new Gtk.MenuItem.with_label(typed_name);
 			append(item);
-			++size;
 			item.show();
 			item.activate.connect(do_feature);
-			addr = o.value_address;
-			et = e.type;
-			if (!et.is_subobject()) {
-				addr = et.dereference(addr);
-				et = s.type_of_any(addr);
+			names.@set(item,name);
+			++i;
+		}
+
+		i = 0;
+		for (j=t.constant_count(); j-->0;) {
+			Constant* c = t.constant_at(j);
+			e = (Entity*)c;
+			if (i==0) {
+				item = new SeparatorMenuItem();
+				append(item);
+				item.show();
+				item = new Gtk.MenuItem.with_label("Constants");
+				append(item);
+				item.show();
+				item.sensitive = false;	
 			}
-			down = new DeepInfo(deep, e, -1, addr, et);
-			items.@set(item, down);
+			x = e.text;
+			alias = x.alias_name!=null;
+			name = alias ? x.alias_name : e._name.fast_name;
+			typed_name = add_short_type(name, e);
+			item = new Gtk.MenuItem.with_label(typed_name);
+			append(item);
+			item.show();
+			item.activate.connect(do_feature);
+			names.@set(item,name);
 			++i;
 		}
 	}
@@ -1902,7 +1861,6 @@ public class EvalPart : Grid, AbstractPart {
 	private StackFrame* frame;
 
 	private Gee.Map<string,Expression> aliases;
-	private ulong moved_id;
 	private bool changed;
 	private bool expanding = true;
 
@@ -1918,10 +1876,10 @@ public class EvalPart : Grid, AbstractPart {
 			int pos = edit.cursor_position;
 			var ex = checker.expression_at(pos, false);
 			if (ex!=null) {
-				int fmt = -1;
+				int style = -1;
 				if (!expanding) 
-					fmt -= ex.Format.EXPAND_ALIAS + ex.Format.EXPAND_PH;
-				text = ex.format_one_value(fmt);
+					style -= ex.Format.EXPAND_ALIAS + ex.Format.EXPAND_PH;
+				text = ex.format_one_value(style);
 				do_data_selected(data.selected_item());
 			} 
 		}
@@ -1986,6 +1944,33 @@ public class EvalPart : Grid, AbstractPart {
 		}
 	}
 	
+	private string bbullet = "⚫";
+	private ulong sig_id;
+
+	private void do_pretty_print() {
+		var buffer = edit.buffer;
+		string text = edit.text;
+		int p = edit.cursor_position;
+		int k = text.index_of_nth_char(p);
+		int l = text.index_of(bullet, k);
+		int lb = text.index_of(bbullet);
+		string rest;
+		unichar c;
+		if (lb<0 && l<0) return;
+		if (lb<p || (l>=0 && lb>l)) {
+			SignalHandler.block (edit, sig_id);
+			if (lb>=0) {
+				text = text.splice(lb, lb+bbullet.length, bullet);
+			}
+			if (l>=0) {
+				text = text.splice(l, l+bullet.length, bbullet); 
+			}
+			edit.text = text;
+			edit.move_cursor(MovementStep.LOGICAL_POSITIONS, p, false);	
+			SignalHandler.unblock (edit, sig_id);
+		}
+	}
+
 	private void do_set_sensitive(bool is_running) {
 		sensitive = !is_running;
 	}
@@ -2024,14 +2009,17 @@ public class EvalPart : Grid, AbstractPart {
 		edit = history.get_child() as Entry;
 		edit.hexpand = true;
 		edit.editable = true;
+//		edit.cursor_visible = true;
 		edit.placeholder_text = "Expression list";
 		edit.set_icon_from_stock(EntryIconPosition.PRIMARY, Stock.PASTE);
 		edit.primary_icon_tooltip_text = "Copy values to data list.";
 		edit.set_icon_from_stock(EntryIconPosition.SECONDARY, Stock.CLEAR);
 		edit.icon_release.connect((p,ev) => { do_edit_icon(p); });
 		edit.activate.connect((e) => { do_check_expression(); });
-		moved_id = edit.notify["cursor-position"].connect_after(
+		edit.notify["cursor-position"].connect_after(
 			(e,p) => { do_moved(e); });
+		sig_id = edit.notify["cursor-position"].connect((e,p) => 
+			{ do_pretty_print(); });
 		attach(checker, 1, 3, 3, 1);
 
 		data.item_selected.connect(do_data_selected);
@@ -2047,12 +2035,29 @@ public class EvalPart : Grid, AbstractPart {
 	}
 	
 	public void insert(string str) { 
-		int n = edit.cursor_position;
+		var model = edit.buffer;
 		string text = edit.text;
-		text = text.splice(n, n, str);
-		edit.text = text;
-		edit.move_cursor(MovementStep.LOGICAL_POSITIONS, text.length, false);
-	}
+		int q, p = edit.cursor_position;
+		int l = text.index_of(bbullet);
+		if (l<0) {
+			q = text.char_count();
+			char c = str[0];
+			if (text.length>0 && (c=='_' || c.isalpha())) {
+				model.insert_text(q,{'.'});
+				++q;
+			}
+		} else {
+			int k = text.index_of_nth_char(p);
+			unichar c;
+			for (q=p; l>k; ++q) {
+				text.get_prev_char(ref l, out c);
+			}
+			model.delete_text(q,1);
+		}
+		model.insert_text(q,str.data);
+		q = q==p ? 1 : q-p;
+		edit.move_cursor(MovementStep.VISUAL_POSITIONS, q, false);
+ 	}
 
 	public void set_debuggee(Debuggee? dg) { 
 		if (dg!=null) {

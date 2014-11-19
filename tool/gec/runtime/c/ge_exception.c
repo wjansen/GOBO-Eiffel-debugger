@@ -30,7 +30,7 @@ void GE_raise(int code)
 {
 	GE_rescue* r = GE_last_rescue;
 #ifdef GEDB_D
-	if (code>0) gedb_crash(code);
+	if (code>0) gedb_crash(code,0);
 #endif
 	if (r != 0) {
 		GE_last_rescue = r->previous;

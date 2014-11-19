@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
-<meta name="generator" content="hevea 2.09">
+<meta name="generator" content="hevea 2.16">
 <link rel="stylesheet" type="text/css" href="debugh.css">
 <title>General objects</title>
 </head>
@@ -26,7 +26,7 @@ any <span style="font-style:oblique">Eiffel</span> expression.
 and object test expressions are not supported. 
 </blockquote><p>An expression is written as follows: a (un-)qualified expression 
 like <span style="font-family:sans-serif">x</span> or <span style="font-family:sans-serif">x.y.z</span>, 
-or the composition of of calls to infix and prefix operators 
+or the composition of calls to infix and prefix operators 
 where the target is a (un-)qualified expression either. 
 Expressions may include function calls
 (the arguments are, recursively, <span style="font-style:italic">expression</span>s as well). 
@@ -60,7 +60,7 @@ corresponding to <span style="font-style:oblique">Eiffel</span> types.
 Since the <span style="font-style:oblique">Gec</span> does a good job in dead code removal, 
 many routines and even some attributes do not occur in the <span style="font-style:oblique">C</span> code. 
 If an expression relies on removed routines etc. 
-then they are indicated as &#X201C;unknown&#X201D; the same way as routines etc. 
+then they are indicated as &#X201C;unknown&#X201D; the same way as routine names etc. 
 not occurring in the <span style="font-style:oblique">Eiffel</span> code. <p>By contrast, arithmetical operations, logical operations, and comparisons 
 of basic expanded types (i.e. the standard operators of these types) 
 are available even if the <span style="font-style:oblique">Gec</span> compiler did not generate 

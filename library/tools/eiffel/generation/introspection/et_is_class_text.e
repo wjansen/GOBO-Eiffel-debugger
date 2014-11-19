@@ -252,13 +252,13 @@ feature -- Factory
 					end
 				end
 			else
-				impl.force_feature (f, s)
+				impl.force_feature (f.implementation_feature, s)
 				last := impl.last_feature
 				nm := f.lower_name
 				const := f.is_constant_attribute or f.is_once
 				if not STRING_.same_string (nm, last.fast_name) then
-					if f.is_routine then
-						create rt.declare_renamed (nm, Current, last, const, s)
+					if f.is_routine and then attached {ET_IS_ROUTINE_TEXT} last as x then
+						create rt.declare_renamed (nm, Current, x, const, s)
 						last := rt
 					else
 						create last.declare_renamed (nm, Current, last, const, s)

@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
-<meta name="generator" content="hevea 2.09">
+<meta name="generator" content="hevea 2.16">
 <style type="text/css">
 .li-itemize{margin:1ex 0ex;}
 .li-enumerate{margin:1ex 0ex;}
@@ -133,7 +133,8 @@ not in finalized mode and without the proper debugger
 (which will be called <U>runtime analyser</U> in the following 
 while <U>debugger</U> means both, post mortem analyser and runtime analyser). 
 The effect is that the post mortem analyser 
-gets invoked if the program crashes for some reason. 
+gets invoked if the program crashes for some reason 
+or when the program is interrupted from keyboard. 
 This way, the call stack as well as data on stack and heap can be analysed. 
 The post mortem analyser has been inspired by the <span style="font-family:monospace">core</span> file 
 written by <span style="font-style:oblique">Unix</span> in case of a program crash: 
@@ -177,7 +178,7 @@ so the compiler&#X2019;s integrity is preserved.
 The debuggee&#X2019;s integrity is preseved as well since only additions 
 to the <span style="font-style:oblique">C</span> code are made that do not modify the behaviour 
 of the normally generated code 
-(surely, the additions cause the longer runtime).
+(of course, the additions cause the longer runtime).
 </p><p>The debugger uses the <span style="font-style:oblique">GTK+</span> graphics library 
 for the graphical user interface (GUI for short). 
 <span style="font-style:oblique">GTK+</span> and related libraries as <span style="font-style:oblique">GLib</span> etc.
@@ -255,14 +256,8 @@ First, installing the extended <span style="font-style:oblique">Gec</span> compi
 (this is done the usual way), thereby the debugger is installed, too. 
 The result is, besides the common programs <span style="font-family:monospace">gec</span> etc., 
 the library <span style="font-family:monospace">libgedb.so</span> (or <span style="font-family:monospace">gedb.dlls</span> on <span style="font-style:oblique">Windows</span>) 
-that contains the bulk of debugger code 
-and the executable <span style="font-family:monospace">gedb</span> (or <span style="font-family:monospace">gedb.exe</span>). 
-Both debugger parts are put into directory <span style="font-family:monospace">$GOBO/bin</span>. 
-When the debugger acts as runtime analyser then <span style="font-family:monospace">gedb</span> is the main program 
-that links <span style="font-family:monospace">libgedb.so</span> as well as the debuggee library, 
-but when the debugger acts as post mortem analyser 
-then the debuggee is the main program linking <span style="font-family:monospace">libgedb.so</span> 
-while <span style="font-family:monospace">gedb</span> is ignored.
+that contains the bulk of debugger code. 
+The debuggee is the main program linking <span style="font-family:monospace">libgedb.so</span>. 
 </p><p>Second, to prepare an <span style="font-style:oblique">Eiffel</span> system for debugging 
 operation system specific options are to be provided in files 
 <span style="font-family:monospace">$GOBO/tool/gec/config/c/*.cfg</span>. 
@@ -281,10 +276,15 @@ dg_libs:
 #endif
 </pre><p>These settings have to be adapted for the other configuration files 
 if they are to be used. 
-</p><blockquote class="quote">
+Moreover, in case of <span style="font-style:oblique">Unix</span> like operation systems 
+the environment variable <span style="font-family:monospace">LD_LIBRARY_PATH</span> 
+must point (among others) to <span style="font-family:monospace">$GOBO/bin</span>, 
+alternatively, you may add the cryptic flag <span style="font-family:monospace">-Wl,-rpath,$GOBO/bin</span> 
+(no internal spaces!)
+to variable <span style="font-family:monospace">dg_libs</span>. </p><blockquote class="quote">
 <div class="center"><span style="font-weight:bold">Hint</span></div>
 If the debugger is to be installed form the <span style="font-style:oblique">Vala</span> source code
-switch to directory <span style="font-family:monospace">$GOBO/library/tools/debugger/gui</span> 
+switch to directory <span style="font-family:monospace">$GOBO/tool/gedb</span> 
 and run <span style="font-family:monospace">make</span> before installing <span style="font-style:oblique">Gec</span>. 
 </blockquote>
 <!--TOC subsection id="sec6" Usage-->
@@ -423,7 +423,7 @@ here consisting of two text lines. The first line is generally
 up to a leading <span style="font-family:sans-serif">expand/compress</span> icon empty while the second line is hidden
 (clicking the icon shows and hides the second line). 
 If a validation error occurs then the first line contains an error description
-and the second (now made visible) contains the expression in question 
+and the second line (now made visible) contains the expression in question 
 showing in red the part where the error has been detected. 
 In other words, this is the debugger&#X2019;s way to issue error massages, 
 the heavy way of opening a dialogue window is avoided. </p>
@@ -433,7 +433,10 @@ The menu bar contains the entries <span style="font-family:sans-serif"><U>F</U><
 <span style="font-family:sans-serif"><U>W</U></span><span style="font-family:sans-serif">indow</span>, <span style="font-family:sans-serif"><U>P</U></span><span style="font-family:sans-serif">references</span>, 
 and <span style="font-family:sans-serif"><U>H</U></span><span style="font-family:sans-serif">elp</span>. 
 Menu <span style="font-family:sans-serif">File</span> has the following items:
-</p><dl class="description"><dt class="dt-description"><span style="font-family:sans-serif"><U>S</U></span><span style="font-family:sans-serif">ave</span></dt><dd class="dd-description"> 
+</p><dl class="description"><dt class="dt-description"><span style="font-family:sans-serif"><U>C</U></span><span style="font-family:sans-serif">ontinue</span></dt><dd class="dd-description">
+the item exists only in the post mortem analyser, it enables to continue 
+the debuggee if it had been interrupted from the keyboard;
+</dd><dt class="dt-description"><span style="font-family:sans-serif"><U>S</U></span><span style="font-family:sans-serif">ave</span></dt><dd class="dd-description"> 
 store the alias name and breakpoint definitions to file 
 <span style="font-style:italic">debuggee</span><span style="font-family:monospace">.edg</span> in the directory where the debuggee is located; 
 </dd><dt class="dt-description"><span style="font-family:sans-serif">Save </span><span style="font-family:sans-serif"><U>a</U></span><span style="font-family:sans-serif">s ...</span></dt><dd class="dd-description"> 
@@ -451,12 +454,12 @@ Menu <span style="font-family:sans-serif">Window</span> has the following items 
 </p><dl class="description"><dt class="dt-description"><span style="font-family:sans-serif">New </span><span style="font-family:sans-serif"><U>d</U></span><span style="font-family:sans-serif">ata</span></dt><dd class="dd-description"> opens a new window for displaying data; 
 </dd><dt class="dt-description"><span style="font-family:sans-serif"><U>G</U></span><span style="font-family:sans-serif">lobal data</span></dt><dd class="dd-description"> opens a window showing global data 
 (constant attributes, values of once functions);
-</dd><dt class="dt-description"><span style="font-family:sans-serif">SQL </span><span style="font-family:sans-serif"><U>s</U></span><span style="font-family:sans-serif">elect</span></dt><dd class="dd-description"> opens a window for selecting 
+</dd><dt class="dt-description"><span style="font-family:sans-serif">SQL </span><span style="font-family:sans-serif"><U>t</U></span><span style="font-family:sans-serif">able</span></dt><dd class="dd-description"> opens a window for selecting 
 and displaying data analogously to the <span style="font-style:oblique">SQL</span> command <span style="font-family:monospace">SELECT</span>; 
 </dd><dt class="dt-description"><span style="font-family:sans-serif"><U>A</U></span><span style="font-family:sans-serif">lias definition</span></dt><dd class="dd-description"> opens a window showing 
 a table of alias definitions, the table entries are editable. 
 </dd></dl><p> 
-Menu <span style="font-family:sans-serif">Preferences</span> has the following item:
+Menu <span style="font-family:sans-serif">Preferences</span> has the following items:
 </p><dl class="description"><dt class="dt-description"><span style="font-family:sans-serif"><U>A</U></span><span style="font-family:sans-serif">ppearance</span></dt><dd class="dd-description">
 opens a window to modify certain properties 
 of the debugger&#X2019;s graphical outlay; 
@@ -535,7 +538,7 @@ so the contents of the <span style="font-family:sans-serif">Call stack</span> pa
 Moreover the effect of <span style="font-family:sans-serif">Cont</span> is modified by the radio buttons
 </p><dl class="description"><dt class="dt-description"><span style="font-family:sans-serif">break</span></dt><dd class="dd-description"> treat breakpoints and tracepoints as defined;
 </dd><dt class="dt-description"><span style="font-family:sans-serif">trace</span></dt><dd class="dd-description"> treat breakpoints as tracepoints, i.e. do not stop;
-</dd><dt class="dt-description"><span style="font-family:sans-serif">ignore</span></dt><dd class="dd-description"> ignore breakpoints and tracepoints at all.
+</dd><dt class="dt-description"><span style="font-family:sans-serif">silent</span></dt><dd class="dd-description"> ignore breakpoints and tracepoints at all.
 </dd></dl><p>The effect of button <span style="font-family:sans-serif">Stop</span> 
 is complementary to that of the other buttons. 
 Quite naturally, also its sensitivity is complementary:
@@ -685,8 +688,7 @@ line and column number;
 (an empty field is technically not possible, so &#X201C;<span style="font-family:monospace">0</span>&#X201D; means not set); 
 </dd><dt class="dt-description"><span style="font-family:sans-serif">Watch</span></dt><dd class="dd-description"> address of a memory location 
 that is watched for modification of its contents;
-</dd><dt class="dt-description"><span style="font-family:sans-serif">Type</span></dt><dd class="dd-description"> type of <span style="font-family:monospace">Current</span> 
-(if the class name in the <span style="font-family:sans-serif">At</span> column is not sufficiently precise); 
+</dd><dt class="dt-description"><span style="font-family:sans-serif">Type</span></dt><dd class="dd-description"> type of <span style="font-family:monospace">Current</span>; 
 </dd><dt class="dt-description"><span style="font-family:sans-serif">If</span></dt><dd class="dd-description"> a boolean expression to be satisfied; 
 </dd><dt class="dt-description"><span style="font-family:sans-serif">Print</span></dt><dd class="dd-description"> no condition but an expression list 
 to be computed and printed 
@@ -739,7 +741,8 @@ directly in the <span style="font-family:sans-serif">Source</span> part, see Sec
 </blockquote><blockquote class="quote">
 <div class="center"><span style="font-weight:bold">Recommendation</span></div>
 The check for breakpoint matches is very time consuming 
-if there are breakpoints without <span style="font-family:sans-serif">Catch</span> and <span style="font-family:sans-serif">At</span> conditions. 
+if there are breakpoints without any 
+of the <span style="font-family:sans-serif">Catch</span>, <span style="font-family:sans-serif">At</span>, and <span style="font-family:sans-serif">Depth</span> conditions. 
 So it is recommended that all breakpoints have one of these conditions set 
 and, for reasons of implementation, 
 that there are no more than 20 breakpoints with the <span style="font-family:sans-serif">At</span> condition. 
@@ -790,22 +793,22 @@ possible positions for the <span style="font-family:sans-serif">At</span> condit
 don&#X2019;t have those positions);
 </dd><dt class="dt-description"><span style="font-family:sans-serif">orange background</span></dt><dd class="dd-description"> string found by a search 
 (see Sec.&#XA0;<a href="#S%3Asearching">3.6.4</a>); 
-</dd><dt class="dt-description"><span style="font-family:sans-serif">medium blue background</span></dt><dd class="dd-description"> 
-name of the class under the mouse pointer that can be displayed 
-(see Sec.&#XA0;<a href="#S%3AsourceActions">3.6.5</a>);
+</dd><dt class="dt-description"><span style="font-family:sans-serif">yellow background</span></dt><dd class="dd-description"> other matching strings 
+(see Sec.&#XA0;<a href="#S%3Asearching">3.6.4</a>); 
 </dd><dt class="dt-description"><span style="font-family:sans-serif">light blue background</span></dt><dd class="dd-description"> 
-name of the feature under the mouse pointer that can be listed 
+name of the feature under the mouse pointer 
+whose definition in source code can be displayed, may be also a class name 
 (see Sec.&#XA0;<a href="#S%3AsourceActions">3.6.5</a>);
 </dd><dt class="dt-description"><span style="font-family:sans-serif">light pink background</span></dt><dd class="dd-description"> 
-name of the feature under the mouse pointer that can be listed and computed, 
+name of the feature under the mouse pointer that can be displayed and computed, 
 the enclosing routine must belong to the call stack 
 (see Sec.&#XA0;<a href="#S%3AsourceActions">3.6.5</a>);
 </dd><dt class="dt-description"><span style="font-family:sans-serif">light gray background</span></dt><dd class="dd-description"> line of the insertion cursor 
 (to make the cursor position better detectable).
 </dd></dl><p>
 The various background colors take the priorities: 
-orange, red, green, light pink, light blue, medium blue, 
-light green, light gray. 
+orange, yellow, red, green, light pink, 
+light blue, light green, light gray. 
 </p>
 <!--TOC subsubsection id="sec22" Class selection-->
 <h4 id="sec22" class="subsubsection">3.6.2&#XA0;&#XA0;Class selection</h4><!--SEC END --><p><a id="S:classSelection"></a>
@@ -858,7 +861,7 @@ The entered number <span style="font-style:italic">n</span> may be
 <!--TOC subsubsection id="sec24" Searching-->
 <h4 id="sec24" class="subsubsection">3.6.4&#XA0;&#XA0;Searching</h4><!--SEC END --><p><a id="S:searching"></a>
 The text field is not writeable but searchable: two methods are provided.
-First, enter the string (generally: regular expression) to be searched 
+First, enter the string (generally: a regular expression) to be searched 
 into the search field at the part&#X2019;s bottom, 
 close input by pressing <span style="font-family:monospace">Enter</span>. 
 Repeatedly search of the same pattern continues the search 
@@ -869,11 +872,15 @@ Entering <span style="font-family:monospace">Control-f</span> starts a search cy
 then forthcoming entered printable keys are accumulated to a string 
 that is searched immediately. The sequence of key presses may include 
 <span style="font-family:monospace">BackSpace</span> to remove the last key from the search string 
-(and search goes back to the previously found pattern), or it may include 
-<span style="font-family:monospace">Arrow Up</span>, <span style="font-family:monospace">Arrow Down</span> to search the same string again 
-in the given direction. 
+(and search goes back to the previously found pattern), 
+and it may include <span style="font-family:monospace">Control-f</span> or <span style="font-family:monospace">Control-r</span> 
+to search the same string again. 
 All other keys and moving the mouse pointer outside the text field 
-terminate the search cycle. 
+terminate the search cycle, 
+in particular, <span style="font-family:monospace">Esc</span> also clears the highlighted strings. 
+The search direction is forward after extending the search string 
+or pressing <span style="font-family:monospace">Control-f</span>, the direction is backward 
+after reducing the search string or pressing <span style="font-family:monospace">Control-r</span>. 
 After termination the same string may be searched by initiating 
 another search cycle with two <span style="font-family:monospace">Control-f</span> presses. 
 In any case, 
@@ -895,17 +902,17 @@ Then in any case the source code around the stop point is displayed.
 the breakpoint has only the <span style="font-family:monospace">At</span> condition defined, 
 the other parts may be specified later 
 by manipulation in the <span style="font-family:sans-serif">Breakpoints</span> part. 
-</dd><dt class="dt-description"><span style="font-weight:bold"><span style="font-family:monospace">Control-d</span></span></dt><dd class="dd-description"> 
+</dd><dt class="dt-description"><span style="font-weight:bold"><span style="font-family:monospace">Control-k</span></span></dt><dd class="dd-description"> 
 Delete the breakpoint(s) next to the insertion cursor. 
-</dd><dt class="dt-description"><span style="font-weight:bold"><span style="font-family:monospace">Control-g</span></span></dt><dd class="dd-description"> 
+</dd><dt class="dt-description"><span style="font-weight:bold"><span style="font-family:monospace">Control-c</span></span></dt><dd class="dd-description"> 
 If the routine containing the insertion cursor belongs to the call stack 
 then continue debuggee execution to the point next to the insertion cursor 
 (or to the routine&#X2019;s caller if the point is not hit), 
 i.e. define a temporary breakpoint and issue a <span style="font-family:sans-serif">Cont</span> command 
 with <span style="font-family:sans-serif">repeat</span>=1, other breakpoint settings remain active. 
-</dd><dt class="dt-description"><span style="font-weight:bold"><span style="font-family:monospace">Control-G</span></span></dt><dd class="dd-description"> Like <span style="font-family:monospace">Control-g</span> but ignore all other breakpoints 
+</dd><dt class="dt-description"><span style="font-weight:bold"><span style="font-family:monospace">Control-C</span></span></dt><dd class="dd-description"> Like <span style="font-family:monospace">Control-c</span> but ignore all other breakpoints 
 (i.e. run in silent mode). 
-</dd><dt class="dt-description"><span style="font-weight:bold"><span style="font-family:monospace">single right click</span></span><span style="font-weight:bold"> or </span><span style="font-weight:bold"><span style="font-family:monospace">Control-t</span></span></dt><dd class="dd-description"> 
+</dd><dt class="dt-description"><span style="font-weight:bold"><span style="font-family:monospace">single right click</span></span><span style="font-weight:bold"> or </span><span style="font-weight:bold"><span style="font-family:monospace">Control-x</span></span></dt><dd class="dd-description"> 
 If the feature name under the mouse pointer 
 is highlighted light blue or light pink then the feature definition 
 is shown in an additional window. This window has two buttons: 
@@ -914,23 +921,22 @@ is shown in an additional window. This window has two buttons:
 close the window and display its contents in the <span style="font-family:sans-serif">Source</span> part. 
 </dd></dl>
 Similarly, if the class name under the mouse pointer 
-is highlighted medium blue then the class text is shown 
+is highlighted light blue then the class text is shown 
 in the <span style="font-family:sans-serif">Source</span> part (no detour through the additional window). 
 <br>
 <U>Hint:</U> This action is always available.
 </dd><dt class="dt-description"><span style="font-weight:bold"><span style="font-family:monospace">double right click</span></span><span style="font-weight:bold"> </span>or<span style="font-weight:bold"> </span><span style="font-weight:bold"><span style="font-family:monospace">Control-e</span></span></dt><dd class="dd-description"> 
 If the feature name under the mouse pointer is highlighted light pink 
 then the feature (in any case a query) is inserted 
-in the <span style="font-family:sans-serif">Evaluation</span> part&#X2019;s <span style="font-family:sans-serif">Expr</span> field at the insertion cursor there 
+in the <span style="font-family:sans-serif">Evaluation</span> part&#X2019;s <span style="font-family:sans-serif">Expr</span> field at its insertion cursor 
 where it can be manipulated further. 
 </dd><dt class="dt-description"><span style="font-weight:bold"><span style="font-family:monospace">triple right click</span></span><span style="font-weight:bold"> </span>or<span style="font-weight:bold"> </span><span style="font-weight:bold"><span style="font-family:monospace">Control-E</span></span></dt><dd class="dd-description"> 
 If the feature name under the mouse pointer is highlighted light pink 
 then the <span style="font-family:sans-serif">Evaluation</span> part&#X2019;s <span style="font-family:sans-serif">Expr</span> field is cleared, 
 the feature is inserted in the field, and the evaluation is done immediately. 
 </dd></dl><p>
-The various control characters may be read as &#X201C;show actual&#X201D;,
-&#X201C;breakpoint&#X201D;, &#X201C;delete breakpoint&#X201D;, &#X201C;go to&#X201D;, &#X201C;go to in any case!&#X201D;, 
-&#X201C;text of&#X201D;, &#X201C;evaluate&#X201D;, and &#X201C;evaluate now!&#X201D;, respectively.
+The various control characters may be read as &#X201C;show actual&#X201D;, &#X201C;Breakpoint&#X201D;, &#X201C;Kill breakpoint&#X201D;, &#X201C;Come here&#X201D;, &#X201C;Come here in any case!&#X201D;, 
+&#X201C;teXt of&#X201D;, &#X201C;Evaluate&#X201D;, and &#X201C;Evaluate now!&#X201D;, respectively.
 </p><p>Some final remarks on the phrases &#X201C;routine in the call stack&#X201D;
 and &#X201C;next to the insertion cursor&#X201D;. 
 A routine belongs to the call stack if it is the routine 
@@ -945,8 +951,12 @@ text position <U>left</U> or <U>above</U> the insertion cursor,
 it is at the same time a position where a <span style="font-family:sans-serif">Next</span> command stops. </p>
 <!--TOC subsection id="sec26" Console part-->
 <h3 id="sec26" class="subsection">3.7&#XA0;&#XA0;Console part</h3><!--SEC END --><p><a id="S:console"></a>
-The <span style="font-family:sans-serif">Console</span> part is available only if the debugger is used 
+The <span style="font-family:sans-serif">Console</span> part collects the <span style="font-style:oblique">Eiffel</span> system&#X2019;s I/O. 
+It is available only if the debugger is used 
 as runtime analyser (otherwise, it stays hidden). 
+In case of the post mortem analyser the <span style="font-family:sans-serif">Console</span> part is meaningless: 
+before crash the debugger graphics is not shown and all I/O is done 
+in the usual console window, after crash further I/O won&#X2019;t happen. 
 </p><p>The <span style="font-family:sans-serif">Console</span> part is a text field of (nearly) black background 
 containing the debuggee&#X2019;s output by <span style="font-family:monospace">io.output</span> (white), 
 <span style="font-family:monospace">io.error</span> (light pink), and the user input read by <span style="font-family:monospace">io.input</span> (light blue). 
@@ -963,22 +973,31 @@ for practical reasons only. The default size of the <span style="font-family:san
 such that as many source code can be shown as is visible in a terminal window.
 The console window has naturally the same size and to save space 
 of the debugger outlay, the <span style="font-family:sans-serif">Console</span> part has been made 
-an alternative &#X201C;source&#X201D;. Its tag name is <span style="font-family:sans-serif">Console</span> and it is always 
+an alternative &#X201C;source text&#X201D;. Its tag name is <span style="font-family:sans-serif">Console</span> and it is always 
 located at the right end of the tag fields bar. 
 The different roles of source code and console are distinguishable 
 by their complementary backgrounds:
 white versus black. Nevertheless, if there is enough space on screen 
 then the <span style="font-family:sans-serif">Console</span> part may be become a separate window: 
-click on the icon of its tag. Pressing the <span style="font-family:sans-serif">Close</span> button of that window 
+click on the icon of its tag. Clicking the <span style="font-family:sans-serif">Close</span> button of that window 
 puts the <span style="font-family:sans-serif">Console</span> part back into the <span style="font-family:sans-serif">Source</span> part. 
 </p><p>If the <span style="font-family:sans-serif">Console</span> part is not displayed in a separate window 
 then the following show/hide policy applies. 
 The part is shown (i.e. automatically selected among all sources 
 of the <span style="font-family:sans-serif">Source</span> part) as soon as the debuggee requests user input, 
-it is hidden if the debugger regains control. 
+it is hidden when the debugger regains control to show the source text 
+of the actual stop point. 
 Output to <span style="font-family:monospace">io.output</span> or <span style="font-family:monospace">io.error</span> has no effect on the visibility 
 of the <span style="font-family:sans-serif">Console</span> part. 
-</p>
+</p><p>Finally, if the <span style="font-family:sans-serif">Console</span> part is shown within the <span style="font-family:sans-serif">Source</span> part 
+then it is searchable as any source text, 
+if it shown as a separate window then incremental search is still available 
+(this is possible because this search mode relies only on key presses 
+in the window itself, 
+i.e. interactions with the main window are not involved). 
+In any case, the background colour of the string found is, 
+adapted to the window&#X2019;s dark background, 
+different from that used in the <span style="font-family:sans-serif">Source</span> part. </p>
 <!--TOC subsection id="sec27" Stack part-->
 <h3 id="sec27" class="subsection">3.8&#XA0;&#XA0;Stack part</h3><!--SEC END --><p><a id="S:stack"></a>
 The <span style="font-family:sans-serif">Call stack</span> part simply contains a table of the nested routine calls 
@@ -1054,13 +1073,13 @@ to distinguish it from common integer numbers
 hexadecimal representations and values of any reference type 
 by their address. 
 </dd></dl><p>The fields of a value of a <span style="font-family:monospace">SPECIAL</span> type get a <span style="font-style:oblique">C</span> inspired name: 
-the field index enclosed in brackets. Also the type name <span style="font-style:oblique">C</span> inspired:
+the field index enclosed in brackets. Also the type name is <span style="font-style:oblique">C</span> inspired:
 the field type name and the value&#X2019;s count enclosed in brackets. 
 For practical reasons the arrangement of both parts has been reversed, 
-first the count then the type name. The reason is that the count at the 
+first the count then the item type name. The reason is that the count at the 
 end would often not be visible in case of a long type name, 
 so it would not be clear that the value is of a <span style="font-family:monospace">SPECIAL</span> type. 
-</p><p>The fields of value of a <span style="font-family:monospace">TUPLE</span> type get the name of their label 
+</p><p>The fields of a value of a <span style="font-family:monospace">TUPLE</span> type get the name of their label 
 if the object itself has been declared as <span style="font-family:monospace">TUPLE</span> type 
 with labels, otherwise the names are <span style="font-family:monospace">item_1</span> etc.
 </p><p>Values of <span style="font-family:monospace">agent</span> objects are more peculiar. 
@@ -1115,7 +1134,7 @@ then all queries of its dynamic type.
 Selecting a menu item inserts it into the <span style="font-family:sans-serif">Expr</span> field 
 of the <span style="font-family:sans-serif">Evaluation</span> part. 
 There the query may be treated as any other expression. 
-In particular, arguments of functions are indicated as bullets, 
+Arguments of functions are indicated as bullets, 
 they have to be replaced by meaningful expressions 
 before the resulting expression can be computed. 
 In particular, the right operand of infix operators is indicated 
@@ -1134,8 +1153,7 @@ selecting an item has no effect. </p>
 More <span style="font-family:sans-serif">Data</span> windows can be opened from menu <span style="font-family:sans-serif">Window </span>&#X2192;<span style="font-family:sans-serif"> New data</span>, 
 they contain the data tree and additionally a combobox on top 
 to select a stack level and the buttons <span style="font-family:sans-serif">manually/automatic</span>, 
-<span style="font-family:sans-serif">Update</span>, <span style="font-family:sans-serif">Close</span> on bottom, but they do not contain the radio buttons
-for format selection. 
+<span style="font-family:sans-serif">Update</span>, <span style="font-family:sans-serif">Close</span> on bottom. 
 These windows and the <span style="font-family:sans-serif">Data</span> part on the main window work independently 
 of each other. 
 After stopping the debuggee the main <span style="font-family:sans-serif">Data</span> part is automatically 
@@ -1164,8 +1182,7 @@ The data are arranged class by class,
 and the window&#X2019;s table has an additional column showing the name 
 of the defining class. 
 The table can be searched for items: 
-after pressing <span style="font-family:monospace">Control-f</span> a text field opens 
-where a string can be entered, 
+pressing <span style="font-family:monospace">Control-f</span> opens a text field where a string can be entered, 
 then any constant attribute and once routine whose name starts 
 with this string will be highlighted. </p>
 <!--TOC subsection id="sec32" SQL part-->
@@ -1198,7 +1215,7 @@ since it has been created during the call of a function.
 Data of basic expanded types are shown in the <span style="font-family:sans-serif">natural</span> format 
 and data of other expanded types are (recursively) expanded to their fields. 
 The idents remain valid as long as the debuggee is not running 
-and the the stack level is not changed. The idents are refreshed 
+and the stack level is not changed. The idents are refreshed 
 after run and stop of the debuggee and when the stack level has been changed 
 (i.e. at the same events when the idents of the <span style="font-family:sans-serif">Data</span> part are refreshed). 
 </p><p>Issuing a <span style="font-family:monospace">SELCET</span> command to this table consists of filling 
@@ -1257,7 +1274,18 @@ the output may look very spurious.
 The reason is that the meta information generated by the compiler 
 for use of the debugger does not (not yet?) include information 
 about renamings. No such problems occur for the <span style="font-family:sans-serif">precise</span> type policy. 
-</blockquote><p>It was not intended to implement a full database, 
+</blockquote><p>The <span style="font-family:sans-serif">SQL select</span> part provides the following actions:
+</p><dl class="description"><dt class="dt-description">
+<span style="font-weight:bold"><span style="font-family:monospace">left click</span></span></dt><dd class="dd-description">
+if the value in the field under the mouse pointer is of a reference type 
+then a data window is opened (composed like the one of the <span style="font-family:sans-serif">Data</span> part) 
+showing all the qualifiers that lead from a root of the persistence closure 
+to the selected object; 
+</dd><dt class="dt-description"><span style="font-weight:bold"><span style="font-family:monospace">right click</span></span></dt><dd class="dd-description">
+the value in the field under the mouse pointer is inserted 
+into the <span style="font-family:sans-serif">Expr</span> field of the <span style="font-family:sans-serif">Evaluation</span> part (similarly to the <span style="font-family:sans-serif">Data</span> part).
+</dd></dl><p>A final remark. 
+It was not intended to implement a full database, 
 so the debugger&#X2019;s <span style="font-family:monospace">SELECT</span> query is rather poor: 
 only one table is supported at one time (no <span style="font-family:monospace">JOIN</span>), 
 no grouping (no <span style="font-family:monospace">GROUP BY</span>, <span style="font-family:monospace">HAVING</span>), 
@@ -1281,24 +1309,35 @@ into the <span style="font-family:sans-serif">Expr</span> field have been correc
 The <span style="font-family:sans-serif">Evaluation</span> part consists of two text fields: <span style="font-family:sans-serif">Expr</span> and <span style="font-family:sans-serif">Value</span>. 
 Field <span style="font-family:sans-serif">Expr</span> may be filled 
 </p><ul class="itemize"><li class="li-itemize">manually with an expression list;
-</li><li class="li-itemize">by right click on a tree node in the <span style="font-family:sans-serif">Data</span> part: 
+</li><li class="li-itemize">by right click on a tree node in the various data parts: 
 a pop-up menu is opened whose entries 
 are the query names of the node, and selecting a query inserts this 
-at the insertion cursor; 
+near the insertion cursor; 
 </li><li class="li-itemize">by multiple right click when the mouse pointer is in <span style="font-family:sans-serif">Source</span> part 
 over a light pink highlighted feature name (in any case a query): 
 the query together with its targets and arguments is inserted 
-at the insertion but not yet computed (double click)
+near the insertion but not yet computed (double click)
 or the field is first cleared and then the query is computed immediately 
 (triple click). 
 </li></ul><p>
-The expression is computed when <span style="font-family:monospace">Enter</span> is pressed 
+The term &#X201C;near the insertion cursor&#X201D; needs an explanation. 
+If there are bullets (denoting not yet written function arguments 
+that may come from a data window) 
+right to the insertion cursor then the first one is replaced 
+by the selected query, if there is no bullet to the right 
+then the query is appended to the existing string. 
+Then the cursor moves rightward to the next bullet, if any, 
+or to the string end. 
+This way the natural left-to-right writing of expressions is supported 
+and cursor positioning on bullets to be replaced is rather automatic. 
+The insertion cursor is not visible if the text field has not the input focus. 
+To make the target position of a clicked query visible, 
+the bullet right to the insertion cursor is larger than the others. </p><p>The expression is computed when <span style="font-family:monospace">Enter</span> is pressed 
 (except for the triple click just mentioned). 
 The value is shown in the non-editable field <span style="font-family:sans-serif">Value</span>. 
-Precisely, the part of the expression list where the insertion cursor 
-of the <span style="font-family:sans-serif">Expr</span> field resides
-(the expression nearest to the left of the cursor 
-up to its leftmost target) is shown. 
+Precisely, the part of the expression list is shown 
+where the insertion cursor of the <span style="font-family:sans-serif">Expr</span> field resides
+(the expression nearest to the left of the cursor up to its leftmost target). 
 This way, values of even very long expression lists can be shown 
 in the one line field. 
 Not shown are expression ranges and their details 
@@ -1318,7 +1357,7 @@ In case of numeric basic expanded types: any <span style="font-family:monospace"
 <span style="font-family:monospace">NATURAL_*</span> values can be assigned to <span style="font-family:monospace">INTEGER_*</span>, <span style="font-family:monospace">NATURAL_*</span>, 
 or <span style="font-family:monospace">REAL_*</span> items, 
 any <span style="font-family:monospace">REAL_*</span> values can be assigned to <span style="font-family:monospace">REAL_*</span> items; 
-the conversion is done along the rules of the <span style="font-style:oblique">C</span> type casting. 
+the conversion is done along the lines of the <span style="font-style:oblique">C</span> type casting. 
 In all other cases the item is assignable if its type set contains
 the type of the expression in the <span style="font-family:sans-serif">Value</span> field 
 (see Sec.&#XA0;<a href="#S%3AdataActions">3.9.2</a> for displaying the typeset of an entity). </p>
@@ -1378,7 +1417,7 @@ any <span style="font-style:oblique">Eiffel</span> expression.
 and object test expressions are not supported. 
 </blockquote><p>An expression is written as follows: a (un-)qualified expression 
 like <span style="font-family:sans-serif">x</span> or <span style="font-family:sans-serif">x.y.z</span>, 
-or the composition of of calls to infix and prefix operators 
+or the composition of calls to infix and prefix operators 
 where the target is a (un-)qualified expression either. 
 Expressions may include function calls
 (the arguments are, recursively, <span style="font-style:italic">expression</span>s as well). 
@@ -1412,7 +1451,7 @@ corresponding to <span style="font-style:oblique">Eiffel</span> types.
 Since the <span style="font-style:oblique">Gec</span> does a good job in dead code removal, 
 many routines and even some attributes do not occur in the <span style="font-style:oblique">C</span> code. 
 If an expression relies on removed routines etc. 
-then they are indicated as &#X201C;unknown&#X201D; the same way as routines etc. 
+then they are indicated as &#X201C;unknown&#X201D; the same way as routine names etc. 
 not occurring in the <span style="font-style:oblique">Eiffel</span> code. <p>By contrast, arithmetical operations, logical operations, and comparisons 
 of basic expanded types (i.e. the standard operators of these types) 
 are available even if the <span style="font-style:oblique">Gec</span> compiler did not generate 
@@ -1452,7 +1491,8 @@ The more sophisticated expressions are composed as follows:
 <tr><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&#XA0;&#XA0;&#XA0;&#XA0;&#X2223;&#XA0;&#XA0;&#X201C;<span style="font-family:monospace">all</span>&#X201D;&#XA0;&#XA0;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&nbsp;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&nbsp;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&nbsp;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&nbsp;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td></tr>
 <tr><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&#XA0;&#XA0;&#XA0;&#XA0;&#X2223;&#XA0;&#XA0;&#X201C;<span style="font-family:monospace">if</span>&#X201D;&#XA0;&#XA0;<span style="font-style:italic">expression</span>&#XA0;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&nbsp;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&nbsp;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&nbsp;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&nbsp;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td></tr>
 <tr><td style="text-align:right;white-space:nowrap" >
-<span style="font-style:italic">expression</span></td><td style="text-align:left;white-space:nowrap" >::=&#XA0; -&#XA0;- Eiffel expression as just described
+<span style="font-style:italic">expression</span></td><td style="text-align:left;white-space:nowrap" >::=&#XA0;
+ -&#XA0;- Eiffel expression as described in Sec.&#XA0;<a href="#S%3AgeneralExpression">4.1</a>
 </td><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&nbsp;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&nbsp;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&nbsp;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&nbsp;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td></tr>
 </table></td></tr>
 </table><p>
@@ -1540,7 +1580,7 @@ in front of the alias name.
 </blockquote><p>An alias definition may be used when composing a <span style="font-style:italic">detailed_expression</span>: 
 the alias name is to be prefixed by an underscore; 
 the leading underscore ensures that the alias name cannot be misunderstood 
-as the feature or variable name . 
+as the feature or variable name. 
 Within the <span style="font-style:italic">detailed_expression</span> to be composed the alias name 
 is replaced by a copy of its associated <span style="font-style:italic">detailed_expression</span>. 
 The resulting <span style="font-style:italic">detailed_expression</span> is in fact an <span style="font-style:italic">expression</span> 

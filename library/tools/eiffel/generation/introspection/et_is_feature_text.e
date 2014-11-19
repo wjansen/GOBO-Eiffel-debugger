@@ -164,6 +164,8 @@ feature -- Access
 
 	home: ET_IS_CLASS_TEXT
 
+	renames: like Current
+
 	tuple_labels: detachable IS_SEQUENCE [ET_IS_FEATURE_TEXT]
 
 feature -- Status Setting
@@ -222,8 +224,6 @@ feature -- Basic operation
 		end
 
 feature {} -- Implementation 
-
-	renames: like Current
 
 	labels_table: DS_HASH_TABLE [IS_SEQUENCE [ET_IS_FEATURE_TEXT], ET_BASE_TYPE]
 		once

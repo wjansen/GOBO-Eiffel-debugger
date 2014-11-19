@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
-<meta name="generator" content="hevea 2.09">
+<meta name="generator" content="hevea 2.16">
 <link rel="stylesheet" type="text/css" href="debugh.css">
 <title>Breakpoints part</title>
 </head>
@@ -52,8 +52,7 @@ line and column number;
 (an empty field is technically not possible, so &#X201C;<span style="font-family:monospace">0</span>&#X201D; means not set); 
 </dd><dt class="dt-description"><span style="font-family:sans-serif">Watch</span></dt><dd class="dd-description"> address of a memory location 
 that is watched for modification of its contents;
-</dd><dt class="dt-description"><span style="font-family:sans-serif">Type</span></dt><dd class="dd-description"> type of <span style="font-family:monospace">Current</span> 
-(if the class name in the <span style="font-family:sans-serif">At</span> column is not sufficiently precise); 
+</dd><dt class="dt-description"><span style="font-family:sans-serif">Type</span></dt><dd class="dd-description"> type of <span style="font-family:monospace">Current</span>; 
 </dd><dt class="dt-description"><span style="font-family:sans-serif">If</span></dt><dd class="dd-description"> a boolean expression to be satisfied; 
 </dd><dt class="dt-description"><span style="font-family:sans-serif">Print</span></dt><dd class="dd-description"> no condition but an expression list 
 to be computed and printed 
@@ -106,7 +105,8 @@ directly in the <span style="font-family:sans-serif">Source</span> part, see Sec
 </blockquote><blockquote class="quote">
 <div class="center"><span style="font-weight:bold">Recommendation</span></div>
 The check for breakpoint matches is very time consuming 
-if there are breakpoints without <span style="font-family:sans-serif">Catch</span> and <span style="font-family:sans-serif">At</span> conditions. 
+if there are breakpoints without any 
+of the <span style="font-family:sans-serif">Catch</span>, <span style="font-family:sans-serif">At</span>, and <span style="font-family:sans-serif">Depth</span> conditions. 
 So it is recommended that all breakpoints have one of these conditions set 
 and, for reasons of implementation, 
 that there are no more than 20 breakpoints with the <span style="font-family:sans-serif">At</span> condition. 

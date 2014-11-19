@@ -60,9 +60,9 @@ public class HelpPart {
 
 		Label headline = new Label("");
 		headline.set_markup(
-"""<b>The following colors are used to highlight 
--- besides syntax highlighting --
-specific positions in source code:</b>"""
+"""<b>The following colors and markers are used to highlight 
+specific positions in source code (besides syntax highlighting):
+</b>"""
 			);
 		box.pack_start(headline, false, false, 5);
 		group.add_widget(headline);
@@ -79,8 +79,10 @@ specific positions in source code:</b>"""
 		table.attach(tag, 0, 0, 1, 1);
 		tag.set_markup("<tt>a</tt>");
 		rgba = new Gdk.RGBA();
-		rgba.parse("#00d600");
+		rgba.parse("#228b22");
 		tag.override_background_color(StateFlags.NORMAL, rgba);
+		rgba.parse("white");
+		tag.override_color(StateFlags.NORMAL, rgba);
 		tag.hexpand = false;
 		tag.vexpand = false;
 		tag.halign = Align.START;
@@ -127,8 +129,10 @@ specific positions in source code:</b>"""
 		table.attach(tag, 0, 3, 1, 1);
 		tag.set_markup("<tt>g</tt>");
 		rgba = new Gdk.RGBA();
-		rgba.parse("red");
+		rgba.parse("#ec0000");
 		tag.override_background_color(StateFlags.NORMAL, rgba);
+		rgba.parse("white");
+		tag.override_color(StateFlags.NORMAL, rgba);
 		tag.hexpand = false;
 		tag.vexpand = false;
 		tag.halign = Align.START;
@@ -143,7 +147,7 @@ specific positions in source code:</b>"""
 		tag = new Label("");
 		table.attach(tag, 0, 4, 1, 1);
 		tag.set_markup("<tt>hijk</tt>");
-		rgba.parse("#ffd475");
+		rgba.parse("orange");
 		tag.override_background_color(StateFlags.NORMAL, rgba);
 		tag.selectable = true;
 		tag.show.connect((w) => { ((w as Label).select_region(0, 5)); });
@@ -153,26 +157,24 @@ specific positions in source code:</b>"""
 		tag.valign = Align.START;
 		text = new Label("");
 		table.attach(text, 1, 4, 1, 1);
-		text.set_text("""String found by a search command""");
+		text.set_text("String found by a search command");
 		text.set_justify(Justification.LEFT);
 		text.halign = Align.START;
 
 		tag = new Label("");
-		tag.set_markup("<tt>lmno</tt>");
 		table.attach(tag, 0, 5, 1, 1);
-		rgba = new Gdk.RGBA();
-		rgba.parse("#abc4ff");
+		tag.set_markup("<tt>lmno</tt>");
+		rgba.parse("#fff670");
 		tag.override_background_color(StateFlags.NORMAL, rgba);
+		tag.selectable = true;
+		tag.show.connect((w) => { ((w as Label).select_region(0, 5)); });
 		tag.hexpand = false;
 		tag.vexpand = false;
 		tag.halign = Align.START;
 		tag.valign = Align.START;
 		text = new Label("");
 		table.attach(text, 1, 5, 1, 1);
-		text.set_markup(
-"""Name of the class under the mouse pointer
-whose source code can be displayed 
-(click mouse button <span><i>3 (right)</i></span> to activate)""");
+		text.set_text("Other matching strings of a search command");
 		text.set_justify(Justification.LEFT);
 		text.halign = Align.START;
 
@@ -180,7 +182,7 @@ whose source code can be displayed
 		tag.set_markup("<tt>pqrs</tt>");
 		table.attach(tag, 0, 6, 1, 1);
 		rgba = new Gdk.RGBA();
-		rgba.parse("#d9e9ff");
+		rgba.parse("#cbe1ff");
 		tag.override_background_color(StateFlags.NORMAL, rgba);
 		tag.hexpand = false;
 		tag.vexpand = false;
@@ -189,7 +191,7 @@ whose source code can be displayed
 		text = new Label("");
 		table.attach(text, 1, 6, 1, 1);
 		text.set_markup(
-"""Name of the feature under the mouse pointer
+"""Name of the feature or class under the mouse pointer
 whose definition in source code can be displayed 
 (click mouse button <span><i>3 (right)</i></span> to activate)""");
 		text.set_justify(Justification.LEFT);
@@ -199,7 +201,7 @@ whose definition in source code can be displayed
 		tag.set_markup("<tt>tuvw</tt>");
 		table.attach(tag, 0, 7, 1, 1);
 		rgba = new Gdk.RGBA();
-		rgba.parse("#fce4fa"); 
+		rgba.parse("#fcc3f7"); 
 		tag.override_background_color(StateFlags.NORMAL, rgba);
 		tag.hexpand = false;
 		tag.vexpand = false;
@@ -233,15 +235,17 @@ of the expression under the mouse pointer can be computed
 		text.halign = Align.START;
 
 		string str = 
-			"The various background colors take the priorities (high to low):\n";
-		str += "   <span background='#ffd475'> 	 </span>, ";
-		str += "<span background='red'> 	 </span>, ";
-		str += "<span background='#00d600'> 	 </span>, ";
-		str += "<span background='#fce4fa'> 	 </span>, ";
-		str += "<span background='#d9e9ff'> 	 </span>, ";
-		str += "<span background='#abc4ff'> 	 </span>, ";
-		str += "<span background='#e0ffc4'> 	 </span>, ";
-		str += "<span background='#dddddc'> 	 </span>.";
+		"The various background colors take the priorities (high to low):\n";
+		str += "<tt>      ";
+		str += "<span background='#ffa500'>   </span> ";
+		str += "<span background='#fff670'>   </span> ";
+		str += "<span background='#ec0000'>   </span> ";
+		str += "<span background='#228b22'>   </span> ";
+		str += "<span background='#fcc3f7'>   </span> ";
+		str += "<span background='#cbe1ff'>   </span> ";
+		str += "<span background='#e0ffc4'>   </span> ";
+		str += "<span background='#dddddc'>   </span>";
+		str += "</tt>";
 		Label priority = new Label(str);
 		box.pack_start(priority, false, false, 5);
 		group.add_widget(priority);
