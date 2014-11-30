@@ -882,6 +882,7 @@ feature {} -- Debugging code
 				current_file.put_string (import.c_init_name)
 				current_file.put_string ("();%N")
 				print_position_handling(de, Start_program_break)
+				print_indentation
 				current_file.put_string ("}%N")
 				dedent
 			end

@@ -26,7 +26,9 @@ inherit
 		end
 
 	KL_SHARED_STRING_EQUALITY_TESTER
-		export {} all end
+		export
+			{NONE} all
+		end
 
 create
 
@@ -200,11 +202,13 @@ feature -- Basic operation
 			compilee.force_type (a_system.any_type)
 			compilee.force_type (a_system.none_type)
 			from
-					-- Add all basic expanded types.
+					-- Add all basic expanded types and the STRING_8 type.
 				l_types := compilee.origin.dynamic_types
-				n := a_system.pointer_type.id
+				n := {IS_BASE}.String8_ident
 			until n = 0 loop
-				compilee.force_type (l_types.item (n))
+				if attached l_types.item (n) as t then 
+					compilee.force_type (t)
+				end
 				n := n - 1
 			end
 			if attached a_root as root then

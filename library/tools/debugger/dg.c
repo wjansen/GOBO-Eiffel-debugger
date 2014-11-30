@@ -103,24 +103,6 @@ static void longjmp_(void* buf, u_int32_t jmp) {
   GE_longjmp(*(GE_jmp_buf*)buf,jmp);
 }
 
-static T2* chars_(void* obj, int* nc) {
-  *nc = 0;
-  if (obj==0) return 0;
-  if (*(int*)obj!=17) return 0;
-  if (((T17*)obj)->a1==0) return 0;
-  *nc = ((T17*)obj)->a2;
-  return ((T15*)((T17*)obj)->a1)->z2;
-}
-
-static T3* unichars_(void* obj, int* nc) {
-  *nc = 0;
-  if (obj==0) return 0;
-  if (*(int*)obj!=18) return 0;
-  if (((T18*)obj)->a1==0) return 0;
-  *nc = ((T18*)obj)->a2;
-  return ((T16*)((T18*)obj)->a1)->z2;
-}
-
 static void set_bp_pos_(int id, int l, int c) {
 #if GEDB_D == 2
   u_int32_t i, pos, val;
@@ -245,6 +227,8 @@ static void set_offsets_(void) {
   }
 }
 
+static T2* chars_(void* obj, int* nc);
+static T3* unichars_(void* obj, int* nc);
 static void gedb_wrap_(EIF_NATURAL_32 i,void *call,void *C,void **args,void *R);
 
 typedef struct { char* name; void* addr; } NamedAddress;

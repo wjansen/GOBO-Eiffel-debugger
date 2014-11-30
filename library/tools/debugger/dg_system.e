@@ -1244,7 +1244,9 @@ feature {} -- Implementation
 
 	type_of_name (nm, c: STRING): IS_TYPE
 		local
-			cn: STRING    
+			cn: STRING
+			bc: IS_CLASS_TEXT
+			id: INTEGER
 		do
 			Result := type_by_name (nm, True)
 			if Result.c_name = Void then

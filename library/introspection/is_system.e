@@ -513,8 +513,10 @@ feature -- Searching
 		do
 			if attached type_at (id) as t then
 				type_stack.push (t)
-				type_stack_count := type_stack.count
+			else
+				type_stack.push (Void)
 			end
+			type_stack_count := type_stack.count
 		ensure
 			stack_size: type_stack_count = old type_stack_count + 1
 		end
@@ -607,9 +609,13 @@ feature -- Searching
 					j := 0
 				until not attached this as t or else j = gc loop
 					l := l - 1
-					p := t.generic_at (j).conformance (type_stack.below_top (l))
+					if attached type_stack.below_top (l) as g then
+						p := t.generic_at (j).conformance (g)
+					else
+						p := {INTEGER}.max_value
+					end
 					if p < {INTEGER}.max_value - penalty then
-						penalty := penalty + p
+							penalty := penalty + p
 					else
 						this := Void
 					end

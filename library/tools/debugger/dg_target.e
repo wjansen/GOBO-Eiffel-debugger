@@ -544,9 +544,11 @@ feature  {} -- Implementation
 	declare (td: IS_TYPE; cap: NATURAL; id: NATURAL)
 		local
 			g: IS_TYPE
+			tn: STRING
 		do
 			declaration.wipe_out
-			if td.is_special then
+			tn := c_type_name(td)
+			if td.is_special then 
 				g := td.generic_at (0)
 				declaration.append (g.c_name)
 				if not g.is_subobject then
@@ -565,40 +567,39 @@ feature  {} -- Implementation
 				declaration.extend (']')
 				declaration_type := td
 			else
-				declaration.wipe_out
-				if td.is_special then
-					if extra_type_names.has (id) then
-						declaration.append (name_prefix)
-						declaration.append_natural_32 (id)
-						declaration.extend ('_')
-						declaration.extend (' ')
-						declaration.append (name_prefix)
-					else
-						declaration.append (once "struct {int id; int32_t a1; int32_t a2; ")
-						g := td.generic_at (0)
-						declaration.append (c_type_name (g))
-						if not g.is_subobject then
-							declaration.extend ('*')
-						end
-						declaration.append (once " z2[")
-						if g.is_character then
-							in_chars := True
-							adapted_cap := cap + 1
-						elseif capacities.has (id) then
-							adapted_cap := capacities.item (id)
-						else
-							adapted_cap := cap.max (1)
-						end
-						declaration.append_natural_32 (adapted_cap)
-						declaration.extend (']')
-						declaration.append (once ";} ")
-						declaration.append (name_prefix)
-					end
-				else
-					declaration.append (c_type_name(td))
-					declaration.extend (' ')
-					declaration.append (name_prefix)
-				end
+--				if td.is_special then
+--					if extra_type_names.has (id) then
+--						declaration.append (name_prefix)
+--						declaration.append_natural_32 (id)
+--						declaration.extend ('_')
+--						declaration.extend (' ')
+--						declaration.append (name_prefix)
+--					else
+--						declaration.append (once "struct {int id; int32_t a1; int32_t a2; ")
+--						g := td.generic_at (0)
+--						declaration.append (c_type_name (g))
+--						if not g.is_subobject then
+--							declaration.extend ('*')
+--						end
+--						declaration.append (once " z2[")
+--						if g.is_character then
+--							in_chars := True
+--							adapted_cap := cap + 1
+--						elseif capacities.has (id) then
+--							adapted_cap := capacities.item (id)
+--						else
+--							adapted_cap := cap.max (1)
+--						end
+--						declaration.append_natural_32 (adapted_cap)
+--						declaration.extend (']')
+--						declaration.append (once ";} ")
+--						declaration.append (name_prefix)
+--					end
+--				else
+				declaration.append (tn)
+				declaration.extend (' ')
+				declaration.append (name_prefix)
+--				end
 				declaration.append_natural_32 (id)
 				declaration_type := td
 			end
@@ -676,7 +677,7 @@ feature {} -- Implementation
 			if t.ident <=type_names.upper then
 				Result := type_names [t.ident]
 			end
-			if not attached Result then
+			if Result = Void then
 				if attached t.c_name as tn then
 					Result := tn
 				else

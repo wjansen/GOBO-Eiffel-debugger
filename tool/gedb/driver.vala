@@ -395,7 +395,7 @@ public class Driver : Debuggee {
 		gui_to_target.push(qm);
 	}
 	
-	private bool callback() {
+	private bool @callback() {
 		if (pma) return true;
 		var qm = target_to_gui.pop();
 		int stop = qm.code;

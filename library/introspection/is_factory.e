@@ -125,7 +125,7 @@ feature -- Factory
 			fid := field_type_ident (id, i)
 			new_type (fid, attac)
 			at := all_types [fid]
-			check attached at end
+			check attached at then end
 			if attached last then
 				last.scan_in_system (id, fid, Current)
 			else

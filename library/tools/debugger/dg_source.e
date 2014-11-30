@@ -45,6 +45,13 @@ inherit
 			actual_object
 		end
 
+	KL_IMPORTED_STRING_ROUTINES
+		undefine
+			copy,
+			is_equal,
+			out
+		end
+
 create
 
 	make

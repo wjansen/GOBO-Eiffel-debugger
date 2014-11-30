@@ -32,6 +32,13 @@ inherit
 			copy, is_equal, out
 		end
 	
+	KL_IMPORTED_STRING_ROUTINES
+		undefine
+			copy,
+			is_equal,
+			out
+		end
+
 create
 
 	make
@@ -113,12 +120,44 @@ feature -- Basic operation
 			create l_file.make_open_read (l_filename.out)
 			l_file.copy_to (c0_file)
 			l_file.close
+			c0_file.put_string ("static T2* chars_(void* obj, int* nc) {%N")
+			if compilee.type_at ({IS_BASE}.String8_ident) /= Void then
+				c0_file.put_string (
+"[
+  *nc = 0;
+  if (obj==0) return 0;
+  if (*(int*)obj!=17) return 0;
+  if (((T17*)obj)->a1==0) return 0;
+  *nc = ((T17*)obj)->a2;
+  return ((T15*)((T17*)obj)->a1)->z2;
+}	
+
+]")
+			else
+				c0_file.put_string ("  return 0;%N}%N")
+			end
+			c0_file.put_string ("static T3* unichars_(void* obj, int* nc) {%N")
+			if compilee.type_at ({IS_BASE}.String32_ident) /= Void then
+				c0_file.put_string (
+"[
+  *nc = 0;
+  if (obj==0) return 0;
+  if (*(int*)obj!=18) return 0;
+  if (((T18*)obj)->a1==0) return 0;
+  *nc = ((T18*)obj)->a2;
+  return ((T16*)((T18*)obj)->a1)->z2;
+}
+
+]")
+			else
+				c0_file.put_string ("  return 0;%N}%N")
+			end
 			put_wrappers
 			c0_file.put_new_line
 			create l_source.make (a_target_system, c_generator.runtime_system,
 														c_generator, compilee)			
 			l_source.set_actionable (True)
-			create l_target.make (c0_file, "", "x",
+			create l_target.make (c0_file, "T", "x",
 														c_names.c_rts_name, a_target_system)
 			create l_table.make (997)
 			create l_driver.make (l_target, l_source, l_table)
