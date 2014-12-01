@@ -53,159 +53,6 @@ if yy_act <= 8 then
 if yy_act <= 4 then
 if yy_act <= 2 then
 if yy_act = 1 then
-		--|#line 37 "dg_scanner.l"
-	yy_execute_action_1
-else
-		--|#line 39 "dg_scanner.l"
-	yy_execute_action_2
-end
-else
-if yy_act = 3 then
-		--|#line 44 "dg_scanner.l"
-	yy_execute_action_3
-else
-		--|#line 50 "dg_scanner.l"
-	yy_execute_action_4
-end
-end
-else
-if yy_act <= 6 then
-if yy_act = 5 then
-		--|#line 53 "dg_scanner.l"
-	yy_execute_action_5
-else
-		--|#line 57 "dg_scanner.l"
-	yy_execute_action_6
-end
-else
-if yy_act = 7 then
-		--|#line 60 "dg_scanner.l"
-	yy_execute_action_7
-else
-		--|#line 67 "dg_scanner.l"
-	yy_execute_action_8
-end
-end
-end
-else
-if yy_act <= 12 then
-if yy_act <= 10 then
-if yy_act = 9 then
-		--|#line 71 "dg_scanner.l"
-	yy_execute_action_9
-else
-		--|#line 75 "dg_scanner.l"
-	yy_execute_action_10
-end
-else
-if yy_act = 11 then
-		--|#line 79 "dg_scanner.l"
-	yy_execute_action_11
-else
-		--|#line 82 "dg_scanner.l"
-	yy_execute_action_12
-end
-end
-else
-if yy_act <= 14 then
-if yy_act = 13 then
-		--|#line 89 "dg_scanner.l"
-	yy_execute_action_13
-else
-		--|#line 93 "dg_scanner.l"
-	yy_execute_action_14
-end
-else
-if yy_act = 15 then
-		--|#line 99 "dg_scanner.l"
-	yy_execute_action_15
-else
-		--|#line 103 "dg_scanner.l"
-	yy_execute_action_16
-end
-end
-end
-end
-else
-if yy_act <= 24 then
-if yy_act <= 20 then
-if yy_act <= 18 then
-if yy_act = 17 then
-		--|#line 107 "dg_scanner.l"
-	yy_execute_action_17
-else
-		--|#line 111 "dg_scanner.l"
-	yy_execute_action_18
-end
-else
-if yy_act = 19 then
-		--|#line 115 "dg_scanner.l"
-	yy_execute_action_19
-else
-		--|#line 119 "dg_scanner.l"
-	yy_execute_action_20
-end
-end
-else
-if yy_act <= 22 then
-if yy_act = 21 then
-		--|#line 123 "dg_scanner.l"
-	yy_execute_action_21
-else
-		--|#line 127 "dg_scanner.l"
-	yy_execute_action_22
-end
-else
-if yy_act = 23 then
-		--|#line 131 "dg_scanner.l"
-	yy_execute_action_23
-else
-		--|#line 135 "dg_scanner.l"
-	yy_execute_action_24
-end
-end
-end
-else
-if yy_act <= 28 then
-if yy_act <= 26 then
-if yy_act = 25 then
-		--|#line 139 "dg_scanner.l"
-	yy_execute_action_25
-else
-		--|#line 143 "dg_scanner.l"
-	yy_execute_action_26
-end
-else
-if yy_act = 27 then
-		--|#line 147 "dg_scanner.l"
-	yy_execute_action_27
-else
-		--|#line 154 "dg_scanner.l"
-	yy_execute_action_28
-end
-end
-else
-if yy_act <= 30 then
-if yy_act = 29 then
-		--|#line 158 "dg_scanner.l"
-	yy_execute_action_29
-else
-		--|#line 164 "dg_scanner.l"
-	yy_execute_action_30
-end
-else
-		--|#line 0 "dg_scanner.l"
-	yy_execute_action_31
-end
-end
-end
-end
-			yy_set_beginning_of_line
-		end
-
-	yy_execute_action_1
-			--|#line 37 "dg_scanner.l"
-		do
 yy_set_line_column
 	yy_position := yy_position + yy_end - yy_start - yy_more_len
 --|#line 37 "dg_scanner.l"
@@ -213,12 +60,7 @@ debug ("GELEX")
 	std.error.put_line ("Executing scanner user-code from file 'dg_scanner.l' at line 37")
 end
 -- ignore separators
-
-		end
-
-	yy_execute_action_2
-			--|#line 39 "dg_scanner.l"
-		do
+else
 	yy_column := yy_column + 8
 	yy_position := yy_position + 8
 --|#line 39 "dg_scanner.l"
@@ -229,12 +71,9 @@ end
 		last_token := BEGIN_TYPEDEF
 		set_start_condition(TYPEDEF)
 	
-
-		end
-
-	yy_execute_action_3
-			--|#line 44 "dg_scanner.l"
-		do
+end
+else
+if yy_act = 3 then
 	yy_column := yy_column + 7
 	yy_position := yy_position + 7
 --|#line 44 "dg_scanner.l"
@@ -245,12 +84,7 @@ end
 		last_token := BEGIN_STRUCT 
 		set_start_condition(STRUCT)
 	
-
-		end
-
-	yy_execute_action_4
-			--|#line 50 "dg_scanner.l"
-		do
+else
 	yy_column := yy_column + 7
 	yy_position := yy_position + 7
 --|#line 50 "dg_scanner.l"
@@ -260,12 +94,11 @@ end
 
 		last_token := BEGIN_STRUCT 
 	
-
-		end
-
-	yy_execute_action_5
-			--|#line 53 "dg_scanner.l"
-		do
+end
+end
+else
+if yy_act <= 6 then
+if yy_act = 5 then
 	yy_column := yy_column + 5
 	yy_position := yy_position + 5
 --|#line 53 "dg_scanner.l"
@@ -276,12 +109,7 @@ end
 		last_token := BEGIN_ENUM 
 		set_start_condition(ENUM)
 	
-
-		end
-
-	yy_execute_action_6
-			--|#line 57 "dg_scanner.l"
-		do
+else
 	yy_column := yy_column + 1
 	yy_position := yy_position + 1
 --|#line 57 "dg_scanner.l"
@@ -291,12 +119,9 @@ end
 
 		last_token := text[1].code 
 	
-
-		end
-
-	yy_execute_action_7
-			--|#line 60 "dg_scanner.l"
-		do
+end
+else
+if yy_act = 7 then
 	yy_column := yy_column + 1
 	yy_position := yy_position + 1
 --|#line 60 "dg_scanner.l"
@@ -307,12 +132,7 @@ end
 		last_token := END_TYPEDEF
 		set_start_condition(INITIAL)
 	
-
-		end
-
-	yy_execute_action_8
-			--|#line 67 "dg_scanner.l"
-		do
+else
 	yy_column := yy_column + yy_end - yy_start - yy_more_len
 	yy_position := yy_position + yy_end - yy_start - yy_more_len
 --|#line 67 "dg_scanner.l"
@@ -323,12 +143,13 @@ end
 		last_token := ENUM_NAME
 		last_string_value := text.twin
 	
-
-		end
-
-	yy_execute_action_9
-			--|#line 71 "dg_scanner.l"
-		do
+end
+end
+end
+else
+if yy_act <= 12 then
+if yy_act <= 10 then
+if yy_act = 9 then
 	yy_column := yy_column + yy_end - yy_start - yy_more_len
 	yy_position := yy_position + yy_end - yy_start - yy_more_len
 --|#line 71 "dg_scanner.l"
@@ -339,12 +160,7 @@ end
 		last_token := INTEGER
 		last_integer_value := text.to_integer
 	
-
-		end
-
-	yy_execute_action_10
-			--|#line 75 "dg_scanner.l"
-		do
+else
 	yy_column := yy_column + yy_end - yy_start - yy_more_len
 	yy_position := yy_position + yy_end - yy_start - yy_more_len
 --|#line 75 "dg_scanner.l"
@@ -355,12 +171,9 @@ end
 		last_token := INTEGER
 		last_integer_value := text.to_integer
 	
-
-		end
-
-	yy_execute_action_11
-			--|#line 79 "dg_scanner.l"
-		do
+end
+else
+if yy_act = 11 then
 	yy_column := yy_column + 1
 	yy_position := yy_position + 1
 --|#line 79 "dg_scanner.l"
@@ -370,12 +183,7 @@ end
 
 		last_token := text[1].code 
 	
-
-		end
-
-	yy_execute_action_12
-			--|#line 82 "dg_scanner.l"
-		do
+else
 	yy_column := yy_column + 1
 	yy_position := yy_position + 1
 --|#line 82 "dg_scanner.l"
@@ -386,12 +194,11 @@ end
 		last_token := END_ENUM
 		set_start_condition(INITIAL)
 	
-
-		end
-
-	yy_execute_action_13
-			--|#line 89 "dg_scanner.l"
-		do
+end
+end
+else
+if yy_act <= 14 then
+if yy_act = 13 then
 	yy_column := yy_column + 2
 	yy_position := yy_position + 2
 --|#line 89 "dg_scanner.l"
@@ -402,12 +209,7 @@ end
 		last_token := END_STRUCT
 		set_start_condition(INITIAL)
 
-
-		end
-
-	yy_execute_action_14
-			--|#line 93 "dg_scanner.l"
-		do
+else
 	yy_column := yy_column + 1
 	yy_position := yy_position + 1
 --|#line 93 "dg_scanner.l"
@@ -417,12 +219,9 @@ end
 
 		last_token := text[1].code 
 	
-
-		end
-
-	yy_execute_action_15
-			--|#line 99 "dg_scanner.l"
-		do
+end
+else
+if yy_act = 15 then
 	yy_column := yy_column + yy_end - yy_start - yy_more_len
 	yy_position := yy_position + yy_end - yy_start - yy_more_len
 --|#line 99 "dg_scanner.l"
@@ -433,12 +232,7 @@ end
 		last_token := TYPE_NAME
 		last_string_value := text.twin
 	
-
-		end
-
-	yy_execute_action_16
-			--|#line 103 "dg_scanner.l"
-		do
+else
 	yy_column := yy_column + yy_end - yy_start - yy_more_len
 	yy_position := yy_position + yy_end - yy_start - yy_more_len
 --|#line 103 "dg_scanner.l"
@@ -449,12 +243,15 @@ end
 		last_token := CLASS_NAME
 		last_string_value := text.twin
 	
-
-		end
-
-	yy_execute_action_17
-			--|#line 107 "dg_scanner.l"
-		do
+end
+end
+end
+end
+else
+if yy_act <= 24 then
+if yy_act <= 20 then
+if yy_act <= 18 then
+if yy_act = 17 then
 	yy_column := yy_column + yy_end - yy_start - yy_more_len
 	yy_position := yy_position + yy_end - yy_start - yy_more_len
 --|#line 107 "dg_scanner.l"
@@ -465,12 +262,7 @@ end
 		last_token := STRUCT_NAME
 		last_string_value := text.twin
 	
-
-		end
-
-	yy_execute_action_18
-			--|#line 111 "dg_scanner.l"
-		do
+else
 	yy_column := yy_column + 8
 	yy_position := yy_position + 8
 --|#line 111 "dg_scanner.l"
@@ -481,12 +273,9 @@ end
 		last_token := TYPE_NAME
 		last_string_value := text.twin
 	
-
-		end
-
-	yy_execute_action_19
-			--|#line 115 "dg_scanner.l"
-		do
+end
+else
+if yy_act = 19 then
 	yy_column := yy_column + 4
 	yy_position := yy_position + 4
 --|#line 115 "dg_scanner.l"
@@ -497,12 +286,7 @@ end
 		last_token := TYPE_NAME
 		last_string_value := text.twin
 	
-
-		end
-
-	yy_execute_action_20
-			--|#line 119 "dg_scanner.l"
-		do
+else
 	yy_column := yy_column + 7
 	yy_position := yy_position + 7
 --|#line 119 "dg_scanner.l"
@@ -513,12 +297,11 @@ end
 		last_token := TYPE_NAME
 		last_string_value := text.twin
 	
-
-		end
-
-	yy_execute_action_21
-			--|#line 123 "dg_scanner.l"
-		do
+end
+end
+else
+if yy_act <= 22 then
+if yy_act = 21 then
 	yy_column := yy_column + 5
 	yy_position := yy_position + 5
 --|#line 123 "dg_scanner.l"
@@ -529,12 +312,7 @@ end
 		last_token := TYPE_NAME
 		last_string_value := text.twin
 	
-
-		end
-
-	yy_execute_action_22
-			--|#line 127 "dg_scanner.l"
-		do
+else
 	yy_column := yy_column + 5
 	yy_position := yy_position + 5
 --|#line 127 "dg_scanner.l"
@@ -545,12 +323,9 @@ end
 		last_token := TYPE_NAME
 		last_string_value := text.twin
 	
-
-		end
-
-	yy_execute_action_23
-			--|#line 131 "dg_scanner.l"
-		do
+end
+else
+if yy_act = 23 then
 	yy_column := yy_column + 6
 	yy_position := yy_position + 6
 --|#line 131 "dg_scanner.l"
@@ -561,12 +336,7 @@ end
 		last_token := TYPE_NAME
 		last_string_value := text.twin
 	
-
-		end
-
-	yy_execute_action_24
-			--|#line 135 "dg_scanner.l"
-		do
+else
 	yy_column := yy_column + 8
 	yy_position := yy_position + 8
 --|#line 135 "dg_scanner.l"
@@ -577,12 +347,13 @@ end
 		last_token := TYPE_NAME
 		last_string_value := text.twin
 	
-
-		end
-
-	yy_execute_action_25
-			--|#line 139 "dg_scanner.l"
-		do
+end
+end
+end
+else
+if yy_act <= 28 then
+if yy_act <= 26 then
+if yy_act = 25 then
 	yy_column := yy_column + 13
 	yy_position := yy_position + 13
 --|#line 139 "dg_scanner.l"
@@ -593,12 +364,7 @@ end
 		last_token := TYPE_NAME
 		last_string_value := text.twin
 	
-
-		end
-
-	yy_execute_action_26
-			--|#line 143 "dg_scanner.l"
-		do
+else
 	yy_column := yy_column + 5
 	yy_position := yy_position + 5
 --|#line 143 "dg_scanner.l"
@@ -609,12 +375,9 @@ end
 		last_token := TYPE_NAME
 		last_string_value := text.twin
 	
-
-		end
-
-	yy_execute_action_27
-			--|#line 147 "dg_scanner.l"
-		do
+end
+else
+if yy_act = 27 then
 	yy_column := yy_column + 4
 	yy_position := yy_position + 4
 --|#line 147 "dg_scanner.l"
@@ -625,12 +388,7 @@ end
 		last_token := TYPE_NAME
 		last_string_value := text.twin
 	
-
-		end
-
-	yy_execute_action_28
-			--|#line 154 "dg_scanner.l"
-		do
+else
 	yy_column := yy_column + yy_end - yy_start - yy_more_len
 	yy_position := yy_position + yy_end - yy_start - yy_more_len
 --|#line 154 "dg_scanner.l"
@@ -641,12 +399,11 @@ end
 		last_token := IDENTIFIER
 		last_string_value := text.twin
 	
-
-		end
-
-	yy_execute_action_29
-			--|#line 158 "dg_scanner.l"
-		do
+end
+end
+else
+if yy_act <= 30 then
+if yy_act = 29 then
 	yy_column := yy_column + yy_end - yy_start - yy_more_len
 	yy_position := yy_position + yy_end - yy_start - yy_more_len
 --|#line 158 "dg_scanner.l"
@@ -657,12 +414,7 @@ end
 		last_token := IDENTIFIER
 		last_string_value := text.twin
 	
-
-		end
-
-	yy_execute_action_30
-			--|#line 164 "dg_scanner.l"
-		do
+else
 	yy_column := yy_column + 1
 	yy_position := yy_position + 1
 --|#line 164 "dg_scanner.l"
@@ -670,12 +422,8 @@ debug ("GELEX")
 	std.error.put_line ("Executing scanner user-code from file 'dg_scanner.l' at line 164")
 end
 -- ignore
-
-		end
-
-	yy_execute_action_31
-			--|#line 0 "dg_scanner.l"
-		do
+end
+else
 yy_set_line_column
 	yy_position := yy_position + 1
 --|#line 0 "dg_scanner.l"
@@ -684,7 +432,11 @@ debug ("GELEX")
 end
 last_token := yyError_token
 fatal_error ("scanner jammed")
-
+end
+end
+end
+end
+			yy_set_beginning_of_line
 		end
 
 	yy_execute_eof_action (yy_sc: INTEGER)

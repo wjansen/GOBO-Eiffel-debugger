@@ -1110,15 +1110,22 @@ feature -- Basic operation
 		local
 			bc: IS_CLASS_TEXT
 			nm: STRING
+			id: INTEGER
 		do
 			create nm.make_from_string (tn)
 			if attached {IS_NORMAL_TYPE} Precursor (nm, True) as nt then
 				Result := nt 
 			else
-				max_type_id := max_type_id + 1
 				max_class_id := max_class_id + 1
 				create bc.make (max_class_id, tn, 0, Void, Void, Void)
-				create {IS_NORMAL_TYPE} Result.make(max_type_id, bc, Reference_flag, Void, Void, Void, Void, Void)
+				if STRING_.same_string (tn, "STRING_8") then 
+					id := {IS_BASE}.String8_ident
+				else
+					max_type_id := max_type_id + 1
+					id := max_type_id
+				end
+				create {IS_NORMAL_TYPE} Result.make(id, bc, 
+					Reference_flag, Void, Void, Void, Void, Void)
 				all_classes.force (bc, bc.ident)
 				all_types.force (Result, Result.ident)
 			end
@@ -1245,8 +1252,6 @@ feature {} -- Implementation
 	type_of_name (nm, c: STRING): IS_TYPE
 		local
 			cn: STRING
-			bc: IS_CLASS_TEXT
-			id: INTEGER
 		do
 			Result := type_by_name (nm, True)
 			if Result.c_name = Void then

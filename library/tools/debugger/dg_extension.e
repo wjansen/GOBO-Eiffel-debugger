@@ -121,7 +121,9 @@ feature -- Basic operation
 			l_file.copy_to (c0_file)
 			l_file.close
 			c0_file.put_string ("static T2* chars_(void* obj, int* nc) {%N")
-			if compilee.type_at ({IS_BASE}.String8_ident) /= Void then
+			if attached compilee.type_at ({IS_BASE}.String8_ident) as s8
+				and then s8.is_alive 
+			 then
 				c0_file.put_string (
 "[
   *nc = 0;
@@ -137,7 +139,9 @@ feature -- Basic operation
 				c0_file.put_string ("  return 0;%N}%N")
 			end
 			c0_file.put_string ("static T3* unichars_(void* obj, int* nc) {%N")
-			if compilee.type_at ({IS_BASE}.String32_ident) /= Void then
+			if attached compilee.type_at ({IS_BASE}.String32_ident) as s32
+				and then s32.is_alive
+			 then
 				c0_file.put_string (
 "[
   *nc = 0;

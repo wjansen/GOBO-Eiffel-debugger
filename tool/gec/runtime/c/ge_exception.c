@@ -77,7 +77,7 @@ EIF_REFERENCE GE_check_catcall(EIF_REFERENCE obj, int type_ids[], int nb)
 					}
 #  endif
 #endif
-					GE_raise(EN_FATAL);
+					GE_raise(24);
 					break;
 				} else if (type_id < type_ids[i]) {
 						/* type-ids are sorted in increasing order. */

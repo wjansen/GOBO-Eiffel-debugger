@@ -133,7 +133,7 @@ feature {} -- Initialization
 				n := l_types.count
 			until n = 0 loop
 				l_dynamic := l_types.item (n)
-				if l_dynamic.is_alive or else n <= 14 then	-- <= ident of POINTER
+				if l_dynamic.is_alive or else n <= {IS_BASE}.Pointer_ident then
 					debuggee.force_type (l_dynamic)
 				end
 				n := n - 1

@@ -491,9 +491,13 @@ public static string format_value(uint8* addr, int off, bool is_home_addr,
 				str = "_%d".printf((int)od);
 			} else {
 				uu = unichars_func(addr, &nc);
-				str = (string)uu;
-				str = str.substring(0, nc);
-				str = uu!=null ? "\"" + str + "\"" : "\"\"";
+				if (uu!=null) {
+					sb = new StringBuilder();
+					for (int i=0; i<nc; i++) sb.append_unichar(uu[i]);
+					str = @"\"$(sb.str)\"";
+				} else {
+					str = "";
+				}
 			}
 			break;
 		default:

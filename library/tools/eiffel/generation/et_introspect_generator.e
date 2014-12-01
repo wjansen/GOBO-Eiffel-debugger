@@ -202,9 +202,9 @@ feature -- Basic operation
 			compilee.force_type (a_system.any_type)
 			compilee.force_type (a_system.none_type)
 			from
-					-- Add all basic expanded types and the STRING_8 type.
+					-- Add all basic expanded types.
 				l_types := compilee.origin.dynamic_types
-				n := {IS_BASE}.String8_ident
+				n := {IS_BASE}.Pointer_ident
 			until n = 0 loop
 				if attached l_types.item (n) as t then 
 					compilee.force_type (t)
