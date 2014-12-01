@@ -116,10 +116,11 @@ calls to the debugger are inserted during compilation to check
 whether the debugger should become active, 
 in particular checking for breakpoints. 
 Depending on the number and complexity of breakpoints, 
-the chosen technique increases dramatically the run time between breakpoints 
-(but does not detectable slow down the debuggee 
+the chosen technique increases (possibly very much) 
+the run time between breakpoints 
+but does not detectable slow down the debuggee 
 when progressing the system step by step 
-since then most time is consumed by user interactions). 
+since then most time is consumed by user interactions. 
 The post mortem analyser does not slow down the computation so much: 
 at the places in <span style="font-style:oblique">C</span> code where the runtime analyser would be called 
 it simply sets a local variable to the program position. 
@@ -153,7 +154,8 @@ not to assembler code, and the necessary meta-information is not available.
 In the middle, the debugger does not support debugging of multi-threaded 
 <span style="font-style:oblique">Eiffel</span> systems: each thread has its own stack 
 and it is not yet possible from the debugger&#X2019;s side 
-to distinguish between the stacks. 
+to distinguish between the stacks, moreover, it is unclear 
+how to stop the other threads when the debugger gets invoked for one thread. 
 On the upper end, the <span style="font-style:oblique">Gedb</span> is not an <span style="font-style:oblique">IDE</span>, 
 i.e. it does not include an editor, nor the <span style="font-style:oblique">Gec</span>, nor any kind 
 of project management. 
