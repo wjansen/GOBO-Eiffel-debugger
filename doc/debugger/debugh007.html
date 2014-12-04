@@ -15,19 +15,27 @@ Gedb &#X2013; The Gec debugger<h3 id="sec13" class="subsection">3.4&#XA0;&#XA0;R
 <p><a id="S:run"></a>
 The <span style="font-family:sans-serif">Run</span> part is available only if the debugger is used as runtime analyser 
 (otherwise, the part is hidden). 
-The elements of the part control the stop-and-go behaviour of the debuggee.
 </p><blockquote class="figure"><div class="center"><hr style="width:80%;height:2"></div>
 <div class="center"><img src="debugh002.png"></div>
 <div class="caption"><table style="border-spacing:6px;border-collapse:separate;" class="cellpading0"><tr><td style="vertical-align:top;text-align:left;" >Figure 2: The <span style="font-family:sans-serif">Run</span> part.</td></tr>
 </table></div><a id="F:run"></a>
-<div class="center"><hr style="width:80%;height:2"></div></blockquote><p>When the debugger gets invoked then the expression list (if any) 
-in text field <span style="font-family:sans-serif">Print on stop</span> will be evaluated and its values will 
-printed on the <span style="font-family:sans-serif">Console</span> part (see Sec.&#XA0;<a href="debugh010.html#S%3Aconsole">3.7</a>). 
-The expressions are evaluated in the routine of the topmost call stack level. 
-If the routine changed after a stop then the expression list disappears 
-(names of local variables in the expressions are now invalid, 
-maybe also query names) and reappears as soon as the routine 
-is entered again with the same target type. </p>
+<div class="center"><hr style="width:80%;height:2"></div></blockquote><p>When the debugger works as post mortem analyser 
+it gets invoked by the following reasons:
+</p><ul class="itemize"><li class="li-itemize">if an exception (assertion violation or OS signal 
+as given by the table in Sec.&#XA0;<a href="debugh008.html#S%3Abreakpoints">3.5</a> 
+for the breakpoint condition <span style="font-family:sans-serif">Catch</span>) 
+occurs and if no routine in the call stack has a rescue clause; 
+</li><li class="li-itemize">if the program is interrupted from keyboard, 
+rescue clauses do not play any role. 
+</li></ul><p>In case of an interrupt the debuggee&#X2019;s work can be continued 
+by menu item <span style="font-family:sans-serif">File </span>&#X2192;<span style="font-family:sans-serif"> Cont</span>, otherwise a crash occurred 
+and continuation is not possible. 
+In both cases the <span style="font-family:sans-serif">Run</span> part is not necessary, therefore it is not shown. 
+</p><p>Things are different if the debugger works as runtime analyser. 
+Additionally to the post mortem analyser the runtime analyser gets invoked 
+by the reasons described in Sec.&#XA0;<a href="#S%3AstopAndGo">3.4.1</a>. 
+The part is shown and the elements of the part control 
+the stop-and-go behaviour of the debuggee.</p>
 <h4 id="sec14" class="subsubsection">3.4.1&#XA0;&#XA0;Stop-and-go behaviour</h4>
 <p><a id="S:stopAndGo"></a>
 Control switches forth and back between debugger and debuggee. 
@@ -40,7 +48,16 @@ More precisely, the debugger regains control for any of the following reasons:
 </li><li class="li-itemize">when the debuggee is interrupted by pressing the <span style="font-family:sans-serif">Stop</span> button 
 (same effect as interrupt from keyboard); 
 </li><li class="li-itemize">after program end. 
-</li></ul><p>When the debugger got the control the debuggee may be continued 
+</li></ul><p> 
+In any case, when the debugger gets invoked then the expression list (if any) 
+in text field <span style="font-family:sans-serif">Print on stop</span> of the part will be evaluated 
+and its values will printed on the <span style="font-family:sans-serif">Console</span> part (see Sec.&#XA0;<a href="debugh010.html#S%3Aconsole">3.7</a>). 
+The expressions are evaluated in the routine of the topmost call stack level. 
+If the routine changed after a stop then the expression list disappears 
+(names of local variables in the expressions are now invalid, 
+maybe also query names) and reappears as soon as the routine 
+is entered again with the same target type. 
+</p><p>When the debugger got the control the debuggee may be continued 
 by means of the buttons on the top of the part. 
 In particular they have the following effect 
 (where <span style="font-style:italic">n</span> is the value of <span style="font-family:monospace">repeat</span>):
@@ -56,17 +73,7 @@ In particular they have the following effect
 <tr><td style="text-align:left;border:solid 1px;white-space:nowrap" ><span style="font-family:sans-serif">Stop</span></td><td style="text-align:left;border:solid 1px;white-space:nowrap" ><span style="font-family:monospace">Pause</span></td><td style="text-align:left;border:solid 1px;white-space:nowrap" >interrupt the debuggee 
 </td></tr>
 </table></div><p>
-If some classes have been compiled without debugger information 
-(see Sec.&#XA0;<a href="debugh003.html#S%3Ausage">2.3</a>) 
-then the continuation commands stop at the first possible position 
-for which debugger information is available, 
-in particular, the <span style="font-family:sans-serif">Step</span> command stops at the first nested routine call 
-for which debugging information has been generated (if any) 
-or simply jumps over routine calls of the class. 
-Nonetheless, even if debugger information is not generated 
-the actual program positions are monitored, 
-so the contents of the <span style="font-family:sans-serif">Call stack</span> part is correct. 
-</p><p>The counter <span style="font-style:italic">n</span> is determined by the spin button <span style="font-family:sans-serif">repeat</span>. 
+The counter <span style="font-style:italic">n</span> is determined by the spin button <span style="font-family:sans-serif">repeat</span>. 
 Moreover the effect of <span style="font-family:sans-serif">Cont</span> is modified by the radio buttons
 </p><dl class="description"><dt class="dt-description"><span style="font-family:sans-serif">break</span></dt><dd class="dd-description"> treat breakpoints and tracepoints as defined;
 </dd><dt class="dt-description"><span style="font-family:sans-serif">trace</span></dt><dd class="dd-description"> treat breakpoints as tracepoints, i.e. do not stop;
@@ -94,7 +101,7 @@ as well as before a procedure call (qualified or not).
 </p><blockquote class="quote">
 <div class="center"><span style="font-weight:bold">Hint</span></div> These program points are those where a breakpoint can be set. 
 </blockquote><p>The stop of command <span style="font-family:sans-serif">Step</span> is more involved. 
-If stopped at an instruction (e.g. as the result of a <span style="font-family:sans-serif">Next</span> command) 
+If stopped just before an instruction (e.g. as the result of a <span style="font-family:sans-serif">Next</span> command) 
 then the program continues to the next routine call or instruction; 
 but if it stopped at (not before!) a routine call 
 then the program steps into the routine 
@@ -108,25 +115,35 @@ For example, consider the procedure call
 (where for simplicity <span style="font-family:monospace">arg</span> is not a function call) 
 and suppose that a <span style="font-family:sans-serif">Next</span> command stopped before the call:
 </p><pre>
-  <span class="textboxed"> </span>some_proc (some_func (arg))
+  <span style="text-decoration:overline"> </span>some_proc (some_func (arg))
 </pre><p>
-(the stop point is indicated in the displayed source code 
-by green background, here by a boxed character). 
+(the stop point is indicated in the <span style="font-family:sans-serif">Source</span> part 
+by green background, here by an overlined character). 
 A following <span style="font-family:sans-serif">Step</span> command continues to the call of <span style="font-family:monospace">some_func</span> 
 but does not yet enter the function (that&#X2019;s for visibility):
 </p><pre>
-   some_proc (<span class="textboxed">s</span>ome_func (arg))
+   some_proc (<span style="text-decoration:overline">s</span>ome_func (arg))
 </pre><p>
 The next <span style="font-family:sans-serif">Step</span> command jumps into the function, and after 
 return (e.g. by command <span style="font-family:sans-serif">Back</span>) 
 the program is ready to enter the procedure by one more <span style="font-family:sans-serif">Step</span> command 
 (again for visibility not yet in the procedure):
 </p><pre>
-  <span class="textboxed">s</span>ome_proc (some_func (arg))
+  <span style="text-decoration:overline">s</span>ome_proc (some_func (arg))
 </pre><p>
 A similar role as the call instructions play for stepping 
 into their argument expressions 
-do the keywords <span style="font-family:monospace">create</span>, <span style="font-family:monospace">if</span>, <span style="font-family:monospace">inspect</span>, <span style="font-family:monospace">until</span> play for the expressions following them. </p>
+do the keywords <span style="font-family:monospace">create</span>, <span style="font-family:monospace">if</span>, <span style="font-family:monospace">inspect</span>, <span style="font-family:monospace">until</span> play for the expressions following them. 
+</p><p>If some classes have been compiled without debugging information 
+(see Sec.&#XA0;<a href="debugh003.html#S%3Ausage">2.3</a>) 
+then the continuation commands stop at the first possible position 
+for which debugger information is available, 
+in particular, the <span style="font-family:sans-serif">Step</span> command stops at the first nested routine call 
+for which debugging information has been generated (if any) 
+or simply jumps over routine calls of the class. 
+Nonetheless, even if debugger information is not generated 
+the actual program positions are monitored, 
+so the contents of the <span style="font-family:sans-serif">Call stack</span> part is correct. </p>
 <h4 id="sec15" class="subsubsection">3.4.2&#XA0;&#XA0;Mark and reset</h4>
 <p><a id="S:markReset"></a>
 If the program stopped at a point where a breakpoint can be set 

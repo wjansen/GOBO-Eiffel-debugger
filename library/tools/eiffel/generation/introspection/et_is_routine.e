@@ -63,7 +63,7 @@ feature {NONE} -- Initialization
 				end
 				alias_name := s.internal_name (nm)
 			end
-			declare_locals (False, s)
+			declare_locals (target.base_class.is_debug_enabled, s)
 			if attached origin.first_precursor as ofp then
 				declare_precursor (ofp, s)
  				if attached origin.other_precursors as oop then
@@ -111,7 +111,7 @@ feature {NONE} -- Initialization
 			flags := Anonymous_routine_flag
 			target := w.target
 			in_class := w.in_class
-			declare_locals (False, s)
+			declare_locals (target.base_class.is_debug_enabled, s)
 			if type /= Void then
 					flags := flags | Function_flag
 			end
@@ -317,7 +317,7 @@ feature {NONE} -- Implementation
 					end
 					create var.declare (Void, nm, dynamic, Current, vt, s)
 				else
-					-- skip over current item
+					-- Skip over current item.
 					var := Void
 				end
 				buffer.push (var)

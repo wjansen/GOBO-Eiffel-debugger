@@ -787,8 +787,12 @@ public abstract class Expression : Object {
 				if (parent==null)
 					throw new ExpressionError.NO_PARENT
 						("Missing parent expression.");
-				if (alias=="[]" && parent.base_class().is_special()) 
-					ex = new ItemExpression(parent, args);
+				if (alias=="[]") {
+					if (parent.base_class().is_special()) 
+						ex = new ItemExpression(parent, args);
+					else
+						ex = new RoutineExpression(rt, args);
+				}
 				else
 					ex = new OperatorExpression(parent, rt, args);
 			} else {
@@ -808,9 +812,6 @@ public abstract class Expression : Object {
 	ensures (result.arg==args) {
 		Expression ex;
 		var alias = e.text.alias_name;
-		if (alias=="[]"){
-			stderr.printf("%s\n", ((Name*)e).fast_name);
-		}
 		if (e.is_routine() && !e.is_once()) {
 			var r = (Routine*)e;
 			if (alias!=null) {

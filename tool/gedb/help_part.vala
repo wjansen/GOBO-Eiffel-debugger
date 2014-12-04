@@ -79,7 +79,7 @@ specific positions in source code (besides syntax highlighting):
 		table.attach(tag, 0, 0, 1, 1);
 		tag.set_markup("<tt>a</tt>");
 		rgba = new Gdk.RGBA();
-		rgba.parse("#228b22");
+		rgba.parse("#25b221");
 		tag.override_background_color(StateFlags.NORMAL, rgba);
 		rgba.parse("white");
 		tag.override_color(StateFlags.NORMAL, rgba);
@@ -157,7 +157,7 @@ specific positions in source code (besides syntax highlighting):
 		tag.valign = Align.START;
 		text = new Label("");
 		table.attach(text, 1, 4, 1, 1);
-		text.set_text("String found by a search command");
+		text.set_text("String found by last search command");
 		text.set_justify(Justification.LEFT);
 		text.halign = Align.START;
 
@@ -174,7 +174,7 @@ specific positions in source code (besides syntax highlighting):
 		tag.valign = Align.START;
 		text = new Label("");
 		table.attach(text, 1, 5, 1, 1);
-		text.set_text("Other matching strings of a search command");
+		text.set_text("Other matching strings of last search command");
 		text.set_justify(Justification.LEFT);
 		text.halign = Align.START;
 
@@ -210,8 +210,7 @@ whose definition in source code can be displayed
 		text = new Label("");
 		table.attach(text, 1, 7, 1, 1);
 		text.set_markup(
-"""Like the item above where additionally the value  
-of the expression under the mouse pointer can be computed
+"""Expression under the mouse pointer that can be computed
 (double click mouse button <span><i>3 (right)</i></span> to activate)""");
 		text.set_justify(Justification.LEFT);
 		text.halign = Align.START;

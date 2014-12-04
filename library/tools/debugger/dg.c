@@ -44,6 +44,7 @@ void gedb_local_offset(void* r, int off, u_int32_t l_id) {
 
 void* gedb_inform1(int reason) {
 #if GEDB_D == 2
+  if (gedb_inter) gedb_inform(reason);
   switch (reason) {
   case -5: /* End_compound_break */
     return gedb_top->scope_depth<=scope_limit ? gedb_inform(reason) : 0;
@@ -65,8 +66,9 @@ static u_int32_t bp_table[TAB_SIZE] = {0};
 static int bp_table_size = 0;
 
 int gedb_stop1(u_int32_t pos, int reason) {
-  u_int32_t i, val;
-  u_int32_t d = gedb_top->depth;
+  u_int32_t i, val, d;
+  if (gedb_step || gedb_inter) return 1;
+  d = gedb_top->depth;
   if (d<=depth_limit || d>=bp_depth) return 1;
   if (bp_table_size!=0) {
     i = pos % TAB_SIZE;
@@ -237,6 +239,7 @@ static NamedAddress addresses[] = {
   { "rts", &gedb_rts}, 
   { "top", &gedb_top}, 
   { "step", &gedb_step},
+  { "inter", &gedb_inter},
   { "results", &results_}, 
   { "markers", &markers_}, 
   { "set_offsets", set_offsets_}, 

@@ -331,7 +331,7 @@ public class StackPart : Box, AbstractPart {
 		top = null;
 		level = 0;
 		if (dg!=null) {
-			dg.response.connect((dg,r,m,f,mc) => { do_refresh(r); });
+			dg.response.connect((dg,r,c,m,f,mc) => { if (!c) do_refresh(r); });
 			dg.notify["is-running"].connect(
 				(g,p) => { do_set_sensitive(dg.is_running); });
 		}

@@ -48,8 +48,6 @@ feature -- Access
 
 	c_status_name: STRING
 
-	c_handler_name: STRING
-
 	c_signal_name: STRING
 
 	c_wrapper_name: STRING
@@ -61,6 +59,8 @@ feature -- Access
 	c_break_name: STRING
 
 	c_crash_name: STRING
+
+	c_interrupt_name: STRING
 
 	c_pos_name: STRING
 
@@ -136,8 +136,8 @@ feature {} -- Implementation
 			c_break_name.append ("stop")
 			c_crash_name := feature_prefix.twin
 			c_crash_name.append ("crash")
-			c_handler_name := feature_prefix.twin
-			c_handler_name.append ("int")
+			c_interrupt_name := feature_prefix.twin
+			c_interrupt_name.append ("inter")
 			c_signal_name := feature_prefix.twin
 			c_signal_name.append ("sgn")
 			c_wrapper_name := feature_prefix.twin

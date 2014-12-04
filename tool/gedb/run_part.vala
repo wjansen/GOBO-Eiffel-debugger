@@ -210,21 +210,24 @@ public class RunPart : Box, AbstractPart {
 		return true;
 	}
 
-	private void treat_response(int reason, Gee.List<Breakpoint>? match,
-							   StackFrame* frame, uint mc) 
+	private void treat_response(int reason, bool cont,
+								Gee.List<Breakpoint>? match,
+								StackFrame* frame, uint mc) 
 	requires (dr!=null) { 
 		ClassText* cls;
 		Breakpoint bp; 
 		string str = ""; 
-		string name, comment;
+		string comment = "";
+		string name;
 		uint pos;
-		update_markers(mc);
-		status.pop(status.get_context_id("stop-reason"));
-		status_changed(reason, frame, match);
-		cls = dr.rts.class_at(frame.class_id);
-		name = ((Gedb.Name*)cls).fast_name;
-		pos = frame.pos;
-		comment = "Stop at %s:%u:%u\n".printf(name, pos/256, pos%256);
+		if (!cont) {update_markers(mc);
+			status.pop(status.get_context_id("stop-reason"));
+			status_changed(reason, frame, match);
+			cls = dr.rts.class_at(frame.class_id);
+			name = ((Gedb.Name*)cls).fast_name;
+			pos = frame.pos;
+			comment = "Stop at %s:%u:%u\n".printf(name, pos/256, pos%256);
+		}
 		switch(reason) {
 		case Driver.ProgramState.Running:
 		case Driver.ProgramState.Still_waiting: 
@@ -236,9 +239,10 @@ public class RunPart : Box, AbstractPart {
 			str = "Program state restored";
 			break;
 		case Driver.ProgramState.At_breakpoint: 
-			Gee.Iterator<Breakpoint> iter;
-			str = "Stop at breakpoint";
-			for (iter=match.iterator(); iter.next();) {
+		case Driver.ProgramState.At_tracepoint: 
+			str = reason==Driver.ProgramState.At_breakpoint ?
+				"Stop at breakpoint" : "Passing tracepoint";
+			for (var iter=match.iterator(); iter.next();) {
 				bp = iter.@get();
 				str += " " + bp.id.to_string();
 				comment += bp.to_string(frame, dr.rts);				
@@ -294,7 +298,7 @@ public class RunPart : Box, AbstractPart {
 				ex = ex.next;
 			}
 		}
-		GLib.Idle.@add(() => { return do_stop_comment(comment); });
+		GLib.Idle.@add(() => { return do_stop_comment(comment, cont); });
 	}
 
 	private Widget add_button(string name, int cmd,
@@ -487,10 +491,12 @@ to show the parsed argument list.""";
 	public MergedHistoryBox print_history { get; private set; }
 	private ListStore total_list;
 
-	private bool do_stop_comment(string str) {
-		if (console!=null) console.put_log_info(str, Log.STOP);
+	private bool do_stop_comment(string str, bool cont) {
+		if (console!=null) 
+			console.put_log_info(str, Log.STOP);
 		if (at_end) 
 			set_deep_sensitive(this, false, null, at_end_list); 
+		else if (cont) dr.target_go(Driver.RunCommand.none, 0, 0);
 		return false;
 	}
 

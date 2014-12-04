@@ -113,7 +113,7 @@ public class SourcePart : Box, AbstractPart, ClassPosition, Searcher {
 		tag.weight_set = true;
 		tags.@add(tag);
 		tag = new TextTag("actual");
-		tag.background = "#228b22";
+		tag.background = "#25b221"; 
 		tag.background_set = true; 
 		tag.foreground = "white";
 		tag.foreground_set = true; 
@@ -666,10 +666,11 @@ and close feature window.""");
 		strong_needle = "";
 
 		orientation = Orientation.VERTICAL;
-		font = Pango.FontDescription.from_string("Inconsolata 11");
+		if (font==null) 
+			font = Pango.FontDescription.from_string("Inconsolata 11");
 		if (font==null) 
 			font = Pango.FontDescription.from_string("Andale Mono 10");
-		if (font==null) 
+		if (font==null)
 			font = Pango.FontDescription.from_string("FreeMono 11");
 		if (font==null) 
 			font = Pango.FontDescription.from_string("Monospace 10");

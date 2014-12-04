@@ -1534,7 +1534,7 @@ namespace Eval {
 			if (ex!=null) {
 				exb.set_child(exb.Child.DOWN, ex);
 				b.expr = ex;
-				h.register(b);
+				h.register(b, true, true);
 			} else if (h.is_match) {
 				h.not_unique = n>1;
 				h.last_token = b.token;

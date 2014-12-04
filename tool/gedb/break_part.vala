@@ -393,7 +393,8 @@ public class BreakPart : Box, AbstractPart {
 		}
 	}
 	
-	private void treat_response(int reason, Gee.List<Breakpoint>? match,
+	private void treat_response(int reason, bool cont, 
+								Gee.List<Breakpoint>? match,
 								StackFrame* frame, uint mc) { 
 		var sel = view.get_selection();
 		sel.unselect_all();

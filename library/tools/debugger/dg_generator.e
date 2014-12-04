@@ -603,69 +603,18 @@ feature {} -- Debugging code
 				current_file.put_integer (j)
 				current_file.put_string (close_c_args)
 			end
-			if l_routine.target.base_class.is_debug_enabled then
-					-- Local variables other than `Current' exist only
-					-- if the enclosing class is enabled for debugging.
-				j := j + 1
-				if attached l_agent as ag then
-					from
-						i := 1
-						n := l_routine.argument_count
-					until i >= n loop
-						if ag.is_open_operand (i) then
-							print_indentation
-							current_file.put_string (import.c_set_local)
-							current_file.put_character ('(')
-							k := k + 1
-							ag.print_open_operand_name (k, current_file, Current)
-							current_file.put_character (',')
-							current_file.put_integer (j)
-							current_file.put_string (close_c_args)
-						end
-						j := j + 1
-						i := i + 1
-					end
-				else
-					from
-						i := 1
-						n := l_routine.argument_count
-					until i >= n loop
-						if attached l_routine.arg_at (i) as v
-							and then attached {ET_IDENTIFIER} v.origin as id 
-						 then
-							print_indentation
-							current_file.put_string (import.c_set_local)
-							current_file.put_character ('(')
-							print_argument_name (id, current_file)
-							current_file.put_character (',')
-							current_file.put_integer (j)
-							current_file.put_string (close_c_args)
-						end
-						j := j + 1
-						i := i + 1
-					end
-				end
-				if attached l_routine.result_field then
-					print_indentation
-					current_file.put_string (import.c_set_local)
-					current_file.put_character ('(')
-					print_result_name (current_file)
-					current_file.put_character (',')
-					current_file.put_integer (j)
-					current_file.put_string (close_c_args)
-				end
-				j := j + 1
+			j := j + 1
+			if attached l_agent as ag then
 				from
 					i := 1
-					n := l_routine.local_count
+					n := l_routine.argument_count
 				until i >= n loop
-					if attached l_routine.local_at (i) as v
-						and then attached {ET_IDENTIFIER} v.origin as id 
-					 then
+					if ag.is_open_operand (i) then
 						print_indentation
 						current_file.put_string (import.c_set_local)
 						current_file.put_character ('(')
-						print_local_name (id, current_file)
+						k := k + 1
+						ag.print_open_operand_name (k, current_file, Current)
 						current_file.put_character (',')
 						current_file.put_integer (j)
 						current_file.put_string (close_c_args)
@@ -673,28 +622,75 @@ feature {} -- Debugging code
 					j := j + 1
 					i := i + 1
 				end
+			else
 				from
-					i := 0
-					n := l_routine.scope_var_count
-				until i = n loop
-					if attached {ET_IS_SCOPE_VARIABLE} l_routine.scope_var_at (i) as v
+					i := 1
+					n := l_routine.argument_count
+				until i >= n loop
+					if attached l_routine.arg_at (i) as v
 						and then attached {ET_IDENTIFIER} v.origin as id 
 					 then
 						print_indentation
 						current_file.put_string (import.c_set_local)
 						current_file.put_character ('(')
-						if v.is_object_test then
-							print_object_test_local_name (id, current_file)
-						else
-							print_across_cursor_name (id, current_file)
-						end
-							current_file.put_character (',')
-							current_file.put_integer (j)
-							current_file.put_string (close_c_args)
+						print_argument_name (id, current_file)
+						current_file.put_character (',')
+						current_file.put_integer (j)
+						current_file.put_string (close_c_args)
 					end
 					j := j + 1
 					i := i + 1
 				end
+			end
+			if attached l_routine.result_field then
+				print_indentation
+				current_file.put_string (import.c_set_local)
+				current_file.put_character ('(')
+				print_result_name (current_file)
+				current_file.put_character (',')
+				current_file.put_integer (j)
+				current_file.put_string (close_c_args)
+			end
+			j := j + 1
+			from
+				i := 1
+				n := l_routine.local_count
+			until i >= n loop
+				if attached l_routine.local_at (i) as v
+					and then attached {ET_IDENTIFIER} v.origin as id 
+				 then
+					print_indentation
+					current_file.put_string (import.c_set_local)
+					current_file.put_character ('(')
+					print_local_name (id, current_file)
+					current_file.put_character (',')
+					current_file.put_integer (j)
+					current_file.put_string (close_c_args)
+				end
+				j := j + 1
+				i := i + 1
+			end
+			from
+				i := 0
+				n := l_routine.scope_var_count
+			until i = n loop
+				if attached {ET_IS_SCOPE_VARIABLE} l_routine.scope_var_at (i) as v
+					and then attached {ET_IDENTIFIER} v.origin as id 
+				 then
+					print_indentation
+					current_file.put_string (import.c_set_local)
+					current_file.put_character ('(')
+					if v.is_object_test then
+						print_object_test_local_name (id, current_file)
+					else
+						print_across_cursor_name (id, current_file)
+					end
+					current_file.put_character (',')
+					current_file.put_integer (j)
+					current_file.put_string (close_c_args)
+				end
+				j := j + 1
+				i := i + 1
 			end
 			dedent
 			print_indentation
@@ -894,7 +890,7 @@ feature {} -- Debugging code
 		local
 			pos: NATURAL
 			n, l, c: INTEGER
-			pure_pos, for_instruction, jump, info: BOOLEAN
+			pure_pos, no_pos, for_instruction, jump, info: BOOLEAN
 		do
 			if attached delayed_enter then
 				flush_delayed
@@ -910,6 +906,7 @@ feature {} -- Debugging code
 					pos := (pos - 1).max (1)
 				when Step_into_break then
 					for_instruction := False
+					no_pos := pure_pos
 				when Start_program_break, Debug_break then
 					for_instruction := True
 				when 
@@ -923,43 +920,45 @@ feature {} -- Debugging code
 					info := True;
 				else
 				end
-				l := line_of_position (pos)
-				if l > max_line_number then
-					max_line_number := l
-				end
-				c := column_of_position (pos)
-				if c > max_column_number then
-					max_column_number := c
-				end
-				tmp_str.clear_all
-				if pure_pos then
-					tmp_str.append (import.c_skip_name)
-				elseif supports_marking and then for_instruction then
-					jump := True
-					tmp_str.append (import.c_jump_name)
-				elseif info then
-					tmp_str.append (import.c_status_name)
-				else
-					tmp_str.append (import.c_pos_name)
-				end
-				tmp_str.extend ('(')
-				if jump then
-					tmp_str.append_integer (actual_id)
+				if not no_pos then
+					l := line_of_position (pos)
+					if l > max_line_number then
+						max_line_number := l
+					end
+					c := column_of_position (pos)
+					if c > max_column_number then
+						max_column_number := c
+					end
+					tmp_str.clear_all
+					if pure_pos then
+						tmp_str.append (import.c_skip_name)
+					elseif supports_marking and then for_instruction then
+						jump := True
+						tmp_str.append (import.c_jump_name)
+					elseif info then
+						tmp_str.append (import.c_status_name)
+					else
+						tmp_str.append (import.c_pos_name)
+					end
+					tmp_str.extend ('(')
+					if jump then
+						tmp_str.append_integer (actual_id)
+						tmp_str.extend (',')
+					end
+					tmp_str.append_integer (l)
 					tmp_str.extend (',')
+					tmp_str.append_integer (c)
+					if not pure_pos then
+						tmp_str.extend (',')
+						tmp_str.append_integer (code)
+					end
+					tmp_str.extend (')')
+					tmp_str.extend (';')
+					tmp_str.extend ('%N')
+					print_indentation
+					current_file.put_string (tmp_str)
+					actual_position := pos
 				end
-				tmp_str.append_integer (l)
-				tmp_str.extend (',')
-				tmp_str.append_integer (c)
-				if not pure_pos then
-					tmp_str.extend (',')
-					tmp_str.append_integer (code)
-				end
-				tmp_str.extend (')')
-				tmp_str.extend (';')
-				tmp_str.extend ('%N')
-				print_indentation
-				current_file.put_string (tmp_str)
-				actual_position := pos
 				if not pure_pos and then for_instruction then
 					n := positions_buffer.count
 					if n >= positions_buffer.capacity then

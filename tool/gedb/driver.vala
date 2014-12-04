@@ -14,6 +14,7 @@ internal void** eif_markers;
 
 internal class QueueMember : Object {
 	internal int code;
+	internal bool cont;
 	internal string name;
 	internal StackFrame* top;
 	internal Breakpoint? bp;
@@ -253,10 +254,11 @@ public class Debuggee : Object {
 		is_running = false;
 		int reason = interrupt ? 
 			Driver.ProgramState.Interrupt : Driver.ProgramState.Crash;
-		response(reason, null, *top0, 0);
+		response(reason, false, null, *top0, 0);
 	}
 
-	public signal void response(int reason, Gee.List<Breakpoint>? match,
+	public signal void response(int reason, bool cont, 
+								Gee.List<Breakpoint>? match,
 								Gedb.StackFrame* f, uint mc);
 }
 
@@ -275,7 +277,8 @@ public class Driver : Debuggee {
 	public const int After_reset_break = -10;
 	
 	public enum RunCommand {
-		cont = 1, 
+		none,
+		cont, 
 		end, 
 		next,
 		step,
@@ -311,8 +314,6 @@ public class Driver : Debuggee {
 	private AsyncQueue<QueueMember> target_to_gui;
 	private QueueSource queue_source;
 
-	private Thread<int> th;
-
 	private FreeFunc free;
 
 	private uint cmd;
@@ -327,7 +328,6 @@ public class Driver : Debuggee {
 	private bool pma;
 	private bool just_marked;
 	private bool interactive;
-	private bool interrupted;
 	private bool after_end;
 	private bool intern;
 
@@ -336,6 +336,7 @@ public class Driver : Debuggee {
 	private uint timeout;
 	private bool ignore_bp_table;
 	private int* step;
+	private int* inter;
 
 	private void*** argv;
 	private int* argc;
@@ -395,24 +396,23 @@ public class Driver : Debuggee {
 		gui_to_target.push(qm);
 	}
 	
-	private bool @callback() {
+	private bool to_gui() {
 		if (pma) return true;
 		var qm = target_to_gui.pop();
-		int stop = qm.code;
-		StackFrame* f = qm.top;
-		Gee.List<Breakpoint>? list = qm.list;
-		is_running = stop==ProgramState.Running;
-		response(stop, list, f, Marker.count);
+		is_running = qm.code==ProgramState.Running;
+		response(qm.code, qm.cont, qm.list, qm.top, Marker.count);
 		return true;
 	}
 
-	internal void catch_signal(int sgn) {
+	public void catch_signal(int sgn) {
+		*inter = sgn==ProcessSignal.INT ? 1 : 0;
 		bool old_intern = intern;
 		intern = interactive;
 		os_signal = sgn;
 		treat_stop(IseCode.Signal_exception);
 		os_signal = 0;
 		intern = old_intern;
+		*inter = 0;
 	}
 
 	public void* treat_info(int reason) {
@@ -455,6 +455,8 @@ public class Driver : Debuggee {
 		return res;
 	}
 
+	public void set_interrupt() { *inter = 1; }
+
 	public void* treat_stop(int reason) {
 		if (intern) return null;
 		top = *(StackFrame**)top0;
@@ -478,10 +480,9 @@ public class Driver : Debuggee {
 			}
 			break;
 		}
-		if (interrupted) {
-			interactive = true;
-			interrupted = false;
+		if (*inter!=0) {
 			stop_code = ProgramState.Interrupt;
+			*inter = 0;
 		}
 		if (old_intern && reason>0) {
 			stderr.printf("ERROR in function evaluation\n");
@@ -499,6 +500,7 @@ public class Driver : Debuggee {
 		if (match.size>0) {
 			stop_code = interactive ?
 				ProgramState.At_breakpoint : ProgramState.At_tracepoint;
+			interactive = true;
 		}
 		void* res = interactive ? treat_commands(reason, old_intern) : null;
 		if (os_signal>0 && rescue!=null) raise_func(0);
@@ -524,12 +526,16 @@ public class Driver : Debuggee {
 				}
 			}
 			var qm = new QueueMember(stop_code);
-			qm.top = top;
+			qm.top = *top0;
 			switch (stop_code) {
 			case ProgramState.At_breakpoint:
-			case ProgramState.At_tracepoint:
 				qm.list = match;
 				stop_code = ProgramState.Still_waiting;
+				break;
+			case ProgramState.At_tracepoint:
+				qm.cont = true;
+				qm.list = match;
+//				stop_code = ProgramState.Still_waiting;
 				break;
 			case ProgramState.Crash:
 				var bp = new Breakpoint();
@@ -545,6 +551,7 @@ public class Driver : Debuggee {
 				timeout = 0;
 			}
 			target_to_gui.push(qm);
+			if (stop_code==ProgramState.At_tracepoint) interactive = false;
 			qm = gui_to_target.pop();
 			just_marked = false;
 			repeat = qm.code;
@@ -553,6 +560,9 @@ public class Driver : Debuggee {
 			run_mode = repeat & 0x0f;
 			repeat >>= 4;
 			switch (cmd) {
+			case RunCommand.none:
+				interactive = false;
+				break;
 			case RunCommand.cont:
 				interactive = false;
 				*step = ignore_bp_table ? 1 : 0;
@@ -611,7 +621,6 @@ public class Driver : Debuggee {
 				break;
 			case RunCommand.exit:
 				intern = false;
-				th.exit(0);
 				break;
 			}
 		}
@@ -713,6 +722,7 @@ public class Driver : Debuggee {
 						bp.watch.refresh(s);
 					}
 				}
+				found.cont = bp.cont;
 				match.@add(found);
 				interactive |= run_mode!=trace && !bp.cont;
 			}
@@ -746,16 +756,6 @@ public class Driver : Debuggee {
 		if (interactive) stop_code = ProgramState.Step_by_step;
 	}
 	
-	private void*[] orig_handlers;
-
-	private static void sig_handler(int sig) {
-		the_driver.catch_signal(sig);
-	}
-
-	private static void interrupt_handler(int sig) {
-		the_driver.interrupted = true;
-	}
-
 	~Driver() { Marker.reset(true); }
 
 	protected override void set_addresses_and_offsets(AddressFunc address_of) {
@@ -766,6 +766,7 @@ public class Driver : Debuggee {
 		raise_func = (RaiseFunc)address_of("raise");
 		set_pos_func = (PositionFunc)address_of("set_bp_pos");
 		set_limits_func = (LimitsFunc)address_of("set_limits");
+		inter = (int*)address_of("inter");
 		step = (int*)address_of("step");
 	}
 
@@ -783,26 +784,9 @@ public class Driver : Debuggee {
 			queue_source = new QueueSource();
 			queue_source.queue = target_to_gui;
 			queue_source.attach(null);
-			queue_source.set_callback(@callback);
+			queue_source.set_callback(to_gui);
 			stop_code = ProgramState.Program_start;
 		}
-		orig_handlers = new void*[32];
-		for (int sig=32; sig-->0;) {
-			switch (sig) {
-			case ProcessSignal.ILL:
-			case ProcessSignal.ABRT:
-			case ProcessSignal.FPE:
-			case ProcessSignal.SEGV:
-				//orig_handlers[sig] =
-				Process.@signal((ProcessSignal)sig, sig_handler);
-				break;
-			case ProcessSignal.INT:
-				//orig_handlers[sig] =
-				Process.@signal((ProcessSignal)sig, interrupt_handler);
-				break;
-			}
-		}
-		the_driver = this;
 	}
 
 	public Driver.with_args(int* argc, void*** argv, AddressFunc af) {
@@ -823,27 +807,9 @@ public class Driver : Debuggee {
 	public StackFrame* top { get; private set; }
 
 	public void stop() {
-		if (th!=null) {
-			var qm = new QueueMember(RunCommand.exit);
-			gui_to_target.push(qm);
-			th.join();
-			th = null;
-		}
+		var qm = new QueueMember(RunCommand.exit);
+		gui_to_target.push(qm);
 		Marker.reset(true);
-	}
-
-}
-
-namespace Gedb {
-	
-	private static weak Driver the_driver;
-	
-	public void* inform(int reason) { 
-		return the_driver.treat_info(reason);
-	}
-
-	public void* stop(int reason) { 
-		return the_driver.treat_stop(reason);
 	}
 
 }

@@ -328,6 +328,7 @@ internal class Menus : GLib.Object {
 	}
 
 	private void do_store_def(Gtk.Action a) {
+		if (!def_store.sensitive) return;
 		var fn = gui.command+".edg";
 		var fs = FileStream.open(fn, "w");
 		if (fs!=null) store(fs);
@@ -343,7 +344,7 @@ internal class Menus : GLib.Object {
 		if (fs!=null) gui.restore(fs);
 	}
 
-	private void do_cont(Gtk.Action a) { gui.cont(); }	
+	private void do_cont(Gtk.Action a) { if (cont.sensitive) gui.cont(); }	
 
 	private void do_quit(Gtk.Action a) { gui.quit(); }	
 
@@ -388,7 +389,7 @@ internal class Menus : GLib.Object {
 	private const Gtk.ActionEntry[] entries = {
 		{ "FileMenu", null, "_File" },   
 		{"Load", null, "_Load", null, "Load debuggee", do_load},
-		{"Cont", null, "_Continue", null, "Continue debuggee", do_cont},
+		{"Cont", null, "_Continue", "<control>C", "Continue debuggee", do_cont},
 		{"Store_def", null, "_Store", "<control>S", 
 		 "Store breakpoints and alias definitions \nto default path", 
 		 do_store_def},
@@ -503,6 +504,7 @@ internal class Menus : GLib.Object {
 		if (with_load) {
 			load = ui.get_widget("/Menubar/FileMenu/Load") as Gtk.MenuItem;
 		}
+		def_store = ui.get_widget("/Menubar/FileMenu/Store_def") as Gtk.MenuItem;
 		if (gui.dg!=null)
 			gui.dg.notify["is-running"].connect(
 				(g,p) => { do_set_sensitive(gui.dg.is_running); });
@@ -512,6 +514,7 @@ internal class Menus : GLib.Object {
 	public MenuBar menubar { get; private set; }
 	public Gtk.MenuItem cont { get ; private set; }
 	public Gtk.MenuItem load { get ; private set; }
+	public Gtk.MenuItem def_store { get ; private set; }
 
 }
 
@@ -762,6 +765,7 @@ public class GUI : Window {
 
 	internal string command;
 	internal Debuggee dg;
+	internal Driver? dr;
 	internal bool as_pma;
 	
 	public void show_global() {
@@ -793,6 +797,7 @@ public class GUI : Window {
 
 	internal void new_exe(Debuggee dg) {
 		this.dg = dg;
+		dr = dg as Driver;
 		if (fixed!=null) {
 // Delay closing `fixed' until all events have been served:
 			GLib.Idle.@add(() => { 
@@ -988,24 +993,17 @@ public class GUI : Window {
 		new_exe(dg);
 	}
 
-	private Thread<int> th;
-
 	public GUI.rta(Driver dr, bool loadable) {
 		this(dr, true, loadable);
 		menus.do_set_sensitive(false);
 		show_all();
-		try {
-			th = new Thread<int>("GUI", () => 
-				{ Gtk.main(); Posix.exit(0); return 0; });
-		} catch (Error e) { 
-			stderr.printf("%s\n", e.message);
-			Posix.exit(1);
-		}
 	}
 
 	public void quit() {
 		destroy();
+		if (the_gui!=null && the_gui.dr!=null) the_gui.dr.stop();
 		Gtk.main_quit(); 
+		Posix.exit(0); 
 	}
 
 	public signal void new_debuggee(string fn);
@@ -1013,9 +1011,25 @@ public class GUI : Window {
 
 namespace Gedb {
 
+	private Thread<int> thread;
+	private void*[] orig_handlers;
+
+	private static void sig_handler(int sig) {
+		the_gui.dr.catch_signal(sig);
+	}
 
 	private static void interrupt_handler(int sig) {
-		crash(IseCode.Signal_exception, sig);
+		if (the_gui==null) return;
+		if (the_gui.dr!=null) {
+			var th = Thread.self<int>();
+			if (thread==th) {
+				the_gui.dr.set_interrupt();
+			} else {
+				the_gui.dr.catch_signal(sig);
+			}
+		} else {
+			crash(IseCode.Signal_exception, sig);
+		}
 	}
 
 	internal GUI the_gui;
@@ -1026,6 +1040,29 @@ namespace Gedb {
 			unowned string[] args = dr.args;
 			Gtk.init(ref args);
 			the_gui = new GUI.rta(dr, false);
+		}
+		orig_handlers = new void*[32];
+		for (int sig=32; sig-->0;) {
+			switch (sig) {
+			case ProcessSignal.ILL:
+			case ProcessSignal.ABRT:
+			case ProcessSignal.FPE:
+			case ProcessSignal.SEGV:
+				//orig_handlers[sig] =
+				Process.@signal((ProcessSignal)sig, sig_handler);
+				break;
+			case ProcessSignal.INT:
+				//orig_handlers[sig] =
+				Process.@signal((ProcessSignal)sig, interrupt_handler);
+				break;
+			}
+		}
+		try {
+			thread = new Thread<int>("GUI", () => 
+				{ Gtk.main(); return 0; });
+		} catch (Error e) { 
+			stderr.printf("%s\n", e.message);
+			Posix.exit(1);
 		}
 	}
 
@@ -1087,8 +1124,16 @@ namespace Gedb {
 		the_gui.dg.crash_response(ctrl_c);
 		the_gui.show_all();
 		Gtk.main();
-		if (the_gui.interrupt) return null;
+		if (the_gui!=null && the_gui.interrupt) return null;
 		the_gui = null;
 		GLib.Process.exit(0);
+	}
+
+	public void* inform(int reason) { 
+		return the_gui.dr.treat_info(reason);
+	}
+
+	public void* stop(int reason) { 
+		return the_gui.dr.treat_stop(reason);
 	}
 }

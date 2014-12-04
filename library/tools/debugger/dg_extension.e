@@ -201,6 +201,7 @@ feature {} -- Extension parts
 			h_file.put_string ("extern void ")
 			h_file.put_string (c_names.c_crash_name)
 			h_file.put_string ("(EIF_NATURAL_32 code,EIF_NATURAL_32 sig);%N")
+			print_forward_variable (True, "int", c_names.c_interrupt_name, "0")
 			if not c_generator.pma_only then
 				-- Define `break'
 				h_file.put_string ("DllImport ")
@@ -274,8 +275,16 @@ feature {} -- Print C structs
 				-- Define `skip', `info', `pos', `jump' 
 			h_file.put_string ("#define ")
 			h_file.put_string (c_names.c_skip_name)
-			h_file.put_string ("(l,c)  s.pos=l*256+c;%N")
-			if not c_generator.pma_only then
+			h_file.put_string ("(l,c)  s.pos=l*256+c;")
+			if c_generator.pma_only then
+				h_file.put_new_line
+			else
+				h_file.put_string ("  if (")
+				h_file.put_string (c_names.c_interrupt_name)
+				h_file.put_character (')')
+				h_file.put_character (' ')
+				h_file.put_string (c_names.c_break_name)
+				h_file.put_string ("(12);%N")
 				h_file.put_string ("#define ")
 				h_file.put_string (c_names.c_id_shift_name)
 				h_file.put_character (' ')
@@ -296,6 +305,8 @@ feature {} -- Print C structs
 				h_file.put_string ("(l,c,code)  s.pos=l*256+c;  ")
 				h_file.put_string ("if (")
 				h_file.put_string (c_names.c_step_name)
+				h_file.put_string (" && ")
+				h_file.put_string (c_names.c_interrupt_name)
 				h_file.put_character (')')
 				h_file.put_character (' ')
 				h_file.put_string (c_names.c_break_name)
