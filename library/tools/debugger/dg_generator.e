@@ -35,7 +35,8 @@ inherit
 			print_routine_entry,
 			print_inline_agent_entry,
 			print_debug_exit,
-			print_until_position
+			print_until_position,
+			print_malloc_current
 	end
 
 	DG_CONSTANTS
@@ -429,6 +430,16 @@ feature {} -- Feature generation
 			already_called := an_identifier
 			print_position_handling (an_identifier, Call_break)
 			Precursor (an_identifier)
+		end
+	
+feature {NONE} -- Memory allocation
+
+	print_malloc_current (a_feature: ET_FEATURE)
+		do
+			Precursor (a_feature)
+			if delayed_enter /= Void then
+				flush_delayed
+			end
 		end
 	
 feature {} -- Debugging code 
@@ -862,7 +873,7 @@ feature {} -- Debugging code
 
 	flush_delayed
 		require
-			is_delayed: attached delayed_enter
+			is_delayed: delayed_enter /= Void
 		local
 			de: like delayed_enter
 		do
@@ -879,11 +890,12 @@ feature {} -- Debugging code
 				current_file.put_string ("();%N")
 				print_position_handling(de, Start_program_break)
 				print_indentation
-				current_file.put_string ("}%N")
 				dedent
+				current_file.put_string ("}%N")
 			end
+			enter_scope (de)
 		ensure
-			is_delayed: not attached delayed_enter
+			is_delayed: delayed_enter = Void
 		end
 	
 	print_position_handling (a_node: ET_AST_NODE; code: INTEGER)
