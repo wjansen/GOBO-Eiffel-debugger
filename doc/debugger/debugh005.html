@@ -16,34 +16,44 @@ Gedb &#X2013; The Gec debugger<h3 id="sec9" class="subsection">3.2&#XA0;&#XA0;Sp
 </p>
 <h4 id="sec10" class="paragraph">Class and type names</h4>
 <p><a id="S:typenameField"></a>
-Parts <span style="font-family:sans-serif">Breakpoints</span>, <span style="font-family:sans-serif">Source</span>, and <span style="font-family:sans-serif">SQL select</span> 
+Parts <span style="font-family:sans-serif">Breakpoints</span>, <span style="font-family:sans-serif">Source</span>, and <span style="font-family:sans-serif">SQL table</span> 
 contain fields to enter a class or type name. 
 This is done via special text entries: a regular expression 
 for the class or type name is to be entered, 
-a combobox opens showing the matching classes or types, 
+a combobox opens showing the classes or types 
+that contain the entered regular expression, 
 one can select from the combobox when this becomes convenient. 
+This input method ensures that only valid class or type names will be entered, 
+at the same time typing effort may be reduced, 
+e.g. prefixes like <span style="font-family:monospace">DS_</span> may be dropped if they are not needed
+to restrict essentially the set of matching names. 
+</p><blockquote class="quote"><div class="center">Hint</div>
 While class names never include generic parameters 
 a type name may contain actual generic parameters, 
-in this case the opening bracket has to be escaped during input 
+in this case the opening bracket have to be escaped during input 
 by a backslash since the bracket is a special symbol of regular expressions 
-(the latter meaning takes precedence during input).</p>
+(this meaning has precedence during input).
+</blockquote>
 <h4 id="sec11" class="paragraph">Expressions</h4>
 <p><a id="S:expressionField"></a>
-Parts <span style="font-family:sans-serif">Run</span>, <span style="font-family:sans-serif">Breakpoints</span>, <span style="font-family:sans-serif">SQL select</span>, and <span style="font-family:sans-serif">Evaluation</span>, 
+Parts <span style="font-family:sans-serif">Run</span>, <span style="font-family:sans-serif">Breakpoints</span>, <span style="font-family:sans-serif">SQL table</span>, and <span style="font-family:sans-serif">Evaluation</span>, 
 and the <span style="font-family:sans-serif">Alias definition</span> window contain special fields 
 for entering expressions. 
 The format of valid expressions is described in Sec.&#XA0;<a href="index.html#S%3Aexpression">4</a>, 
 there is also described how the expressions are validated. 
+In any case, pressing <span style="font-family:monospace">Enter</span> is necessary to finish input 
+and to start validation or evaluation. 
 To most of such fields a restricted history is accompanied 
 storing previously entered expressions. These can be shown and selected from 
 by clicking the button on the field&#X2019;s right end. 
 </p><p>If a part contains a field for entering expressions it contains also 
 a so-called <span style="font-family:sans-serif">Expander</span> widget close to this field 
-(several of those fields in the same part share the <span style="font-family:sans-serif">Expander</span>), 
+(several of those fields in the same part share the widget), 
 here consisting of two text lines. The first line is generally 
-up to a leading <span style="font-family:sans-serif">expand/compress</span> icon empty while the second line is hidden
+up to a leading <span style="font-family:sans-serif">expand/compress</span> icon empty 
+while the second line is empty and hidden
 (clicking the icon shows and hides the second line). 
-If a validation error occurs then the first line contains an error description
+If a validation error occurs then the first line contains the error description
 and the second line (now made visible) contains the expression in question 
 showing in red the part where the error has been detected. 
 In other words, this is the debugger&#X2019;s way to issue error massages, 

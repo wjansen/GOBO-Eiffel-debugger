@@ -87,6 +87,9 @@ feature {NONE} -- Initialization
 					command.set_garbage_collector (a_value)
 				end
 			end
+			if has_attribute (Gedb_attribute_name) then
+				command.set_gedb (boolean_value (Gedb_attribute_name))
+			end
 			if has_attribute (Exit_code_variable_attribute_name) then
 				a_value := attribute_value (Exit_code_variable_attribute_name)
 				if a_value.count > 0 then
@@ -193,6 +196,15 @@ feature {NONE} -- Constants
 			-- Name of xml attribute for "split_size"
 		once
 			Result := "split_size"
+		ensure
+			attribute_name_not_void: Result /= Void
+			atribute_name_not_empty: Result.count > 0
+		end
+
+	gedb_attribute_name: STRING
+			-- Name of xml attribute for "gedb"
+		once
+			Result := "gedb"
 		ensure
 			attribute_name_not_void: Result /= Void
 			atribute_name_not_empty: Result.count > 0

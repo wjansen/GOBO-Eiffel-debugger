@@ -219,10 +219,8 @@ feature {NONE} -- Processing
 			l_system_name: STRING
 			l_introspection: ET_INTROSPECT_GENERATOR 
 			l_debugger: DG_GENERATOR
-			l_type: ET_DYNAMIC_TYPE
 			l_ast: ET_DECORATED_AST_FACTORY
 			l_file: KL_TEXT_INPUT_FILE
-			l_name: STRING
 			l_type_names: DS_HASH_SET [STRING]
 			s: STRING
 		do

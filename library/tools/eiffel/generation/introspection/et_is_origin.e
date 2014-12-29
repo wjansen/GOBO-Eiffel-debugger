@@ -18,7 +18,7 @@ inherit
 
 feature {NONE} -- Initialization 
 
-	make_origin (o: attached like origin)
+	make_origin (o: like origin)
 		do
 			origin := o
 		ensure
@@ -27,15 +27,10 @@ feature {NONE} -- Initialization
 
 feature -- Access 
 
-	origin: detachable O_
+	origin: O_
 
 	defined: BOOLEAN
 			-- Has definition pass already been run? 
-
-	system: ET_IS_SYSTEM
-		once
-			create Result
-		end
 
 feature -- Printing 
 

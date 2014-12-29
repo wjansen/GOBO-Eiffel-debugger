@@ -59,7 +59,6 @@ feature {NONE} -- Initialization
 	declare (o: like origin; id: INTEGER; s: ET_IS_SYSTEM)
 		local
 			df: ET_DYNAMIC_FEATURE
-			bc: like base_class
 			it: like item_type
 			a2: like field_at
 			r: ET_IS_ROUTINE
@@ -108,7 +107,7 @@ feature {NONE} -- Initialization
 			flags := Flexible_flag
 			if o.is_alive then
 				flags := flags | Reference_flag
-				create a2.declare_from_pattern (Void, p.item_0, Current, 2, s)
+				create a2.declare (Void, Current, s)
 				fields.add (a2)
 			end
 		end
@@ -130,18 +129,18 @@ feature -- Initialization
 
 feature -- Access 
 
-	base_class: ET_IS_CLASS_TEXT
+	base_class: attached ET_IS_CLASS_TEXT
 
 feature -- ET_IS_ORIGIN 
 
 	print_count (file: KI_TEXT_OUTPUT_STREAM; g: ET_INTROSPECT_GENERATOR)
 		do
-			g.print_field_special_count_name (origin, file)
+			g.print_attribute_special_count_name (origin, file)
 		end
 
 	print_item (file: KI_TEXT_OUTPUT_STREAM; g: ET_INTROSPECT_GENERATOR)
 		do
-			g.print_field_special_item_name (origin, file)
+			g.print_attribute_special_item_name (origin, file)
 		end
 
 feature {IS_BASE} -- Implementation 
@@ -161,7 +160,7 @@ feature {NONE} -- Implementation
 			create id.make (s.internal_name (once "count"))
 			create attr.make (id, dt.base_type, dt.base_class)
 			create df.make (attr, dt, s.origin)
-			create Result.declare_from_feature (base_class, df.static_feature, s)
+			create Result.declare_from_feature (df.static_feature, base_class, s)
 		end
 
 	item_feature (s: ET_IS_SYSTEM): ET_IS_FEATURE_TEXT
@@ -175,7 +174,7 @@ feature {NONE} -- Implementation
 			create id.make (s.internal_name (once "item"))
 			create attr.make (id, dt.base_type, dt.base_class)
 			create df.make (attr, dt, s.origin)
-			create Result.declare_from_feature (base_class, df.static_feature, s)
+			create Result.declare_from_feature (df.static_feature, base_class, s)
 		end
 	
 feature {NONE} -- Implementation 

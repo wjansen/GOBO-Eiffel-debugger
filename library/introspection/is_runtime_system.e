@@ -99,7 +99,7 @@ feature {NONE} -- Initialization
 
 feature -- Access
 
-	any_type: IS_NORMAL_TYPE
+	any_type: attached IS_NORMAL_TYPE
 
 	none_type: like any_type
 
@@ -126,11 +126,7 @@ feature -- Object creation
 			is_alive: t.is_alive
 		do
 			if t.is_subobject then
-				if t.flags & Missing_id_flag = 0 then
-					Result := c_new_boxed_object (t.allocate)
-				else
-					Result := c_new_copy (t.default_instance, t.instance_bytes)
-				end
+				Result := c_new_boxed_object (t.allocate)
 			elseif t.is_meta_type then
 			elseif t.is_agent and then attached {IS_AGENT_TYPE} t as at then
 				Result := c_new_object (at.declared_type.allocate)
@@ -295,8 +291,6 @@ feature -- Low level access
 				cap := special_capacity (a, st)
 				(as_pointer(a) +c. offset).memory_copy ($cap, natural_32_bytes)
 			end
-		ensure
-			not_negative: Result >= 0
 		end
 
 	refresh_all_onces
@@ -313,9 +307,9 @@ feature -- Low level access
 			end
 		end
 
-	refresh_initialized_onces (comp: detachable PREDICATE [ANY, TUPLE [IS_ONCE, IS_ONCE]])
+	refresh_initialized_onces (comp: detachable PREDICATE [ANY, TUPLE [attached IS_ONCE, attached IS_ONCE]])
 		local
-			o: IS_ONCE
+			o: attached IS_ONCE
 			n: INTEGER
 		do
 			if attached initialized_onces as inits then
@@ -369,11 +363,11 @@ feature -- Low level access
 				end
 			end
 		ensure
-			when_found: attached Result as o implies
-									dereferenced (o.value_address, o.type) = loc
+			when_found: Result /= Void implies
+									dereferenced (Result.value_address, Result.type) = loc
 		end
 
-	initialized_onces: detachable IS_SEQUENCE [IS_ONCE]
+	initialized_onces: detachable IS_SEQUENCE [attached IS_ONCE]
 
 feature {NONE} -- Factory 
 
@@ -398,7 +392,7 @@ feature {NONE} -- Factory
 
 	agent_call_field (a: IS_AGENT_TYPE): POINTER
 		do
-			Result := c_agent_call_field (a.ident)
+			Result := c_agent_call (a.ident)
 		end
 
 	set_agent_base (a: IS_AGENT_TYPE)
@@ -422,7 +416,7 @@ feature {NONE} -- Factory
 		local
 			id: INTEGER
 		do
-			id := c_declared_type (a.ident)
+			id := c_agent_declared (a.ident)
 			last_type := type_at (id)
 		end
 
@@ -468,9 +462,8 @@ feature {NONE} -- Implementation
 	
 	set_locations
 		local
-			cot: IS_TUPLE_TYPE
 			off: INTEGER
-			i, j, k, m, n, na: INTEGER
+			i, j, m, na: INTEGER
 		do
 			m := all_types.count
 			from
@@ -616,42 +609,42 @@ feature {NONE} -- Guru section
 			 but it should never be called during runtime.
 			 ]"
 		local
-			c: IS_CLASS_TEXT
-			t: IS_TYPE
-			n: IS_NORMAL_TYPE
-			b: IS_EXPANDED_TYPE
-			s: IS_SPECIAL_TYPE
-			u: IS_TUPLE_TYPE
-			g: IS_AGENT_TYPE
-			o: IS_ONCE
-			a0, a1, a2: IS_FIELD
-			r: IS_ROUTINE
-			l: IS_LOCAL
-			ot: IS_SCOPE_VARIABLE
-			f: IS_FEATURE_TEXT
-			rf: IS_ROUTINE_TEXT
+			c: attached IS_CLASS_TEXT
+			t: attached IS_TYPE
+			n: attached IS_NORMAL_TYPE
+			b: attached IS_EXPANDED_TYPE
+			s: attached IS_SPECIAL_TYPE
+			u: attached IS_TUPLE_TYPE
+			g: attached IS_AGENT_TYPE
+			o: attached IS_ONCE
+			a0, a1, a2: attached IS_FIELD
+			r: attached IS_ROUTINE
+			l: attached IS_LOCAL
+			ot: attached IS_SCOPE_VARIABLE
+			f: attached IS_FEATURE_TEXT
+			rf: attached IS_ROUTINE_TEXT
 			x: IS_ENTITY 
-			m: IS_NAME
-			cb: IS_CONSTANT 
-			cc: IS_CONSTANT
-			ci: IS_CONSTANT
-			cn: IS_CONSTANT 
-			cr: IS_CONSTANT 
-			cs: IS_CONSTANT 
+			m: attached IS_NAME
+			cb: attached IS_CONSTANT 
+			cc: attached IS_CONSTANT
+			ci: attached IS_CONSTANT
+			cn: attached IS_CONSTANT 
+			cr: attached IS_CONSTANT 
+			cs: attached IS_CONSTANT 
 			cu: IS_CONSTANT 
 			cy: IS_CONSTANT 
-			sf: IS_SEQUENCE [IS_FEATURE_TEXT]
-			sr: IS_SEQUENCE [IS_ROUTINE_TEXT]
-			sa: IS_SEQUENCE [IS_FIELD]
-			sc: IS_SEQUENCE [IS_CONSTANT]
-			se: IS_SEQUENCE [IS_ROUTINE]
-			al: IS_SEQUENCE [IS_LOCAL]
-			qt: IS_SEQUENCE [IS_TYPE]
-			qc: IS_SEQUENCE [IS_CLASS_TEXT]
-			qy: IS_SEQUENCE [IS_CONSTANT]
-			qo: IS_SEQUENCE [IS_ONCE]
-			st: IS_SET [IS_TYPE]
-			any: ANY
+			sf: IS_SEQUENCE [attached IS_FEATURE_TEXT]
+			af: IS_SPARSE_ARRAY [attached IS_FEATURE_TEXT]
+			sr: IS_SEQUENCE [attached IS_ROUTINE_TEXT]
+			sa: IS_SEQUENCE [attached IS_FIELD]
+			sc: IS_SEQUENCE [attached IS_CONSTANT]
+			se: IS_SEQUENCE [attached IS_ROUTINE]
+			al: IS_SPARSE_ARRAY [attached IS_LOCAL]
+			qt: IS_SEQUENCE [attached IS_TYPE]
+			qc: IS_SEQUENCE [attached IS_CLASS_TEXT]
+			qy: IS_SEQUENCE [attached IS_CONSTANT]
+			qo: IS_SEQUENCE [attached IS_ONCE]
+			st: IS_SET [attached IS_TYPE]
 			i: INTEGER
 		do
 			flags := No_gc_flag
@@ -667,7 +660,8 @@ feature {NONE} -- Guru section
 			create all_classes.make_1 (c)
 			i := all_classes.count
 			qc.add (c)
-			create rf.make (no_name, no_name, Routine_flag, 2, 3, sf, 2, 3, 1, sr)
+			create af.make_1 (f)
+			create rf.make (no_name, no_name, Routine_flag, 2, 3, af, 2, 3, 1, sr)
 			f := rf
 			f.set_tuple_labels (sf)
 			f.set_home (c)
@@ -704,7 +698,9 @@ feature {NONE} -- Guru section
 			sa.add (a2)
 			create all_types.make_1 (t)
 			i := all_types.count
-			t := all_types [0]
+			if attached all_types [0] as t0 then
+				t := t0
+			end
 			create all_agents.make_1 (g)
 			i := all_agents.count
 			g := all_agents [0]
@@ -778,27 +774,29 @@ feature {NONE} -- Guru section
 			Result := root_creation_procedure.var_at(0)
 		end
 	
-feature {NONE} -- External implementation 
+feature -- External implementation 
 	
-	c_system: ANY
+	c_type_exists (id: INTEGER): BOOLEAN
 		external "C inline"
 		alias
-			"[
-			 
-			#ifdef GEIP_INTRO
-				geip_rts
-			#else
-				0
-			#endif
-			 
-			 ]"
+	"[
+		/**/
+#ifdef GEIP_TABLES
+		(geip_t[$id] != 0)
+#else
+		0
+#endif
+	/**/
+	]"
 		end
+	
+feature {NONE} -- External implementation 
 	
 	c_ident (a: detachable ANY): INTEGER
 		external
 			"C inline"
 		alias
-			"$a ? ((EIF_ANY*)$a)->id : 0"
+			"$a ? *(int*)$a : 0"
 		end
 	
 	c_new_object (call: POINTER): ANY
@@ -815,13 +813,6 @@ feature {NONE} -- External implementation
 			"((EIF_REFERENCE (*)(EIF_BOOLEAN))($call))(EIF_TRUE)"
 		end
 	
-	c_new_copy (src: POINTER; size: NATURAL): ANY
-		external
-			"C inline use <string.h>"
-		alias
-			"(EIF_REFERENCE)(memcpy(GE_alloc($size),$src,$size))"
-		end
-
 	c_new_array (call: POINTER; n: NATURAL): ANY
 		external
 			"C inline"
@@ -833,7 +824,7 @@ feature {NONE} -- External implementation
 		external
 			"C inline"
 		alias
-			"((void (*)(EIF_ANY*))$call)((EIF_ANY*)$a)"
+			"((void (*)(EIF_REFERENCE))$call)((EIF_REFERENCE)$a)"
 		end
 	
 	c_call_invariant (call: POINTER; at: POINTER): BOOLEAN
@@ -851,13 +842,6 @@ feature {NONE} -- External implementation
 			"(EIF_POINTER*)(*(void**)$p)"
 		end
 	
-	c_type (id: INTEGER): TYPE [ANY]
-		external 
-			"C inline"
-		alias
-			"(EIF_REFERENCE)&GE_types[$id]"
-		end
-	
 	c_field_offset (t, f: POINTER): INTEGER
 		external
 			"C inline"
@@ -865,312 +849,296 @@ feature {NONE} -- External implementation
 			"(EIF_INTEGER)((size_t)$f - (size_t)$t)"
 		end
 
-feature {NONE} -- External implementation
-	
-	c_type_exists (id: INTEGER): BOOLEAN
-		external "C inline"
-		alias
-"[
-
-#ifdef GEIP_TABLES
-  (geip_t[$id] != 0)
-#else
-  0
-#endif
-
-]"
-		end
-	
 	c_system_name: POINTER
 		external "C inline"
 		alias
-"[
-
+	"[
+	/**/
 #ifdef GEIP_TABLES
   geip_self
 #else
   0
 #endif
-
-]"
+	/**/
+	]"
 		end
-	
+
 	c_comp_time: INTEGER_64
 		external "C inline"
 		alias
-"[
-
+	"[
+		/**/
 #ifdef GEIP_TABLES
-  geip_time
+		geip_time
 #else
-  0
+		0
 #endif
-
-]"
+	/**/
+	]"
 		end
-	
 	c_class_count: INTEGER
 		external "C inline"
 		alias
-"[
-
+	"[
+		/**/
 #ifdef GEIP_TABLES
-  geip_cc
+		geip_cc
 #else
-  0
+		0
 #endif
-
-]"
+	/**/
+	]"
 		end
-	
+
 	c_class_name (id: INTEGER): POINTER
 		external "C inline"
 		alias
-"[
-
+	"[
+		/**/
 #ifdef GEIP_TABLES
-  geip_c[$id]
+		geip_c[$id]
 #else
-  0
+		0
 #endif
-
+/**/
 ]"
 		end
-	
+
 	c_class_flags (id: INTEGER): INTEGER
 		external "C inline"
 		alias
-"[
-
+	"[
+		/**/
 #ifdef GEIP_TABLES
-  geip_cf[$id]
+		geip_cf[$id]
 #else
-  0
+		0
 #endif
-
+/**/
 ]"
 		end
-	
+
 	c_type_count: INTEGER
 		external "C inline"
 		alias
-"[
-
+	"[
+		/**/
 #ifdef GEIP_TABLES
-  geip_tc
+		geip_tc
 #else
-  0
+		0
 #endif
-
-]"
+	/**/
+	]"
 		end
-	
+
 	c_root_type: INTEGER
 		external "C inline"
 		alias
-"[
-
+	"[
+		/**/
 #ifdef GEIP_TABLES
-  geip_root
+		geip_root
 #else
-  0
+		0
 #endif
-
+/**/
 ]"
 		end
-	
+
 	c_any_type: INTEGER
 		external "C inline"
 		alias
-"[
-
+	"[
+		/**/
 #ifdef GEIP_TABLES
-  geip_any
+		geip_any
 #else
-  0
+		0
 #endif
-
-]"
+	/**/
+	]"
 		end
 
 	c_type_flags (id: INTEGER): INTEGER
 		external "C inline"
 		alias
-"[
-
+	"[
+		/**/
 #ifdef GEIP_TABLES
-  geip_t[$id]->flags
+		geip_t[$id]->flags
 #else
-  0
+		0
 #endif
-
-]"
+	/**/
+	]"
 		end
-	
+
 	c_class_ident (id: INTEGER): INTEGER
 		external "C inline"
 		alias
-"[
-
+	"[
+/**/
 #ifdef GEIP_TABLES
   geip_t[$id]->class_id
 #else
   0
 #endif
-
-]"
+		/**/
+		]"
 		end
-	
+
 	c_generic_count (id: INTEGER): INTEGER
 		external "C inline"
 		alias
-"[
-
+	"[
+		/**/
 #ifdef GEIP_TABLES
-  geip_t[$id]->ngenerics
+		geip_t[$id]->ngenerics
 #else
-  0
+		0
 #endif
-
-]"
+	/**/
+	]"
 		end
-	
+
 	c_generic (id, i: INTEGER): INTEGER
 		external "C inline"
 		alias
-"[
-
+	"[
+		/**/
 #ifdef GEIP_TABLES
-(geip_t[$id]->generics)[$i]
+		(geip_t[$id]->generics)[$i]
 #else
-  0
+		0
 #endif
-
+/**/
 ]"
 		end
-	
+
 	c_field_count (id: INTEGER): INTEGER
 		external "C inline"
 		alias
-"[
-
+	"[
+		/**/
 #ifdef GEIP_TABLES
-  geip_t[$id]->nfields
+		geip_t[$id]->nfields
 #else
-  0
+		0
 #endif
-
-]"
+	/**/
+	]"
 		end
-	
+
 	c_creation_ident (id: INTEGER): INTEGER
 		external "C inline"
 		alias
-"[
-
+	"[
+		/**/
 #ifdef GEIP_TABLES
-  geip_t[$id]->create_id
+		geip_t[$id]->create_id
 #else
-  0
+		0
 #endif
-
-]"
+	/**/
+	]"
 		end
-	
+
 	c_allocate (id: INTEGER): POINTER
 		require
 			exists: c_type_exists (id)
 		external "C inline"
 		alias
-"[
-
+	"[
+		/**/
 #ifdef GEIP_TABLES
-  geip_t[$id]->alloc
+		geip_t[$id]->alloc
 #else
-  0
+		0
 #endif
-
-]"
+	/**/
+	]"
 		end
-	
+
 	c_type_default (id: INTEGER): POINTER
 		require
 			exists: c_type_exists (id)
 		external "C inline"
 		alias
-"[
-
+	"[
+		/**/
 #ifdef GEIP_TABLES
-  geip_t[$id]->def
+		geip_t[$id]->def
 #else
-  0
+		0
 #endif
-
-]"
+	/**/
+	]"
 		end
-	
+
 	c_type_bytes (id: INTEGER): NATURAL
 		require
 			exists: c_type_exists (id)
 		external "C inline"
 		alias
-"[
-
+	"[
+		/**/
 #ifdef GEIP_TABLES
-  geip_t[$id]->size
+		geip_t[$id]->size
 #else
-  0
+		0
 #endif
-
-]"
+	/**/
+	]"
 		end
-	
+
 	c_boxed_bytes (id: INTEGER): NATURAL
 		require
 			exists: c_type_exists (id)
 		external "C inline"
 		alias
-"[
-
+	"[
+		/**/
 #ifdef GEIP_TABLES
-((GEIP_Tb*)geip_t[$id])->boxed_size
+		((GEIP_Tb*)geip_t[$id])->boxed_size
 #else
-  0
+		0
 #endif
-
+	/**/
 ]"
+
 		end
-	
+
 	c_agent_declared (id: INTEGER): INTEGER
 		require
 			exists: c_type_exists (id)
 		external "C inline"
 		alias
-"[
-
+	"[
+		/**/
 #ifdef GEIP_TABLES
-((GEIP_A*)geip_t[$id])->declared_id
+		((GEIP_A*)geip_t[$id])->declared_id
 #else
-  0
+		0
 #endif
-
-]"
+	/**/
+	]"
 		end
-	
+
 	c_agent_closed_tuple (id: INTEGER): INTEGER
 		require
 			exists: c_type_exists (id)
 		external "C inline"
 		alias
-"[
-
+	"[
+		/**/
 #ifdef GEIP_TABLES
-((GEIP_A*)geip_t[$id])->closed_tuple_id
+		((GEIP_A*)geip_t[$id])->closed_tuple_id
 #else
-  0
+		0
 #endif
-
-]"
+	/**/
+	]"
 		end
 	
 	c_agent_result (id: INTEGER): INTEGER
@@ -1178,15 +1146,15 @@ feature {NONE} -- External implementation
 			exists: c_type_exists (id)
 		external "C inline"
 		alias
-"[
-
+	"[
+		/**/
 #ifdef GEIP_TABLES
-((GEIP_A*)geip_t[$id])->result_id
+		((GEIP_A*)geip_t[$id])->result_id
 #else
-  0
+		0
 #endif
-
-]"
+	/**/
+	]"
 		end
 	
 	c_agent_pattern (id: INTEGER): POINTER
@@ -1194,15 +1162,15 @@ feature {NONE} -- External implementation
 			exists: c_type_exists (id)
 		external "C inline"
 		alias
-"[
-
+	"[
+		/**/
 #ifdef GEIP_TABLES
-((GEIP_A*)geip_t[$id])->open_closed
+		((GEIP_A*)geip_t[$id])->open_closed
 #else
-  0
+		0
 #endif
-
-]"
+	/**/
+	]"
 		end
 	
 	c_agent_routine (id: INTEGER): POINTER
@@ -1210,15 +1178,15 @@ feature {NONE} -- External implementation
 			exists: c_type_exists (id)
 		external "C inline"
 		alias
-"[
-
+	"[
+		/**/
 #ifdef GEIP_TABLES
-  geip_n ? geip_n[((GEIP_A*)geip_t[$id])->routine_name] : 0
+		geip_n ? geip_n[((GEIP_A*)geip_t[$id])->routine_name] : 0
 #else
-  0
+		0
 #endif
-
-]"
+	/**/
+	]"
 		end
 	
 	c_agent_function_loc (id: INTEGER): POINTER
@@ -1226,15 +1194,15 @@ feature {NONE} -- External implementation
 			exists: c_type_exists (id)
 		external "C inline"
 		alias
-"[
-
+	"[
+		/**/
 #ifdef GEIP_TABLES
-((GEIP_A*)geip_t[$id])->call_field
+		((GEIP_A*)geip_t[$id])->call_field
 #else
-  0
+		0
 #endif
-
-]"
+	/**/
+	]"
 		end
 	
 	c_agent_call (id: INTEGER): POINTER
@@ -1242,29 +1210,29 @@ feature {NONE} -- External implementation
 			exists: c_type_exists (id)
 		external "C inline"
 		alias
-"[
-
+	"[
+		/**/
 #ifdef GEIP_TABLES
-((GEIP_A*)geip_t[$id])->call
+		((GEIP_A*)geip_t[$id])->call
 #else
-  0
+		0
 #endif
-
-]"
+	/**/
+	]"
 		end
 	
 	c_field_type_ident (id, i: INTEGER): INTEGER
 		external "C inline"
 		alias
-"[
-
+	"[
+		/**/
 #ifdef GEIP_TABLES
-  geip_t[$id]->fields[$i].type_id
+		geip_t[$id]->fields[$i].type_id
 #else
-  0
+		0
 #endif
-
-]"
+	/**/
+	]"
 		end
 	
 	c_indexed_offset (id, i: INTEGER): INTEGER
@@ -1272,43 +1240,44 @@ feature {NONE} -- External implementation
 			exists: c_type_exists (id)
 		external "C inline"
 		alias
-"[
-
+	"[
+		/**/
 #ifdef GEIP_TABLES
-(int)((size_t)((geip_t[$id]->fields)[$i].def)-(size_t)(geip_t[$id]->def))
+		(int)((size_t)((geip_t[$id]->fields)[$i].def)-(size_t)(geip_t[$id]->def))
 #else
-  0
+		0
 #endif
-
-]"
+		
+	/**/
+	]"
 		end
 	
 	c_boxed_offset (id: INTEGER): INTEGER
 		external "C inline"
 		alias
-"[
-
+	"[
+		/**/
 #ifdef GEIP_TABLES
-(int)((size_t)(((GEIP_Tb*)geip_t[$id])->subobject)-(size_t)(((GEIP_Tb*)geip_t[$id])->boxed_def))
+		(int)((size_t)(((GEIP_Tb*)geip_t[$id])->subobject)-(size_t)(((GEIP_Tb*)geip_t[$id])->boxed_def))
 #else
-  0
+		0
 #endif
-
-]"
+	/**/
+	]"
 		end
 	
 	c_field_name_count: INTEGER
 		external "C inline"
 		alias
-"[
-
+	"[
+		/**/
 #ifdef GEIP_TABLES
-  geip_nc
+		geip_nc
 #else
-  0
+		0
 #endif
-
-]"
+	/**/
+	]"
 		end
 	
 	c_field_name_ident (id, i: INTEGER): INTEGER
@@ -1316,61 +1285,61 @@ feature {NONE} -- External implementation
 			exists: c_type_exists (id)
 		external "C inline"
 		alias
-"[
-
+	"[
+		/**/
 #ifdef GEIP_TABLES
-  geip_t[$id]->fields[$i].name_id
+		geip_t[$id]->fields[$i].name_id
 #else
-  0
+		0
 #endif
-
-]"
+	/**/
+	]"
 		end
 
 	c_field_name (i: INTEGER): POINTER
 		external "C inline"
 		alias
-"[
-
+	"[
+		/**/
 #ifdef GEIP_TABLES
-  geip_n ? geip_n[$i] : 0
+		geip_n ? geip_n[$i] : 0
 #else
-  0
+		0
 #endif
-
-]"
+	/**/
+	]"
 		end
 
 	c_typeset_index (tid, fid: INTEGER): INTEGER
 		require
-			exists: c_type_exists (id)
+			exists: c_type_exists (tid)
 		external "C inline"
 		alias
-"[
-
+	"[
+		/**/
 #ifdef GEIP_TABLES
-  geip_t[$tid]->fields[$fid].typeset_id
+		geip_t[$tid]->fields[$fid].typeset_id
 #else
-  0
+		0
 #endif
-
-]"
+	/**/
+	]"
 		end
 	
 	c_typeset_size (id: INTEGER): INTEGER
 		require
-			exists: c_type_exists (id)
+	exists: c_type_exists (id)
 		external "C inline"
 		alias
-"[
-
+	"[
+		/**/
 #ifdef GEIP_TABLES
-  geip_tss[$id]
+		geip_tss[$id]
 #else
-  0
+		0
 #endif
-
-]"
+	/**/
+	]"
 		end
 	
 	c_typeset_elem (id, i: INTEGER): INTEGER
@@ -1378,23 +1347,21 @@ feature {NONE} -- External implementation
 			exists: c_type_exists (id)
 		external "C inline"
 		alias
-"[
-
+	"[
+		/**/
 #ifdef GEIP_TABLES
-  geip_ts[$id][$i]
+		geip_ts[$id][$i]
 #else
-  0
+		0
 #endif
-
-]"
+	/**/
+	]"
 		end
 	
 invariant
 	
 note
-	
 	author: "Wolfgang Jansen"
 	date: "$Date$"
 	revision: "$Revision$"
-	
 end

@@ -105,6 +105,12 @@ static void longjmp_(void* buf, u_int32_t jmp) {
   GE_longjmp(*(GE_jmp_buf*)buf,jmp);
 }
 
+static void* interruptable_(void* buf, void* target, void* func) {
+  int val = GE_setjmp(*(GE_jmp_buf*)buf);
+  if (val) return (void*)val;
+  return ((void* (*)(void*))func)(target);
+}
+
 static void set_bp_pos_(int id, int l, int c) {
 #if GEDB_D == 2
   u_int32_t i, pos, val;
@@ -248,6 +254,7 @@ static NamedAddress addresses[] = {
   { "free", free_}, 
   { "longjmp", longjmp_}, 
   { "jmp_buffer", jmp_buffer_}, 
+  { "interruptable", interruptable_}, 
   { "chars", chars_}, 
   { "unichars", unichars_}, 
   { "set_bp_pos", set_bp_pos_},

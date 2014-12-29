@@ -29,8 +29,12 @@ feature -- Access
 			medium_exists: medium.exists
 			medium_is_open_read: medium.is_open_read
 			medium_supports_storable: medium.support_storable
+		local
+			l_deserializer: PC_DESERIALIZER
 		do
-			Result := medium.retrieved
+			create l_deserializer
+			l_deserializer.read (medium)
+			Result := l_deserializer.top_object
 		end
 
 	retrieve_by_name (file_name: STRING): detachable ANY
@@ -52,7 +56,7 @@ feature -- Access
 			create file.make_with_name (file_name)
 			if file.exists and then file.is_readable then
 				file.open_read
-				Result := file.retrieved
+				Result := retrieved (file)
 				file.close
 			end
 		end
@@ -95,8 +99,11 @@ feature -- Element change
 			medium_exists: medium.exists
 			medium_is_open_write: medium.is_open_write
 			medium_supports_storable: medium.support_storable
+		local
+			l_serializer: PC_SERIALIZER
 		do
-			medium.basic_store (Current)
+			create l_serializer
+			l_serializer.put_basically (Current, medium, Void)
 		end
 
 	general_store (medium: IO_MEDIUM)
@@ -107,6 +114,7 @@ feature -- Element change
 			--| This feature may use a visible name of a class written
 			--| in the `visible' clause of the Ace file. This makes it
 			--| possible to overcome class name clashes.
+			-- Current implementation: calls `independent_store'.
 		obsolete
 			"Use `independent_store'."
 		require
@@ -115,7 +123,7 @@ feature -- Element change
 			medium_is_open_write: medium.is_open_write
 			medium_supports_storable: medium.support_storable
 		do
-			medium.independent_store (Current)
+			independent_store (medium)
 		end
 
 	independent_store (medium: IO_MEDIUM)
@@ -128,8 +136,11 @@ feature -- Element change
 			medium_exists: medium.exists
 			medium_is_open_write: medium.is_open_write
 			medium_supports_storable: medium.support_storable
+		local
+			l_serializer: PC_SERIALIZER
 		do
-			medium.independent_store (Current)
+			create l_serializer
+			l_serializer.put (Current, medium, Void)
 		end
 
 	store_by_name (file_name: STRING)
@@ -149,7 +160,7 @@ feature -- Element change
 			if (file.exists and then file.is_writable) or else
 				(file.is_creatable) then
 				file.open_write
-				file.independent_store (Current)
+				independent_store (file)
 				file.close
 			else
 				create l_io_exception

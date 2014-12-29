@@ -667,7 +667,7 @@ end
 	yy_do_action_19
 			--|#line 108 "dg_system.y"
 		local
-			yyval6: IS_SEQUENCE [IS_FIELD]
+			yyval6: IS_SEQUENCE [attached IS_FIELD]
 		do
 --|#line 108 "dg_system.y"
 debug ("GEYACC")
@@ -694,7 +694,7 @@ end
 	yy_do_action_20
 			--|#line 111 "dg_system.y"
 		local
-			yyval6: IS_SEQUENCE [IS_FIELD]
+			yyval6: IS_SEQUENCE [attached IS_FIELD]
 		do
 --|#line 111 "dg_system.y"
 debug ("GEYACC")
@@ -713,7 +713,7 @@ end
 	yy_do_action_21
 			--|#line 116 "dg_system.y"
 		local
-			yyval5: IS_FIELD
+			yyval5: attached IS_FIELD
 		do
 --|#line 116 "dg_system.y"
 debug ("GEYACC")
@@ -742,7 +742,7 @@ end
 	yy_do_action_22
 			--|#line 120 "dg_system.y"
 		local
-			yyval5: IS_FIELD
+			yyval5: attached IS_FIELD
 		do
 --|#line 120 "dg_system.y"
 debug ("GEYACC")
@@ -770,7 +770,7 @@ end
 	yy_do_action_23
 			--|#line 123 "dg_system.y"
 		local
-			yyval5: IS_FIELD
+			yyval5: attached IS_FIELD
 		do
 --|#line 123 "dg_system.y"
 debug ("GEYACC")
@@ -998,8 +998,8 @@ feature {NONE} -- Semantic value stacks
 	yyspecial_routines4: KL_SPECIAL_ROUTINES [IS_TYPE]
 			-- Routines that ought to be in SPECIAL [IS_TYPE]
 
-	yyvs5: SPECIAL [IS_FIELD]
-			-- Stack for semantic values of type IS_FIELD
+	yyvs5: SPECIAL [attached IS_FIELD]
+			-- Stack for semantic values of type attached IS_FIELD
 
 	yyvsc5: INTEGER
 			-- Capacity of semantic value stack `yyvs5'
@@ -1007,11 +1007,11 @@ feature {NONE} -- Semantic value stacks
 	yyvsp5: INTEGER
 			-- Top of semantic value stack `yyvs5'
 
-	yyspecial_routines5: KL_SPECIAL_ROUTINES [IS_FIELD]
-			-- Routines that ought to be in SPECIAL [IS_FIELD]
+	yyspecial_routines5: KL_SPECIAL_ROUTINES [attached IS_FIELD]
+			-- Routines that ought to be in SPECIAL [attached IS_FIELD]
 
-	yyvs6: SPECIAL [IS_SEQUENCE [IS_FIELD]]
-			-- Stack for semantic values of type IS_SEQUENCE [IS_FIELD]
+	yyvs6: SPECIAL [IS_SEQUENCE [attached IS_FIELD]]
+			-- Stack for semantic values of type IS_SEQUENCE [attached IS_FIELD]
 
 	yyvsc6: INTEGER
 			-- Capacity of semantic value stack `yyvs6'
@@ -1019,8 +1019,8 @@ feature {NONE} -- Semantic value stacks
 	yyvsp6: INTEGER
 			-- Top of semantic value stack `yyvs6'
 
-	yyspecial_routines6: KL_SPECIAL_ROUTINES [IS_SEQUENCE [IS_FIELD]]
-			-- Routines that ought to be in SPECIAL [IS_SEQUENCE [IS_FIELD]]
+	yyspecial_routines6: KL_SPECIAL_ROUTINES [IS_SEQUENCE [attached IS_FIELD]]
+			-- Routines that ought to be in SPECIAL [IS_SEQUENCE [attached IS_FIELD]]
 
 feature {NONE} -- Constants
 
@@ -1048,7 +1048,7 @@ feature -- User-defined features
 
  
  
-feature {} -- Initialization 
+feature {NONE} -- Initialization 
 
 	default_create
 		do
@@ -1086,7 +1086,7 @@ feature {} -- Initialization
  
 feature -- Access
 
-	any_type: IS_NORMAL_TYPE
+	any_type: attached IS_NORMAL_TYPE
 
 	none_type: like any_type
 
@@ -1131,12 +1131,12 @@ feature -- Basic operation
 			end
 		end
 
-	new_special_type (ti: IS_TYPE): IS_TYPE
+	new_special_type (ti: attached IS_TYPE): attached IS_TYPE
 		local
 			tc: IS_TYPE
 			ts: IS_SPECIAL_TYPE
 			f: IS_FIELD
-			ff: IS_SEQUENCE [IS_FIELD]
+			ff: IS_SEQUENCE [attached IS_FIELD]
 			fl: INTEGER
 		do
 			if attached special_type_by_item_type (ti, True) as st then
@@ -1189,7 +1189,7 @@ feature -- Basic operation
 			end
 		end
 	
-feature {} -- Implementation
+feature {NONE} -- Implementation
 
 	max_type_id: INTEGER
 	max_class_id: INTEGER
@@ -1249,7 +1249,7 @@ feature {} -- Implementation
 			Result.to_upper
 		end
 
-	type_of_name (nm, c: STRING): IS_TYPE
+	type_of_name (nm, c: STRING): attached IS_TYPE
 		local
 			cn: STRING
 		do
@@ -1279,11 +1279,11 @@ feature {} -- Implementation
 			end
 		end
 
-	expanded_type (nm, cn: STRING): IS_EXPANDED_TYPE
+	expanded_type (nm, cn: STRING): attached IS_EXPANDED_TYPE
 		local
-			base, ft: IS_TYPE
-			f: IS_FIELD
-			ff: IS_SEQUENCE[IS_FIELD]
+			base, ft: attached IS_TYPE
+			f: attached IS_FIELD
+			ff: IS_SEQUENCE[attached IS_FIELD]
 			id, i, n: INTEGER
 		do
 			base := type_of_name (nm, cn)
@@ -1294,7 +1294,9 @@ feature {} -- Implementation
 				id := max_type_id
 				from
 					n := base.field_count
-					create ff.make (n, Void)
+					if n > 0 then
+						create ff.make (n, base.field_at(0))
+					end
 				until i = n loop
 					f := base.field_at(i)
 					ft := f.type

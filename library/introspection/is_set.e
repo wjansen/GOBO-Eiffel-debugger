@@ -11,7 +11,7 @@ inherit
 		rename
 			remove as remove_last_items
 		export
-			{} sort, default_sort, swap, clean, index_of
+			{NONE} sort, default_sort, swap, clean, index_of
 		redefine
 			make,
 			make_1,

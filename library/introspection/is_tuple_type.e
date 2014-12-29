@@ -35,7 +35,7 @@ create {IS_SYSTEM, IS_TYPE}
 
 feature {NONE} -- Initialization 
 
-	make (id: INTEGER; fl: INTEGER; ct: IS_CLASS_TEXT;
+	make (id: INTEGER; fl: INTEGER; ct: like base_class;
 			g: like generics; e: like effectors; a: like fields; r: like routines)
 		note
 			action: "Construct the descriptor."

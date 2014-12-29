@@ -15,29 +15,25 @@ inherit
 		end
 
 	COMPARABLE
-		undefine
-			copy,
+		redefine
 			is_equal,
 			out
 		end
 
 	HASHABLE
-		undefine
-			copy,
+		redefine
 			is_equal,
 			out
 		end
 
 	PLATFORM
-		undefine
-			copy,
+		redefine
 			is_equal,
 			out
 		end
 
 	KL_IMPORTED_STRING_ROUTINES
-		undefine
-			copy,
+		redefine
 			is_equal,
 			out
 		end
@@ -94,11 +90,9 @@ feature -- Comparison
 
 	is_equal (other: like Current): BOOLEAN
 		do
-			Result := STRING_.three_way_comparison (other.fast_name , fast_name) = 0
-		ensure then
-			same_name: Result implies fast_name.is_equal (other.fast_name)
+			Result := same_name (other)
 		end
-			
+	
 feature -- Output 
 
 	out: STRING
@@ -161,7 +155,7 @@ feature -- Output
 			end
 		end
 
-feature -- COMPARABLE 
+feature -- COMPARABLE
 
 	same_name (other: IS_NAME): BOOLEAN
 		note
@@ -170,7 +164,7 @@ feature -- COMPARABLE
 			Result := STRING_.same_string (other.fast_name, fast_name)
 		end
 
-	is_less alias "<" (other: IS_NAME): BOOLEAN
+	is_less alias "<" (other: like Current): BOOLEAN
 		do
 			if not same_name (other) then
 				Result := is_name_less (other.fast_name)

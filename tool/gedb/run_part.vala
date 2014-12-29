@@ -2,7 +2,7 @@ using Gtk;
 using Gee;
 using Gedb;
 
-public class RunPart : Box, AbstractPart {
+public class RunPart : Box, AbstractPart, Cancellable  {
 	
 	private enum PrintItem {
 		TEXT,
@@ -29,6 +29,9 @@ public class RunPart : Box, AbstractPart {
 	private Gee.List<Widget> at_end_list;
 	private Gee.Map<string,Expression> aliases;
   	private string[] arg_list;
+	private TreePath stop_path;
+	private string on_stop;
+	private bool tracing;
 	private bool at_end;
 
 	private void issue_command(int cmd, int mode, int rep, string comment) 
@@ -216,11 +219,11 @@ public class RunPart : Box, AbstractPart {
 	requires (dr!=null) { 
 		ClassText* cls;
 		Breakpoint bp; 
-		string str = ""; 
 		string comment = "";
+		string str = ""; 
 		string name;
 		uint pos;
-		if (!cont) {update_markers(mc);
+		if (!cont && frame!=null) {update_markers(mc);
 			status.pop(status.get_context_id("stop-reason"));
 			status_changed(reason, frame, match);
 			cls = dr.rts.class_at(frame.class_id);
@@ -245,7 +248,7 @@ public class RunPart : Box, AbstractPart {
 			for (var iter=match.iterator(); iter.next();) {
 				bp = iter.@get();
 				str += " " + bp.id.to_string();
-				comment += bp.to_string(frame, dr.rts);				
+				comment += bp.to_string(); 
 			}
 			break;
 		case Driver.ProgramState.Debug_clause: 
@@ -255,6 +258,14 @@ public class RunPart : Box, AbstractPart {
 		case Driver.ProgramState.Interrupt: 
 			str = "Program interrupted";
 			comment += "Interrupt\n";
+			break;
+		case Driver.ProgramState.Eval_interrupt: 
+			str = "Expression evaluation interrupted";
+			comment += "On stop evaluation interrupted";
+			break;
+		case Driver.ProgramState.Eval_crash: 
+			str = "Expression evaluation crashed";
+			comment += "On stop evaluation crashed";
 			break;
 		case Driver.ProgramState.Program_end: 
 			str = "Program finished";
@@ -274,31 +285,14 @@ public class RunPart : Box, AbstractPart {
 		default:
 			break;
 		}
+		tracing = cont;
 		uint id = status.get_context_id("stop-reason");
 		status.remove_all(id);
 		status.push(id, str);
+		do_stop_comment(comment, tracing);
 		print_history.update();
-		var path = print_history.top();
-		if (path!=null) {
-			Expression ex;
-			TreeIter iter;
-			var m = print_history.model;
-			m.get_iter(out iter, path);
-			m.@get(iter, PrintItem.EXPR, out ex, -1);
-			try {
-				ex.compute_in_stack(frame, dr.rts);
-				var exb = ex.bottom();
-				if (exb.dynamic_type!=null)
-					comment += exb.format_values(2, 
-						exb.Format.WITH_NAME |
-						exb.Format.WITH_TYPE |
-						exb.Format.INDEX_VALUE ,
-						frame, dr.rts);
-			} catch (ExpressionError e) {
-				ex = ex.next;
-			}
-		}
-		GLib.Idle.@add(() => { return do_stop_comment(comment, cont); });
+		stop_path = print_history.top();
+		if (stop_path!=null) dr.call_delayed(this);
 	}
 
 	private Widget add_button(string name, int cmd,
@@ -524,7 +518,43 @@ to show the parsed argument list.""";
 			dr.notify["is-running"].connect(
 				(g,p) => { do_set_sensitive(dr.is_running); });
 			dr.response.connect(treat_response);
-			marks.tearoff_title = compose_title("Marked positions", dr.rts);
+			marks.tearoff_title =
+				compose_title("Marked positions", dr.rts);
+		}
+	}
+
+	public void action() {
+		Expression ex;
+		TreeIter iter;
+		var m = print_history.model;
+		m.get_iter(out iter, stop_path);
+		m.@get(iter, PrintItem.EXPR, out ex, -1);
+		on_stop = "";
+		uint fmt = 
+			ex.Format.WITH_NAME | ex.Format.WITH_TYPE | ex.Format.INDEX_VALUE;
+		try {
+			ex.compute_in_stack(dr.frame(), dr.rts);
+			var exb = ex.bottom();
+			if (exb.dynamic_type!=null) {
+				on_stop = "On stop:\n";
+				on_stop += exb.format_values(2, fmt, dr.frame(), dr.rts);
+			}
+		} catch (ExpressionError e) {
+			ex = ex.next;
+		}
+	}
+
+	public void post_action() {
+		do_stop_comment(on_stop, tracing);
+	}
+
+	public void post_cancel(StackFrame* f) {
+		on_stop += "  On stop evaluation cancelled\n";
+		do_stop_comment(on_stop, tracing);
+		if (f!=null) {
+			string msg = "Evaluation cancelled";
+			string bad = f.to_string(dr.rts);
+			checker.show_message(msg, "", bad, null);
 		}
 	}
 

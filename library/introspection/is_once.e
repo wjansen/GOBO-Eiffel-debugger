@@ -34,7 +34,7 @@ feature {NONE} -- Initialization
 
 feature -- Access 
 
-	home: IS_CLASS_TEXT
+	home: attached IS_CLASS_TEXT
 			-- Class containing `Current'. 
 
 	is_initialized: BOOLEAN
@@ -120,8 +120,8 @@ feature {NONE} -- External implementation
 
 invariant
 	
-	when_function: is_function and then init /= default_pointer 
-		implies addr /= default_pointer
+	when_function: is_function and then init_address /= default_pointer 
+		implies value_address /= default_pointer
 	
 note
 

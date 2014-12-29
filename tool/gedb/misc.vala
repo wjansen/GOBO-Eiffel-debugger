@@ -35,7 +35,7 @@ public string compose_title(string? addendum, System* rts) {
 
 public delegate void* ReallocFunc(void* orig, size_t n);
 public delegate void FreeFunc(void* orig);
-public delegate void WrapFunc(uint i, void *call, void* C, void** args, void* R);
+public delegate void WrapFunc(uint i, void* call, void* C, void** args, void* R);
 public delegate weak unichar[] UnicharsFunc(void* obj, int *nc);
 public delegate weak uint8[] CharsFunc(void* obj, int *nc);
 
@@ -528,13 +528,12 @@ public string format_type(uint8* addr, int off, bool is_home_addr,
 			str = "[%d] %s".printf((int)n, str);
 		} else if (t.is_tuple() && ft!=null) {
 			var tl = ft.tuple_labels;
-			if (tl!=null) {
+			n = t.generics.length;
+			if (tl!=null && tl.length>=n) {
 				FeatureText* tli;
-				n = t.generics.length;
 				str = "TUPLE";
 				for (uint i=0; i<n; ++i) {
 					tli = tl[i];
-					if (tli==null) break;
 					str += i==0 ? "[" : "; ";
 					str += ((Gedb.Name*)tli).fast_name;
 					str += ": ";
@@ -545,6 +544,29 @@ public string format_type(uint8* addr, int off, bool is_home_addr,
 		}
 	}
 	return str;
+}
+
+/**
+   Interface for actions to be run in a separate thread
+   and that can be canncelled from outside.
+ */
+public interface Cancellable : Object {
+
+/**
+   Action to be run in a separate thread.
+ */
+	public abstract void action();
+
+/**
+   Action to be run in the calling thread after normal end of `action'.
+ */
+	public abstract void post_action();
+
+/**
+   Action to be run in the calling thread after cancellation of `action'.
+   @f StackFrame of the Eiffel routine (if any) called by `action'.
+ */
+	public abstract void post_cancel(StackFrame* f);
 }
 
 public interface ClassPosition {

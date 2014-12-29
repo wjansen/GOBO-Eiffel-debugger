@@ -2857,7 +2857,8 @@ public abstract class Expression : Object {
 		Expression? a = arg;
 		Field* e;
 		uint8* eaddr;
-		for (uint i=0; i<_item_count; ++i) {
+		uint n = uint.min(_item_count,t.field_count());
+		for (uint i=0; i<n; ++i) {
 			assert (a!=null);
 			e = t.fields[i];
 			Gedb.Type* ft = e._entity.type;
@@ -2885,7 +2886,8 @@ public abstract class Expression : Object {
 
 	public override string append_single_name(string? to, uint fmt=0) {
 		string here = to!=null ? to : "";
-		return here + "[" + arg.append_name(null, fmt) + "]";
+		here += arg!=null ? "[" + arg.append_name(null, fmt) + "]" : "[]";
+		return here;
 	}
 
  }

@@ -8,8 +8,7 @@ inherit
 
 	IS_TYPE
 		export
-			{ET_C_SOURCE, IS_SYSTEM}
-				set_bytes
+			{PC_MEMORY_ACCESS} set_bytes
 		redefine
 			base_class,
 			generic_at,
@@ -25,7 +24,7 @@ inherit
 			
 	KL_IMPORTED_STRING_ROUTINES
 		export
-			{} all
+			{NONE} all
 			{ANY}
 				copy,
 				is_equal,
@@ -59,7 +58,6 @@ feature {NONE} -- Initialization
 	declare_from_pattern (o: like origin; p: like Current; s: ET_IS_SYSTEM)
 		local
 			queries: ET_DYNAMIC_FEATURE_LIST
-			q: ET_DYNAMIC_FEATURE
 			a: ET_IS_FIELD
 			buffer: like field_buffer
 			nm: STRING
@@ -81,7 +79,6 @@ feature {NONE} -- Initialization
 			effectors := Void
 			fields := Void
 			routines := Void
-			last_routine := Void
 			internal_hash_code := 0
 			n := p.generic_count
 			if n > 0 then
@@ -99,12 +96,13 @@ feature {NONE} -- Initialization
 					n := 0
 					buffer := field_buffer
 				until i = 0 loop
-					q := queries.item (i)
-					nm := q.static_feature.lower_name
-					if q.is_attribute and attached p.field_by_name (nm) as pa then
-						create a.declare_from_pattern (q, pa, Current, n, s)
-						n := n + 1
-						buffer.push (a)
+					if attached queries.item (i) as q then
+						nm := q.static_feature.lower_name
+						if q.is_attribute and attached p.field_by_name (nm) as pa then
+							create a.declare (q, Current, s)
+							n := n + 1
+							buffer.push (a)
+						end
 					end
 					i := i - 1
 				end
@@ -131,7 +129,6 @@ feature -- Initialization
 			ee: like effectors
 			e: like effector_at
 			i, j: INTEGER
-			detach: BOOLEAN
 		do
 			if not defined then
 				defined := True
@@ -214,27 +211,27 @@ feature -- Access
 
 	base_class: ET_IS_CLASS_TEXT
 
-	generic_at (i: INTEGER): ET_IS_TYPE
+	generic_at (i: INTEGER): attached ET_IS_TYPE
 		do
 			Result := generics [i]
 		end
 
-	effector_at (i: INTEGER): ET_IS_TYPE
+	effector_at (i: INTEGER): attached ET_IS_TYPE
 		do
 			Result := effectors [i]
 		end
 
-	field_at (i: INTEGER): ET_IS_FIELD
+	field_at (i: INTEGER): attached ET_IS_FIELD
 		do
 			Result := fields [i]
 		end
 
-	constant_at (i: INTEGER): ET_IS_CONSTANT
+	constant_at (i: INTEGER): attached ET_IS_CONSTANT
 		do
 			Result := constants [i]
 		end
 
-	routine_at (i: INTEGER): ET_IS_ROUTINE
+	routine_at (i: INTEGER): attached ET_IS_ROUTINE
 		do
 			Result := routines [i]
 		end
@@ -264,9 +261,9 @@ feature -- Status setting
 			has_effector: attached effectors as ee and then ee.has (e)
 		end
 	
-	set_fields (aa: IS_SEQUENCE [IS_FIELD])
+	set_fields (aa: IS_SEQUENCE [attached IS_FIELD])
 		do
-			if attached {IS_SEQUENCE [ET_IS_FIELD]} aa as ff then
+			if attached {IS_SEQUENCE [attached ET_IS_FIELD]} aa as ff then
 				-- workaround spurious catcall
 				fields := ff
 			end
@@ -291,7 +288,7 @@ feature -- Searching
 
 feature -- Factory 
 
-	force_routine (f: ET_DYNAMIC_FEATURE; as_create: BOOLEAN; s: ET_IS_SYSTEM)
+	force_routine (f: attached ET_DYNAMIC_FEATURE; as_create: BOOLEAN; s: ET_IS_SYSTEM)
 		note
 			action:
 			"[
@@ -303,8 +300,7 @@ feature -- Factory
 			is_routine: f.static_feature.is_function
 									or else f.static_feature.is_procedure
 		local
-			last: like last_routine
-			n: INTEGER
+			last: detachable like last_routine
 		do
 			last := routine_by_origin (f, s)
 			if attached last as l and then l.is_creation /= as_create then
@@ -324,15 +320,14 @@ feature -- Factory
 			not_void: attached last_routine
 		end
 
-	force_anonymous_routine (r: ET_IS_ROUTINE)
+	force_anonymous_routine (r: attached ET_IS_ROUTINE)
 		require
 			anonymous: r.is_anonymous
-			has_routines: routines /= Void
 		do
 			routines.add (r)
 		end
 
-	force_precursor_routine (r: ET_IS_ROUTINE)
+	force_precursor_routine (r: attached ET_IS_ROUTINE)
 		require
 			is_precursor: r.is_precursor
 		do
@@ -355,7 +350,7 @@ feature -- Status setting
 
 feature -- Comparison
 	
-	is_equal (other: ET_IS_TYPE): BOOLEAN
+	is_equal (other: attached like Current): BOOLEAN
 		do
 			Result := ident = other.ident
 		end
@@ -388,7 +383,6 @@ feature {ET_IS_TYPE} -- Additional construction
 			no_fields: field_count = 0
 		local
 			qq: ET_DYNAMIC_FEATURE_LIST
-			df: ET_DYNAMIC_FEATURE
 			buffer: like field_buffer
 			f: ET_IS_FIELD
 			i, n, na: INTEGER
@@ -399,8 +393,7 @@ feature {ET_IS_TYPE} -- Additional construction
 				from
 					i := qq.count
 				until i = 0 loop
-					df := qq.item (i)
-					if df.is_attribute then
+					if attached qq.item (i) as df and then df.is_attribute then
 						create f.declare (df, Current, s)
 						na := na + 1
 						buffer.push (f)
@@ -432,12 +425,11 @@ feature {ET_IS_TYPE} -- Additional construction
 			no_routines: routine_count = 0
 		local
 			queries, procedures: ET_DYNAMIC_FEATURE_LIST
-			dynamic: ET_DYNAMIC_FEATURE
+			dynamic: attached ET_DYNAMIC_FEATURE
 			static: ET_FEATURE
 			buffer: like routine_buffer
 			r: detachable ET_IS_ROUTINE
 			rc: ET_IS_ROUTINE
-			nm: STRING
 			i, nr: INTEGER
 			needed, onces_only: BOOLEAN
 		do
@@ -451,7 +443,9 @@ feature {ET_IS_TYPE} -- Additional construction
 						queries := origin.queries
 						i := queries.count
 					until i = 0 loop
-						dynamic := queries.item (i)
+						if attached queries.item (i) as dyn then
+							dynamic := dyn
+						end
 						if not s.origin_table.has (dynamic) then
 							static := dynamic.static_feature
 							i := i - 1
@@ -489,7 +483,9 @@ feature {ET_IS_TYPE} -- Additional construction
 							procedures := origin.procedures
 							i := procedures.count
 						until i = 0 loop
-							dynamic := procedures.item (i)
+							if attached procedures.item (i) as dyn then 
+								dynamic := dyn
+							end
 							if not s.origin_table.has (dynamic) then
 								static := dynamic.static_feature
 								i := i - 1
@@ -513,7 +509,9 @@ feature {ET_IS_TYPE} -- Additional construction
 					from
 						i := procedures.count
 					until i = 0 loop
-						dynamic := procedures.item (i)
+						if attached procedures.item (i) as dyn then
+							dynamic := dyn
+						end
 						static := dynamic.static_feature
 						i := i - 1
 						if dynamic.is_creation and then
@@ -554,22 +552,24 @@ feature {NONE} -- Implementation
 			end
 		end
 
-	target (dyn: ET_DYNAMIC_FEATURE; s: ET_IS_SYSTEM): ET_IS_TYPE
+	target (dyn: ET_DYNAMIC_FEATURE; s: ET_IS_SYSTEM): attached ET_IS_TYPE
 		do
 			if attached {ET_DYNAMIC_PRECURSOR} dyn as prec then
 				s.force_type (prec.parent_type)
-				Result := s.last_type
+				if attached s.last_type as lt then
+					Result := lt
+				end
 			else
 				Result := Current
 			end
 		end
 	
-	field_buffer: IS_STACK [ET_IS_FIELD]
+	field_buffer: IS_STACK [attached ET_IS_FIELD]
 		once
 			create Result
 		end
 
-	routine_buffer: IS_STACK [ET_IS_ROUTINE]
+	routine_buffer: IS_STACK [attached ET_IS_ROUTINE]
 		once
 			create Result
 		end

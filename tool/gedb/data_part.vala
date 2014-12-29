@@ -1697,7 +1697,7 @@ public class FeatureMenu : Gtk.Menu {
 		Gtk.MenuItem item;
 		string name, typed_name;
 		uint i, j, m, n;
-		bool alias;
+		bool alias, header;
 
 		this.data = data;
 		this.prefix = prefix!="Current" ? prefix : "";
@@ -1746,44 +1746,46 @@ public class FeatureMenu : Gtk.Menu {
 			r = t.routines[i];
 			if (r.is_function()) flist.@add(r);
 		}
+		header = false;
+		flist.sort(compare_routines);
 		n = flist.size;
-		if (n>0) {
-			flist.sort(compare_routines);
-			item = new SeparatorMenuItem();
-			append(item);
-			item.show();
-			item = new Gtk.MenuItem.with_label("Functions");
-			append(item);
-			item.show();
-			item.sensitive = false;
-			for (i=0; i<n; i++) {
-				r = flist.@get((int)i);
-				if (r.is_once()) continue;
-				e = (Entity*)r;
-				x = e.text;
-				if (x==null) continue;
-				item = new Gtk.MenuItem();
+		for (i=0; i<n; i++) {
+			r = flist.@get((int)i);
+			if (r.is_once()) continue;
+			e = (Entity*)r;
+			x = e.text;
+			if (x==null) continue;
+			if (!header) {
+				item = new SeparatorMenuItem();
 				append(item);
 				item.show();
-				m = r.argument_count;
-				if (x.alias_name=="[]") {
-					name = "["; 
-				} else if (x.alias_name!=null) {
-					name = x.alias_name;
-				} else {
-					name = e._name.fast_name;
-					if (m>1) name += "(";
-					}
-				for (j=1; j<m; ++j) {
-					if (j>1) name += ",";
-					name += bullet;
-				}
-				if (x.alias_name=="[]") name += "]";
-				else if (m>1 && x.alias_name==null) name += ")";
-				item.activate.connect(do_feature);
-				item.label = add_short_type(name, e);
-				names.@set(item,name);
+				item = new Gtk.MenuItem.with_label("Functions");
+				append(item);
+				item.show();
+				item.sensitive = false;
+				header = true;
 			}
+			item = new Gtk.MenuItem();
+			append(item);
+			item.show();
+			m = r.argument_count;
+			if (x.alias_name=="[]") {
+				name = "["; 
+			} else if (x.alias_name!=null) {
+				name = x.alias_name;
+			} else {
+				name = e._name.fast_name;
+				if (m>1) name += "(";
+			}
+			for (j=1; j<m; ++j) {
+				if (j>1) name += ",";
+				name += bullet;
+			}
+			if (x.alias_name=="[]") name += "]";
+			else if (m>1 && x.alias_name==null) name += ")";
+			item.activate.connect(do_feature);
+			item.label = add_short_type(name, e);
+			names.@set(item,name);
 		}
 
 		ct = t.base_class;
@@ -1851,7 +1853,7 @@ enum Query {
 	NUM_COLS
 }
 	
-public class EvalPart : Grid, AbstractPart {
+public class EvalPart : Grid, AbstractPart, Cancellable {
 
 	private DataPart? data;
 	private Entry result;
@@ -1886,19 +1888,8 @@ public class EvalPart : Grid, AbstractPart {
 		result.set_text(text); 
 	}
 	
-	private bool do_check_expression() {
-		checker.reset();
-		string str = edit.get_text();
-		if (str.strip().length==0 || data.dg==null) return false; 
-		bool ok = checker.check_dynamic
-			(str, null, data.frame, data.dg.rts, true, 
-			 aliases, null, id_to_expr, data);
-		if (!ok) return false;
-		var ex = (!) checker.parsed;
-		history.add_item(ex.append_name(), false);
-		changed = false;
-		set_result(ex);
-		return true;
+	private void do_check_expression() {
+		data.dg.call_delayed(this);
 	}
 	
 	private void do_moved(Object obj) { 
@@ -2027,13 +2018,6 @@ public class EvalPart : Grid, AbstractPart {
 	
 	public HistoryBox history { get; private set; }
 
-	public void compute(string str, bool move_cursor_at_end=false) {
-		edit.text = str;
-		edit.activate();
-		if (move_cursor_at_end) 
-			edit.move_cursor(MovementStep.VISUAL_POSITIONS, str.length, false);
-	}
-	
 	public void insert(string str) { 
 		var model = edit.buffer;
 		string text = edit.text;
@@ -2059,11 +2043,40 @@ public class EvalPart : Grid, AbstractPart {
 		edit.move_cursor(MovementStep.VISUAL_POSITIONS, q, false);
  	}
 
+	public void compute(string str, bool move_cursor_at_end=false) {
+		edit.text = str;
+		edit.activate();
+		if (move_cursor_at_end) 
+			edit.move_cursor(MovementStep.VISUAL_POSITIONS, str.length, false);
+	}
+	
 	public void set_debuggee(Debuggee? dg) { 
 		if (dg!=null) {
 			dg.notify["is-running"].connect(
 				(g,p) => { do_set_sensitive(dg.is_running); });
+			var dr = dg as Driver;
 		}
+	}
+
+	public void action() {
+		checker.reset();
+		string str = edit.get_text();
+		if (str.strip().length==0 || data.dg==null) return; 
+		checker.check_dynamic(str, null, data.frame, data.dg.rts, 
+							  true, aliases, null, id_to_expr, data);
+	}
+
+	public void post_action() {
+		var ex = (!) checker.parsed;
+		history.add_item(ex.append_name(), false);
+		changed = false;
+		set_result(ex);
+	}
+
+	public void post_cancel(StackFrame* f) {
+		string msg = "Evaluation cancelled";
+		string bad = f!=null ? f.to_string(data.dg.rts) : "";
+		checker.show_message(msg, "", bad, null);
 	}
 
 } /* EvalPart */

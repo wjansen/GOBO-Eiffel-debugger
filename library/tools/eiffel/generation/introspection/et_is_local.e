@@ -64,9 +64,9 @@ feature -- Initialization
 
 feature -- Access 
 
-	type: ET_IS_TYPE
+	type: attached ET_IS_TYPE
 
-	home: ET_IS_ROUTINE
+	home: attached ET_IS_ROUTINE
 
 	text: detachable ET_IS_FEATURE_TEXT
 

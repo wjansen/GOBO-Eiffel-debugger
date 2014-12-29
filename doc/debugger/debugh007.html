@@ -32,10 +32,12 @@ by menu item <span style="font-family:sans-serif">File </span>&#X2192;<span styl
 and continuation is not possible. 
 In both cases the <span style="font-family:sans-serif">Run</span> part is not necessary, therefore it is not shown. 
 </p><p>Things are different if the debugger works as runtime analyser. 
-Additionally to the post mortem analyser the runtime analyser gets invoked 
-by the reasons described in Sec.&#XA0;<a href="#S%3AstopAndGo">3.4.1</a>. 
-The part is shown and the elements of the part control 
-the stop-and-go behaviour of the debuggee.</p>
+Additionally to the reasons for the post mortem analyser 
+the runtime analyser gets invoked by the reasons described 
+in Sec.&#XA0;<a href="#S%3AstopAndGo">3.4.1</a>. 
+The debuggee&#X2019;s work can often be continued. 
+So the part is shown and its elements control the stop-and-go behaviour 
+of the debuggee.</p>
 <h4 id="sec14" class="subsubsection">3.4.1&#XA0;&#XA0;Stop-and-go behaviour</h4>
 <p><a id="S:stopAndGo"></a>
 Control switches forth and back between debugger and debuggee. 
@@ -74,21 +76,21 @@ In particular they have the following effect
 </td></tr>
 </table></div><p>
 The counter <span style="font-style:italic">n</span> is determined by the spin button <span style="font-family:sans-serif">repeat</span>. 
-Moreover the effect of <span style="font-family:sans-serif">Cont</span> is modified by the radio buttons
+Moreover the effect of buttons is modified by the radio buttons
 </p><dl class="description"><dt class="dt-description"><span style="font-family:sans-serif">break</span></dt><dd class="dd-description"> treat breakpoints and tracepoints as defined;
 </dd><dt class="dt-description"><span style="font-family:sans-serif">trace</span></dt><dd class="dd-description"> treat breakpoints as tracepoints, i.e. do not stop;
 </dd><dt class="dt-description"><span style="font-family:sans-serif">silent</span></dt><dd class="dd-description"> ignore breakpoints and tracepoints at all.
 </dd></dl><p>The effect of button <span style="font-family:sans-serif">Stop</span> 
+(The button label <span style="font-family:sans-serif">Stop</span> is suppressed on some platforms 
+in favour of the keyboard accelerator <span style="font-family:sans-serif">Pause</span>. 
+You may need to read <span style="font-family:sans-serif">Pause</span> for <span style="font-family:sans-serif">Stop</span> in the following.
+)
 is complementary to that of the other buttons. 
 Quite naturally, also its sensitivity is complementary:
 if the debuggee has stopped for some reason then <span style="font-family:sans-serif">Stop</span> is insensitive 
 while the other &#X201C;dynamic&#X201D; buttons are sensitive, 
 but if the debuggee is running then <span style="font-family:sans-serif">Stop</span> is sensitive while 
 the dynamic buttons (and most GUI elements) are insensitive.
-(The button label <span style="font-family:sans-serif">Stop</span> is suppressed on some platforms 
-in favour of the keyboard accelerator <span style="font-family:sans-serif">Pause</span>. 
-You may need to read <span style="font-family:sans-serif">Pause</span> for <span style="font-family:sans-serif">Stop</span>.
-)
 </p><p>Some remarks seem to be in order to explain when the <span style="font-family:sans-serif">Next</span> 
 and <span style="font-family:sans-serif">Step</span> commands actually stop. 
 Command <span style="font-family:sans-serif">Next</span> stops before the next instruction. 
@@ -129,7 +131,7 @@ return (e.g. by command <span style="font-family:sans-serif">Back</span>)
 the program is ready to enter the procedure by one more <span style="font-family:sans-serif">Step</span> command 
 (again for visibility not yet in the procedure):
 </p><pre>
-  <span style="text-decoration:overline">s</span>ome_proc (some_func (arg))
+   <span style="text-decoration:overline">s</span>ome_proc (some_func (arg))
 </pre><p>
 A similar role as the call instructions play for stepping 
 into their argument expressions 
@@ -142,7 +144,7 @@ in particular, the <span style="font-family:sans-serif">Step</span> command stop
 for which debugging information has been generated (if any) 
 or simply jumps over routine calls of the class. 
 Nonetheless, even if debugger information is not generated 
-the actual program positions are monitored, 
+the actual program positions of instructions are monitored, 
 so the contents of the <span style="font-family:sans-serif">Call stack</span> part is correct. </p>
 <h4 id="sec15" class="subsubsection">3.4.2&#XA0;&#XA0;Mark and reset</h4>
 <p><a id="S:markReset"></a>
@@ -156,23 +158,24 @@ Storing and restoring the system state may be used to approximate
 a critical program point more and more closely. 
 </p><p>Clicking button <span style="font-family:sans-serif">Mark</span> stores the program state and marks 
 the program point to be recoverable. 
-The program point is added to the combobox to its right. 
-A program point in this combobox is recovered when selected. 
+The program point is added to the combobox <span style="font-family:sans-serif">Reset</span> to its right. 
+A program point in this combobox is restored when selected. 
 Then also marked program points not in the call stack 
 up to the selected program point are discarded 
 but marked points at the same call stack level remain valid. 
-So, it is possible to jump forward and backward in the same routine call. 
+So, it is possible to jump forth and back in the same routine call. 
 </p><blockquote class="quote">
 <div class="center"><span style="font-weight:bold">Warnings</span></div> 
 <ul class="itemize"><li class="li-itemize">Non-Eiffel data, e.g. file contents, are not stored and restored. 
 This may cause the program state to be incorrect after <span style="font-family:sans-serif">Reset</span>. 
 </li><li class="li-itemize">Store and restore make a deep traversal through the objects reachable 
-from the current routine, so these actions may take some time. 
+from the current routine, so these actions may take some time 
+and a very large stack size may be needed. 
 </li><li class="li-itemize">The program state is written to a binary file 
 <span style="font-style:italic">debuggee</span><span style="font-family:monospace">.m</span><span style="font-style:italic">n</span> in a temporary directory 
 (<span style="font-style:italic">n</span> is a counter). 
-This file should not be viewed or printed and must not be modified 
-(it is deleted at end of the debugging session).
+This file should not be viewed or printed and must not be modified, 
+it is deleted when the marked point becomes invalid. 
 </li><li class="li-itemize">Debugger settings such as breakpoint definitions are not stored and restored. 
 So, any breakpoint definitions are preserved 
 across the <span style="font-family:sans-serif">Reset</span> command. 
@@ -191,8 +194,7 @@ has not been clicked.
 Pressing the right mouse button in this text field
 pops up a menu showing how the string is parsed into separate arguments. 
 The menu is for visualization only, clicking an item has no effect. 
-</blockquote><blockquote class="quote">
-<div class="center"><span style="font-weight:bold">Restriction</span></div> Argument parsing works very well 
+Argument parsing works very well 
 under <span style="font-style:oblique">Posix</span> compliant operating systems, 
 otherwise it is rather poor. 
 </blockquote>

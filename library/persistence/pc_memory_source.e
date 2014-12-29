@@ -10,7 +10,7 @@ class PC_MEMORY_SOURCE
 
 inherit
 
-	PC_RANDOM_ACCESS_SOURCE [ANY]
+	PC_RANDOM_ACCESS_SOURCE [attached ANY]
 		undefine
 			set_field
 		redefine
@@ -174,7 +174,7 @@ feature -- Status setting
 			actionable_set: actionable = yes_no
 		end
 
-	set_ident (obj: detachable ANY)
+	set_ident (obj: attached ANY)
 		do
 			process_ident (obj)
 		end
@@ -202,7 +202,7 @@ feature {PC_DRIVER} -- Reading structure definitions
 			process_ident (actual_object)
 		end
 
-	read_once (id: ANY)
+	read_once (id: attached ANY)
 		do
 			last_class := Void
 			if attached system.once_by_address (as_pointer(id)) as o then
@@ -220,7 +220,7 @@ feature {PC_DRIVER} -- Reading object definitions
 			process_ident (id)
 		end
 	
-	pre_object (t: IS_TYPE; id: detachable ANY)
+	pre_object (t: IS_TYPE; id: attached ANY)
 		do
 			if id /= void_ident then
 				push_offset (t, id)
@@ -234,7 +234,7 @@ feature {PC_DRIVER} -- Reading object definitions
 			end
 		end
 
-	post_object (t: IS_TYPE; id: detachable ANY)
+	post_object (t: IS_TYPE; id: attached ANY)
 		do
 			pop_offset
 			if actionable and then t.is_actionable then
@@ -244,7 +244,7 @@ feature {PC_DRIVER} -- Reading object definitions
 			end
 		end
 
-	pre_agent (a: IS_AGENT_TYPE; id: ANY)
+	pre_agent (a: IS_AGENT_TYPE; id: attached ANY)
 		local
 			obj: ANY
 		do
@@ -252,12 +252,12 @@ feature {PC_DRIVER} -- Reading object definitions
 			push_offset (a, obj)
 		end
 
-	post_agent (a: IS_AGENT_TYPE; id: ANY)
+	post_agent (a: IS_AGENT_TYPE; id: attached ANY)
 		do
 			pop_offset
 		end
 
-	pre_special (s: IS_SPECIAL_TYPE; cap: NATURAL; id: ANY)
+	pre_special (s: IS_SPECIAL_TYPE; cap: NATURAL; id: attached ANY)
 		do
 			push_offset (s, id)
 			inspect s.item_type.ident
@@ -321,7 +321,7 @@ feature {PC_DRIVER} -- Reading object definitions
 			end
 		end
 	
-	post_special (t: IS_SPECIAL_TYPE; id: ANY)
+	post_special (t: IS_SPECIAL_TYPE; id: attached ANY)
 		do
 			pop_offset
 		end

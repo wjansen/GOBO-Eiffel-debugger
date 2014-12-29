@@ -107,7 +107,7 @@ feature -- Constants
 
 	free_op: INTEGER = 40
 	
-feature {} -- External implementation 
+feature {NONE} -- External implementation 
 
 	Interrupt_signal: INTEGER
 		external

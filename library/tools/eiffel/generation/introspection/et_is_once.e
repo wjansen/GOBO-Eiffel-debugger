@@ -51,9 +51,9 @@ feature {NONE} -- Initialization
 
 feature -- Access 
 
-	target: ET_IS_TYPE
+	target: attached ET_IS_TYPE
 
-	home: ET_IS_CLASS_TEXT
+	home: attached ET_IS_CLASS_TEXT
 
 	type: detachable ET_IS_TYPE
 

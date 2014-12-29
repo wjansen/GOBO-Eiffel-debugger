@@ -19,7 +19,7 @@ public class ConsolePart : ScrolledWindow {
 	private void fill_tag_table(TextBuffer buf) {
 		TextTag tag; 
 		tag = buf.create_tag("go", 
-							 "foreground", "green", "foreground-set", true, 
+							 "foreground", "#6cd306", "foreground-set", true, 
 							 null);
 		tag = buf.create_tag("info", 
 							 "foreground", "yellow", "foreground-set", true, 

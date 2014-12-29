@@ -24,6 +24,7 @@
 			Generate scanner and parser files.
 		</description>
 
+		<geant file="build.eant" target="install" dir="debugger"/>
 		<geant target="eiffel_scanner"/>
 		<geant target="eiffel_parser"/>
 		<geant target="eiffel_preparser"/>

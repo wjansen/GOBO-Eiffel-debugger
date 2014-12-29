@@ -2,7 +2,7 @@ using Gedb;
 
 namespace Eval {
 	
-	public enum ErrorCode {
+	public errordomain ParseError {
 		OK = 0,
 		NO_CLASS,
 		NO_TUPLE,
@@ -73,7 +73,7 @@ namespace Eval {
 			syntax_only = false;
 		}
 
-		public void init_typed(Gedb.Type* t, StackFrame* f, System* s, 
+		public void init_typed(Gedb.Type* t, StackFrame* f, System* s,
 							   bool compute_now) 
 		requires (t!=null || f!=null) requires (s!=null) {
 			reset(true);
@@ -82,15 +82,12 @@ namespace Eval {
 			if (t!=null) {
 				root_type = t;
 				base_class = root_type.base_class;
-			} else if (f!=null) {
-				root_type = f.target_type();
-				base_class = system.class_at(f.class_id);
-				act_routine = f.routine;
+			} else {
+				root_type = frame.target_type();
+				base_class = system.class_at(frame.class_id);
 			}
-			if (f!=null) {
-				act_routine = f.routine;
-				act_text = act_routine.routine_text();
-			}
+			act_routine = frame.routine;
+			act_text = (RoutineText*)((Entity*)act_routine).text;
 			syntax_only = false;
 			now = compute_now;
 		}
@@ -108,7 +105,7 @@ namespace Eval {
 			bp = null;
 			missing_alias = null;
 			missing_ident = 0;
-			error = ErrorCode.OK;
+			error = null;
 			syntax_only = true;
 			if (totally) {
 				system = null;
@@ -131,12 +128,14 @@ namespace Eval {
 		}
 		
 		public override void on_syntax_error() {
-			if (error==ErrorCode.OK) {
-				error = ErrorCode.OTHER;
+			string msg = "Syntax: at %d after matching `%s'".
+				printf(n_chars_read, last_token.name);
+			if (error==null) {
+				error = new ParseError.OTHER ("Syntax error");
 				last_token = token_gobject as Token;
 			}
 			is_match = false;
-			// stderr.printf("Syntax: at %d after matching `%s'\n", n_chars_read, last_token.name);
+			// stderr.printf("%s\n",msg);
 		}
 		
 		public void set_aliases(Gee.Map<string,Expression>? al) {
@@ -170,8 +169,8 @@ namespace Eval {
 		public string missing_alias;
 		public uint missing_ident;
 		public bool not_unique;
-		public ErrorCode error;
-		
+		public ParseError? error;
+
 		public Nonterm? value_at(int pos, bool with_range) {
 			return result!=null ? result.child_at(this, pos, with_range) : null;
 		}
@@ -203,7 +202,7 @@ namespace Eval {
 				if (now) {
 					try {
 						if (frame!=null && !in_object) {
-							ex.compute_in_stack(frame, system); 
+							ex.compute_in_stack(frame, system);
 						} else  {
 							Expression? p = ex.parent;
 							uint8* pa = p!=null ? p.address() : null;
@@ -212,7 +211,7 @@ namespace Eval {
 							ex.compute_in_object(pa, t, system, frame, null);
 						}
 					} catch (ExpressionError err) {
-						error = ErrorCode.NOT_COMPUTED;
+						error = new ParseError.NOT_COMPUTED (err.message);
 						last_token = v.token;
 						is_match = false;
 					}
@@ -221,7 +220,7 @@ namespace Eval {
 						ex.parent.base_class() : base_class;
 					is_match &= ex.static_check(ct, act_text, system, frame);
 					if (!is_match) {
-						error = ErrorCode.UNKNOWN;
+						error = new ParseError.UNKNOWN ("Syntax error");
 						last_token = v.token;
 					}
 				}
@@ -1163,14 +1162,14 @@ namespace Eval {
 					h.not_unique = n>0;
 				}
 				if (dex==null)
-					h.error = ErrorCode.UNKNOWN;
+					h.error = new ParseError.UNKNOWN ("");
 			}
 			ex.set_child(ex.Child.DOWN, dex);
 			d.expr = dex;
 			if (dex!=null) h.register(d, true, true);
 			if (dex==null) {
 				h.last_token = d.token;
-				if (h.error==0) h.error = ErrorCode.UNKNOWN;
+				if (h.error==null) h.error = new ParseError.UNKNOWN ("");
 				h.is_match = false;
 			}
 		}
@@ -1196,7 +1195,8 @@ namespace Eval {
 				for (uint i=nu; i-->0;) {
 					if (f==null) {
 						h.last_token = up.token;
-						h.error = ErrorCode.NO_STACK;
+						h.error = new ParseError.NO_STACK 
+							("Not actual call stack");
 						h.is_match = false;
 						return;
 					}
@@ -1237,7 +1237,8 @@ namespace Eval {
 						}
 					} catch (ExpressionError err) {
 						if (err is ExpressionError.NOT_INITIALIZED) 
-							h.error = ErrorCode.NOT_INIT;
+							h.error = new ParseError.NOT_INIT 
+								("Once function not yet initalized");
 					}
 				} else {
 					ft = ct.query_by_name(out n, name, u.args==null,
@@ -1264,7 +1265,7 @@ namespace Eval {
 				h.last_token = u.token;
 				h.last_value = null; 
 				h.not_unique = n>0;
-				if (h.error==0) h.error = ErrorCode.UNKNOWN;
+				if (h.error==null) h.error = new ParseError.UNKNOWN ("");
 				h.is_match = false;
 			}
 		}
@@ -1319,7 +1320,14 @@ namespace Eval {
 			} else {
 				h.last_token = t;
 				h.missing_ident = id;
-				h.error = is_id ? ErrorCode.NO_IDENT : ErrorCode.NO_ALIAS;
+				if (!is_id)
+					h.error = new ParseError.NO_ALIAS ("Unkown alias name");
+					else if (h.syntax_only) 
+						h.error = new ParseError.NO_IDENT 
+							("Invalid object ident");
+					else 
+						h.error = new ParseError.NO_IDENT 
+							("Object idents not supported");
 				h.is_match = false;
 			}
 		}
@@ -1406,7 +1414,7 @@ namespace Eval {
 				h.pop_place(true);
 			} else {
 				h.last_token = oi.token;
-				h.error = ErrorCode.NO_RANGE;
+				h.error = new ParseError.NO_RANGE ("Not in a range");
 				h.is_match = false;				
 			}
 		}
@@ -1435,7 +1443,7 @@ namespace Eval {
 				h.register(this);
 			} else {
 				h.last_token = l;
-				h.error = ErrorCode.NO_RANGE;
+				h.error = new ParseError.NO_RANGE ("Not in a range");
 				h.is_match = false;
 			}
 		}
@@ -1494,7 +1502,7 @@ namespace Eval {
 			this.copy(h, u);
 			set_root(h, f, u);
 			if (h.is_match) expr.upframe_count = f.count;
-			else h.error = ErrorCode.NO_STACK;
+			else h.error = new ParseError.NO_STACK ("Out of call stack");
 		}
 		
 		[Lemon(pattern="Left(l) DOT Unqualified(u)")]
@@ -1538,7 +1546,7 @@ namespace Eval {
 			} else if (h.is_match) {
 				h.not_unique = n>1;
 				h.last_token = b.token;
-				h.error = ErrorCode.UNKNOWN;
+				h.error = new ParseError.UNKNOWN ("");
 				h.is_match = false;
 			}
 		}
@@ -1562,7 +1570,7 @@ namespace Eval {
 			s.pop_types(s, n);
 			if (tt==null) {
 				h.last_token = b.token;
-				h.error = ErrorCode.NO_TUPLE;
+				h.error = new ParseError.NO_TUPLE ("Unknown TUPLE type");
 				h.is_match = false;
 			}
 			return tt;
@@ -1571,9 +1579,9 @@ namespace Eval {
 		[Lemon(pattern="LBRACKET(l) RBRACKET(r)")]
 		public Left._5(Parser h, Token l, Token r) { 
 			base.from_token(h, l, r, "[...]");
-			var ct = h.system.class_by_name("TUPLE");
-			var tt = get_tt(h, null);
+			var tt = h.system.tuple_type_by_generics(0, false);
 			if (tt==null) return;
+			var ct = h.system.class_by_name("TUPLE");
 			expr = new TupleExpression(null, tt, ct);
 			h.register(this, true, false);
 		}
@@ -1581,9 +1589,9 @@ namespace Eval {
 		[Lemon(pattern="Brackets(b)")]
 		public Left._6(Parser h, Brackets b) {
 			base.from_token(h, b.token);
-			var ct = h.system.class_by_name("TUPLE");
 			var tt = get_tt(h, b);
 			if (tt==null) return;
+			var ct = h.system.class_by_name("TUPLE");
 			expr = new TupleExpression(b.expr, tt, ct);
 			expr.set_child(expr.Child.ARG, b.expr);
 			h.register(this, true, false);
@@ -1601,7 +1609,8 @@ namespace Eval {
 				if (g.is_once()) {
 					var o = (Gedb.Once*)g;
 					if (!o.is_initialized()) 
-						h.error = ErrorCode.NOT_INIT;
+						h.error = new ParseError.NOT_INIT 
+							("Once function not initialized");
 					else
 						expr = new OnceExpression(o);
 				} else {
@@ -1612,7 +1621,8 @@ namespace Eval {
 			if (expr==old) {
 				h.last_token = u.token;
 				h.not_unique = n>0;
-				if (h.error==0) h.error = ErrorCode.NO_ONCE;
+				if (h.error==null) h.error = new ParseError.NO_ONCE 
+					("Unknown once function or constant");
 				h.is_match = false;
 			}
 		}
@@ -1631,12 +1641,13 @@ namespace Eval {
 			if (h.syntax_only) {
 			} else if (sn==0) {
 				h.last_token = p;
-				h.error = ErrorCode.BAD_PH_POS;
+				h.error = new ParseError.BAD_PH_POS 
+					("Placeholder not allowed here");
 				h.is_match= false;
 				return;
 			} else if (sn<pn) {
 				h.last_token = p;
-				h.error = ErrorCode.BAD_PH_COUNT;
+				h.error = new ParseError.BAD_PH_COUNT ("Too many placeholders");
 				h.is_match= false;
 				return;
 			}
@@ -1668,7 +1679,7 @@ namespace Eval {
 			cls = h.system.class_by_name(token.name);
 			if (cls==null) {
 				h.last_token = token;
-				h.error = ErrorCode.NO_CLASS;
+				h.error = new ParseError.NO_CLASS ("Unknwon class name");
 				h.is_match = false;
 			}
 		}
@@ -1901,7 +1912,7 @@ namespace Eval {
 			} else {
 				h.not_unique = n>0;
 				h.last_token = op;
-				h.error = ErrorCode.UNKNOWN;
+				h.error = new ParseError.UNKNOWN ("");
 				h.is_match = false;
 			}
 		}

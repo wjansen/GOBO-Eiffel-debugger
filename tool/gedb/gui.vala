@@ -1021,8 +1021,7 @@ namespace Gedb {
 	private static void interrupt_handler(int sig) {
 		if (the_gui==null) return;
 		if (the_gui.dr!=null) {
-			var th = Thread.self<int>();
-			if (thread==th) {
+			if (thread==Thread.self<int>()) {
 				the_gui.dr.set_interrupt();
 			} else {
 				the_gui.dr.catch_signal(sig);

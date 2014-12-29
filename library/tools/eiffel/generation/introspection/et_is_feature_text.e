@@ -21,7 +21,7 @@ create
 	declare_from_declaration,
 	declare_simple
 
-create {ET_IS_CLASS_TEXT}
+create {ET_IS_CLASS_TEXT,ET_IS_TYPE}
 
 	declare_from_feature,
 	declare_renamed
@@ -81,8 +81,6 @@ feature {NONE} -- Initialization
 		end
 
 	declare_from_feature (f: ET_FEATURE; h: like home; s: ET_IS_SYSTEM)
-		require
-			h_implements_e: f.origin.static_feature.implementing_class = h
 		local
 			static: ET_FEATURE
 			pos: ET_POSITION
@@ -121,7 +119,7 @@ feature {NONE} -- Initialization
 			end
 			last_pos := last_pos.max (first_pos)
 		ensure
-			origin_set: origin = f.static_feature
+			origin_set: origin = f
 		end
 
 	declare_renamed (nm: STRING; h: like home; r: like renames; const: BOOLEAN
@@ -164,9 +162,9 @@ feature -- Access
 
 	home: ET_IS_CLASS_TEXT
 
-	renames: like Current
+	renames: detachable ET_IS_FEATURE_TEXT
 
-	tuple_labels: detachable IS_SEQUENCE [ET_IS_FEATURE_TEXT]
+	tuple_labels: detachable IS_SEQUENCE [attached ET_IS_FEATURE_TEXT]
 
 feature -- Status Setting
 	
@@ -174,7 +172,6 @@ feature -- Status Setting
 		note
 			action: "TUPLE labels of `t'."
 		local
-			label: ET_LABEL
 			text: ET_IS_FEATURE_TEXT
 			nm: STRING
 			i, n: INTEGER
@@ -193,14 +190,15 @@ feature -- Status Setting
 							else
 								s.force_class (t.base_class)
 							end
-							label := param.label_item
-							nm := label.identifier.lower_name
-							create text.declare_from_declaration
-								(label, nm, param.declared_type, home, s)
-							if not attached tuple_labels then
-								create tuple_labels.make (n, text)
+							if attached param.label_item as l then
+								nm := l.identifier.lower_name
+								create text.declare_from_declaration
+									(l, nm, param.declared_type, home, s)
+								if not attached tuple_labels then
+									create tuple_labels.make (n, text)
+								end
+								tuple_labels.add (text)
 							end
-							tuple_labels.add (text)
 						end
 						i := i + 1
 					end
@@ -225,7 +223,7 @@ feature -- Basic operation
 
 feature {NONE} -- Implementation 
 
-	labels_table: DS_HASH_TABLE [IS_SEQUENCE [ET_IS_FEATURE_TEXT], ET_BASE_TYPE]
+	labels_table: DS_HASH_TABLE [IS_SEQUENCE [attached ET_IS_FEATURE_TEXT], ET_BASE_TYPE]
 		once
 			create Result.make (100)
 		end

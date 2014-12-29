@@ -55,7 +55,7 @@ feature {NONE} -- Initialization
 	
 feature -- Access
 
-	base_class: ET_IS_CLASS_TEXT
+	base_class: attached ET_IS_CLASS_TEXT
 	
 feature {NONE} -- Implementation
 
@@ -86,17 +86,14 @@ feature {NONE} -- Implementation
 	
 	add_operators (buffer: like routine_buffer; s: ET_IS_SYSTEM)
 		local
-			bc: ET_CLASS
 			qq: ET_QUERY_LIST
 			q: ET_QUERY
-			dq: ET_DYNAMIC_FEATURE
 			r: ET_IS_ROUTINE
 			nm: STRING
 			i: INTEGER
 		do
-			bc := origin.base_class
 			from
-				qq := bc.queries
+				qq := origin.base_class.queries
 				i := qq.count
 			until i = 0 loop
 				q := qq.item (i)
@@ -104,9 +101,10 @@ feature {NONE} -- Implementation
 				if attached q.alias_name and then standard_operators.has (nm)
 					and then not attached routine_by_name(nm, False)
 				 then
-					dq := origin.dynamic_query (q, s.origin)
-					create r.declare (dq, Current, s)
-					buffer.push (r)
+					if attached origin.dynamic_query (q, s.origin) as dq then
+						create r.declare (dq, Current, s)
+						buffer.push (r)
+					end
 				end
 				i := i - 1
 			end

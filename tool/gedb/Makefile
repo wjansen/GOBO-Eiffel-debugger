@@ -11,8 +11,8 @@ l=.so
 e=
 prelib=lib
 
-VALA := inspect.vala misc.vala expression.vala breakpoint.vala \
-  checker.vala persist.vala driver.vala \
+VALA := inspect.vala misc.vala expression.vala \
+  breakpoint.vala checker.vala persist.vala driver.vala \
   abstract_part.vala info_part.vala console_part.vala \
   stack_part.vala data_part.vala sql_part.vala \
   run_part.vala break_part.vala source_part.vala gui.vala 
@@ -103,7 +103,8 @@ console_part$o: console_part.vala misc.vapi inspect.vapi
 console_part.vapi: console_part.vala
 
 stack_part$o: stack_part.vala inspect.vapi misc.vapi \
- expression.vapi breakpoint.vapi driver.vapi info_part.vapi abstract_part.vapi
+ expression.vapi breakpoint.vapi driver.vapi info_part.vapi \
+ abstract_part.vapi
 	valac -c $(VFLAGS) --vapi=stack_part.vapi -h stack_part.h $(PKG) $^
 stack_part.vapi: stack_part.vala
 
@@ -136,18 +137,19 @@ break_part$o: break_part.vala inspect.vapi persist.vapi misc.vapi \
 break_part.vapi: break_part.vala
 
 source_part$o: source_part.vala inspect.vapi persist.vapi \
- misc.vapi expression.vapi breakpoint.vapi driver.vapi info_part.vapi \
- abstract_part.vapi console_part.vapi stack_part.vapi data_part.vapi \
- run_part.vapi break_part.vapi \
+ misc.vapi expression.vapi breakpoint.vapi driver.vapi \
+ info_part.vapi abstract_part.vapi console_part.vapi stack_part.vapi \
+ data_part.vapi run_part.vapi break_part.vapi \
  home/home_parser.vapi home/_GedbParserParser.vapi \
  src/src_scanner.vapi src/_GedbScannerParser.vapi
 	valac -c $(VFLAGS) --vapi=source_part.vapi -h source_part.h $(PKG) $^
 source_part.vapi: source_part.vala
 
 gui$o help_part$o: gui.vala help_part.vala inspect.vapi misc.vapi \
- persist.vapi expression.vapi breakpoint.vapi driver.vapi info_part.vapi \
- abstract_part.vapi console_part.vapi stack_part.vapi data_part.vapi \
- sql_part.vapi checker.vapi run_part.vapi break_part.vapi source_part.vapi \
+ persist.vapi expression.vapi breakpoint.vapi driver.vapi \
+ info_part.vapi abstract_part.vapi console_part.vapi stack_part.vapi \
+ data_part.vapi sql_part.vapi checker.vapi run_part.vapi break_part.vapi \
+ source_part.vapi \
  src/src_scanner.vapi src/_GedbScannerParser.vapi \
  home/home_parser.vapi home/_GedbParserParser.vapi \
  eval/eval_parser.vapi eval/_EvalParserParser.vapi 
@@ -166,7 +168,7 @@ main$o: main.vala gui.vapi inspect.vapi persist.vapi misc.vapi \
 	valac -c $(VFLAGS) $(PKG) --pkg=gmodule-2.0 $^
 
 libgedb.a: gui.o inspect.o persist.o misc.o \
- expression.o breakpoint.o driver.o \
+ expression.o envir.o breakpoint.o driver.o \
  abstract_part.o info_part.o console_part.o stack_part.o \
  data_part.o  sql_part.o checker.o run_part.o break_part.o \
  source_part.o help_part.o \

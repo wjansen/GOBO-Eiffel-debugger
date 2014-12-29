@@ -1,4 +1,4 @@
-class PC_ANY_TABLE [V_]
+class PC_ANY_TABLE [V_ -> detachable ANY]
 
 inherit
 
@@ -22,7 +22,7 @@ feature -- Access
 
 feature -- Hash code 
 
-	hash (key: ANY): INTEGER
+	hash (key: attached ANY): INTEGER
 		do
 			Result := ($key).hash_code // 8 
 		end

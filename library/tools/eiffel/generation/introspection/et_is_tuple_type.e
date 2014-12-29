@@ -55,7 +55,6 @@ feature {NONE} -- Initialization
 
 	declare (o: like origin; id: INTEGER; s: ET_IS_SYSTEM)
 		local
-			item: ET_IDENTIFIER
 			sets: ET_DYNAMIC_TYPE_SET_LIST
 			dynamic: ET_DYNAMIC_TYPE
 			t: ET_IS_TYPE
@@ -86,22 +85,23 @@ feature {NONE} -- Initialization
 					i := 0
 				until i = n loop
 					t := generic_at (i)
-					item := item_id (i + 1, s)
-					create a.declare_without_origin (i, item.lower_name, t, Current, s)
-					if attached {ET_DECLARED_TYPE} t.origin.base_type as d then
-						create x.declare_from_declaration (item, a.fast_name, d, base_class, s)
-						if i = 0 then
-							x.declare_tuple_labels (t.origin.base_type, s)
-						elseif attached x.tuple_labels as tl then
-							x.set_tuple_labels (tl)
+					if attached item_id (i + 1, s) as item then
+						create a.declare_without_origin (i, item.lower_name, t, Current, s)
+						if attached {ET_DECLARED_TYPE} t.origin.base_type as d then
+							create x.declare_from_declaration (item, a.fast_name, d, base_class, s)
+							if i = 0 then
+								x.declare_tuple_labels (t.origin.base_type, s)
+							elseif attached x.tuple_labels as tl then
+								x.set_tuple_labels (tl)
+							end
+							a.set_text (x)
 						end
-						a.set_text (x)
-					end
-					if not attached fields then
-						create fields.make (n, a)
-					end
-					if attached fields as aa then
-						aa.add (a)
+						if not attached fields then
+							create fields.make (n, a)
+						end
+						if attached fields as aa then
+							aa.add (a)
+						end
 					end
 					i := i + 1
 				end
@@ -113,7 +113,7 @@ feature {NONE} -- Initialization
 
 	declare_from_pattern (o: like origin; p: like Current; s: ET_IS_SYSTEM)
 		local
-			a: ET_IS_FIELD
+			a: attached ET_IS_FIELD
 			i, n: INTEGER
 		do
 			Precursor (o, p, s)
@@ -121,7 +121,8 @@ feature {NONE} -- Initialization
 				from
 					n := generic_count
 				until i = n loop
-					create a.declare_from_pattern (Void, p.field_at (i), Current, i, s)
+					a := p.field_at (i)
+					create a.declare_without_origin (i, a.fast_name, a.type, Current, s)
 					if not attached fields then
 						create fields.make (n, a)
 					end
@@ -161,7 +162,7 @@ feature -- Initialization
 
 feature -- Access 
 
-	base_class: ET_IS_CLASS_TEXT
+	base_class: attached ET_IS_CLASS_TEXT
 
 feature -- ET_IS_ORIGIN 
 

@@ -20,7 +20,7 @@ inherit
 		end
 
 	DG_TOKENS
-		export {} all end
+		export {NONE} all end
 
 
 feature -- Status report

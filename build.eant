@@ -40,7 +40,7 @@
 			Remove intermediary generated files.
 		</description>
 
-<geant file="build.eant" target="clean" dir="tool/gedb" if="${GOBO_EIFFEL}=ge"/>
+		<geant file="build.eant" target="clean" dir="tool/gedb" if="${GOBO_EIFFEL}=ge"/>
 		<geant file="build.eant" target="clean" dir="library/tools/debugger"/>
 		<geant file="build.eant" target="clean" dir="library"/>
 		<geant file="build.eant" target="clean" dir="src"/>
@@ -54,8 +54,6 @@
 			Remove all generated files.
 		</description>
 
-		<geant file="build.eant" target="clobber" dir="tool/gedb" if="${GOBO_EIFFEL}=ge"/>
-		<geant file="build.eant" target="clobber" dir="library/tools/debugger"/>
 		<geant file="build.eant" target="clobber" dir="library"/>
 		<geant file="build.eant" target="clobber" dir="src"/>
 		<geant file="build.eant" target="clobber" dir="example"/>
@@ -83,12 +81,13 @@
 		<geant file="build.eant" target="install" dir="library"/>
 		<geant file="build.eant" target="clobber" dir="src/gec"/>
 		<geant file="build.eant" target="install" dir="src/gec"/>
-			<!-- Need 'inspect.h' before installing 'debugger' -->
-		<geant file="build.eant" target="clobber" dir="tool/gedb" if="${GOBO_EIFFEL}=ge"/>
-		<geant file="build.eant" target="install" dir="tool/gedb" if="${GOBO_EIFFEL}=ge"/>
 			<!-- Need 'dg_system.e' before compiling 'gec' -->
-		<geant file="build.eant" target="clobber" dir="library/tools/debugger"/>
-		<geant file="build.eant" target="install" dir="library/tools/debugger"/>
+		<geant file="build.eant" target="clobber" dir="tool/gedb" if="${GOBO_EIFFEL}=ge"/>
+		<geant file="build.eant" target="install" dir="tool/gedb"/>
+		<geant file="build.eant" target="clobber" dir="library/tools/debugger" if="${GOBO_EIFFEL}=ge"/>
+		<geant file="build.eant" target="install" dir="library/tools/debugger" if="${GOBO_EIFFEL}=ge"/>
+		<geant file="build.eant" target="clean" dir="tool/gedb" if="${GOBO_EIFFEL}=ge"/>
+		<geant file="build.eant" target="clean" dir="library/tools/debugger"/>
 			<!-- Compile gec twice to get a bootstrap effect -->
 		<geant file="build.eant" target="compile" dir="src/gec" if="${GOBO_EIFFEL}=ge"/>
 		<move file="src/gec/gec${exe}" to_directory="bin" if="${GOBO_EIFFEL}=ge"/>
@@ -122,8 +121,6 @@
 		<geant file="../src/geyacc/build.eant" target="compile" dir="bin"/>
 		<geant file="../src/geyacc/build.eant" target="clean" dir="bin"/>
 		<geant target="clobber"/>
-		<geant file="build.eant" target="install" dir="tool/gedb" if="${GOBO_EIFFEL}=ge"/>
-		<geant file="build.eant" target="install" dir="library/tools/debugger"/>
 		<geant file="build.eant" target="install" dir="library"/>
 		<geant file="build.eant" target="install" dir="src"/>
 		<geant file="../src/getest/build.eant" target="compile" dir="bin"/>

@@ -18,12 +18,12 @@ _EvalParserParser.c _EvalParserParser.h : _EvalParserParser.lemon
 	${LEMON} -c _EvalParserParser.lemon
 
 eval_parser.vapi eval_parser.c _EvalParser.h : eval_parser.vala _EvalParserParser.vapi \
- ../inspect.vapi ../misc.vapi ../expression.vapi ../breakpoint.vapi
+ ../inspect.vapi ../misc.vapi ../expression.vapi ../envir.vapi ../breakpoint.vapi
 	valac ${CFLAGS_VALA} \
 	--vapidir=. --vapi=eval_parser.vapi \
 	--disable-warnings -C -H _EvalParser.h -X -I.. \
 	--pkg=gtk+-3.0 --pkg=gee-0.8 _EvalParserParser.vapi \
-	../inspect.vapi ../misc.vapi ../expression.vapi ../breakpoint.vapi \
+	../inspect.vapi ../misc.vapi ../expression.vapi ../envir.vapi ../breakpoint.vapi \
 	eval_parser.vala 
 
 _EvalParserParser.o : _EvalParser.h _EvalParserLexer.c _EvalParserParser.c _EvalParserParser.h

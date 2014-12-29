@@ -44,7 +44,7 @@ feature {NONE} -- Initialization
 
 feature -- Access 
 
-	type: ET_IS_TYPE
+	type: attached ET_IS_TYPE
 
 	text: detachable ET_IS_FEATURE_TEXT
 

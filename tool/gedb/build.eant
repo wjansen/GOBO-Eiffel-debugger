@@ -28,16 +28,20 @@
 		<description>
 			Remove intermediary generated files.
 		</description>
+		<available resource="inspect.h" variable="h"/>
+		<move file="inspect.h" to_file="inspect.h0" if="${h}"/>
 		<exec executable="make clean"/>
+		<move file="inspect.h0" to_file="inspect.h" if="${h}"/>
 	</target>
 
 	<target name="clobber">
 		<description>
 			Remove all generated files.
 		</description>
-		<move file="inspect.h" to_file="inspect.h0"/>
+		<available resource="inspect.h" variable="h"/>
+		<move file="inspect.h" to_file="inspect.h0" if="${h}"/>
 		<exec executable="make clobber"/>
-		<move file="inspect.h0" to_file="inspect.h"/>
+		<move file="inspect.h0" to_file="inspect.h" if="${h}"/>
 	</target>
 
 </project>

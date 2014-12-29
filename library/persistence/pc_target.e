@@ -27,7 +27,7 @@ feature {PC_BASE} -- Initialization
 feature -- Access 
 
 	field: detachable IS_ENTITY
-			-- Definition of the actually treated object. 
+			-- Definition of the currently treated object. 
 
 	void_ident: detachable O_
 		note
@@ -37,7 +37,7 @@ feature -- Access
 			is_default: attached Result as r implies Result = r.default
 		end
 
-	last_ident: detachable O_
+	last_ident: O_
 			-- Ident of the currently treated object. 
 
 	has_integer_indices: BOOLEAN
@@ -486,7 +486,7 @@ feature {PC_DRIVER} -- Writing array data
 	
 feature {PC_DRIVER, PC_TARGET} -- 
 
-	put_once (cls: detachable IS_CLASS_TEXT; nm: STRING; id: detachable O_)
+	put_once (cls: detachable IS_CLASS_TEXT; nm: STRING; id: O_)
 		note
 			action:
 			"[
@@ -504,7 +504,7 @@ feature {PC_DRIVER, PC_TARGET} --
 		do
 			last_ident := id
 		ensure
-			when_no_once: not attached o implies last_ident = id
+			when_no_once: cls = Void implies last_ident = id
 		end
 
 feature {PC_DRIVER} -- Object location 

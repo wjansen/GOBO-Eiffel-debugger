@@ -39,7 +39,7 @@ create
 
 	make
 
-feature {} -- Initialization 
+feature {NONE} -- Initialization 
 
 	make (a_file: like c_file;
 				a_type_prefix, a_value_prefix, a_name: STRING; a_system: DG_SYSTEM)
@@ -57,8 +57,8 @@ feature {} -- Initialization
 			a_name_table: "type names to be used; use default C names if `Void'"
 		require
 			c_open: a_file.is_open_write
-			type_prefix_not_empty: not type_prefix.is_empty
-			value_prefix_not_empty: not value_prefix.is_empty
+			type_prefix_not_empty: not a_type_prefix.is_empty
+			value_prefix_not_empty: not a_value_prefix.is_empty
 		do
 			c_file := a_file
 			type_name_prefix := a_type_prefix
@@ -87,9 +87,9 @@ feature {PC_BASE} -- Initialization
 			Precursor
 			in_chars := False
 			in_array := False
-			type_names.wipe_out
+			type_names.discard_items
 			extra_type_names.wipe_out
-			capacities.clear
+			capacities.wipe_out
 		end
 
 feature {PC_DRIVER} -- Termination 
@@ -537,7 +537,7 @@ feature {PC_DRIVER} -- Handling of elementary data
 			index := n
 		end
 	
-feature  {} -- Implementation
+feature  {NONE} -- Implementation
 	
 	adapted_cap, item_count: NATURAL
 
@@ -605,7 +605,7 @@ feature  {} -- Implementation
 			end
 		end
 
-feature {} -- Implementation
+feature {NONE} -- Implementation
 
 	c_file: PLAIN_TEXT_FILE
 

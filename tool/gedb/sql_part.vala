@@ -97,6 +97,67 @@ internal class SqlQuery {
 	}
 }
 
+internal class SqlData : Object, Cancellable {
+
+	private bool ok;
+
+	private SqlPart sql;
+	private Gedb.Type* type;
+	private uint8* address;
+	private uint ident;
+	private Expression?[] exx;
+
+	internal SqlData(SqlPart sql, uint od, Gedb.Type* t, uint8* addr, 
+		Expression[] exs) {
+		this.sql = sql;
+		type = t;
+		address = addr;
+		ident = od;
+		Expression? ex;
+		int n = exs.length;
+		exx = new Expression?[n];
+		for (int i=n; i-->0;) {
+			ex = exs[i];
+			if (ex!=null) exx[i] = ex.clone();
+		}
+	}
+
+	public void action() { ok = sql.delay_update(ident, type, address, exx); }
+
+	public void post_action() { sql.post_update(ident, address, exx, ok); }
+
+	public void post_cancel(StackFrame* f) {
+		if (f!=null) {
+			string msg = "Evaluation cancelled";
+			string bad = f.to_string(sql.dg.rts);
+			sql.checker.show_message(msg, "", bad, null);
+		}
+	}
+}
+
+internal class SqlHistory : Object, Cancellable {
+
+	private bool ok; 
+
+	internal SqlPart sql;
+	internal HistoryBox box;
+
+	internal SqlHistory(SqlPart sql, HistoryBox box) {
+		this.sql = sql;
+		this.box = box;
+	}
+
+	public void action() { ok = sql.delay_compute(box); }
+	public void post_action() { sql.post_compute(box, ok); }
+	public void post_cancel(StackFrame* f) {
+		if (f!=null) {
+			string msg = "Evaluation cancelled";
+			string bad = f.to_string(sql.dg.rts);
+			sql.checker.show_message(msg, "", bad, null);
+		}
+	}
+}
+
 public class SqlPart : Window {
 
 	private ListStore all_types;
@@ -115,7 +176,6 @@ public class SqlPart : Window {
 	private ListStore store;
 	private CellRendererText id_cell;
 	private CellRendererText basic_cell;
-	private ExpressionChecker checker;
 
 	private ToggleButton conform;
 	private Button update;
@@ -131,6 +191,7 @@ public class SqlPart : Window {
 	internal Debuggee dg;
 	internal DataPart data;
 	internal Status status;
+	internal ExpressionChecker checker;
 
 	public bool obsolete { get; private set; }
 
@@ -406,25 +467,45 @@ public class SqlPart : Window {
 		return true;
 	}
 
-	private void do_check_expression(HistoryBox h, bool as_cond) {
+	internal bool delay_compute(HistoryBox box) {
+		if (actual.from==null) return false;
 		checker.reset();
-		if (actual.from==null) return;
 		Expression? ex = null;
-		var e = h.get_child() as Entry;
+		var e = box.get_child() as Entry;
 		string str = e.get_text();
+		bool ok = false;
 		if (str.strip().length>0) {
-			bool ok = checker.check_dynamic
-			(str, actual.from, dg.frame(), dg.rts, false, 
-				 aliases, actual.prefix);
-			if (!ok) return;
-			ex = (!) checker.parsed;
-			str = ex.append_name();
+			ok = checker.check_dynamic(str, actual.from, 
+									   dg.frame(), dg.rts, false, 
+									   aliases, actual.prefix);
 		}
-		if (as_cond) actual.where = ex;
+		return ok;
+	}
+
+	internal void post_compute(HistoryBox box, bool ok) {
+		if (!ok) {
+// TODO
+			return;
+		}
+		var ex = (!) checker.parsed;
+		string str = ex.append_name();
+		if (box==where_history) actual.where = ex;
 		else actual.select = ex;
-		h.add_item(str, false);
+		box.add_item(str, false);
+		var e = box.get_child() as Entry;
 		e.set_text(str);
 		obsolete = true;
+	}
+
+	private void do_check_expression(HistoryBox hb) {
+		var dr = data.dg as Driver;
+		var h = new SqlHistory(this,hb);
+		if (dr!=null) {
+			dr.call_delayed(h);
+		} else {
+			bool ok = delay_compute(hb);
+			post_compute(hb, ok);
+		}
 	}
 
 	private void do_refresh(StackFrame* f) {
@@ -451,16 +532,82 @@ public class SqlPart : Window {
 		obsolete = true;
 	}
 
+	internal bool delay_update(uint od, Gedb.Type* t, void* addr, 
+		Expression?[] exs) {
+		if (actual.where!=null) {
+			try {
+				actual.set_object(addr);
+				actual.where.compute_in_object
+					(addr, t, dg.rts, dg.frame(), addr);
+			} catch (ExpressionError err) {
+				// issue message
+				return false;
+			} 
+			var bottom = actual.where.bottom();
+			if (bottom.dynamic_type==null 
+				|| bottom.dynamic_type.ident!=TypeIdent.BOOLEAN) {
+				// issue message
+				return false;
+			}
+			if (!bottom.as_bool()) 
+				return false;
+		}
+		try {
+			Expression? ex;
+			for (int i=exs.length; i-->0;) {
+				ex = exs[i];
+				if (ex!=null) ex.compute_in_object
+					(addr, t, dg.rts, dg.frame(), addr);
+			}
+		} catch (ExpressionError err) {
+			// issue message
+			return false;
+		}
+		return true;
+	}
+
+	internal void post_update(uint od, uint8* obj, Expression?[] expr, bool ok) {
+		if (!ok) return;
+		Gedb.Type* ft;
+		Field* f;
+		Expression ex;
+		TreeIter at;
+		bool is_home;
+		uint k = expr.length;
+		store.append(out at);
+		store.@set(at, 0, obj, 1, od, -1);
+		for (uint i=1; i<k; ++i) {
+			f = actual.flat_fields[i];
+			ex = expr[i];
+			if (f!=null) {
+				ft = ((Entity*)f).type;
+				obj = ex!=null ? ex.bottom().address() : obj;
+				obj += f.offset;
+				is_home = ex!=null;
+			} else if (ex!=null) {
+				ex = ex.bottom();
+				obj = ex.address();
+				ft = ex.dynamic_type;
+				is_home = false;
+			} else {
+				continue;
+			}
+			update_column(at, i, obj, is_home, ft);
+		}
+		int n = store.iter_n_children(null);
+		count.set_text(@"$n");
+	}
+
 	private void do_update() {
 		if (actual.from==null) return;
 		Gedb.Type* t;
 		TreeIter at;
-		string str;
 		uint8* obj;
 		uint od;
-		int n = 0;
 		if (store!=null) store.clear();
+		count.set_text("0");
 		if (obsolete) build_view();
+		var dr = data.dg as Driver;
 		data.refill_known_objects(dg.rts);
 		Gee.HashMap<void*,uint> ko = data.known_objects;
 		Gee.MapIterator<void*,uint> iter;
@@ -480,67 +627,16 @@ public class SqlPart : Window {
 					continue;
 				}
 			}
-			try {
-				actual.set_object(obj);
-				if (actual.where!=null) {
-					actual.where.compute_in_object
-						(obj, t, dg.rts, dg.frame(), obj);
-					var bottom = actual.where.bottom();
-					if (bottom.address()==null) {
-						// issue message
-						continue;
-					}
-					if (bottom.dynamic_type==null 
-						|| bottom.dynamic_type.ident!=TypeIdent.BOOLEAN) {
-						// issue message
-						continue;
-					}
-					if (!bottom.as_bool()) continue;
-				}
+			if (as_default) {
 				store.append(out at);
 				store.@set(at, 0, obj, 1, od, -1);
-				if (as_default) {
-					scan_fields(at, 1, obj, t);
-				} else {
-					actual.select.compute_in_object
-						(obj, t, dg.rts, dg.frame(), obj);
-					Gedb.Type* ft;
-					Field* f;
-					Expression ex;
-					uint8* addr;
-					bool is_home;
-					uint k = actual.flat_exs.length;
-					for (uint i=1; i<k; ++i) {
-						f = actual.flat_fields[i];
-						ex = actual.flat_exs[i];
-						if (f!=null) {
-							ft = ((Entity*)f).type;
-							ex = actual.flat_exs[i];
-							addr = ex!=null ? ex.bottom().address() : obj;
-							addr += f.offset;
-							is_home = ex!=null;
-						} else if (ex!=null) {
-							ex = ex.bottom();
-							addr = ex.address();
-							ft = ex.dynamic_type;
-							is_home = false;
-						} else {
-							continue;
-						}
-						update_column(at, i, addr, is_home, ft);
-					}
-				}
-				++n;
-			} catch (ExpressionError err) {
-			// issue message
-				stderr.printf("%s\n", err.message);
-				continue;
+				scan_fields(at, 1, obj, t);
+			} else {
+				var d = new SqlData(this, od, t, obj, actual.flat_exs);
+				dg.call_delayed(d);
 			}
 		}
-		count.set_text(@"$n");
-		var screen = get_screen();
-		int h = (int)(0.5*screen.height());
-		scroll.set_min_content_height(int.min(n*24+30,h));
+/*
 		if (targets!=null) {
 			if (found) {
 				targets.reset_ident();
@@ -548,6 +644,14 @@ public class SqlPart : Window {
 				targets.do_close();
 				targets = null;
 			}
+		}
+*/
+		if (as_default) {
+			int n = store.iter_n_children(null);
+			count.set_text(@"$n");
+			var screen = get_screen();
+			int h = (int)(0.5*screen.height());
+			scroll.set_min_content_height(int.min(n*24+30,h));
 		}
 	}
 
@@ -826,6 +930,7 @@ public class SqlPart : Window {
 		actual = new SqlQuery(dg.rts, null);
 		conformings = null;
 		do_toggle();
+		var dr = dg as Driver;
 	}
 	
 	public SqlPart(Debuggee dg, StackPart stack, DataPart data, Status status,
@@ -873,7 +978,7 @@ public class SqlPart : Window {
 		select_history = new HistoryBox("SQL select");
 		grid.attach(select_history, 1, 0, 1, 1);
 		select_history.selected.connect(
-			(h) => { do_check_expression(select_history, false); });
+			(h) => { do_check_expression(select_history); });
 		select = select_history.get_child() as Entry;
 		select.hexpand = true;
 		select.editable = true;
@@ -882,7 +987,7 @@ public class SqlPart : Window {
 		select.icon_release.connect((e) => 
 			{ select.set_text("");  select.grab_focus(); });
 		select.activate.connect(
-			(e) => { do_check_expression(select_history, false); });
+			(e) => { do_check_expression(select_history); });
 		label = new Label("from ");
 		grid.attach(label, 0, 1, 1, 1);
 		label.halign = Align.START;
@@ -907,14 +1012,14 @@ public class SqlPart : Window {
 		where_history = new HistoryBox("SQL where");
 		grid.attach(where_history, 1, 2, 1, 1);
 		where_history.selected.connect(
-			(h) => { do_check_expression(where_history, true); });
+			(h) => { do_check_expression(where_history); });
 		where = where_history.get_child() as Entry;
 		where.hexpand = true;
 		where.editable = true;
 		where.placeholder_text = "Boolean expression";
 		where.set_icon_from_stock(EntryIconPosition.SECONDARY, Stock.CLEAR);
 		where.activate.connect(
-			(e) => { do_check_expression(where_history, true); });
+			(e) => { do_check_expression(where_history); });
 		where.icon_release.connect((e) => 
 			{ where.set_text("");  where.grab_focus(); });
 		checker = new ExpressionChecker();

@@ -16,13 +16,13 @@ inherit
 			root_creation_procedure
 		end
 
-	ET_IS_ORIGIN [ET_DYNAMIC_SYSTEM, IS_SYSTEM]
+	ET_IS_ORIGIN [attached ET_DYNAMIC_SYSTEM, IS_SYSTEM]
 		redefine
 			pre_store,
 			post_store
 		end
 	
-	IS_SET [ET_IS_TYPE]
+	IS_SET [attached ET_IS_TYPE]
 		rename
  			make as typeset_make,
 			data as typeset_data,
@@ -38,7 +38,7 @@ inherit
 			out
 		end
 
-	KL_EQUALITY_TESTER [IS_SET [ET_IS_TYPE]]
+	KL_EQUALITY_TESTER [IS_SET [attached ET_IS_TYPE]]
 		rename
 			test as test_effectors
 		undefine
@@ -81,7 +81,6 @@ feature {NONE} -- Initialization
 							]"
 		local
 			cls: ET_CLASS
-			ocr: ET_DYNAMIC_FEATURE
 			i, n: INTEGER
 		do
 			compilation_time := actual_time_as_integer
@@ -129,12 +128,15 @@ feature {NONE} -- Initialization
 			if needs & With_root_creation /= 0 then
 				force_type (o.root_type)
 				root_type := last_type
-				ocr := o.root_creation_procedure
-				if attached root_type.routine_by_origin (ocr, Current) as r then
-					root_creation_procedure := r
-				else
-					root_type.force_routine (ocr, True, Current)
-					root_creation_procedure := root_type.last_routine
+				if attached root_type as rt
+					and then attached o.root_creation_procedure as ocr
+				 then
+					if attached rt.routine_by_origin (ocr, Current) as r then
+						root_creation_procedure := r
+					else
+						rt.force_routine (ocr, True, Current)
+						root_creation_procedure := rt.last_routine
+					end
 				end
 			else
 				needed_categories := 0
@@ -236,7 +238,7 @@ feature -- Constants and once functions
 	
 feature -- Access 
 
-	any_type: ET_IS_NORMAL_TYPE
+	any_type: attached ET_IS_NORMAL_TYPE
 
 	none_type: like any_type
 
@@ -325,25 +327,25 @@ feature -- Access
 			Result := all_types [i]
 		end
 
-	agent_at (i: INTEGER): ET_IS_AGENT_TYPE
+	agent_at (i: INTEGER): attached ET_IS_AGENT_TYPE
 		do
 			Result := all_agents [i]
 		end
 
-	once_at (i: INTEGER): ET_IS_ONCE
+	once_at (i: INTEGER): attached ET_IS_ONCE
 		do
 			Result := all_onces [i]
 		end
 
-	constant_at (i: INTEGER): ET_IS_CONSTANT
+	constant_at (i: INTEGER): attached ET_IS_CONSTANT
 		do
 			Result := all_constants [i]
 		end
 
-	last_class: like class_at
+	last_class: attached like class_at
 			-- Class provided by `force_class'. 
 
-	last_type: like type_at
+	last_type: attached like type_at
 			-- Type provided by `force_type'. 
 
 	last_agent: detachable ET_IS_AGENT_TYPE
@@ -493,7 +495,7 @@ feature -- Searching
 				end
 			end
 		ensure
-			when_found: attached Result as r implies r.origin = o
+			when_found: Result /= Void implies Result.origin.static_feature.implementation_feature = o
 		end
 
 	constant_by_origin (f: ET_DYNAMIC_FEATURE): detachable like constant_at
@@ -518,7 +520,7 @@ feature -- Searching
 				end
 			end
 		ensure
-			when_found: attached Result as r implies r.origin = c
+			when_found: Result /= Void implies Result.origin = f
 		end
 
 feature -- Factory 
@@ -558,7 +560,6 @@ feature -- Factory
 	force_type (t: ET_DYNAMIC_TYPE)
 		local
 			last: like last_type
-			nm: STRING
 			id: INTEGER
 		do
 			last := type_by_origin (t)
@@ -584,7 +585,7 @@ feature -- Factory
 		end
 
 	force_agent (a: ET_AGENT; dt: ET_DYNAMIC_TYPE;
-			w: ET_DYNAMIC_FEATURE; t: ET_DYNAMIC_TYPE; i: INTEGER)
+			w: attached ET_DYNAMIC_FEATURE; t: ET_DYNAMIC_TYPE; i: INTEGER)
 		note
 			action:
 			"[
@@ -624,11 +625,11 @@ feature -- Factory
 		do
 			force_type (root)
 			root_type := last_type
-			if proc /= Void then
-				if attached root_type.routine_by_origin (proc, Current) as p then 
+			if proc /= Void and then attached root_type as rt then
+				if attached rt.routine_by_origin (proc, Current) as p then 
 					root_creation_procedure := p
 				else
-					create root_creation_procedure.declare (proc, root_type, Current)
+					create root_creation_procedure.declare (proc, rt, Current)
 				end
 			end
 		ensure
@@ -640,8 +641,6 @@ feature -- Factory
 		end
 
 	force_type_from_pattern (t: ET_IS_TYPE)
-		require
-			has_dictionary: attached class_name_dictionary
 		local
 			params: ET_ACTUAL_PARAMETER_LIST
 			types: DS_ARRAYED_LIST [ET_DYNAMIC_TYPE]
@@ -669,8 +668,9 @@ feature -- Factory
 				i := i + 1
 			end
 			if not ok then
-				last_type := type_by_class_and_generics (nm, ng, t.is_attached)
-				if not attached last_type then
+				if attached type_by_class_and_generics (nm, ng, t.is_attached) as lt then
+					last_type := lt
+				else
 					from
 						types := origin.dynamic_types
 						k := types.count
@@ -728,7 +728,8 @@ feature -- Factory
 			type_stack.pop (ng)
 		end
 			
-	force_routine (f: ET_DYNAMIC_FEATURE; t: ET_IS_TYPE; locals, as_create: BOOLEAN)
+	force_routine (f: attached ET_DYNAMIC_FEATURE; t: ET_IS_TYPE;
+			locals, as_create: BOOLEAN)
 		note
 			action: "{
 			Search routine corresponding to `f' in `h'.
@@ -755,7 +756,7 @@ feature -- Factory
 			end
 		end
 
-	force_once (o: ET_DYNAMIC_FEATURE; target: ET_IS_TYPE)
+	force_once (o: attached ET_DYNAMIC_FEATURE; target: attached ET_IS_TYPE)
 		local
 			static: ET_FEATURE
 		do
@@ -764,7 +765,9 @@ feature -- Factory
 				last_once := once_by_origin (static)
 				if last_once = Void then
 					create last_once.declare(o, target, Current)
-					all_onces.add (last_once)
+					if attached last_once as lo then
+						all_onces.add (lo)
+					end
 				end
 			else
 				last_once := Void
@@ -776,7 +779,6 @@ feature -- Basic operation
 	internal_name (s: READABLE_STRING_8): READABLE_STRING_8
 		local
 			new: STRING
-			l, u: INTEGER
 		do
 			name_pool.search (s)
 			if name_pool.found then
@@ -788,8 +790,8 @@ feature -- Basic operation
 			end
 		end
 
-	type_set (static: ET_IS_TYPE; list: detachable ET_DYNAMIC_TYPE_SET;
-			attach: BOOLEAN): detachable IS_SET [ET_IS_TYPE]
+	type_set (static: attached ET_IS_TYPE; list: detachable ET_DYNAMIC_TYPE_SET;
+			attach: BOOLEAN): detachable IS_SET [attached ET_IS_TYPE]
 		require
 			needs_typeset: needs_typeset
 		local
@@ -854,7 +856,7 @@ feature -- ET_IS_ORIGIN
 
 feature -- DS_EQUALITY_TESTER 
 
-	test_effectors (v, u: IS_SET [ET_IS_TYPE]): BOOLEAN
+	test_effectors (v, u: IS_SET [attached ET_IS_TYPE]): BOOLEAN
 		local
 			vi, ui: IS_TYPE
 			i: INTEGER
@@ -899,7 +901,7 @@ feature {IS_BASE} -- Implementation
 			create Result
 		end
 
-	once_less (u, v: ET_IS_ONCE): BOOLEAN
+	once_less (u, v: attached ET_IS_ONCE): BOOLEAN
 		do
 			Result := u.home.is_less(v.home)
 			if not Result and then u.home.is_equal(v.home) then
@@ -907,7 +909,7 @@ feature {IS_BASE} -- Implementation
 			end
 		end
 	
-	const_less (u, v: ET_IS_CONSTANT ): BOOLEAN
+	const_less (u, v: attached ET_IS_CONSTANT ): BOOLEAN
 		do
 			Result := u.home.is_less(v.home)
 			if not Result and then u.home.is_equal(v.home) then

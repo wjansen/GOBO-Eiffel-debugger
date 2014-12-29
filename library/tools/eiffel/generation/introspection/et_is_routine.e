@@ -70,7 +70,9 @@ feature {NONE} -- Initialization
 					from
 						i := oop.count
 					until i = 0 loop
-						declare_precursor (oop.item (i), s)
+						if attached oop.item (i) as pi then
+							declare_precursor (pi, s)
+						end
 						i := i - 1
 					end
 				end
@@ -119,12 +121,13 @@ feature {NONE} -- Initialization
 				attached {ET_INTERNAL_ROUTINE_INLINE_AGENT} inline_agent.orig_agent as ia
 			 then
 				create text.declare_from_agent (ia, Current, in_class, s)
-				in_class.add_text (text)
+				if attached text as x then
+					in_class.add_text (x)
+				end
 			end
 			w.add_inline (Current)
 		ensure
 			inline_agent_set: inline_agent = a
-			target_set: target = r.target
 		end
 
 feature -- Initialization 
@@ -182,9 +185,9 @@ feature -- Access
 
 	type: detachable ET_IS_TYPE
 
-	target: ET_IS_TYPE
+	target: attached ET_IS_TYPE
 
-	in_class: ET_IS_CLASS_TEXT
+	in_class: attached ET_IS_CLASS_TEXT
 	
 	text: detachable ET_IS_ROUTINE_TEXT
 
@@ -195,14 +198,14 @@ feature -- Access
 			Result := vars [i]
 		end
 
-	inline_routine_at (i: INTEGER): ET_IS_ROUTINE
+	inline_routine_at (i: INTEGER): attached ET_IS_ROUTINE
 		do
 			Result := inline_routines [i]
 		end
 
 feature -- Status setting 
 
-	add_inline (r: ET_IS_ROUTINE)
+	add_inline (r: attached ET_IS_ROUTINE)
 		do
 			if attached inline_routines then
 			else
@@ -247,7 +250,7 @@ feature -- ET_IS_ORIGIN
 					done := True
 				end
 			elseif is_anonymous then
-				check inline_agent end
+				check inline_agent /= Void end
 				inline_agent.print_function (file, g)
 				done := True
 			end
@@ -269,22 +272,17 @@ feature {NONE} -- Implementation
 		local
 			closure: ET_CLOSURE
 			df: ET_DYNAMIC_FEATURE
-			frm: ET_FORMAL_ARGUMENT
-			lcl: ET_LOCAL_VARIABLE
 			pf, pl: ET_POSITION
 			dynamic: detachable ET_DYNAMIC_TYPE
-			static_type: ET_TYPE
 			res: detachable ET_AST_NODE
-			ac: ET_ACROSS_COMPONENT
 			id: ET_IDENTIFIER
 			pos: ET_POSITION
 			ct: detachable ET_IS_SCOPE_VARIABLE
 			vt: detachable ET_IS_FEATURE_TEXT
-			rt: detachable ET_IS_ROUTINE_TEXT
 			var: like var_at
 			buffer: like var_buffer
 			nm: STRING
-			i, k, n0, n, na, e_pos: INTEGER
+			i, n0, n, na, e_pos: INTEGER
 			once_only: BOOLEAN
 		do
 			once_only := not s.needs_locals and s.needs_once_values 
@@ -327,17 +325,18 @@ feature {NONE} -- Implementation
 						i := 0
 					until i = na loop
 						i := i + 1
-						frm := fs.formal_argument (i)
-						id := frm.name.identifier
-						dynamic := df.dynamic_type_set (id).static_type
-						if s.needs_feature_texts then
-							create vt.declare_from_declaration
-								(frm, id.lower_name, frm.declared_type, in_class, s)
-						else
-							vt := Void
+						if attached fs.formal_argument (i) as frm then
+							id := frm.name.identifier
+							dynamic := df.dynamic_type_set (id).static_type
+							if s.needs_feature_texts then
+								create vt.declare_from_declaration
+									(frm, id.lower_name, frm.declared_type, in_class, s)
+							else
+								vt := Void
+							end
+							create var.declare (id, Void, dynamic, Current, vt, s)
+							buffer.push (var)
 						end
-						create var.declare (id, Void, dynamic, Current, vt, s)
-						buffer.push (var)
 					end
 				end
 				argument_count := na + 1
@@ -385,23 +384,24 @@ feature {NONE} -- Implementation
 					until i = n loop
 						i := i + 1
 						dynamic := Void
-						lcl := ls.local_variable (i)
-						if lcl.is_used then
-							id := lcl.name.identifier
-							if attached df.dynamic_type_set (id) as dyn then
-								dynamic := dyn.static_type
+						if attached ls.local_variable (i) as lcl then
+							if lcl.is_used then
+								id := lcl.name.identifier
+								if attached df.dynamic_type_set (id) as dyn then
+									dynamic := dyn.static_type
+								end
 							end
-						end
-						if dynamic /= Void then
-							if s.needs_feature_texts then
-								create vt.declare_from_declaration
+							if dynamic /= Void then
+								if s.needs_feature_texts then
+									create vt.declare_from_declaration
 									(lcl, id.lower_name, lcl.declared_type, in_class, s)
-							else
-								vt := Void
+								else
+									vt := Void
+								end
+								create var.declare (lcl.name, Void, dynamic, Current, vt, s)
+								buffer.push (var)
+								local_count := local_count + 1
 							end
-							create var.declare (lcl.name, Void, dynamic, Current, vt, s)
-							buffer.push (var)
-							local_count := local_count + 1
 						end
 					end
 				end
@@ -417,21 +417,22 @@ feature {NONE} -- Implementation
 						i := 0
 					until i = n loop
 						i := i + 1
-						if attached {ET_NAMED_OBJECT_TEST} ots.item (i) as ot then
-							id := ot.name
-							if (e_pos = 0 or else id.position.line < e_pos)
+						if attached {ET_NAMED_OBJECT_TEST} ots.item (i) as ot
+							and then attached ot.name as oi
+						then
+							if (e_pos = 0 or else oi.position.line < e_pos)
 								and then attached ot.first_scope_position
-								and then attached df.dynamic_type_set (id) as ds
+								and then attached df.dynamic_type_set (oi) as ds
 							 then 
 								dynamic := ds.static_type
 								if s.needs_feature_texts then
 									create vt.declare_from_declaration
-										(id, id.lower_name, dynamic.base_type, in_class, s)
-									vt.set_positions (ot.attached_keyword, id.last_position)
+										(oi, oi.lower_name, dynamic.base_type, in_class, s)
+									vt.set_positions (ot.attached_keyword, oi.last_position)
 								else
 									vt := Void
 								end
-								create ct.declare (id, dynamic, True, Current, vt, s)
+								create ct.declare (oi, dynamic, True, Current, vt, s)
 								ct.set_attached
 								pf := ot.first_scope_position
 								ct.set_lower_scope_limit (pf.line * 256 + pf.column)
@@ -449,34 +450,36 @@ feature {NONE} -- Implementation
 						i := 0
 					until i = n loop
 						i := i + 1
-						ac := acs.item (i)
-						id := ac.cursor_name
-						if (e_pos = 0 or else id.position.line < e_pos)
-							and then attached df.dynamic_type_set (id) as ds
+						if attached acs.item (i) as ac 
+							and then attached ac.cursor_name as ai
 						 then
-							dynamic := ds.static_type
-							if attached {ET_DECLARED_TYPE} dynamic.base_type as dt then
-								if s.needs_feature_texts 
-								 then
-									create vt.declare_from_declaration
-										(id, id.lower_name, dt, in_class, s)
-									vt.set_positions (ac.across_keyword, id.last_position)
-								else
-									vt := Void
+							if (e_pos = 0 or else ai.position.line < e_pos)
+								and then attached df.dynamic_type_set (ai) as ds
+							 then
+								dynamic := ds.static_type
+								if attached {ET_DECLARED_TYPE} dynamic.base_type as dt then
+									if s.needs_feature_texts 
+									 then
+										create vt.declare_from_declaration
+										(ai, ai.lower_name, dt, in_class, s)
+										vt.set_positions (ac.across_keyword, ai.last_position)
+									else
+										vt := Void
+									end
+									create ct.declare(ai, dynamic, False, Current, vt, s)
+									if attached {ET_ACROSS_EXPRESSION} ac as expr then
+										pf := expr.iteration_conditional.position
+										pl := expr.end_keyword.position
+									elseif attached {ET_ACROSS_INSTRUCTION} ac as inst then
+										pf := inst.new_cursor_expression.last_position
+										pl := inst.end_keyword.position
+									end
+									ct.set_attached
+									ct.set_lower_scope_limit (pf.line * 256 + pf.column)
+									ct.set_upper_scope_limit (pl.line * 256 + pl.column)
+									buffer.push (ct)
+									scope_var_count := scope_var_count + 1
 								end
-								create ct.declare(id, dynamic, False, Current, vt, s)
-								if attached {ET_ACROSS_EXPRESSION} ac as ae then
-									pf := ae.iteration_conditional.position
-									pl := ae.end_keyword.position
-								elseif attached {ET_ACROSS_INSTRUCTION} ac as ai then
-									pf := ai.new_cursor_expression.last_position
-									pl := ai.end_keyword.position
-								end
-								ct.set_attached
-								ct.set_lower_scope_limit (pf.line * 256 + pf.column)
-								ct.set_upper_scope_limit (pl.line * 256 + pl.column)
-								buffer.push (ct)
-								scope_var_count := scope_var_count + 1
 							end
 						end
 					end
@@ -491,7 +494,7 @@ feature {NONE} -- Implementation
 				i := n
 			until i = 0 loop
 				i := i - 1
-				vars.add (buffer.below_top(i))
+				vars.force (buffer.below_top(i), n-1-i)
 			end
 			buffer.pop (n)
 			check
@@ -499,9 +502,9 @@ feature {NONE} -- Implementation
 			end
 		end
 
-	declare_precursor (p: ET_DYNAMIC_PRECURSOR; s: ET_IS_SYSTEM)
+	declare_precursor (p: attached ET_DYNAMIC_PRECURSOR; s: ET_IS_SYSTEM)
 		local
-			r: ET_IS_ROUTINE
+			r: attached ET_IS_ROUTINE
 		do
 			create r.declare (p, target, s)
 			target.force_precursor_routine (r)

@@ -8,7 +8,6 @@ inherit
 
 	IS_NAME
 		redefine
-			is_equal,
 			is_less,
 			hash_code
 		end
@@ -47,7 +46,7 @@ feature -- Access
 
 	alias_name: detachable STRING_8
 
-	tuple_labels: detachable IS_SEQUENCE [IS_FEATURE_TEXT]
+	tuple_labels: detachable IS_SEQUENCE [attached IS_FEATURE_TEXT]
 			-- Tuple labels if the feature result is of a TUPLE type. 
 
 	home: IS_CLASS_TEXT
@@ -64,8 +63,8 @@ feature -- Access
 	definition: like Current
 			-- Class and feature where `Current' is defined. 
 		do
-			if renames /= Void then
-				Result := renames
+			if attached {like Current} renames as r then
+				Result := r
 			else
 				Result := Current
 			end
@@ -160,16 +159,14 @@ feature -- Status setting
 
 	set_bounds (first_l, first_c: INTEGER; last_l, last_c: INTEGER)
 		require
-			positive: frist_l > 0 and frist_c > 0 and last_l > 0 and last_c > 0
+			positive: first_l > 0 and first_c > 0 and last_l > 0 and last_c > 0
 			last_below_first: last_l >= first_l
 		do
 			first_pos := position_as_integer (first_l, first_c)
 			last_pos := position_as_integer (last_l, last_c)
 		ensure
 			first_line_set: first_line = first_l
-			first_col_set: first_col = first_c
 			last_line_set: last_line = last_l
-			last_col_set: last_col = last_c
 		end
 
 feature -- Basic operation 
@@ -221,17 +218,12 @@ feature -- Basic operation
 			end
 		end
 
-feature -- Comparison 
+feature -- COMPARABLE
 
-	is_equal (other: like Current): BOOLEAN
-		do
-			Result := same_name (other)
-		end
-
-	is_less alias "<" (other: IS_FEATURE_TEXT): BOOLEAN
+	is_less alias "<" (other: attached IS_FEATURE_TEXT): BOOLEAN
 		do
 			if not same_name (other) then
-				Result := not other.is_name_less (fast_name)
+				Result := is_name_less (other.fast_name)
 			end
 		end
 
@@ -256,7 +248,6 @@ feature {IS_NAME} -- Implementation
 
 invariant
 
-	when_attribute: is_attribute implies routine_tex /= Void
 	last_below_first: last_line >= first_line
 
 note

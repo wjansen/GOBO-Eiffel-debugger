@@ -36,7 +36,7 @@ create {IS_SYSTEM, IS_TYPE}
 
 feature {NONE} -- Initialization 
 
-	make (id: INTEGER; fl: INTEGER; ct: IS_CLASS_TEXT; it: like item_type;
+	make (id: INTEGER; fl: INTEGER; ct: like base_class; it: like item_type;
 				a: attached like fields; e: like effectors; r: like routines)
 		note
 			action: "Construct the descriptor."
@@ -64,27 +64,27 @@ feature {NONE} -- Initialization
 
 	make_in_system (tid, fl: INTEGER; f: IS_FACTORY)
 		local
-			it: like item_type
 			a0, a1, a2: like field_at
 		do
 			ident := tid
 			flags := fl
 			f.add_type (Current)
 			create generics
-			it := f.integer_type
-			generics.add (it)
-			if is_alive then
-				flags := 0
-				create a0.make_in_system (once "count", it, Current, 0, f)
-				create a1.make_in_system (once "capacity", it, Current, 1, f)
-				create a2.make_in_system (once "item", it, Current, 2, f)
-				create fields.make (3, a0)
-				fields.add (a0)
-				fields.add (a1)
-				fields.add (a2)
+			if attached {like item_type} f.integer_type as it then
+				generics.add (it)
+				if is_alive then
+					flags := 0
+					create a0.make_in_system (once "count", it, Current, 0, f)
+					create a1.make_in_system (once "capacity", it, Current, 1, f)
+					create a2.make_in_system (once "item", it, Current, 2, f)
+					create fields.make (3, a0)
+					fields.add (a0)
+					fields.add (a1)
+					fields.add (a2)
+				end
+				flags := fl
+				scan_in_system (f)
 			end
-			flags := fl
-			scan_in_system (f)
 		ensure
 			ident_set: ident = tid
 			flags_set: flags = fl

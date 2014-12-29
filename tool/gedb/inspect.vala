@@ -2549,6 +2549,15 @@ other value means `other' is a parent class.
 
 		public Routine* routine;
 
+		public string to_string(System* s) {
+			ClassText* ct = s.class_at(class_id);
+			Routine* r = routine;
+			string str = @"$(((Name*)ct).fast_name)";
+			str += @".$(((Name*)r).fast_name)";
+			str += @":$(pos/256):$(pos%256)";
+			return str;
+		}
+
 /**
    @return Type of actual target
  */

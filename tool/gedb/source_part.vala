@@ -1317,8 +1317,8 @@ public class FullSource : SingleSource {
 				case '.':
 				case 'b':
 				case 'k':
-				case 'c':
-				case 'C':
+				case 'u':
+				case 'U':
 				case 'e':
 				case 'E':
 				case 'p':
@@ -1369,11 +1369,11 @@ public class FullSource : SingleSource {
 					brk.kill_breakpoint(cls.ident, actual_pos);
 				}
 				break;
-			case 'c': 
-			case 'C': 
+			case 'u': 
+			case 'U': 
 				cls = current_class();
 				p = insert_position(true);
-				set_once_breakpoint(cls.ident, p, code=='C');
+				set_once_breakpoint(cls.ident, p, code=='U');
 				break;
 			case 'l':
 				s.search_state = s.SearchMode.GO_TO;

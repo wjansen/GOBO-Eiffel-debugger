@@ -2,15 +2,20 @@ note
 
 	description: "Class for traversal of a PC_HASH_TABLE."
 
-class PC_HASH_TABLE_CURSOR [V_, K_]
+class PC_HASH_TABLE_CURSOR [V_ -> detachable ANY, K_ -> attached ANY]
 
 inherit
 
 	PC_CURSOR [V_, K_]
 		redefine
-			make
+			make,
+			target
 		end
 
+create
+
+	make
+	
 feature {NONE} -- Initalization
 
 	make (t: like target)
@@ -22,11 +27,13 @@ feature {NONE} -- Initalization
 	
 feature -- Access
 
-	target: PC_HASH_TABLE_TABLE [V_, K_]
+	target: PC_HASH_TABLE [V_, K_]
 	
 	item: V_
 		do
-			Result := target.data [index]
+			if attached target.data [index] as di then
+				Result := di
+			end
 		end
 
 feature -- Status report
