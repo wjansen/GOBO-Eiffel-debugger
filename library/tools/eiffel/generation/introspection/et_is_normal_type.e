@@ -13,7 +13,7 @@ inherit
 		redefine
 			declare,
 			base_class,
-			compute_flags,
+			compute_flags
 		end
 
 	IS_NORMAL_TYPE
@@ -43,8 +43,6 @@ feature {NONE} -- Initialization
 			params: ET_ACTUAL_PARAMETER_LIST
 			static: ET_TYPE
 			dynamic: ET_DYNAMIC_TYPE
-			t: ET_IS_TYPE
-			f: ET_IS_FIELD
 			i, n: INTEGER
 		do
 			Precursor (o, id, s)
@@ -76,7 +74,7 @@ feature {NONE} -- Initialization
 
 feature -- Access 
 
-	base_class: ET_IS_CLASS_TEXT
+	base_class: attached ET_IS_CLASS_TEXT
 
 feature {NONE} -- Implementation 
 
@@ -86,9 +84,8 @@ feature {NONE} -- Implementation
 		local
 			qq: ET_DYNAMIC_FEATURE_LIST
 			df: ET_DYNAMIC_FEATURE
-			cls: ET_CLASS
 			c: ET_IS_CONSTANT
-			i, n, na: INTEGER
+			i: INTEGER
 		do
 			if s.needs_constants then
 				qq := origin.queries

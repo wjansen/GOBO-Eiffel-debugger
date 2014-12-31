@@ -79,7 +79,6 @@ feature {NONE} -- Initialization
 			nm_not_empty: not nm.is_empty
 			ocp_not_empty: not ocp.is_empty
 		local
-			at: like base
 			ff: IS_FIELD
 		do
 			ident := tid
@@ -89,9 +88,10 @@ feature {NONE} -- Initialization
 			f.add_type (Current)
 			open_operand_count := ocp.occurrences (open_operand_indicator)
 			closed_operand_count := ocp.occurrences (closed_operand_indicator)
-			at := f.any_type
-			base := at
-			create ff.make (no_name, at, Void, Void)
+			if attached {like base} f.any_type as at then
+				base := at
+			end
+			create ff.make (no_name, base, Void, Void)
 			scan_in_system (f)
 		ensure
 			ident_set: ident = tid
@@ -192,7 +192,7 @@ feature -- Access
 			Result := "SPECIAL"
 		end
 	
-	base: IS_TYPE
+	base: attached IS_TYPE
 			-- Type descriptor of the routine's base class 
 	
 	base_is_closed: BOOLEAN
@@ -284,10 +284,10 @@ feature -- Access
 	in_routine: detachable IS_ROUTINE
 			-- In case of an inline agent the descriptor of the enclosing routine. 
 
-	declared_type: detachable IS_NORMAL_TYPE
+	declared_type: IS_NORMAL_TYPE
 			-- ROUTINE type of `Current's declaration (GEC specific)
 
-	closed_operands_tuple: detachable IS_TUPLE_TYPE
+	closed_operands_tuple: IS_TUPLE_TYPE
 			-- Tuple of closed operands (GEC specific). 
 	
 	routine: detachable IS_ROUTINE
@@ -379,8 +379,6 @@ feature {IS_BASE} -- Implementation
 	
 invariant
 
-	function_field_set: function_field = declared_type.field_by_name (function_name)
-	
 note
 
 	author: "Wolfgang Jansen"

@@ -1,6 +1,8 @@
 using Gedb;
+
 public delegate void* JumpBufferFunc();
 public delegate void* LongjmpFunc(void* buf, int val);
+public delegate void* InterruptableFunc(void* buf, void* target, void* func);
 public delegate void PositionFunc(uint id, uint l, uint c);
 public delegate void LimitsFunc(uint d, uint s);
 public delegate void OffsetFunc();
@@ -9,6 +11,7 @@ public delegate void RaiseFunc(int code);
 
 internal JumpBufferFunc jump_buffer_func;
 internal LongjmpFunc longjmp_func;
+internal InterruptableFunc interruptable_func;
 
 internal void** eif_markers;
 
@@ -29,8 +32,8 @@ internal class QueueSource : GLib.Source {
 	
 	public QueueSource() { 	base(); }
 
-	protected override bool prepare(out int timeout) {
-		timeout = -1;
+	protected override bool prepare(out int to) {
+		to = -1;
 		return false;
 	}
 	
@@ -198,12 +201,35 @@ internal struct GE_ZA {
 
 public class Debuggee : Object {
 
-	protected StackFrame** top0;
+	private Cancellable? intern_action;
+	private Thread<StackFrame*> action_thread;
 
+	protected StackFrame** top0;
 	protected RaiseFunc raise_func; 	
 	protected PositionFunc set_pos_func;
 	protected LimitsFunc set_limits_func;
 	protected OffsetFunc offset_func;
+	protected int* interrupt;
+	protected uint timeout;
+
+	protected void init_timeout() {
+		if (timeout==0) {
+			timeout = GLib.Timeout.@add(40, () => {
+					timeout = 0;	
+					is_running = true;
+					return false;
+				});
+		}
+	}
+	protected void cancel_action(Cancellable? c, StackFrame* f) {
+		StackFrame* old = *top0;
+		if (f!=null) *top0 = f;
+		GLib.Idle.@add(() => { 
+				intern_action.post_cancel(old); 
+				is_running = false;	
+				return false; });
+		Thread<StackFrame*>.exit(old);
+	}
 
 	protected Debuggee.by_args(string[] args) {
 		this.args = args[0:args.length];
@@ -212,6 +238,7 @@ public class Debuggee : Object {
 	protected virtual void set_addresses_and_offsets(AddressFunc af) {
 		rts = *(System**)af("rts");
 		top0 = (StackFrame**)af("top");
+		interrupt = (int*)af("inter");
 		EiffelObjects.eif_results = af("results");
 		realloc_func = (ReallocFunc)af("realloc");
 		free_func = (FreeFunc)af("free");
@@ -234,9 +261,7 @@ public class Debuggee : Object {
 		set_addresses_and_offsets(address_of);
 	}
 
-	public System* rts;
-
-	public StackFrame* frame() { return top0!=null ? *top0 : null; }
+	public System* rts { get; private set; }
 
 	public bool has_rescue() {
 		StackFrame* rescue;
@@ -254,12 +279,43 @@ public class Debuggee : Object {
 		is_running = false;
 		int reason = interrupt ? 
 			Driver.ProgramState.Interrupt : Driver.ProgramState.Crash;
-		response(reason, false, null, *top0, 0);
+		response(reason, false, null, frame(), 0);
 	}
 
 	public signal void response(int reason, bool cont, 
 								Gee.List<Breakpoint>? match,
 								Gedb.StackFrame* f, uint mc);
+
+	public StackFrame* frame() { return top0!=null ? *top0 : null; }
+
+	public virtual void call_delayed(Cancellable target) {
+		init_timeout();
+		intern_action = target;
+		target.action(); 
+		if (timeout!=0) {
+			GLib.Source.@remove(timeout);
+			timeout = 0;
+		}
+		GLib.Idle.@add(() => { 
+				target.post_action();
+				is_running = false;
+				return false; });
+	}
+
+	public void interrupt_action() {
+		stderr.printf("interrupt\n");
+	}
+
+	protected void cancel_action(StackFrame* f) {
+		StackFrame* old = *top0;
+		if (f!=null) *top0 = f;
+		GLib.Idle.@add(() => { 
+				intern_action.post_cancel(old); 
+				is_running = false;	
+				return false; });
+		Thread<StackFrame*>.exit(old);
+	}
+
 }
 
 public class Driver : Debuggee {
@@ -305,6 +361,8 @@ public class Driver : Debuggee {
 		Interrupt,
 		Catch,
 		Crash,
+		Eval_interrupt,
+		Eval_crash,
 		Program_end,
 		Abort,
 		Still_waiting
@@ -333,10 +391,10 @@ public class Driver : Debuggee {
 
 	private int stop_code;
 	private int os_signal;
-	private uint timeout;
 	private bool ignore_bp_table;
 	private int* step;
-	private int* inter;
+	private void* intern_buffer;
+	private void* intern_buffer;
 
 	private void*** argv;
 	private int* argc;
@@ -345,13 +403,12 @@ public class Driver : Debuggee {
 
 	private Gee.List<Breakpoint> breakpoints;
 	private Gee.List<Breakpoint> match;
-	
+
 	public void update_breakpoints(Gee.List<Breakpoint>? list) {
 		breakpoints = list;
 		uint depth = int.MAX;
 		int n = 0;
 		bool ok = true;
-		set_pos_func(depth, 0, 0);
 		ignore_bp_table = false;
 		if (list==null) return;
 		foreach (var bp in list) {
@@ -379,13 +436,7 @@ public class Driver : Debuggee {
 		case RunCommand.step:
 		case RunCommand.end:
 		case RunCommand.back:
-			if (timeout==0) {
-				timeout = GLib.Timeout.@add(20, () => {
-						timeout = 0;	
-						is_running = true;
-						return false;
-					});
-			}
+			init_timeout();
 			break;
 		default:
 			timeout = 0;
@@ -405,17 +456,22 @@ public class Driver : Debuggee {
 	}
 
 	public void catch_signal(int sgn) {
-		*inter = sgn==ProcessSignal.INT ? 1 : 0;
+		*interrupt = sgn==ProcessSignal.INT ? 1 : 0;
 		bool old_intern = intern;
-		intern = interactive;
 		os_signal = sgn;
 		treat_stop(IseCode.Signal_exception);
 		os_signal = 0;
 		intern = old_intern;
-		*inter = 0;
+		*interrupt = 0;
 	}
 
 	public void* treat_info(int reason) {
+		if (*interrupt!=0) {
+			interactive = true;
+			treat_commands(IseCode.Signal_exception,intern);
+			*interrupt = 0;
+			return null;
+		}
 		if (intern) return null;
 		top = *(StackFrame**)top0;
 		interactive = just_marked;
@@ -455,9 +511,16 @@ public class Driver : Debuggee {
 		return res;
 	}
 
-	public void set_interrupt() { *inter = 1; }
-
 	public void* treat_stop(int reason) {
+		if (*interrupt!=0) {
+			*interrupt = 0;
+			intern = interactive;
+			interactive = true;
+			stop_code = intern ?
+				ProgramState.Eval_interrupt : ProgramState.Interrupt;
+			treat_commands(IseCode.Signal_exception, intern);
+			return null;
+		}
 		if (intern) return null;
 		top = *(StackFrame**)top0;
 		StackFrame* rescue = null;
@@ -480,9 +543,9 @@ public class Driver : Debuggee {
 			}
 			break;
 		}
-		if (*inter!=0) {
+		if (*interrupt!=0) {
 			stop_code = ProgramState.Interrupt;
-			*inter = 0;
+			*interrupt = 0;
 		}
 		if (old_intern && reason>0) {
 			stderr.printf("ERROR in function evaluation\n");
@@ -510,23 +573,27 @@ public class Driver : Debuggee {
 
 	private void* treat_commands(int reason, bool old_intern) 
 	requires (interactive) {
+		if (old_intern) {
+			cancel_action(top);
+			return null;
+		}
 		Marker* m;
-		while (interactive) {
-			int ss = top.depth;
-			if (ss<minimum_stack_size) minimum_stack_size = ss;
-			Marker.clear_to_depth(minimum_stack_size);
-			if (breakpoints!=null) {
-				// forget temporary breakpoint:
-				var bb = breakpoints;
-				foreach (var bp in bb) {
-					if (bp!=null && bp.id==0) {
-						bb.@remove(bp);
-						break;
-					}
+		int ss = top.depth;
+		if (ss<minimum_stack_size) minimum_stack_size = ss;
+		Marker.clear_to_depth(minimum_stack_size);
+		if (breakpoints!=null) {
+			// forget temporary breakpoint:
+			var bb = breakpoints;
+			foreach (var bp in bb) {
+				if (bp!=null && bp.id==0) {
+					bb.@remove(bp);
+					break;
 				}
 			}
-			var qm = new QueueMember(stop_code);
-			qm.top = *top0;
+		}
+		var qm = new QueueMember(stop_code);
+		qm.top = top;
+		while (interactive) {
 			switch (stop_code) {
 			case ProgramState.At_breakpoint:
 				qm.list = match;
@@ -535,7 +602,6 @@ public class Driver : Debuggee {
 			case ProgramState.At_tracepoint:
 				qm.cont = true;
 				qm.list = match;
-//				stop_code = ProgramState.Still_waiting;
 				break;
 			case ProgramState.Crash:
 				var bp = new Breakpoint();
@@ -715,6 +781,16 @@ public class Driver : Debuggee {
 			if (found!=null) {
 				if (bp.depth>0 && bp.pp) bp.depth = frame.depth+1;
 				found.print = bp.print;
+				if (found.print!=null) {
+					found.print.compute_in_stack(top, rts);
+					found.formatted = found.print.bottom().format_values(2,
+						found.print.Format.WITH_NAME |
+						found.print.Format.WITH_TYPE |
+						found.print.Format.INDEX_VALUE ,
+						top, rts);
+				} else {
+					found.formatted = null;
+				}
 				if (found.watch!=null) {
 					if (wi.depth>top.depth) {
 						found.watch.invalidate();
@@ -760,13 +836,13 @@ public class Driver : Debuggee {
 
 	protected override void set_addresses_and_offsets(AddressFunc address_of) {
 		base.set_addresses_and_offsets(address_of);
-		longjmp_func = (LongjmpFunc)address_of("longjmp");
 		jump_buffer_func = (JumpBufferFunc)address_of("jmp_buffer");
+		longjmp_func = (LongjmpFunc)address_of("longjmp");
+		interruptable_func = (InterruptableFunc)address_of("interruptable");
 		eif_markers = address_of("markers");
 		raise_func = (RaiseFunc)address_of("raise");
 		set_pos_func = (PositionFunc)address_of("set_bp_pos");
 		set_limits_func = (LimitsFunc)address_of("set_limits");
-		inter = (int*)address_of("inter");
 		step = (int*)address_of("step");
 	}
 
@@ -802,6 +878,7 @@ public class Driver : Debuggee {
 		}
 		set_addresses_and_offsets(af); 
 		*step = 1;
+		*interrupt = 0;
 	}
 
 	public StackFrame* top { get; private set; }
@@ -812,4 +889,15 @@ public class Driver : Debuggee {
 		Marker.reset(true);
 	}
 
+	public override void call_delayed(Cancellable target) {
+		var th = new Thread<StackFrame*>("Action", () => {
+				base.call_delayed(target);
+				return null;
+			});
+	}
+
+	public void set_interrupt() { *interrupt = 1; }
+
 }
+
+public delegate Error? ActionFunc(Object target);

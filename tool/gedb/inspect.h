@@ -739,6 +739,7 @@ void gedb_stack_frame_free (GedbStackFrame* self);
 guint gedb_stack_frame_line (GedbStackFrame *self);
 guint gedb_stack_frame_column (GedbStackFrame *self);
 void gedb_stack_frame_set_position (GedbStackFrame *self, gint l, gint c);
+gchar* gedb_stack_frame_to_string (GedbStackFrame *self, GedbSystem* s);
 GedbType* gedb_stack_frame_target_type (GedbStackFrame *self);
 guint8* gedb_target (GedbStackFrame* f);
 guint gedb_c_ident (void* a);

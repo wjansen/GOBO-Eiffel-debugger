@@ -58,11 +58,15 @@ inherit
 		rename
 			make as make_feature
 		export
-			{} all
+			{NONE} all
+			{IS_BASE} fast_name
 			{ANY}
 				position_as_integer,
 				line_of_position,
-				column_of_position
+				column_of_position,
+				is_less, is_less_equal,
+				is_equal, 
+				is_greater, is_greater_equal
 		undefine
 			copy,
 			is_equal,
@@ -71,7 +75,8 @@ inherit
 
 	KL_SHARED_EXECUTION_ENVIRONMENT
 		export
-			{} all
+			{NONE} all
+			{ANY} is_equal
 		undefine
 			is_equal,
 			copy,
@@ -89,7 +94,7 @@ create
 
 	make_debug
 
-feature {} -- Initialization 
+feature {NONE} -- Initialization 
 
 	make_debug (a_system: like current_dynamic_system; as_pmd: BOOLEAN)
 		note
@@ -115,50 +120,52 @@ feature {} -- Initialization
 			else
 				make_generator (a_system)
 			end
-			needed_categories := 0
-				| {ET_IS_SYSTEM}.With_root_creation
-				| {ET_IS_SYSTEM}.With_parents
-				| {ET_IS_SYSTEM}.With_texts
-				| {ET_IS_SYSTEM}.With_once_values
-				| {ET_IS_SYSTEM}.With_effectors
-				| {ET_IS_SYSTEM}.With_attributes
-				| {ET_IS_SYSTEM}.With_default_creation
-				| {ET_IS_SYSTEM}.With_routines
-				| {ET_IS_SYSTEM}.With_constants
-				| {ET_IS_SYSTEM}.With_locals
-				| {ET_IS_SYSTEM}.With_signatures
-				| {ET_IS_SYSTEM}.With_typeset
-			build_system (a_system, a_system.root_type, needed_categories, True, False)
-			from
-				l_types := debuggee.origin.dynamic_types
-				n := l_types.count
-			until n = 0 loop
-				l_dynamic := l_types.item (n)
-				if l_dynamic.is_alive or else n <= {IS_BASE}.Pointer_ident then
-					debuggee.force_type (l_dynamic)
+			if attached a_system as s then
+				needed_categories := 0
+					| {ET_IS_SYSTEM}.With_root_creation
+					| {ET_IS_SYSTEM}.With_parents
+					| {ET_IS_SYSTEM}.With_texts
+					| {ET_IS_SYSTEM}.With_once_values
+					| {ET_IS_SYSTEM}.With_effectors
+					| {ET_IS_SYSTEM}.With_attributes
+					| {ET_IS_SYSTEM}.With_default_creation
+					| {ET_IS_SYSTEM}.With_routines
+					| {ET_IS_SYSTEM}.With_constants
+					| {ET_IS_SYSTEM}.With_locals
+					| {ET_IS_SYSTEM}.With_signatures
+					| {ET_IS_SYSTEM}.With_typeset
+					build_system (s, s.root_type, needed_categories, True, False)
+				from
+					l_types := debuggee.origin.dynamic_types
+					n := l_types.count
+				until n = 0 loop
+					l_dynamic := l_types.item (n)
+					if l_dynamic.is_alive or else n <= {IS_BASE}.Pointer_ident then
+						debuggee.force_type (l_dynamic)
+					end
+					n := n - 1
 				end
-				n := n - 1
-			end
-			from
-				n := debuggee.type_count
-			until n = 0 loop
-				n := n - 1 
-				if attached debuggee.type_at (n) as t 
-					and then t.is_normal and then attached t.fields as aa
-				 then
-					aa.default_sort
+				from
+					n := debuggee.type_count
+				until n = 0 loop
+					n := n - 1 
+					if attached debuggee.type_at (n) as t 
+						and then t.is_normal and then attached t.fields as aa
+					 then
+						aa.default_sort
+					end
 				end
-			end
-			create import
-			entity_declaration := "static void* e = 0;%N"
-			field_declaration := "static "
-			l_type := debugger.type_by_name("TYPE", True)
-			field_declaration.append (l_type.c_name)
-			field_declaration.append ("* e = 0;%N")
-			c1 := c_clock
+				create import
+				entity_declaration := "static void* e = 0;%N"
+				field_declaration := "static "
+				l_type := debugger.type_by_name("TYPE", True)
+				field_declaration.append (l_type.c_name)
+				field_declaration.append ("* e = 0;%N")
+				c1 := c_clock
 --		io.-rror.put_string("Compile time: ")
 --		io.error.put_double((c1-c0)/c_factor)
 --		io.error.put_new_line
+			end
 		end
 
 feature -- Access 
@@ -230,17 +237,19 @@ feature -- Access
 
 		end
 	
-feature {} -- Feature generation 
+feature {NONE} -- Feature generation 
 
   print_agent_declaration (i: INTEGER; an_agent: ET_AGENT)
 		local
 			l_type: ET_DYNAMIC_TYPE
     do
-      Precursor (i, an_agent)
-			if attached intro_compilee as ic then
-				ic.resolve_no_ident_types
-				l_type := dynamic_type_set (an_agent).static_type
-				ic.force_agent (an_agent, l_type, current_feature, current_type, i)
+			if attached current_feature as cf then
+				Precursor (i, an_agent)
+				if attached intro_compilee as ic then
+					ic.resolve_no_ident_types
+					l_type := dynamic_type_set (an_agent).static_type
+					ic.force_agent (an_agent, l_type, cf, current_type, i)
+				end
 			end
 		end
 	
@@ -250,10 +259,7 @@ feature {} -- Feature generation
 			l_extension: DG_EXTENSION
 			l_import: ET_IMPORT
 			l_routine: ET_IS_ROUTINE
-			l_names: HASH_TABLE [STRING, IS_TYPE]
-			l_filename: STRING
 			i, j, k: INTEGER
-			l_append: BOOLEAN
 		do
 			debuggee.define
 			refill_remote_to_self
@@ -273,10 +279,13 @@ feature {} -- Feature generation
 				end
 			end
 			include_runtime_header_file ("eif_dir.h", True, header_file)
-			include_runtime_header_file ("eif_file.h", True, header_file)	
-			include_runtime_header_file ("eif_memory.h", True, header_file)
+			header_file.put_new_line
 			included_runtime_c_files.force ("eif_dir.c")
+			include_runtime_header_file ("eif_file.h", True, header_file)	
+			header_file.put_new_line
 			included_runtime_c_files.force ("eif_file.c")
+			include_runtime_header_file ("eif_memory.h", True, header_file)
+			header_file.put_new_line
 			included_runtime_c_files.force ("eif_memory.c")
 			create l_import
 			create l_intro_ext.make (Current, debuggee, l_import)
@@ -310,7 +319,7 @@ feature {} -- Feature generation
 			"(EIF_REAL_64)CLOCKS_PER_SEC"
 		end
 	
-feature {} -- Feature generation 
+feature {NONE} -- Feature generation 
 
 	generate_c_code (a_system_name: STRING)
 		do
@@ -410,12 +419,6 @@ feature {} -- Feature generation
 			Precursor (an_instruction)
 		end
 
-	print_static_call_instruction0 (an_instruction: ET_STATIC_CALL_INSTRUCTION)
-		do
-			print_position_handling (an_instruction, Call_break)
-			Precursor (an_instruction)
-		end
-
 	print_unqualified_call_instruction (an_instruction: ET_FEATURE_CALL_INSTRUCTION)
 		do
 			if attached {ET_CALL_INSTRUCTION} an_instruction as instr then
@@ -442,7 +445,7 @@ feature {NONE} -- Memory allocation
 			end
 		end
 	
-feature {} -- Debugging code 
+feature {NONE} -- Debugging code 
 
 	actual_routine: detachable ET_IS_ROUTINE
 
@@ -451,28 +454,30 @@ feature {} -- Debugging code
 			l_type: detachable ET_IS_TYPE
 			l_name: READABLE_STRING_8
 		do
-			l_type := debuggee.type_by_origin (current_type)
-			if attached {ET_IS_AGENT_TYPE} l_type as l_agent then
-				l_type := l_agent.declared_type
-			end
-			if l_type /= Void then
-				actual_routine := l_type.routine_by_origin (current_feature, debuggee)
-				if actual_routine /= Void
-					and then actual_routine.is_creation /= as_create 
-				 then
-					l_name := actual_routine.fast_name
-					actual_routine := l_type.routine_by_name (l_name, as_create)
+			if attached current_feature as cf then
+				l_type := debuggee.type_by_origin (current_type)
+				if attached {ET_IS_AGENT_TYPE} l_type as l_agent then
+					l_type := l_agent.declared_type
 				end
-			else
-				actual_routine := Void
-			end
-			if actual_routine /= Void and then actual_routine.is_external then
-				actual_routine := Void
-			end
-			if actual_routine /= Void
-				and then attached actual_routine.target.routines as rr
-			 then
-				print_stack_initialization (rr.index_of (actual_routine))
+				if l_type /= Void then
+					actual_routine := l_type.routine_by_origin (cf, debuggee)
+					if actual_routine /= Void
+						and then actual_routine.is_creation /= as_create 
+					 then
+						l_name := actual_routine.fast_name
+						actual_routine := l_type.routine_by_name (l_name, as_create)
+					end
+				else
+					actual_routine := Void
+				end
+				if actual_routine /= Void and then actual_routine.is_external then
+					actual_routine := Void
+				end
+				if attached actual_routine as ar
+					and then attached actual_routine.target.routines as rr
+				 then
+					print_stack_initialization (rr.index_of (ar))
+				end
 			end
 		end
 
@@ -480,28 +485,30 @@ feature {} -- Debugging code
 		local
 			l_type: ET_DYNAMIC_TYPE
 		do
-			actual_routine := Void
-			if actual_agent_ident > 0 then
-				if attached debuggee.type_by_origin (current_type) then
-					if not attached debuggee.last_agent as la
-						or else la.orig_agent /= an_agent
-					 then
-						l_type := dynamic_type_set (an_agent).static_type
-						debuggee.force_agent (an_agent, l_type, current_feature, current_type, actual_agent_ident)
+			if attached current_feature as cf then
+				actual_routine := Void
+				if actual_agent_ident > 0 then
+					if attached debuggee.type_by_origin (current_type) then
+						if not attached debuggee.last_agent as la
+							or else la.orig_agent /= an_agent
+						 then
+							l_type := dynamic_type_set (an_agent).static_type
+							debuggee.force_agent (an_agent, l_type, cf , current_type, actual_agent_ident)
+						end
+						if attached debuggee.last_agent as ag then
+							actual_routine := ag.routine
+						end
 					end
-					if attached debuggee.last_agent as ag then
-						actual_routine := ag.routine
+					if actual_routine /= Void and then actual_routine.is_external then
+						actual_routine := Void
 					end
-				end
-				if actual_routine /= Void and then actual_routine.is_external then
-					actual_routine := Void
-				end
-				if attached actual_routine then
-					print_stack_initialization (0)
+					if attached actual_routine then
+						print_stack_initialization (0)
+					end
 				end
 			end
 		end
-
+	
 	print_debug_exit (a_last: BOOLEAN)
 		local
 			l_keyword: detachable ET_KEYWORD
@@ -537,114 +544,141 @@ feature {} -- Debugging code
 		require
 			has_actual: actual_routine /= Void
 		local
-			l_target: ET_IS_TYPE
-			l_routine: ET_IS_ROUTINE
+			l_target: attached ET_IS_TYPE
 			l_agent: detachable ET_IS_AGENT_TYPE
 			l_compound: detachable ET_COMPOUND
 			l_rescue: detachable ET_COMPOUND
-			l_node: ET_AST_NODE
 			i, j, k, n: INTEGER
 			is_root: BOOLEAN
 		do
-			l_routine := actual_routine
-			l_agent := l_routine.inline_agent
-			if l_agent /= Void then
-				if attached {ET_INTERNAL_ROUTINE_CLOSURE} l_agent.orig_agent as ag then
-					l_compound := ag.compound
-					l_rescue := ag.rescue_clause
+			if attached actual_routine as l_routine then
+				l_agent := l_routine.inline_agent
+				if l_agent /= Void then
+					if attached {ET_INTERNAL_ROUTINE_CLOSURE} l_agent.orig_agent as ag then
+						l_compound := ag.compound
+						l_rescue := ag.rescue_clause
+					end
+				else
+					if attached {ET_INTERNAL_ROUTINE} l_routine.origin.static_feature as sf then
+						l_compound := sf.compound
+						l_rescue := sf.rescue_clause
+					end
 				end
-			else
-				if attached {ET_INTERNAL_ROUTINE} l_routine.origin.static_feature as sf then
-					l_compound := sf.compound
-					l_rescue := sf.rescue_clause
-				end
-			end
-			l_target := l_routine.target
-			is_root := l_routine = debuggee.root_creation_procedure
-			actual_text := l_routine.text
-			actual_debugged := l_routine.in_class.is_debug_enabled
-				or else l_routine = debuggee.root_creation_procedure
-			actual_id := l_routine.in_class.ident
+				l_target := l_routine.target
+				is_root := l_routine = debuggee.root_creation_procedure
+				actual_text := l_routine.text
+				actual_debugged := l_routine.in_class.is_debug_enabled
+					or else l_routine = debuggee.root_creation_procedure
+				actual_id := l_routine.in_class.ident
 				-- Define stack frame variable: 
-			print_indentation
-			current_file.put_string (import.frame_struct_name)
-			current_file.put_string (once " s = {0};%N")
-			if supports_marking then
 				print_indentation
-				current_file.put_string (buffer_declaration)
-			end
-			print_indentation
-			current_file.put_character ('{')
-			current_file.put_new_line
-			indent			
-			print_indentation
-			current_file.put_string (entity_declaration)			
-			print_indentation
-			current_file.put_string (once "if (!e) {%N")
-			indent
-			print_indentation
-			current_file.put_string (once "e = ")
-			current_file.put_string (import.c_get_routine)
-			current_file.put_character ('(')
-			current_file.put_integer (l_target.ident)
-			current_file.put_character (',')
-			if attached l_agent then
-				current_file.put_integer (l_target.routines.index_of (l_routine))
-			else
-				current_file.put_integer (an_index)
-			end
-			current_file.put_string (close_c_args)
-				-- Compute offsets of local variables:
-			if attached l_agent then 
-				if attached l_routine.arg_at (0) then
+				current_file.put_string (import.frame_struct_name)
+				current_file.put_string (once " s = {0};%N")
+				if supports_marking then
 					print_indentation
-					current_file.put_string (import.c_set_local)
-					current_file.put_character ('(')
-					print_argument_name (formal_argument (1), current_file)
-					current_file.put_character (',')
-					current_file.put_integer (j)
-					current_file.put_string (close_c_args)
+					current_file.put_string (buffer_declaration)
 				end
-			elseif l_routine.uses_current then
 				print_indentation
-				current_file.put_string (import.c_set_local)
+				current_file.put_character ('{')
+				current_file.put_new_line
+				indent			
+				print_indentation
+				current_file.put_string (entity_declaration)			
+				print_indentation
+				current_file.put_string (once "if (!e) {%N")
+				indent
+				print_indentation
+				current_file.put_string (once "e = ")
+				current_file.put_string (import.c_get_routine)
 				current_file.put_character ('(')
-				print_current_name (current_file)
+				current_file.put_integer (l_target.ident)
 				current_file.put_character (',')
-				current_file.put_integer (j)
+				if attached l_agent then
+					current_file.put_integer (l_target.routines.index_of (l_routine))
+				else
+					current_file.put_integer (an_index)
+				end
 				current_file.put_string (close_c_args)
-			end
-			j := j + 1
-			if attached l_agent as ag then
-				from
-					i := 1
-					n := l_routine.argument_count
-				until i >= n loop
-					if ag.is_open_operand (i) then
+				-- Compute offsets of local variables:
+				if attached l_agent then 
+					if attached l_routine.arg_at (0) then
 						print_indentation
 						current_file.put_string (import.c_set_local)
 						current_file.put_character ('(')
-						k := k + 1
-						ag.print_open_operand_name (k, current_file, Current)
+						print_argument_name (formal_argument (1), current_file)
 						current_file.put_character (',')
 						current_file.put_integer (j)
 						current_file.put_string (close_c_args)
 					end
-					j := j + 1
-					i := i + 1
+				elseif l_routine.uses_current then
+					print_indentation
+					current_file.put_string (import.c_set_local)
+					current_file.put_character ('(')
+					print_current_name (current_file)
+					current_file.put_character (',')
+					current_file.put_integer (j)
+					current_file.put_string (close_c_args)
 				end
-			else
+				j := j + 1
+				if attached l_agent as ag then
+					from
+						i := 1
+						n := l_routine.argument_count
+					until i >= n loop
+						if ag.is_open_operand (i) then
+							print_indentation
+							current_file.put_string (import.c_set_local)
+							current_file.put_character ('(')
+							k := k + 1
+							ag.print_open_operand_name (k, current_file, Current)
+							current_file.put_character (',')
+							current_file.put_integer (j)
+							current_file.put_string (close_c_args)
+						end
+						j := j + 1
+					i := i + 1
+					end
+				else
+					from
+						i := 1
+						n := l_routine.argument_count
+					until i >= n loop
+						if attached l_routine.arg_at (i) as v
+							and then attached {ET_IDENTIFIER} v.origin as id 
+						 then
+							print_indentation
+							current_file.put_string (import.c_set_local)
+							current_file.put_character ('(')
+							print_argument_name (id, current_file)
+							current_file.put_character (',')
+							current_file.put_integer (j)
+							current_file.put_string (close_c_args)
+						end
+						j := j + 1
+						i := i + 1
+					end
+				end
+				if attached l_routine.result_field then
+					print_indentation
+					current_file.put_string (import.c_set_local)
+					current_file.put_character ('(')
+					print_result_name (current_file)
+					current_file.put_character (',')
+					current_file.put_integer (j)
+					current_file.put_string (close_c_args)
+				end
+				j := j + 1
 				from
 					i := 1
-					n := l_routine.argument_count
+					n := l_routine.local_count
 				until i >= n loop
-					if attached l_routine.arg_at (i) as v
+					if attached l_routine.local_at (i) as v
 						and then attached {ET_IDENTIFIER} v.origin as id 
 					 then
 						print_indentation
 						current_file.put_string (import.c_set_local)
 						current_file.put_character ('(')
-						print_argument_name (id, current_file)
+						print_local_name (id, current_file)
 						current_file.put_character (',')
 						current_file.put_integer (j)
 						current_file.put_string (close_c_args)
@@ -652,112 +686,84 @@ feature {} -- Debugging code
 					j := j + 1
 					i := i + 1
 				end
-			end
-			if attached l_routine.result_field then
-				print_indentation
-				current_file.put_string (import.c_set_local)
-				current_file.put_character ('(')
-				print_result_name (current_file)
-				current_file.put_character (',')
-				current_file.put_integer (j)
-				current_file.put_string (close_c_args)
-			end
-			j := j + 1
-			from
-				i := 1
-				n := l_routine.local_count
-			until i >= n loop
-				if attached l_routine.local_at (i) as v
-					and then attached {ET_IDENTIFIER} v.origin as id 
-				 then
-					print_indentation
-					current_file.put_string (import.c_set_local)
-					current_file.put_character ('(')
-					print_local_name (id, current_file)
-					current_file.put_character (',')
-					current_file.put_integer (j)
-					current_file.put_string (close_c_args)
-				end
-				j := j + 1
-				i := i + 1
-			end
-			from
-				i := 0
-				n := l_routine.scope_var_count
-			until i = n loop
-				if attached {ET_IS_SCOPE_VARIABLE} l_routine.scope_var_at (i) as v
-					and then attached {ET_IDENTIFIER} v.origin as id 
-				 then
-					print_indentation
-					current_file.put_string (import.c_set_local)
-					current_file.put_character ('(')
-					if v.is_object_test then
-						print_object_test_local_name (id, current_file)
-					else
-						print_across_cursor_name (id, current_file)
+				from
+					i := 0
+					n := l_routine.scope_var_count
+				until i = n loop
+					if attached {ET_IS_SCOPE_VARIABLE} l_routine.scope_var_at (i) as v
+						and then attached {ET_IDENTIFIER} v.origin as id 
+					 then
+						print_indentation
+						current_file.put_string (import.c_set_local)
+						current_file.put_character ('(')
+						if v.is_object_test then
+							print_object_test_local_name (id, current_file)
+						else
+							print_across_cursor_name (id, current_file)
+						end
+						current_file.put_character (',')
+						current_file.put_integer (j)
+						current_file.put_string (close_c_args)
 					end
-					current_file.put_character (',')
-					current_file.put_integer (j)
-					current_file.put_string (close_c_args)
+					j := j + 1
+					i := i + 1
 				end
-				j := j + 1
-				i := i + 1
-			end
-			dedent
-			print_indentation
-			current_file.put_character ('}')
-			current_file.put_new_line
-				-- Set stack frame descriptor: 
-			print_indentation
-			current_file.put_string (once "s.routine = e;%N")
-			dedent
-			print_indentation
-			current_file.put_character ('}')
-			current_file.put_new_line
-			print_indentation
-			current_file.put_string (once "s.class_id = ")
-			current_file.put_integer (l_routine.in_class.ident)
-			current_file.put_character (';')
-			current_file.put_new_line
-			print_indentation
-			current_file.put_string (once "s.caller = ")
-			current_file.put_string (import.c_stacktop_name)
-			current_file.put_character (';')
-			current_file.put_new_line
-			print_indentation
-			current_file.put_string (once "s.depth = ")
-			current_file.put_string (import.c_stacktop_name)
-			if is_root then
-				current_file.put_string ("!=0 ? ")
-				current_file.put_string (import.c_stacktop_name)
-				current_file.put_string (once "->depth+1 : 1;%N")
-			else
-				current_file.put_string (once "->depth+1;%N")
-			end
-			if not pma_only then
+				dedent
 				print_indentation
-				current_file.put_string (once "s.scope_depth = ")
+				current_file.put_character ('}')
+				current_file.put_new_line
+				-- Set stack frame descriptor: 
+				print_indentation
+				current_file.put_string (once "s.routine = e;%N")
+				dedent
+				print_indentation
+				current_file.put_character ('}')
+				current_file.put_new_line
+				print_indentation
+				current_file.put_string (once "s.class_id = ")
+				current_file.put_integer (l_routine.in_class.ident)
+				current_file.put_character (';')
+				current_file.put_new_line
+				print_indentation
+				current_file.put_string (once "s.caller = ")
+				current_file.put_string (import.c_stacktop_name)
+				current_file.put_character (';')
+				current_file.put_new_line
+				print_indentation
+				current_file.put_string (once "s.depth = ")
 				current_file.put_string (import.c_stacktop_name)
 				if is_root then
 					current_file.put_string ("!=0 ? ")
 					current_file.put_string (import.c_stacktop_name)
-					current_file.put_string (once "->scope_depth+1 : 1;%N")
+					current_file.put_string (once "->depth+1 : 1;%N")
 				else
-					current_file.put_string (once "->scope_depth+1;%N")
+					current_file.put_string (once "->depth+1;%N")
 				end
-			end
-			print_indentation
-			current_file.put_string (import.c_stacktop_name)
-			current_file.put_string (address_s)
-			if attached l_compound as c then
-				if l_routine.is_creation then
-					delayed_enter := c
-				else
-					enter_scope (c.keyword)
+				if not pma_only then
+					print_indentation
+					current_file.put_string (once "s.scope_depth = ")
+					current_file.put_string (import.c_stacktop_name)
+					if is_root then
+						current_file.put_string ("!=0 ? ")
+						current_file.put_string (import.c_stacktop_name)
+						current_file.put_string (once "->scope_depth+1 : 1;%N")
+					else
+						current_file.put_string (once "->scope_depth+1;%N")
+					end
+				end
+				print_indentation
+				current_file.put_string (import.c_stacktop_name)
+				current_file.put_string (address_s)
+				if attached l_compound as c then
+					if l_routine.is_creation then
+						delayed_enter := c
+					else
+						enter_scope (c.keyword)
+					end
 				end
 			end
 		end
-
+	
 	print_stack_termination (a_keyword: ET_KEYWORD)
 		do
 			if actual_routine /= Void then
@@ -889,8 +895,8 @@ feature {} -- Debugging code
 				current_file.put_string (import.c_init_name)
 				current_file.put_string ("();%N")
 				print_position_handling(de, Start_program_break)
-				print_indentation
 				dedent
+				print_indentation
 				current_file.put_string ("}%N")
 			end
 			enter_scope (de)
@@ -941,7 +947,7 @@ feature {} -- Debugging code
 					if c > max_column_number then
 						max_column_number := c
 					end
-					tmp_str.clear_all
+					tmp_str.wipe_out
 					if pure_pos then
 						tmp_str.append (import.c_skip_name)
 					elseif supports_marking and then for_instruction then
@@ -1012,7 +1018,7 @@ feature {} -- Debugging code
 
 	old_pos: INTEGER
 	
-feature {} -- Routine signatures 
+feature {NONE} -- Routine signatures 
 
 	signature_index (a_routine: ET_IS_ROUTINE): INTEGER
 		note
@@ -1022,7 +1028,7 @@ feature {} -- Routine signatures
 			 BNF:  [res_type] "=" [type] ";" {arg_type ","}
 			]"
 		do
-			tmp_str.clear_all
+			tmp_str.wipe_out
 			append_signature (a_routine, tmp_str)
 			if signature_pool.has (tmp_str) then
 				Result := signature_pool.item (tmp_str)
@@ -1090,7 +1096,7 @@ feature {} -- Routine signatures
 			end
 		end
 
-feature {} -- Extended code generation 
+feature {NONE} -- Extended code generation 
 
 	step_into_position_disabled: BOOLEAN
 
@@ -1175,7 +1181,7 @@ feature {} -- Extended code generation
 			end
 		end
 	
-feature {} -- Implementation 
+feature {NONE} -- Implementation 
 
 	already_called: detachable ET_AST_NODE
 

@@ -582,8 +582,8 @@ namespace Gedb {
 		}
 		
 		public override void read_char32() {
-			last_char32 = file.getc();
-			++pos;
+			read_int();
+			last_char32 = last_int;
 		}
 
 		public override void read_int8() {

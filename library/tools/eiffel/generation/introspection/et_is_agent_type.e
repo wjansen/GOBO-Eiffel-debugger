@@ -111,7 +111,7 @@ feature {NONE} -- Initialization
 			fast_name := out
 		ensure
 			origin_set: orig_agent = o
-			declared_type_set: declared_type = d
+			declared_type_set: declared_type.origin = dt
 			where_set: where = w
 		end
 
@@ -143,9 +143,6 @@ feature {NONE} -- Initialization
 feature -- Initialization 
 
 	define (s: ET_IS_SYSTEM)
-		local
-			f: like field_at
-			k: INTEGER
 		do
 			if not defined then
 				Precursor (s)
@@ -162,7 +159,7 @@ feature -- Access
 
 	base_class: ET_IS_CLASS_TEXT
 
-	base: ET_IS_TYPE
+	base: attached ET_IS_TYPE
 	
 	declared_type: ET_IS_NORMAL_TYPE
 
@@ -172,9 +169,9 @@ feature -- Access
 
 	in_routine: detachable ET_IS_ROUTINE
 
-	home: ET_IS_CLASS_TEXT
+	home: attached ET_IS_CLASS_TEXT
 	
-	where: ET_DYNAMIC_FEATURE
+	where: attached ET_DYNAMIC_FEATURE
 
 	in_type: ET_DYNAMIC_TYPE
 	
@@ -260,23 +257,24 @@ feature {NONE} -- Implementation
 		end
 
 	declare_routine (s: ET_IS_SYSTEM)
-		local
-			f: ET_DYNAMIC_FEATURE
 		do
 			if is_alive then
 				if attached {ET_CALL_AGENT} orig_agent as c then
-					if orig_agent.is_procedure then
-						f := base.origin.seeded_dynamic_procedure (c.name.seed, s.origin)
-					else
-						f := base.origin.seeded_dynamic_query (c.name.seed, s.origin)
+					if orig_agent.is_procedure and then
+						attached base.origin.seeded_dynamic_procedure (c.name.seed, s.origin) as f
+					 then
+						base.force_routine (f, False, s)
+					elseif attached base.origin.seeded_dynamic_query (c.name.seed, s.origin) as f then
+						base.force_routine (f, False, s)
 					end
-					base.force_routine (f, False, s)
 					routine := base.last_routine
 				elseif attached {ET_INLINE_AGENT} orig_agent as inline then
 					base.force_routine (where, False, s)
 					in_routine := base.last_routine
 					create routine.declare_anonymous (Current, in_routine, s)
-					base.force_anonymous_routine (routine)
+					if attached routine as r then
+						base.force_anonymous_routine (r)
+					end
 				end
 				routine.build_arguments (s)
 			end
@@ -285,7 +283,7 @@ feature {NONE} -- Implementation
 	declare_fields (s: ET_IS_SYSTEM)
 		local
 			buffer: like field_buffer
-			ca: attached like field_at
+			ca: detachable like field_at
 			i, k, n: INTEGER
 		do
 			buffer := field_buffer
@@ -347,7 +345,7 @@ feature {NONE} -- Implementation
 	
 	arg_names: ARRAY [READABLE_STRING_8]
 		once
-			create Result.make (0, 9)
+			create Result.make_filled ("", 0, 9)
 		ensure
 			zero_based: Result.lower = 0
 		end
@@ -373,7 +371,7 @@ feature {NONE} -- Implementation
 
 invariant
 
-	when_alive: alive implies attached routine 
+	when_alive: is_alive implies attached routine 
 	
 note
 

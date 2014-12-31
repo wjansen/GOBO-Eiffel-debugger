@@ -1,0 +1,31 @@
+CC ?= cc
+CFLAGS ?= `pkg-config --cflags glib-2.0 gobject-2.0`
+LIBS ?= `pkg-config --libs glib-2.0 gobject-2.0`
+LEX ?= lex
+LEMON ?= lemon
+CFLAGS_VALA ?=
+OUTPUT ?= a.out
+
+_EvalParserLexer.lex _EvalParserParser2.h _EvalParserParser.lemon : eval_parser.vala
+	../vle/vala-lemon-extractor
+
+eval_parser.c _Parser.h : eval_parser.vala _EvalParserParser.vapi
+	valac ${CFLAGS_VALA} --vapidir=. -C -H _Parser.h --pkg _EvalParserParser eval_parser.vala
+
+${OUTPUT} : eval_parser.c _EvalParserParser.o
+	${CC} ${CFLAGS} -I. -o ${OUTPUT} eval_parser.c _EvalParserParser.o ${LIBS}
+
+_EvalParserLexer.c : _EvalParserLexer.lex
+	${LEX} -o _EvalParserLexer.c _EvalParserLexer.lex
+
+_EvalParserParser.c _EvalParserParser.h : _EvalParserParser.lemon
+	${LEMON} -q _EvalParserParser.lemon
+
+_EvalParserParser.o : _Parser.h _EvalParserLexer.c _EvalParserParser.c _EvalParserParser.h
+	cat _Parser.h _EvalParserLexer.c _EvalParserParser.c > _Parser.tmp.c
+	${CC} ${CFLAGS}  -I. -c _Parser.tmp.c -o _EvalParserParser.o
+
+clean :
+	rm -f _EvalParserLexer.lex _EvalParserParser2.h _EvalParserParser.lemon _EvalParserLexer.c _EvalParserParser.c _EvalParserParser.h eval_parser.c _EvalParserParser.vapi _EvalParserParser.o _Parser.h _Parser.tmp.c ${OUTPUT}
+
+all : ${OUTPUT}

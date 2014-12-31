@@ -975,12 +975,15 @@ public class FullSource : SingleSource {
 		word = buf.get_text(start, end, false);
 		pos = 256*(start.get_line()+1) + (start.get_line_offset()+1);
 		Qualified? q = identifier_table.@get(pos);
-		if (q==null)
-			return;
-		ClassText* cls;
+		if (q==null) return;
+		ClassText* cls = q.cls;
 		FeatureText* ft = q.ft;
 		RoutineText* rt = null;
-		if (ft==null) return;
+		if (cls==null && ft==null) return;
+		if (ft==null) {
+			s.do_actual(null, cls.ident, 257);
+			return;
+		}
 		if (ft.renames!=null) ft = ft.renames;
 		int m, n;
 		string cn = ft.home._name.fast_name;
@@ -1173,8 +1176,8 @@ public class FullSource : SingleSource {
 			end.assign(start);
 			end.forward_to_tag_toggle(id_op);
 			if (q.cls==null) ft = q.ft;
-			text.apply_tag(list, start, end);
 			if (ft==null && (q==null || q.cls==null)) return false;
+			text.apply_tag(list, start, end);
 			if (ft==null) return true;
 			string name = "";
 			if (ft.home!=cls) 
@@ -1317,8 +1320,8 @@ public class FullSource : SingleSource {
 				case '.':
 				case 'b':
 				case 'k':
-				case 'c':
-				case 'C':
+				case 'u':
+				case 'U':
 				case 'e':
 				case 'E':
 				case 'p':
@@ -1369,11 +1372,11 @@ public class FullSource : SingleSource {
 					brk.kill_breakpoint(cls.ident, actual_pos);
 				}
 				break;
-			case 'c': 
-			case 'C': 
+			case 'u': 
+			case 'U': 
 				cls = current_class();
 				p = insert_position(true);
-				set_once_breakpoint(cls.ident, p, code=='C');
+				set_once_breakpoint(cls.ident, p, code=='U');
 				break;
 			case 'l':
 				s.search_state = s.SearchMode.GO_TO;

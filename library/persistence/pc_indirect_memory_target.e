@@ -579,9 +579,6 @@ feature {NONE} -- Implementation
 	valid_field (f: IS_FIELD): BOOLEAN
 		do
 			Result := attached object and then f.offset >= 0
-			if not Result then
-				io.put_new_line
-			end
 		end
 	
 	valid_stack: ARRAYED_STACK [BOOLEAN]

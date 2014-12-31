@@ -47,10 +47,18 @@ feature {NONE} -- Initialization
 			default_create
 			fast_name := nm.twin
 			flags := fl
-			all_classes.copy (c)
-			all_types.copy (t)
-			all_onces.copy (o)
-			all_constants.copy (u)
+			if c /= Void then
+				all_classes := c.twin
+			end
+			if t /= Void then
+				all_types := t.twin
+			end
+			if o /= Void then
+				all_onces := o.twin
+			end
+			if u /= Void then
+				all_constants := u.twin
+			end
 			root_creation_procedure := proc
 			root_type := root
 		ensure
@@ -368,7 +376,7 @@ feature -- Access
 			Result := t
 		end
 
-	any_type: IS_NORMAL_TYPE
+	any_type: attached IS_NORMAL_TYPE
 		note
 			return: "Descriptor of type ANY."
 		deferred
@@ -399,7 +407,7 @@ feature -- Access
 			vaidity: Result = (0 <= i and then i < agent_count and then attached all_agents as aa and then attached aa [i])
 		end
 
-	agent_at (i: INTEGER): IS_AGENT_TYPE
+	agent_at (i: INTEGER): attached IS_AGENT_TYPE
 		note
 			return: "`i'-th agent type of the system"
 		require
@@ -426,7 +434,7 @@ feature -- Access
 			vaidity: Result = (0 <= i and then i < once_count)
 		end
 
-	once_at (i: INTEGER): IS_ONCE
+	once_at (i: INTEGER): attached IS_ONCE
 		note
 			return: "`i'-th once function of the system."
 		require
@@ -448,7 +456,7 @@ feature -- Access
 			not_negative: Result >= 0
 		end
 
-	constant_at (i: INTEGER): IS_CONSTANT
+	constant_at (i: INTEGER): attached IS_CONSTANT
 		require
 			valid_index: 0 < i and then i < constant_count
 		do
@@ -457,7 +465,7 @@ feature -- Access
 
 	search_unique (i: INTEGER): detachable like constant_at
 		local
-			c: IS_CONSTANT
+			c: like constant_at
 			n: INTEGER
 		do
 			from
@@ -509,19 +517,17 @@ feature -- Searching
 
 	push_type (id: INTEGER)
 		require
-			not_negative: id >= 0
+			valid: valid_type (id)
 		do
 			if attached type_at (id) as t then
 				type_stack.push (t)
-			else
-				type_stack.push (Void)
 			end
 			type_stack_count := type_stack.count
 		ensure
 			stack_size: type_stack_count = old type_stack_count + 1
 		end
 
-	top_type: attached like type_at
+	top_type: like type_at
 		require
 			type_stack_not_empty: type_stack_count > 0
 		do
@@ -682,7 +688,8 @@ feature -- Searching
 				end
 			end
 		ensure
-			when_found: attached Result as r implies r.is_tuple and then all_types.has (r)
+			when_found: attached {like type_at} Result as r
+									implies Result.is_tuple and then all_types.has (r)
 		end
 
 	special_type_by_item_type (it: IS_TYPE; attac: BOOLEAN): detachable IS_SPECIAL_TYPE
@@ -695,7 +702,9 @@ feature -- Searching
 			end
 			pop_types (1)
 		ensure
-			when_found: attached Result as r implies r.is_special and then r.generic_at (0) = it and then all_types.has (r)
+			when_found: attached {like type_at} Result as r
+									implies Result.is_special and then Result.generic_at (0) = it
+									and then all_types.has (r)
 		end
 
 	agent_by_base_and_routine (base: IS_TYPE; ocp, nm: READABLE_STRING_8): detachable IS_AGENT_TYPE
@@ -721,9 +730,10 @@ feature -- Searching
 				end
 			end
 		ensure
-			when_found: attached Result as r implies nm.is_equal (r.routine_name)
-									and then r.open_closed_pattern.is_equal (ocp)
-									and then r.base = base and then all_types.has (r)
+			when_found: attached {like type_at} Result as r
+									implies nm.is_equal (Result.routine_name)
+									and then Result.open_closed_pattern.is_equal (ocp)
+									and then Result.base = base and then all_types.has (r)
 		end
 
 	type_by_name (type_name: READABLE_STRING_8; attac: BOOLEAN): detachable like type_at
@@ -794,7 +804,7 @@ feature -- Output
 			s: "STRING to be extended"
 		local
 			td: attached like type_at
-			list: IS_SEQUENCE [IS_TYPE]
+			list: IS_SEQUENCE [attached like type_at]
 			i, n: INTEGER
 		do
 			from

@@ -56,7 +56,7 @@ public class ExpressionChecker : Expander {
 	}
 
 	public void reset() {
-		parser.reset();
+		parser = new Eval.Parser();
 		parsed = null;
 		label = "";
 		msg.set_text("");
@@ -106,7 +106,7 @@ public class ExpressionChecker : Expander {
 	}
 
 	public bool check_dynamic(string query, 
-							  Gedb.Type* home, StackFrame* f, System* s, 
+							  Gedb.Type* home, StackFrame* f, System* s,
 							  bool to_compute,
 							  Gee.Map<string,Expression>? alias=null,
 							  Gee.List<Expression>? prefix=null,
@@ -150,9 +150,9 @@ public class ExpressionChecker : Expander {
 		} else {
 			ClassText* ct = null;
 			RoutineText* rt = null;	
-			head = parser.not_unique ? "<i>Ambigous " : "<i>Unknown ";
-			switch (err) {
-			case Eval.ErrorCode.UNKNOWN:
+			head = parser.error.message;
+			if (head==null || head=="") {
+				head = parser.not_unique ? "<i>Ambigous " : "<i>Unknown ";
 				if (val!=null && val.expr!=null) 
 					ct = val.expr.base_class();
 				if (ct==null) {
@@ -163,11 +163,11 @@ public class ExpressionChecker : Expander {
 					if (rt!=null) {
 						head += "query/variable in current routine</i>";
 /*
-						head += "query/variable in </i><tt>";
-						head += ct._name.fast_name;
-						head += ".";
-						head += rt._feature._name.fast_name;
-						head += "</tt>";
+  head += "query/variable in </i><tt>";
+  head += ct._name.fast_name;
+  head += ".";
+  head += rt._feature._name.fast_name;
+  head += "</tt>";
 */
 					} else {
 						head += failed.name[0].isalnum() ? "query" : "operator";
@@ -179,44 +179,6 @@ public class ExpressionChecker : Expander {
 					head += "</i>";
 				}
 				head += ":";
-				break;
-			case Eval.ErrorCode.NO_CLASS:
-				head += "class name</i>:";
-				break;
-			case Eval.ErrorCode.NO_TUPLE:
-				head += "TUPLE type</i>:";
-				break;
-			case Eval.ErrorCode.NO_ONCE:
-				head += "once function or constant</i>:";
-				break;
-			case Eval.ErrorCode.NOT_INIT:
-				head = "<i>Not yet initialized once function</i>:";
-				break;
-			case Eval.ErrorCode.NO_ALIAS:
-				head += "alias name</i>:";
-				break;
-			case Eval.ErrorCode.NO_STACK:
-				head = "<i>No actual stack</i>:";
-				break;
-			case Eval.ErrorCode.NO_IDENT:
-				if (as_static) 
-					head = "<i>Object idents not supported";
-				else
-					head = "<i>Invalid object ident";
-				head += "</i>:";
-				break;
-			case Eval.ErrorCode.BAD_PH_POS:
-				head = "<i>Placeholder not allowed there</i>:";
-				break;
-			case Eval.ErrorCode.BAD_PH_COUNT:
-				head = "<i>Too many placeholders</i>:";
-				break;
-			case Eval.ErrorCode.NOT_COMPUTED:
-				head = "<i>Not computable</i>:";
-				break;
-			default:
-				head = "<i>Parse error</i>:";
-				break;
 			}
 		}
 		if (ok) {

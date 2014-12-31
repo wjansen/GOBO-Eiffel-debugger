@@ -188,21 +188,6 @@ feature {NONE} -- POINTER conversion
 			"((EIF_INTEGER_64)time(0))*1000 "
 		end
 
-	c_tables: BOOLEAN
-		external
-			"C inline"
-		alias
-			"[
-			
-			#ifdef GEIP_TABLES 
-				(EIF_BOOLEAN)1
-			#else 
-				(EIF_BOOLEAN)0
-			#endif 
-			
-			 ]"
-		end
-	
 note
 
 	author: "Wolfgang Jansen"

@@ -74,9 +74,6 @@ feature {NONE} -- Initialization
 			action: "Create code generator for `a_system' describing GEC."
 		require
 			is_self: STRING_.same_string(a_root.base_class.upper_name, "GEC")
-		local
-			l_types: DS_ARRAYED_LIST [ET_DYNAMIC_TYPE]
-			n: INTEGER
 		do
 			is_self := True
 			needed_categories := 0
@@ -121,7 +118,9 @@ feature {NONE} -- Initialization
 		do
 			create import
 			make_generator (a_system)
-			build_system (a_system, a_root, a_categories, as_debugging, True)
+			if attached a_system as s then
+				build_system (s, a_root, a_categories, as_debugging, True)
+			end
 		end
 
 feature -- Access 
@@ -176,7 +175,7 @@ feature -- Access
 
 feature -- Basic operation 
 
-	build_system (a_system: like current_dynamic_system;
+	build_system (a_system: attached like current_dynamic_system;
 								a_root: detachable ET_DYNAMIC_TYPE;
 								a_need: INTEGER; as_debugging, with_types: BOOLEAN)
 		note
@@ -224,10 +223,10 @@ feature {NONE} -- Feature generation
     do
       actual_agent_ident := i
       Precursor (i, an_agent)
-			if not is_self then
+			if not is_self and then attached current_feature as cf then
 				l_type := dynamic_type_set (an_agent).static_type
 				compilee.resolve_no_ident_types
-				compilee.force_agent (an_agent, l_type, current_feature, current_type, i)
+				compilee.force_agent (an_agent, l_type, cf, current_type, i)
 			end
       actual_agent_ident := 0
 		end

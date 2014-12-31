@@ -11,7 +11,10 @@ class IS_LOCAL
 inherit
 
 	IS_ENTITY 
-
+		redefine
+			type
+		end
+	
 create
 
 	make
@@ -35,6 +38,8 @@ feature {NONE} -- Initialization
 
 feature -- Access 
 
+	type: attached IS_TYPE
+	
 	is_attached: BOOLEAN 
 
 feature {IS_BASE} -- Implemention

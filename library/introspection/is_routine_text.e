@@ -86,7 +86,7 @@ feature -- Access
 			Result := 0 <= i and then i < inline_text_count
 		end
 	
-	inline_text_at (i: INTEGER): IS_ROUTINE_TEXT
+	inline_text_at (i: INTEGER): attached IS_ROUTINE_TEXT
 		note
 			return: "`i'-th inline routine defined within `Current'."
 		require
@@ -157,7 +157,7 @@ feature -- Searching
 
 feature {IS_BASE} -- Implementation
 
-	vars: IS_SEQUENCE [like var_at]
+	vars: IS_SPARSE_ARRAY [like var_at]
 
 feature {NONE} -- Implementation
 

@@ -49,12 +49,12 @@ feature -- Access
 			return: "Is `Current' of an attached type?"
 		deferred
 		ensure
-			when_subobject: attached type as t and then t.is_subobject implies Result
+			when_subobject: type /= Void and then type.is_subobject implies Result
 		end
 
 	is_subobject: BOOLEAN 
 
-	type_set: detachable IS_SET [like type]
+	type_set: detachable IS_SET [attached like type]
 			-- Dynamic types of the entity. 
 
 	text: detachable IS_FEATURE_TEXT
@@ -74,7 +74,7 @@ feature {IS_BASE} -- Status setting
 	
 feature -- COMPARABLE 
 
-	is_less alias "<" (other: IS_ENTITY): BOOLEAN
+	is_less alias "<" (other: like Current): BOOLEAN
 		note
 			return: "Compare `alias_name's if not void."
 		do

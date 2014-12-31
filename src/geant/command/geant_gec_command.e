@@ -92,6 +92,9 @@ feature -- Access
 	garbage_collector: STRING
 			-- Name of GC being used
 
+	gedb: BOOLEAN
+			-- Mode of debugging
+
 	clean: STRING
 			-- Name of system to be cleaned
 
@@ -170,6 +173,14 @@ feature -- Setting
 			garbage_collector := s
 		ensure
 			garbage_collector_set: garbage_collector = s
+		end
+
+	set_gedb (b: BOOLEAN)
+			-- Set `gedb' to `b'.
+		do
+			gedb := b
+		ensure
+			gedb_set: gedb = b
 		end
 
 	set_clean (a_clean: like clean)
@@ -367,6 +378,9 @@ feature -- Command-line
 				Result.append_string ("--gc=")
 				Result.append_string (garbage_collector)
 				Result.append_character (' ')
+			end
+			if gedb then
+				Result.append_string ("--gedb=full ")
 			end
 			a_filename := file_system.pathname_from_file_system (ace_filename, unix_file_system)
 			Result := STRING_.appended_string (Result, a_filename)

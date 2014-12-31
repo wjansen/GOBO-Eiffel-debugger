@@ -21,11 +21,9 @@ create
 
 	default_create
 	
-feature {} -- Initialization
+feature {NONE} -- Initialization
 
 	default_create
-		local
-			i, n: INTEGER
 		do
 			feature_prefix.copy("gedb_")
 			struct_prefix.copy("GEDB_")
@@ -114,7 +112,7 @@ feature -- Access
 	
 	c_col_shift_name: STRING
 	
-feature {} -- Implementation
+feature {NONE} -- Implementation
 	
 	make_c_names (an_infix: READABLE_STRING_8)
 		do

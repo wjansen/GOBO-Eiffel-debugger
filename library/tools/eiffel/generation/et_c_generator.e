@@ -402,7 +402,6 @@ feature {NONE} -- Compilation script generation
 			l_external_object_pathnames: DS_ARRAYED_LIST [STRING]
 			l_includes: STRING
 			l_libs: STRING
-			l_lib: STRING
 			l_pathname: STRING
 			l_cursor: DS_HASH_TABLE_CURSOR [STRING, STRING]
 			l_external_c_filenames: DS_HASH_TABLE [STRING, STRING]
@@ -28555,6 +28554,8 @@ feature {NONE} -- Include files
 					include_runtime_header_file ("eif_traverse.h", False, a_file)
 				elseif a_filename.same_string ("%"eif_types.h%"") then
 					include_runtime_header_file ("eif_types.h", False, a_file)
+				elseif a_filename.same_string ("%"ge_inspect.h%"") then
+					include_runtime_header_file ("ge_inspect.h", False, a_file)
 				elseif a_filename.same_string ("%"ge_time.h%"") then
 					include_runtime_header_file ("ge_time.h", False, a_file)
 				else
@@ -28632,6 +28633,8 @@ feature {NONE} -- Include files
 					include_runtime_header_file ("eif_cecil.h", False, a_file)
 				elseif a_filename.same_string ("eif_traverse.h") then
 					included_runtime_c_files.force ("eif_traverse.c")
+				elseif a_filename.same_string ("ge_inspect.h") then
+					included_runtime_c_files.force ("ge_inspect.c")
 				end
 				if a_force then
 					include_runtime_c_file (a_filename, a_file)

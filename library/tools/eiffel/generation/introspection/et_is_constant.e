@@ -27,17 +27,16 @@ feature {NONE} -- Initialization
 		note
 			action: "Create `Current' according to `o'."
 		local
-			nm: STRING
-			dynamic: ET_DYNAMIC_TYPE
-			static: ET_FEATURE
+			static: attached ET_FEATURE
 			real_value: REAL_64
 			int_value: INTEGER_64
 			nat_value: NATURAL_64
-			n: INTEGER
 			ok: BOOLEAN
 		do
 			make_origin (o)
-			static := o.static_feature
+			if attached o.static_feature as sf then
+				static := sf
+			end
 			fast_name := s.internal_name (static.lower_name)
 			s.force_class (static.implementation_class)
 			home := s.last_class
@@ -133,7 +132,9 @@ feature {NONE} -- Initialization
 			if s.needs_feature_texts then
 				create text.declare_from_declaration (static, fast_name,
 																							type.origin.base_type, home, s)
-				home.add_text (text)
+				if attached text as x then
+					home.add_text (x)
+				end
 			end
 		ensure
 			origin_set: origin = o
@@ -154,11 +155,11 @@ feature -- Initialization
 
 feature -- Access 
 
-	type: ET_IS_TYPE
+	type: attached ET_IS_TYPE
 
-	text: ET_IS_FEATURE_TEXT
+	text: detachable ET_IS_FEATURE_TEXT
 
-	home: ET_IS_CLASS_TEXT
+	home: attached ET_IS_CLASS_TEXT
 	
 feature -- ET_IS_ORIGIN 
 

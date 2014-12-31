@@ -26,14 +26,15 @@ create
 	
 create {ET_IS_TYPE, IS_FACTORY}
 
-	make_in_system
+	make_in_system,
+	make
 
 feature {NONE} -- Initialization 
 
-	declare (o: attached like origin; h: like target; s: ET_IS_SYSTEM)
+	declare (o: like origin; t: like target; s: ET_IS_SYSTEM)
 		note
 			action: "Create `Current' according to `o'."
-			h: "enclosing type"
+			h: "target type"
 		local
 			static: ET_FEATURE
 			nm: READABLE_STRING_8
@@ -44,7 +45,7 @@ feature {NONE} -- Initialization
 			fast_name := s.internal_name (static.lower_name)
 			s.force_type (o.result_type_set.static_type)
 			type := s.last_type
-			target := h
+			target := t
 			is_attached := static.type.is_type_attached (o.target_type.base_class)
 			s.force_class (o.target_type.base_class)
 			if attached static.alias_name as anm then
@@ -63,10 +64,10 @@ feature {NONE} -- Initialization
 			offset := -1
 		ensure
 			origin_set: origin = o
-			target_set: target = h
+			target_set: target = t
 		end
 
-	declare_without_origin (id: INTEGER; nm: STRING; t: ET_IS_TYPE; 
+	declare_without_origin (id: INTEGER; nm: STRING; t: attached ET_IS_TYPE; 
 			tgt: like target; s: ET_IS_SYSTEM)
 		note
 			action: "Create `Current'."
@@ -115,7 +116,7 @@ feature -- Initialization
 
 feature -- Access 
 
-	type: ET_IS_TYPE
+	type: attached ET_IS_TYPE
 
 	text: detachable ET_IS_FEATURE_TEXT
 

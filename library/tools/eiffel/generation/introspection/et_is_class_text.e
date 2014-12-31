@@ -9,7 +9,7 @@ inherit
 	IS_CLASS_TEXT
 		redefine
 			parent_at,
-			feature_at,
+			feature_at
 		end
 
 	ET_IS_ORIGIN [ET_CLASS, IS_CLASS_TEXT]
@@ -107,14 +107,14 @@ feature -- Initialization
 
 feature -- Access 
 
-	parent_at (i: INTEGER): ET_IS_CLASS_TEXT
+	parent_at (i: INTEGER): attached ET_IS_CLASS_TEXT
 		do
 			if attached parents as ps then
 				Result := ps [i]
 			end
 		end
 
-	feature_at (i: INTEGER): ET_IS_FEATURE_TEXT
+	feature_at (i: INTEGER): attached ET_IS_FEATURE_TEXT
 		do
 			if attached features as fs then
 				Result := fs [i]
@@ -152,8 +152,6 @@ feature -- Status setting
 		end
 
 	add_text (f: like feature_at)
-		require
-			not_has_f: not features.has (f)
 		do
 			if features = Void then
 				create features.make_1 (f)
@@ -170,8 +168,6 @@ feature -- Searching
 		note
 			return: "Current's feature having origin `o'."
 			o: "original feature"
-		local
-			i: INTEGER
 		do
 			s.origin_table.search (o)
 			if s.origin_table.found and then
@@ -197,7 +193,7 @@ feature -- Searching
 				Result := found
 			end
 		ensure
-			when_found: attached Result as r implies r.origin = o
+			when_found: Result /= Void implies Result.origin = o.static_feature
 		end
 
 feature -- Factory
@@ -213,7 +209,7 @@ feature -- Factory
 			 ]"
 			f: "entity of `last_feature' to generate"
 		local
-			impl: ET_IS_CLASS_TEXT
+			impl: attached ET_IS_CLASS_TEXT
 			last: like last_feature
 			rt: ET_IS_ROUTINE_TEXT
 			nm: STRING

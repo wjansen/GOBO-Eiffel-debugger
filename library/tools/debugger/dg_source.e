@@ -56,7 +56,7 @@ create
 
 	make
 
-feature {} -- Initialization 
+feature {NONE} -- Initialization 
 
 	make (a_remote: like remote_system; a_self: like self_system;
 			a_generator: ET_INTROSPECT_GENERATOR; a_top: ET_IS_SYSTEM)
@@ -66,7 +66,6 @@ feature {} -- Initialization
 			x: IS_FEATURE_TEXT
 			r: IS_ROUTINE
 			f: IS_FIELD
-			o: IS_ONCE
 			a: IS_ARRAY [IS_NAME]
 			aa: ARRAY [IS_ARRAY[ IS_NAME]]
 			any: ANY
@@ -125,7 +124,7 @@ feature {} -- Initialization
 				a := r.vars
 				a := r.text.vars
 				x := r.text.var_at (0)
-				create aa.make (0, 1)
+				create aa.make_filled (a, 0, 1)
 				aa.put (a, 0)
 				last_ident := a
 				last_string := ""
@@ -165,7 +164,7 @@ feature {PC_DRIVER} -- Reading structure definitions
 
 feature {PC_DRIVER} -- Push and pop data 
 
-	pre_object (t: IS_TYPE; id: ANY)
+	pre_object (t: IS_TYPE; id: attached ANY)
 		do
 			Precursor (as_self (t), id)
 			valid_address := t.is_alive
@@ -182,14 +181,14 @@ feature {PC_DRIVER} -- Push and pop data
 			end
 		end
 
-	post_object (t: IS_TYPE; id: ANY)
+	post_object (t: IS_TYPE; id: attached ANY)
 		do
 			Precursor (t, id)
 			valid_address := True
 			in_string := False
 		end
 
-	pre_special (s: IS_SPECIAL_TYPE; cap: NATURAL; id: ANY)
+	pre_special (s: IS_SPECIAL_TYPE; cap: NATURAL; id: attached ANY)
 		do
 			Precursor (s, cap, id)
 			valid_address := True
@@ -332,7 +331,7 @@ feature {PC_DRIVER} -- Reading elementary data
 			if attached {STRING} as_any (address) as s then
 				last_string.copy (s)
 			else
-				last_string.clear_all
+				last_string.wipe_out
 			end
 		end
 
@@ -341,11 +340,11 @@ feature {PC_DRIVER} -- Reading elementary data
 			if attached {STRING_32} as_any (address) as u then
 				last_unicode.copy (u)
 			else
-				last_unicode.clear_all
+				last_unicode.wipe_out
 			end
 		end
 
-feature {} -- Object location 
+feature {NONE} -- Object location 
 
 	set_offset (fd: like field)
 		local
@@ -366,7 +365,6 @@ feature {} -- Object location
 	set_indexed_offset (s: IS_SPECIAL_TYPE; n: NATURAL)
 		local
 			a0: like address
-			off: INTEGER
 		do
 			valid_address := address /= a0
 			if valid_address then
@@ -374,7 +372,7 @@ feature {} -- Object location
 			end	
 		end
 
-feature {} -- Type conversion 
+feature {NONE} -- Type conversion 
 
 	self_class: detachable IS_CLASS_TEXT
 		note
@@ -469,7 +467,7 @@ feature {} -- Type conversion
 				end
 			end
 		ensure
-			in_types: attached Result as r and then self_types [r.ident] = a_type
+			in_types: Result /= Void and then self_types [Result.ident] = a_self
 		end
 
 	as_self (a_remote: like as_remote): like self_type
@@ -519,10 +517,10 @@ feature {} -- Type conversion
 				end
 			end
 		ensure
-			in_types: attached Result as r and then self_types.item (a_type.ident) = r
+			in_types: Result /= Void and then self_types.item (a_remote.ident) = Result
 		end
 
-feature {} -- Implementation 
+feature {NONE} -- Implementation 
 
 	in_string, valid_address: BOOLEAN
 
@@ -538,7 +536,7 @@ feature {} -- Implementation
 	process_ident (id: like last_ident)
 		local
 			remote: like as_remote
-			self: like as_self
+			self: attached like as_self
 			obj: like last_ident
 			addr: POINTER
 			off: INTEGER
@@ -548,8 +546,10 @@ feature {} -- Implementation
 			last_count := 0
 			last_capacity := 0
 			obj := id
-			if obj /= Void then
-				self := self_system.type_of_any (obj, Void)
+			if obj /= Void and then
+				attached self_system.type_of_any (obj, Void) as st
+			 then
+				self := st
 				remote := as_remote (self)
 				if data_offsets.has (self) then
 					off := data_offsets.item (self)

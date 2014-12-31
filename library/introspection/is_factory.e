@@ -260,15 +260,17 @@ feature {IS_TYPE,IS_FIELD} -- Factory
 				until i = n loop
 					j := typeset_tid (k, i)
 					new_type (j, is_attached)
-					ts.add (last_type)
+					if attached last_type as lt then
+						ts.add (lt)
+					end
 					i := i + 1
 				end
 			end
 			last_typeset := ts
 		ensure
-			same_typeset: t.valid_field (i)
-										and then attached t.field_at (i).type_set as ts
-										implies ts = last_typeset
+			same_typeset: last_type.valid_field (fid)
+										and then attached last_type.field_at (fid).type_set as fts
+										implies fts = last_typeset
 		end
 
 	item_name (i: INTEGER): READABLE_STRING_8
@@ -278,7 +280,7 @@ feature {IS_TYPE,IS_FIELD} -- Factory
 			str: STRING
 		do
 			if item_names.upper < i then
-				item_names.conservative_resize (item_names.lower, i)
+				item_names.conservative_resize_with_default ("", item_names.lower, i)
 			end
 			if attached item_names [i] as nm
 				and then not STRING_.same_string(nm, no_name)
@@ -306,7 +308,7 @@ feature {IS_TYPE,IS_FIELD} -- Factory
 			str: STRING
 		do
 			if operand_names.upper < oid then
-				operand_names.conservative_resize (operand_names.lower, oid)
+				operand_names.conservative_resize_with_default ("", operand_names.lower, oid)
 			end
 			if attached operand_names [oid] as nm
 				and then not STRING_.same_string(nm, no_name) then
@@ -408,8 +410,6 @@ feature {NONE} -- Auxiliary routines of factory
 		end
 
 	class_flags (cid: INTEGER): INTEGER
-		require
-			class_exists: class_exists (tid)
 		deferred
 		end
 
@@ -454,18 +454,6 @@ feature {IS_TYPE} -- Auxiliary routines of factory
 		end
 
 	field_name (tid, i: INTEGER): READABLE_STRING_8
-		require
-			type_exists: valid_type (tid)
-		deferred
-		end
-
-	creation_ident (tid: INTEGER): INTEGER
-		note
-			return:
-			"[
-			 Index of routine describing the default creation of type
-			 having index `tid'; negative if no such routine exists.
-			 ]"
 		require
 			type_exists: valid_type (tid)
 		deferred

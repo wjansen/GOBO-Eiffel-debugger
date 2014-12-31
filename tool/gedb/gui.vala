@@ -389,7 +389,7 @@ internal class Menus : GLib.Object {
 	private const Gtk.ActionEntry[] entries = {
 		{ "FileMenu", null, "_File" },   
 		{"Load", null, "_Load", null, "Load debuggee", do_load},
-		{"Cont", null, "_Continue", "<control>C", "Continue debuggee", do_cont},
+		{"Cont", null, "Co_ntinue", "F3", "Continue debuggee", do_cont},
 		{"Store_def", null, "_Store", "<control>S", 
 		 "Store breakpoints and alias definitions \nto default path", 
 		 do_store_def},
@@ -946,9 +946,11 @@ public class GUI : Window {
 	internal History history { get; private set; }
 
 	internal bool interrupt;
+	internal bool interactive;
 
 	internal void cont() { 
 		interrupt = true;
+		interactive = false;
 		hide();
 		Gtk.main_quit();
 	}
@@ -1021,12 +1023,14 @@ namespace Gedb {
 	private static void interrupt_handler(int sig) {
 		if (the_gui==null) return;
 		if (the_gui.dr!=null) {
-			var th = Thread.self<int>();
-			if (thread==th) {
+			if (thread==Thread.self<int>()) {
 				the_gui.dr.set_interrupt();
 			} else {
 				the_gui.dr.catch_signal(sig);
 			}
+		} else if(the_gui.interactive) {
+			Process.exit(1);	// To be imptoved!
+			// the_gui.dg.interrupt_action();
 		} else {
 			crash(IseCode.Signal_exception, sig);
 		}
@@ -1122,6 +1126,7 @@ namespace Gedb {
 			dialog.run();
 		}
 		the_gui.dg.crash_response(ctrl_c);
+		the_gui.interactive = true;
 		the_gui.show_all();
 		Gtk.main();
 		if (the_gui!=null && the_gui.interrupt) return null;

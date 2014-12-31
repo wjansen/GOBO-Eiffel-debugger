@@ -1,0 +1,31 @@
+CC ?= cc
+CFLAGS ?= `pkg-config --cflags glib-2.0 gobject-2.0`
+LIBS ?= `pkg-config --libs glib-2.0 gobject-2.0`
+LEX ?= lex
+LEMON ?= lemon
+CFLAGS_VALA ?=
+OUTPUT ?= a.out
+
+_GedbParserLexer.lex _GedbParserParser2.h _GedbParserParser.lemon : home_parser.vala
+	../vle/vala-lemon-extractor
+
+home_parser.c _Parser.h : home_parser.vala _GedbParserParser.vapi
+	valac ${CFLAGS_VALA} --vapidir=. -C -H _Parser.h --pkg _GedbParserParser home_parser.vala
+
+${OUTPUT} : home_parser.c _GedbParserParser.o
+	${CC} ${CFLAGS} -I. -o ${OUTPUT} home_parser.c _GedbParserParser.o ${LIBS}
+
+_GedbParserLexer.c : _GedbParserLexer.lex
+	${LEX} -o _GedbParserLexer.c _GedbParserLexer.lex
+
+_GedbParserParser.c _GedbParserParser.h : _GedbParserParser.lemon
+	${LEMON} -q _GedbParserParser.lemon
+
+_GedbParserParser.o : _Parser.h _GedbParserLexer.c _GedbParserParser.c _GedbParserParser.h
+	cat _Parser.h _GedbParserLexer.c _GedbParserParser.c > _Parser.tmp.c
+	${CC} ${CFLAGS}  -I. -c _Parser.tmp.c -o _GedbParserParser.o
+
+clean :
+	rm -f _GedbParserLexer.lex _GedbParserParser2.h _GedbParserParser.lemon _GedbParserLexer.c _GedbParserParser.c _GedbParserParser.h home_parser.c _GedbParserParser.vapi _GedbParserParser.o _Parser.h _Parser.tmp.c ${OUTPUT}
+
+all : ${OUTPUT}

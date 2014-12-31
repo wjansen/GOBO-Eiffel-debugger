@@ -1,0 +1,1051 @@
+%left ALIAS_CMD ARROW BREAK_CMD DEBUG_CMD.
+%left EXC AT DEPTH TYP IFF PRINT CONT DIS.
+%right ASSIGN.
+%left IMPLIES.
+%left OR XOR.
+%left AND.
+%left EQ NE SIM NSIM LT LE GT GE.
+%left INTERVAL.
+%left PLUS MINUS.
+%left TIMES DIV IDIV IMOD.
+%right UP.
+%left FREE_OP.
+%left BIT_OR BIT_AND LEFT_SHIFT RIGHT_SHIFT.
+%left NOT.
+%left DOT.
+%type parsed {EvalParsed*}
+parsed(l_this) ::= command(c). 
+{	l_this = eval_parsed_new (l_ea, c);
+	#ifdef EVAL_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x63\x6F\x6D\x6D\x61\x6E\x64(\x63) {new EvalParsed is %p}\n", l_this);
+	#endif
+	g_object_unref(c);
+}
+%type command {EvalCommand*}
+command(l_this) ::= multi(m). 
+{	l_this = eval_command_new__1(l_ea, m);
+	#ifdef EVAL_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x6D\x75\x6C\x74\x69(\x6D) {new EvalCommand is %p}\n", l_this);
+	#endif
+	g_object_unref(m);
+}
+command(l_this) ::= alias(a). 
+{	l_this = eval_command_new__2(l_ea, a);
+	#ifdef EVAL_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x61\x6C\x69\x61\x73(\x61) {new EvalCommand is %p}\n", l_this);
+	#endif
+	g_object_unref(a);
+}
+command(l_this) ::= break(b). 
+{	l_this = eval_command_new__3(l_ea, b);
+	#ifdef EVAL_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x62\x72\x65\x61\x6B(\x62) {new EvalCommand is %p}\n", l_this);
+	#endif
+	g_object_unref(b);
+}
+command(l_this) ::= debug(g). 
+{	l_this = eval_command_new__4(l_ea, g);
+	#ifdef EVAL_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x64\x65\x62\x75\x67(\x67) {new EvalCommand is %p}\n", l_this);
+	#endif
+	g_object_unref(g);
+}
+%type alias {EvalAlias*}
+alias(l_this) ::= ALIAS_CMD IDENTIFIER(i) ARROW detailed(d). 
+{	l_this = eval_alias_new__1(l_ea, i, d);
+	#ifdef EVAL_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x41\x4C\x49\x41\x53_\x43\x4D\x44 \x49\x44\x45\x4E\x54\x49\x46\x49\x45\x52(\x69) \x41\x52\x52\x4F\x57 \x64\x65\x74\x61\x69\x6C\x65\x64(\x64) {new EvalAlias is %p}\n", l_this);
+	#endif
+	g_object_unref(i);
+	g_object_unref(d);
+}
+%type break {EvalBreak*}
+break(l_this) ::= BREAK_CMD catch(e) at(a) depth(d) typ(t) iff(i) print(p) cont(c) dis(n). 
+{	l_this = eval_break_new__1(l_ea, e, a, d, t, i, p, c, n);
+	#ifdef EVAL_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x42\x52\x45\x41\x4B_\x43\x4D\x44 \x63\x61\x74\x63\x68(\x65) \x61\x74(\x61) \x64\x65\x70\x74\x68(\x64) \x74\x79\x70(\x74) \x69\x66\x66(\x69) \x70\x72\x69\x6E\x74(\x70) \x63\x6F\x6E\x74(\x63) \x64\x69\x73(\x6E) {new EvalBreak is %p}\n", l_this);
+	#endif
+	g_object_unref(e);
+	g_object_unref(a);
+	g_object_unref(d);
+	g_object_unref(t);
+	g_object_unref(i);
+	g_object_unref(p);
+	g_object_unref(c);
+	g_object_unref(n);
+}
+%type catch {EvalCatch*}
+catch(l_this) ::= . 
+{	l_this = eval_catch_new__0(l_ea);
+}
+catch(l_this) ::= EXC IDENTIFIER(e). 
+{	l_this = eval_catch_new__1(l_ea, e);
+	#ifdef EVAL_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x45\x58\x43 \x49\x44\x45\x4E\x54\x49\x46\x49\x45\x52(\x65) {new EvalCatch is %p}\n", l_this);
+	#endif
+	g_object_unref(e);
+}
+catch(l_this) ::= EXC VOID(e). 
+{	l_this = eval_catch_new__2(l_ea, e);
+	#ifdef EVAL_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x45\x58\x43 \x56\x4F\x49\x44(\x65) {new EvalCatch is %p}\n", l_this);
+	#endif
+	g_object_unref(e);
+}
+catch(l_this) ::= EXC CHECK(e). 
+{	l_this = eval_catch_new__3(l_ea, e);
+	#ifdef EVAL_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x45\x58\x43 \x43\x48\x45\x43\x4B(\x65) {new EvalCatch is %p}\n", l_this);
+	#endif
+	g_object_unref(e);
+}
+catch(l_this) ::= EXC WHEN(e). 
+{	l_this = eval_catch_new__4(l_ea, e);
+	#ifdef EVAL_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x45\x58\x43 \x57\x48\x45\x4E(\x65) {new EvalCatch is %p}\n", l_this);
+	#endif
+	g_object_unref(e);
+}
+catch(l_this) ::= EXC ALL(e). 
+{	l_this = eval_catch_new__5(l_ea, e);
+	#ifdef EVAL_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x45\x58\x43 \x41\x4C\x4C(\x65) {new EvalCatch is %p}\n", l_this);
+	#endif
+	g_object_unref(e);
+}
+%type at {EvalAt*}
+at(l_this) ::= . 
+{	l_this = eval_at_new__0(l_ea);
+}
+at(l_this) ::= AT IDENTIFIER(n) COLON INTEGER(l) COLON INTEGER(c). 
+{	l_this = eval_at_new__1(l_ea, n, l, c);
+	#ifdef EVAL_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x41\x54 \x49\x44\x45\x4E\x54\x49\x46\x49\x45\x52(\x6E) \x43\x4F\x4C\x4F\x4E \x49\x4E\x54\x45\x47\x45\x52(\x6C) \x43\x4F\x4C\x4F\x4E \x49\x4E\x54\x45\x47\x45\x52(\x63) {new EvalAt is %p}\n", l_this);
+	#endif
+	g_object_unref(n);
+	g_object_unref(l);
+	g_object_unref(c);
+}
+%type depth {EvalDepth*}
+depth(l_this) ::= . 
+{	l_this = eval_depth_new__0(l_ea);
+}
+depth(l_this) ::= DEPTH INTEGER(d). 
+{	l_this = eval_depth_new__1(l_ea, d);
+	#ifdef EVAL_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x44\x45\x50\x54\x48 \x49\x4E\x54\x45\x47\x45\x52(\x64) {new EvalDepth is %p}\n", l_this);
+	#endif
+	g_object_unref(d);
+}
+%type typ {EvalTyp*}
+typ(l_this) ::= . 
+{	l_this = eval_typ_new__0(l_ea);
+}
+typ(l_this) ::= TYP typename(n). 
+{	l_this = eval_typ_new__1(l_ea, n);
+	#ifdef EVAL_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x54\x59\x50 \x74\x79\x70\x65\x6E\x61\x6D\x65(\x6E) {new EvalTyp is %p}\n", l_this);
+	#endif
+	g_object_unref(n);
+}
+%type iff {EvalIff*}
+iff(l_this) ::= . 
+{	l_this = eval_iff_new__0(l_ea);
+}
+iff(l_this) ::= IFF single(s). 
+{	l_this = eval_iff_new__1(l_ea, s);
+	#ifdef EVAL_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x49\x46\x46 \x73\x69\x6E\x67\x6C\x65(\x73) {new EvalIff is %p}\n", l_this);
+	#endif
+	g_object_unref(s);
+}
+%type print {EvalPrint*}
+print(l_this) ::= . 
+{	l_this = eval_print_new__0(l_ea);
+}
+print(l_this) ::= PRINT multi(m). 
+{	l_this = eval_print_new__1(l_ea, m);
+	#ifdef EVAL_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x50\x52\x49\x4E\x54 \x6D\x75\x6C\x74\x69(\x6D) {new EvalPrint is %p}\n", l_this);
+	#endif
+	g_object_unref(m);
+}
+%type cont {EvalCont*}
+cont(l_this) ::= . 
+{	l_this = eval_cont_new__0(l_ea);
+}
+cont(l_this) ::= CONT. 
+{	l_this = eval_cont_new__1(l_ea);
+}
+%type dis {EvalDis*}
+dis(l_this) ::= . 
+{	l_this = eval_dis_new__0(l_ea);
+}
+dis(l_this) ::= DIS. 
+{	l_this = eval_dis_new__1(l_ea);
+}
+%type debug {EvalDebug*}
+debug(l_this) ::= DEGUG_CMD. 
+{	l_this = eval_debug_new__1(l_ea);
+}
+%type typename {EvalTypename*}
+typename(l_this) ::= IDENTIFIER(t). 
+{	l_this = eval_typename_new__1(l_ea, t);
+	#ifdef EVAL_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x49\x44\x45\x4E\x54\x49\x46\x49\x45\x52(\x74) {new EvalTypename is %p}\n", l_this);
+	#endif
+	g_object_unref(t);
+}
+typename(l_this) ::= IDENTIFIER(t) LBRACKET typelist(tt) RBRACKET. 
+{	l_this = eval_typename_new__2(l_ea, t, tt);
+	#ifdef EVAL_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x49\x44\x45\x4E\x54\x49\x46\x49\x45\x52(\x74) \x4C\x42\x52\x41\x43\x4B\x45\x54 \x74\x79\x70\x65\x6C\x69\x73\x74(\x74\x74) \x52\x42\x52\x41\x43\x4B\x45\x54 {new EvalTypename is %p}\n", l_this);
+	#endif
+	g_object_unref(t);
+	g_object_unref(tt);
+}
+%type typelist {EvalTypelist*}
+typelist(l_this) ::= typename(t). 
+{	l_this = eval_typelist_new__1(l_ea, t);
+	#ifdef EVAL_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x74\x79\x70\x65\x6E\x61\x6D\x65(\x74) {new EvalTypelist is %p}\n", l_this);
+	#endif
+	g_object_unref(t);
+}
+typelist(l_this) ::= typelist(tt) COMMA typename(t). 
+{	l_this = eval_typelist_new__2(l_ea, tt, t);
+	#ifdef EVAL_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x74\x79\x70\x65\x6C\x69\x73\x74(\x74\x74) \x43\x4F\x4D\x4D\x41 \x74\x79\x70\x65\x6E\x61\x6D\x65(\x74) {new EvalTypelist is %p}\n", l_this);
+	#endif
+	g_object_unref(tt);
+	g_object_unref(t);
+}
+%type multi {EvalMulti*}
+multi(l_this) ::= detailed(d). 
+{	l_this = eval_multi_new__1(l_ea, d);
+	#ifdef EVAL_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x64\x65\x74\x61\x69\x6C\x65\x64(\x64) {new EvalMulti is %p}\n", l_this);
+	#endif
+	g_object_unref(d);
+}
+multi(l_this) ::= multi(m) COMMA detailed(d). 
+{	l_this = eval_multi_new__2(l_ea, m, d);
+	#ifdef EVAL_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x6D\x75\x6C\x74\x69(\x6D) \x43\x4F\x4D\x4D\x41 \x64\x65\x74\x61\x69\x6C\x65\x64(\x64) {new EvalMulti is %p}\n", l_this);
+	#endif
+	g_object_unref(m);
+	g_object_unref(d);
+}
+%type detailed {EvalDetailed*}
+detailed(l_this) ::= range(r). 
+{	l_this = eval_detailed_new__1(l_ea, r);
+	#ifdef EVAL_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x72\x61\x6E\x67\x65(\x72) {new EvalDetailed is %p}\n", l_this);
+	#endif
+	g_object_unref(r);
+}
+detailed(l_this) ::= open_detail(od) multi(m) RBRACE(r). 
+{	l_this = eval_detailed_new__2(l_ea, od, m, r);
+	#ifdef EVAL_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x6F\x70\x65\x6E_\x64\x65\x74\x61\x69\x6C(\x6F\x64) \x6D\x75\x6C\x74\x69(\x6D) \x52\x42\x52\x41\x43\x45(\x72) {new EvalDetailed is %p}\n", l_this);
+	#endif
+	g_object_unref(od);
+	g_object_unref(m);
+	g_object_unref(r);
+}
+%type open_detail {EvalOpenDetail*}
+open_detail(l_this) ::= range(r) LBRACE(b). 
+{	l_this = eval_open_detail_new__1(l_ea, r, b);
+	#ifdef EVAL_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x72\x61\x6E\x67\x65(\x72) \x4C\x42\x52\x41\x43\x45(\x62) {new EvalOpenDetail is %p}\n", l_this);
+	#endif
+	g_object_unref(r);
+	g_object_unref(b);
+}
+%type range {EvalRange*}
+range(l_this) ::= single(s). 
+{	l_this = eval_range_new__1(l_ea, s);
+	#ifdef EVAL_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x73\x69\x6E\x67\x6C\x65(\x73) {new EvalRange is %p}\n", l_this);
+	#endif
+	g_object_unref(s);
+}
+range(l_this) ::= open_indices(oi) indices(ii) RBB(r). 
+{	l_this = eval_range_new__2(l_ea, oi, ii, r);
+	#ifdef EVAL_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x6F\x70\x65\x6E_\x69\x6E\x64\x69\x63\x65\x73(\x6F\x69) \x69\x6E\x64\x69\x63\x65\x73(\x69\x69) \x52\x42\x42(\x72) {new EvalRange is %p}\n", l_this);
+	#endif
+	g_object_unref(oi);
+	g_object_unref(ii);
+	g_object_unref(r);
+}
+%type open_indices {EvalOpenIndices*}
+open_indices(l_this) ::= single(s) LBB(l). 
+{	l_this = eval_open_indices_new__1(l_ea, s, l);
+	#ifdef EVAL_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x73\x69\x6E\x67\x6C\x65(\x73) \x4C\x42\x42(\x6C) {new EvalOpenIndices is %p}\n", l_this);
+	#endif
+	g_object_unref(s);
+	g_object_unref(l);
+}
+%type indices {EvalIndices*}
+indices(l_this) ::= single(f) COLON single(l). 
+{	l_this = eval_indices_new__1(l_ea, f, l);
+	#ifdef EVAL_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x73\x69\x6E\x67\x6C\x65(\x66) \x43\x4F\x4C\x4F\x4E \x73\x69\x6E\x67\x6C\x65(\x6C) {new EvalIndices is %p}\n", l_this);
+	#endif
+	g_object_unref(f);
+	g_object_unref(l);
+}
+indices(l_this) ::= single(l) DOLLAR single(c). 
+{	l_this = eval_indices_new__2(l_ea, l, c);
+	#ifdef EVAL_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x73\x69\x6E\x67\x6C\x65(\x6C) \x44\x4F\x4C\x4C\x41\x52 \x73\x69\x6E\x67\x6C\x65(\x63) {new EvalIndices is %p}\n", l_this);
+	#endif
+	g_object_unref(l);
+	g_object_unref(c);
+}
+indices(l_this) ::= ALL(a). 
+{	l_this = eval_indices_new__3(l_ea, a);
+	#ifdef EVAL_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x41\x4C\x4C(\x61) {new EvalIndices is %p}\n", l_this);
+	#endif
+	g_object_unref(a);
+}
+indices(l_this) ::= IFF(i) single(s). 
+{	l_this = eval_indices_new__4(l_ea, i, s);
+	#ifdef EVAL_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x49\x46\x46(\x69) \x73\x69\x6E\x67\x6C\x65(\x73) {new EvalIndices is %p}\n", l_this);
+	#endif
+	g_object_unref(i);
+	g_object_unref(s);
+}
+%type left {EvalLeft*}
+left(l_this) ::= unqualified(u). 
+{	l_this = eval_left_new__1(l_ea, u);
+	#ifdef EVAL_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x75\x6E\x71\x75\x61\x6C\x69\x66\x69\x65\x64(\x75) {new EvalLeft is %p}\n", l_this);
+	#endif
+	g_object_unref(u);
+}
+left(l_this) ::= upframe(f) unqualified(u). 
+{	l_this = eval_left_new__1u(l_ea, f, u);
+	#ifdef EVAL_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x75\x70\x66\x72\x61\x6D\x65(\x66) \x75\x6E\x71\x75\x61\x6C\x69\x66\x69\x65\x64(\x75) {new EvalLeft is %p}\n", l_this);
+	#endif
+	g_object_unref(f);
+	g_object_unref(u);
+}
+left(l_this) ::= left(l) DOT unqualified(u). 
+{	l_this = eval_left_new__2(l_ea, l, u);
+	#ifdef EVAL_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x6C\x65\x66\x74(\x6C) \x44\x4F\x54 \x75\x6E\x71\x75\x61\x6C\x69\x66\x69\x65\x64(\x75) {new EvalLeft is %p}\n", l_this);
+	#endif
+	g_object_unref(l);
+	g_object_unref(u);
+}
+left(l_this) ::= left(l) brackets(b). 
+{	l_this = eval_left_new__3(l_ea, l, b);
+	#ifdef EVAL_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x6C\x65\x66\x74(\x6C) \x62\x72\x61\x63\x6B\x65\x74\x73(\x62) {new EvalLeft is %p}\n", l_this);
+	#endif
+	g_object_unref(l);
+	g_object_unref(b);
+}
+left(l_this) ::= LPAREN(l) single(s) RPAREN(r). 
+{	l_this = eval_left_new__4(l_ea, l, s, r);
+	#ifdef EVAL_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x4C\x50\x41\x52\x45\x4E(\x6C) \x73\x69\x6E\x67\x6C\x65(\x73) \x52\x50\x41\x52\x45\x4E(\x72) {new EvalLeft is %p}\n", l_this);
+	#endif
+	g_object_unref(l);
+	g_object_unref(s);
+	g_object_unref(r);
+}
+left(l_this) ::= LBRACKET(l) RBRACKET(r). 
+{	l_this = eval_left_new__5(l_ea, l, r);
+	#ifdef EVAL_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x4C\x42\x52\x41\x43\x4B\x45\x54(\x6C) \x52\x42\x52\x41\x43\x4B\x45\x54(\x72) {new EvalLeft is %p}\n", l_this);
+	#endif
+	g_object_unref(l);
+	g_object_unref(r);
+}
+left(l_this) ::= brackets(b). 
+{	l_this = eval_left_new__6(l_ea, b);
+	#ifdef EVAL_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x62\x72\x61\x63\x6B\x65\x74\x73(\x62) {new EvalLeft is %p}\n", l_this);
+	#endif
+	g_object_unref(b);
+}
+left(l_this) ::= class_specifier(c) DOT unqualified(u). 
+{	l_this = eval_left_new__7(l_ea, c, u);
+	#ifdef EVAL_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x63\x6C\x61\x73\x73_\x73\x70\x65\x63\x69\x66\x69\x65\x72(\x63) \x44\x4F\x54 \x75\x6E\x71\x75\x61\x6C\x69\x66\x69\x65\x64(\x75) {new EvalLeft is %p}\n", l_this);
+	#endif
+	g_object_unref(c);
+	g_object_unref(u);
+}
+left(l_this) ::= HEAPVAR(hv). 
+{	l_this = eval_left_new__8(l_ea, hv);
+	#ifdef EVAL_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x48\x45\x41\x50\x56\x41\x52(\x68\x76) {new EvalLeft is %p}\n", l_this);
+	#endif
+	g_object_unref(hv);
+}
+left(l_this) ::= PLACEHOLDER(p). 
+{	l_this = eval_left_new__10(l_ea, p);
+	#ifdef EVAL_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x50\x4C\x41\x43\x45\x48\x4F\x4C\x44\x45\x52(\x70) {new EvalLeft is %p}\n", l_this);
+	#endif
+	g_object_unref(p);
+}
+%type class_specifier {EvalClassSpecifier*}
+class_specifier(l_this) ::= LBRACE(l) IDENTIFIER(i) RBRACE(r). 
+{	l_this = eval_class_specifier_new__1(l_ea, l, i, r);
+	#ifdef EVAL_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x4C\x42\x52\x41\x43\x45(\x6C) \x49\x44\x45\x4E\x54\x49\x46\x49\x45\x52(\x69) \x52\x42\x52\x41\x43\x45(\x72) {new EvalClassSpecifier is %p}\n", l_this);
+	#endif
+	g_object_unref(l);
+	g_object_unref(i);
+	g_object_unref(r);
+}
+%type upframe {EvalUpframe*}
+upframe(l_this) ::= UPFRAME(u). 
+{	l_this = eval_upframe_new__1(l_ea, u);
+	#ifdef EVAL_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x55\x50\x46\x52\x41\x4D\x45(\x75) {new EvalUpframe is %p}\n", l_this);
+	#endif
+	g_object_unref(u);
+}
+upframe(l_this) ::= UPFRAME_COUNT(u). 
+{	l_this = eval_upframe_new__2(l_ea, u);
+	#ifdef EVAL_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x55\x50\x46\x52\x41\x4D\x45_\x43\x4F\x55\x4E\x54(\x75) {new EvalUpframe is %p}\n", l_this);
+	#endif
+	g_object_unref(u);
+}
+%type single {EvalSingle*}
+single(l_this) ::= left(l). 
+{	l_this = eval_single_new__1(l_ea, l);
+	#ifdef EVAL_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x6C\x65\x66\x74(\x6C) {new EvalSingle is %p}\n", l_this);
+	#endif
+	g_object_unref(l);
+}
+single(l_this) ::= PLUS(op) single(s). 
+{	l_this = eval_single_new__3(l_ea, op, s);
+	#ifdef EVAL_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x50\x4C\x55\x53(\x6F\x70) \x73\x69\x6E\x67\x6C\x65(\x73) {new EvalSingle is %p}\n", l_this);
+	#endif
+	g_object_unref(op);
+	g_object_unref(s);
+}
+single(l_this) ::= MINUS(op) single(s). 
+{	l_this = eval_single_new__4(l_ea, op, s);
+	#ifdef EVAL_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x4D\x49\x4E\x55\x53(\x6F\x70) \x73\x69\x6E\x67\x6C\x65(\x73) {new EvalSingle is %p}\n", l_this);
+	#endif
+	g_object_unref(op);
+	g_object_unref(s);
+}
+single(l_this) ::= NOT(op) single(s). 
+{	l_this = eval_single_new__5(l_ea, op, s);
+	#ifdef EVAL_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x4E\x4F\x54(\x6F\x70) \x73\x69\x6E\x67\x6C\x65(\x73) {new EvalSingle is %p}\n", l_this);
+	#endif
+	g_object_unref(op);
+	g_object_unref(s);
+}
+single(l_this) ::= FREE_OP(op) single(s). 
+{	l_this = eval_single_new__6(l_ea, op, s);
+	#ifdef EVAL_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x46\x52\x45\x45_\x4F\x50(\x6F\x70) \x73\x69\x6E\x67\x6C\x65(\x73) {new EvalSingle is %p}\n", l_this);
+	#endif
+	g_object_unref(op);
+	g_object_unref(s);
+}
+single(l_this) ::= single(l) FREE_OP(op) single(r). 
+{	l_this = eval_single_new__7(l_ea, l, op, r);
+	#ifdef EVAL_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x73\x69\x6E\x67\x6C\x65(\x6C) \x46\x52\x45\x45_\x4F\x50(\x6F\x70) \x73\x69\x6E\x67\x6C\x65(\x72) {new EvalSingle is %p}\n", l_this);
+	#endif
+	g_object_unref(l);
+	g_object_unref(op);
+	g_object_unref(r);
+}
+single(l_this) ::= single(l) UP(op) single(r). 
+{	l_this = eval_single_new__8(l_ea, l, op, r);
+	#ifdef EVAL_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x73\x69\x6E\x67\x6C\x65(\x6C) \x55\x50(\x6F\x70) \x73\x69\x6E\x67\x6C\x65(\x72) {new EvalSingle is %p}\n", l_this);
+	#endif
+	g_object_unref(l);
+	g_object_unref(op);
+	g_object_unref(r);
+}
+single(l_this) ::= single(l) TIMES(op) single(r). 
+{	l_this = eval_single_new__9(l_ea, l, op, r);
+	#ifdef EVAL_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x73\x69\x6E\x67\x6C\x65(\x6C) \x54\x49\x4D\x45\x53(\x6F\x70) \x73\x69\x6E\x67\x6C\x65(\x72) {new EvalSingle is %p}\n", l_this);
+	#endif
+	g_object_unref(l);
+	g_object_unref(op);
+	g_object_unref(r);
+}
+single(l_this) ::= single(l) DIV(op) single(r). 
+{	l_this = eval_single_new__10(l_ea, l, op, r);
+	#ifdef EVAL_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x73\x69\x6E\x67\x6C\x65(\x6C) \x44\x49\x56(\x6F\x70) \x73\x69\x6E\x67\x6C\x65(\x72) {new EvalSingle is %p}\n", l_this);
+	#endif
+	g_object_unref(l);
+	g_object_unref(op);
+	g_object_unref(r);
+}
+single(l_this) ::= single(l) IDIV(op) single(r). 
+{	l_this = eval_single_new__11(l_ea, l, op, r);
+	#ifdef EVAL_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x73\x69\x6E\x67\x6C\x65(\x6C) \x49\x44\x49\x56(\x6F\x70) \x73\x69\x6E\x67\x6C\x65(\x72) {new EvalSingle is %p}\n", l_this);
+	#endif
+	g_object_unref(l);
+	g_object_unref(op);
+	g_object_unref(r);
+}
+single(l_this) ::= single(l) IMOD(op) single(r). 
+{	l_this = eval_single_new__12(l_ea, l, op, r);
+	#ifdef EVAL_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x73\x69\x6E\x67\x6C\x65(\x6C) \x49\x4D\x4F\x44(\x6F\x70) \x73\x69\x6E\x67\x6C\x65(\x72) {new EvalSingle is %p}\n", l_this);
+	#endif
+	g_object_unref(l);
+	g_object_unref(op);
+	g_object_unref(r);
+}
+single(l_this) ::= single(l) PLUS(op) single(r). 
+{	l_this = eval_single_new__13(l_ea, l, op, r);
+	#ifdef EVAL_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x73\x69\x6E\x67\x6C\x65(\x6C) \x50\x4C\x55\x53(\x6F\x70) \x73\x69\x6E\x67\x6C\x65(\x72) {new EvalSingle is %p}\n", l_this);
+	#endif
+	g_object_unref(l);
+	g_object_unref(op);
+	g_object_unref(r);
+}
+single(l_this) ::= single(l) MINUS(op) single(r). 
+{	l_this = eval_single_new__14(l_ea, l, op, r);
+	#ifdef EVAL_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x73\x69\x6E\x67\x6C\x65(\x6C) \x4D\x49\x4E\x55\x53(\x6F\x70) \x73\x69\x6E\x67\x6C\x65(\x72) {new EvalSingle is %p}\n", l_this);
+	#endif
+	g_object_unref(l);
+	g_object_unref(op);
+	g_object_unref(r);
+}
+single(l_this) ::= single(l) EQ(op) single(r). 
+{	l_this = eval_single_new__16(l_ea, l, op, r);
+	#ifdef EVAL_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x73\x69\x6E\x67\x6C\x65(\x6C) \x45\x51(\x6F\x70) \x73\x69\x6E\x67\x6C\x65(\x72) {new EvalSingle is %p}\n", l_this);
+	#endif
+	g_object_unref(l);
+	g_object_unref(op);
+	g_object_unref(r);
+}
+single(l_this) ::= single(l) NE(op) single(r). 
+{	l_this = eval_single_new__17(l_ea, l, op, r);
+	#ifdef EVAL_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x73\x69\x6E\x67\x6C\x65(\x6C) \x4E\x45(\x6F\x70) \x73\x69\x6E\x67\x6C\x65(\x72) {new EvalSingle is %p}\n", l_this);
+	#endif
+	g_object_unref(l);
+	g_object_unref(op);
+	g_object_unref(r);
+}
+single(l_this) ::= single(l) SIM(op) single(r). 
+{	l_this = eval_single_new__18(l_ea, l, op, r);
+	#ifdef EVAL_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x73\x69\x6E\x67\x6C\x65(\x6C) \x53\x49\x4D(\x6F\x70) \x73\x69\x6E\x67\x6C\x65(\x72) {new EvalSingle is %p}\n", l_this);
+	#endif
+	g_object_unref(l);
+	g_object_unref(op);
+	g_object_unref(r);
+}
+single(l_this) ::= single(l) NSIM(op) single(r). 
+{	l_this = eval_single_new__19(l_ea, l, op, r);
+	#ifdef EVAL_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x73\x69\x6E\x67\x6C\x65(\x6C) \x4E\x53\x49\x4D(\x6F\x70) \x73\x69\x6E\x67\x6C\x65(\x72) {new EvalSingle is %p}\n", l_this);
+	#endif
+	g_object_unref(l);
+	g_object_unref(op);
+	g_object_unref(r);
+}
+single(l_this) ::= single(l) LT(op) single(r). 
+{	l_this = eval_single_new__20(l_ea, l, op, r);
+	#ifdef EVAL_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x73\x69\x6E\x67\x6C\x65(\x6C) \x4C\x54(\x6F\x70) \x73\x69\x6E\x67\x6C\x65(\x72) {new EvalSingle is %p}\n", l_this);
+	#endif
+	g_object_unref(l);
+	g_object_unref(op);
+	g_object_unref(r);
+}
+single(l_this) ::= single(l) LE(op) single(r). 
+{	l_this = eval_single_new__21(l_ea, l, op, r);
+	#ifdef EVAL_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x73\x69\x6E\x67\x6C\x65(\x6C) \x4C\x45(\x6F\x70) \x73\x69\x6E\x67\x6C\x65(\x72) {new EvalSingle is %p}\n", l_this);
+	#endif
+	g_object_unref(l);
+	g_object_unref(op);
+	g_object_unref(r);
+}
+single(l_this) ::= single(l) GT(op) single(r). 
+{	l_this = eval_single_new__22(l_ea, l, op, r);
+	#ifdef EVAL_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x73\x69\x6E\x67\x6C\x65(\x6C) \x47\x54(\x6F\x70) \x73\x69\x6E\x67\x6C\x65(\x72) {new EvalSingle is %p}\n", l_this);
+	#endif
+	g_object_unref(l);
+	g_object_unref(op);
+	g_object_unref(r);
+}
+single(l_this) ::= single(l) GE(op) single(r). 
+{	l_this = eval_single_new__23(l_ea, l, op, r);
+	#ifdef EVAL_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x73\x69\x6E\x67\x6C\x65(\x6C) \x47\x45(\x6F\x70) \x73\x69\x6E\x67\x6C\x65(\x72) {new EvalSingle is %p}\n", l_this);
+	#endif
+	g_object_unref(l);
+	g_object_unref(op);
+	g_object_unref(r);
+}
+single(l_this) ::= single(l) AND(op) single(r). 
+{	l_this = eval_single_new__24(l_ea, l, op, r);
+	#ifdef EVAL_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x73\x69\x6E\x67\x6C\x65(\x6C) \x41\x4E\x44(\x6F\x70) \x73\x69\x6E\x67\x6C\x65(\x72) {new EvalSingle is %p}\n", l_this);
+	#endif
+	g_object_unref(l);
+	g_object_unref(op);
+	g_object_unref(r);
+}
+single(l_this) ::= single(l) AND(op) THEN single(r). 
+{	l_this = eval_single_new__25(l_ea, l, op, r);
+	#ifdef EVAL_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x73\x69\x6E\x67\x6C\x65(\x6C) \x41\x4E\x44(\x6F\x70) \x54\x48\x45\x4E \x73\x69\x6E\x67\x6C\x65(\x72) {new EvalSingle is %p}\n", l_this);
+	#endif
+	g_object_unref(l);
+	g_object_unref(op);
+	g_object_unref(r);
+}
+single(l_this) ::= single(l) OR(op) single(r). 
+{	l_this = eval_single_new__26(l_ea, l, op, r);
+	#ifdef EVAL_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x73\x69\x6E\x67\x6C\x65(\x6C) \x4F\x52(\x6F\x70) \x73\x69\x6E\x67\x6C\x65(\x72) {new EvalSingle is %p}\n", l_this);
+	#endif
+	g_object_unref(l);
+	g_object_unref(op);
+	g_object_unref(r);
+}
+single(l_this) ::= single(l) OR(op) ELSE single(r). 
+{	l_this = eval_single_new__27(l_ea, l, op, r);
+	#ifdef EVAL_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x73\x69\x6E\x67\x6C\x65(\x6C) \x4F\x52(\x6F\x70) \x45\x4C\x53\x45 \x73\x69\x6E\x67\x6C\x65(\x72) {new EvalSingle is %p}\n", l_this);
+	#endif
+	g_object_unref(l);
+	g_object_unref(op);
+	g_object_unref(r);
+}
+single(l_this) ::= single(l) XOR(op) single(r). 
+{	l_this = eval_single_new__28(l_ea, l, op, r);
+	#ifdef EVAL_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x73\x69\x6E\x67\x6C\x65(\x6C) \x58\x4F\x52(\x6F\x70) \x73\x69\x6E\x67\x6C\x65(\x72) {new EvalSingle is %p}\n", l_this);
+	#endif
+	g_object_unref(l);
+	g_object_unref(op);
+	g_object_unref(r);
+}
+single(l_this) ::= single(l) IMPLIES(op) single(r). 
+{	l_this = eval_single_new__29(l_ea, l, op, r);
+	#ifdef EVAL_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x73\x69\x6E\x67\x6C\x65(\x6C) \x49\x4D\x50\x4C\x49\x45\x53(\x6F\x70) \x73\x69\x6E\x67\x6C\x65(\x72) {new EvalSingle is %p}\n", l_this);
+	#endif
+	g_object_unref(l);
+	g_object_unref(op);
+	g_object_unref(r);
+}
+single(l_this) ::= manifest(m). 
+{	l_this = eval_single_new__31(l_ea, m);
+	#ifdef EVAL_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x6D\x61\x6E\x69\x66\x65\x73\x74(\x6D) {new EvalSingle is %p}\n", l_this);
+	#endif
+	g_object_unref(m);
+}
+%type args {EvalArgs*}
+args(l_this) ::= single(s). 
+{	l_this = eval_args_new__1(l_ea, s);
+	#ifdef EVAL_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x73\x69\x6E\x67\x6C\x65(\x73) {new EvalArgs is %p}\n", l_this);
+	#endif
+	g_object_unref(s);
+}
+args(l_this) ::= args(aa) COMMA single(s). 
+{	l_this = eval_args_new__2(l_ea, aa, s);
+	#ifdef EVAL_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x61\x72\x67\x73(\x61\x61) \x43\x4F\x4D\x4D\x41 \x73\x69\x6E\x67\x6C\x65(\x73) {new EvalArgs is %p}\n", l_this);
+	#endif
+	g_object_unref(aa);
+	g_object_unref(s);
+}
+%type unqualified {EvalUnqualified*}
+unqualified(l_this) ::= IDENTIFIER(i). 
+{	l_this = eval_unqualified_new (l_ea, i);
+	#ifdef EVAL_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x49\x44\x45\x4E\x54\x49\x46\x49\x45\x52(\x69) {new EvalUnqualified is %p}\n", l_this);
+	#endif
+	g_object_unref(i);
+}
+unqualified(l_this) ::= CURRENT(c). 
+{	l_this = eval_unqualified_new__1(l_ea, c);
+	#ifdef EVAL_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x43\x55\x52\x52\x45\x4E\x54(\x63) {new EvalUnqualified is %p}\n", l_this);
+	#endif
+	g_object_unref(c);
+}
+unqualified(l_this) ::= RESULT(r). 
+{	l_this = eval_unqualified_new__2(l_ea, r);
+	#ifdef EVAL_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x52\x45\x53\x55\x4C\x54(\x72) {new EvalUnqualified is %p}\n", l_this);
+	#endif
+	g_object_unref(r);
+}
+unqualified(l_this) ::= FALSE(f). 
+{	l_this = eval_unqualified_new__3(l_ea, f);
+	#ifdef EVAL_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x46\x41\x4C\x53\x45(\x66) {new EvalUnqualified is %p}\n", l_this);
+	#endif
+	g_object_unref(f);
+}
+unqualified(l_this) ::= TRUE(t). 
+{	l_this = eval_unqualified_new__4(l_ea, t);
+	#ifdef EVAL_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x54\x52\x55\x45(\x74) {new EvalUnqualified is %p}\n", l_this);
+	#endif
+	g_object_unref(t);
+}
+unqualified(l_this) ::= VOID(v). 
+{	l_this = eval_unqualified_new__5(l_ea, v);
+	#ifdef EVAL_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x56\x4F\x49\x44(\x76) {new EvalUnqualified is %p}\n", l_this);
+	#endif
+	g_object_unref(v);
+}
+unqualified(l_this) ::= ALIAS(a). 
+{	l_this = eval_unqualified_new__6(l_ea, a);
+	#ifdef EVAL_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x41\x4C\x49\x41\x53(\x61) {new EvalUnqualified is %p}\n", l_this);
+	#endif
+	g_object_unref(a);
+}
+unqualified(l_this) ::= IDENT_LPAREN(l) args(aa) RPAREN(r). 
+{	l_this = eval_unqualified_new__7(l_ea, l, aa, r);
+	#ifdef EVAL_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x49\x44\x45\x4E\x54_\x4C\x50\x41\x52\x45\x4E(\x6C) \x61\x72\x67\x73(\x61\x61) \x52\x50\x41\x52\x45\x4E(\x72) {new EvalUnqualified is %p}\n", l_this);
+	#endif
+	g_object_unref(l);
+	g_object_unref(aa);
+	g_object_unref(r);
+}
+%type brackets {EvalBrackets*}
+brackets(l_this) ::= LBRACKET(l) args(aa) RBRACKET(r). 
+{	l_this = eval_brackets_new__1(l_ea, l, aa, r);
+	#ifdef EVAL_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x4C\x42\x52\x41\x43\x4B\x45\x54(\x6C) \x61\x72\x67\x73(\x61\x61) \x52\x42\x52\x41\x43\x4B\x45\x54(\x72) {new EvalBrackets is %p}\n", l_this);
+	#endif
+	g_object_unref(l);
+	g_object_unref(aa);
+	g_object_unref(r);
+}
+%type manifest {EvalManifest*}
+manifest(l_this) ::= CHARACTER(c). 
+{	l_this = eval_manifest_new__3(l_ea, c);
+	#ifdef EVAL_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x43\x48\x41\x52\x41\x43\x54\x45\x52(\x63) {new EvalManifest is %p}\n", l_this);
+	#endif
+	g_object_unref(c);
+}
+manifest(l_this) ::= STRING(s). 
+{	l_this = eval_manifest_new__4(l_ea, s);
+	#ifdef EVAL_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x53\x54\x52\x49\x4E\x47(\x73) {new EvalManifest is %p}\n", l_this);
+	#endif
+	g_object_unref(s);
+}
+manifest(l_this) ::= INTEGER(i). 
+{	l_this = eval_manifest_new__5(l_ea, i);
+	#ifdef EVAL_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x49\x4E\x54\x45\x47\x45\x52(\x69) {new EvalManifest is %p}\n", l_this);
+	#endif
+	g_object_unref(i);
+}
+manifest(l_this) ::= REAL(r). 
+{	l_this = eval_manifest_new__6(l_ea, r);
+	#ifdef EVAL_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x52\x45\x41\x4C(\x72) {new EvalManifest is %p}\n", l_this);
+	#endif
+	g_object_unref(r);
+}
+l_translation_unit ::= parsed.
+%start_symbol {l_translation_unit}
+%name EvalLemon
+%token_prefix EVAL_PARSER_PARSER_T_
+%token_destructor
+{	if ($$ != NULL) g_object_unref($$);
+}
+%default_destructor
+{	g_object_unref($$);
+}
+%parse_failure
+{
+#	ifdef EVAL_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE on_parse_failed()\n");
+#	endif
+	eval_parser_parser_on_parse_failed(EVAL_PARSER_PARSER(l_ea));
+}
+%syntax_error
+{
+#	ifdef EVAL_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE on_syntax_error()\n");
+#	endif
+	eval_parser_parser_on_syntax_error(EVAL_PARSER_PARSER(l_ea));
+}
+%parse_accept
+{
+#	ifdef EVAL_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE on_parse_accept()\n");
+#	endif
+	eval_parser_parser_on_parse_accept(EVAL_PARSER_PARSER(l_ea));
+}
+%token_type {EvalToken*}
+%extra_argument {EvalParser *l_ea}
+
+%include
+{#	include <_EvalParserParser2.h>
+
+#	define EVAL_PARSER_PARSER_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), EVAL_TYPE_PARSER_PARSER, EvalParserParserPrivate)) // for lex
+#	define yy_accept eval_accept // lex's version conflicts with lemon one
+
+#	ifdef EVAL_PARSER_PARSER_LEMON_ENABLED
+		void *EvalLemonAlloc(void *(*mallocProc)(size_t));
+		void EvalLemonFree(void *p, void (*freeProc)(void*));
+		void EvalLemon(void *yyp, int yymajor, EvalToken *yyminor, EvalParser *l_ea);
+#	endif
+
+GType eval_parser_parser_t_get_type (void) {
+	static volatile gsize eval_parser_parser_t_type_id__volatile = 0;
+	if (g_once_init_enter (&eval_parser_parser_t_type_id__volatile)) {
+		static const GEnumValue values[] = {{EVAL_PARSER_PARSER_T_END_OF_INPUT, "EVAL_PARSER_PARSER_T_END_OF_INPUT", "END_OF_INPUT"}, {EVAL_PARSER_PARSER_T_NO_ADD_TOKEN, "EVAL_PARSER_PARSER_T_NO_ADD_TOKEN", "NO_ADD_TOKEN"}, {EVAL_PARSER_PARSER_T_ALIAS_CMD, "EVAL_PARSER_PARSER_T_ALIAS_CMD", "ALIAS_CMD"}, {EVAL_PARSER_PARSER_T_ARROW, "EVAL_PARSER_PARSER_T_ARROW", "ARROW"}, {EVAL_PARSER_PARSER_T_BREAK_CMD, "EVAL_PARSER_PARSER_T_BREAK_CMD", "BREAK_CMD"}, {EVAL_PARSER_PARSER_T_DEBUG_CMD, "EVAL_PARSER_PARSER_T_DEBUG_CMD", "DEBUG_CMD"}, {EVAL_PARSER_PARSER_T_EXC, "EVAL_PARSER_PARSER_T_EXC", "EXC"}, {EVAL_PARSER_PARSER_T_AT, "EVAL_PARSER_PARSER_T_AT", "AT"}, {EVAL_PARSER_PARSER_T_DEPTH, "EVAL_PARSER_PARSER_T_DEPTH", "DEPTH"}, {EVAL_PARSER_PARSER_T_TYP, "EVAL_PARSER_PARSER_T_TYP", "TYP"}, {EVAL_PARSER_PARSER_T_IFF, "EVAL_PARSER_PARSER_T_IFF", "IFF"}, {EVAL_PARSER_PARSER_T_PRINT, "EVAL_PARSER_PARSER_T_PRINT", "PRINT"}, {EVAL_PARSER_PARSER_T_CONT, "EVAL_PARSER_PARSER_T_CONT", "CONT"}, {EVAL_PARSER_PARSER_T_DIS, "EVAL_PARSER_PARSER_T_DIS", "DIS"}, {EVAL_PARSER_PARSER_T_ASSIGN, "EVAL_PARSER_PARSER_T_ASSIGN", "ASSIGN"}, {EVAL_PARSER_PARSER_T_IMPLIES, "EVAL_PARSER_PARSER_T_IMPLIES", "IMPLIES"}, {EVAL_PARSER_PARSER_T_OR, "EVAL_PARSER_PARSER_T_OR", "OR"}, {EVAL_PARSER_PARSER_T_XOR, "EVAL_PARSER_PARSER_T_XOR", "XOR"}, {EVAL_PARSER_PARSER_T_AND, "EVAL_PARSER_PARSER_T_AND", "AND"}, {EVAL_PARSER_PARSER_T_EQ, "EVAL_PARSER_PARSER_T_EQ", "EQ"}, {EVAL_PARSER_PARSER_T_NE, "EVAL_PARSER_PARSER_T_NE", "NE"}, {EVAL_PARSER_PARSER_T_SIM, "EVAL_PARSER_PARSER_T_SIM", "SIM"}, {EVAL_PARSER_PARSER_T_NSIM, "EVAL_PARSER_PARSER_T_NSIM", "NSIM"}, {EVAL_PARSER_PARSER_T_LT, "EVAL_PARSER_PARSER_T_LT", "LT"}, {EVAL_PARSER_PARSER_T_LE, "EVAL_PARSER_PARSER_T_LE", "LE"}, {EVAL_PARSER_PARSER_T_GT, "EVAL_PARSER_PARSER_T_GT", "GT"}, {EVAL_PARSER_PARSER_T_GE, "EVAL_PARSER_PARSER_T_GE", "GE"}, {EVAL_PARSER_PARSER_T_INTERVAL, "EVAL_PARSER_PARSER_T_INTERVAL", "INTERVAL"}, {EVAL_PARSER_PARSER_T_PLUS, "EVAL_PARSER_PARSER_T_PLUS", "PLUS"}, {EVAL_PARSER_PARSER_T_MINUS, "EVAL_PARSER_PARSER_T_MINUS", "MINUS"}, {EVAL_PARSER_PARSER_T_TIMES, "EVAL_PARSER_PARSER_T_TIMES", "TIMES"}, {EVAL_PARSER_PARSER_T_DIV, "EVAL_PARSER_PARSER_T_DIV", "DIV"}, {EVAL_PARSER_PARSER_T_IDIV, "EVAL_PARSER_PARSER_T_IDIV", "IDIV"}, {EVAL_PARSER_PARSER_T_IMOD, "EVAL_PARSER_PARSER_T_IMOD", "IMOD"}, {EVAL_PARSER_PARSER_T_UP, "EVAL_PARSER_PARSER_T_UP", "UP"}, {EVAL_PARSER_PARSER_T_FREE_OP, "EVAL_PARSER_PARSER_T_FREE_OP", "FREE_OP"}, {EVAL_PARSER_PARSER_T_BIT_OR, "EVAL_PARSER_PARSER_T_BIT_OR", "BIT_OR"}, {EVAL_PARSER_PARSER_T_BIT_AND, "EVAL_PARSER_PARSER_T_BIT_AND", "BIT_AND"}, {EVAL_PARSER_PARSER_T_LEFT_SHIFT, "EVAL_PARSER_PARSER_T_LEFT_SHIFT", "LEFT_SHIFT"}, {EVAL_PARSER_PARSER_T_RIGHT_SHIFT, "EVAL_PARSER_PARSER_T_RIGHT_SHIFT", "RIGHT_SHIFT"}, {EVAL_PARSER_PARSER_T_NOT, "EVAL_PARSER_PARSER_T_NOT", "NOT"}, {EVAL_PARSER_PARSER_T_DOT, "EVAL_PARSER_PARSER_T_DOT", "DOT"}, {EVAL_PARSER_PARSER_T_IDENTIFIER, "EVAL_PARSER_PARSER_T_IDENTIFIER", "IDENTIFIER"}, {EVAL_PARSER_PARSER_T_VOID, "EVAL_PARSER_PARSER_T_VOID", "VOID"}, {EVAL_PARSER_PARSER_T_CHECK, "EVAL_PARSER_PARSER_T_CHECK", "CHECK"}, {EVAL_PARSER_PARSER_T_WHEN, "EVAL_PARSER_PARSER_T_WHEN", "WHEN"}, {EVAL_PARSER_PARSER_T_ALL, "EVAL_PARSER_PARSER_T_ALL", "ALL"}, {EVAL_PARSER_PARSER_T_COLON, "EVAL_PARSER_PARSER_T_COLON", "COLON"}, {EVAL_PARSER_PARSER_T_INTEGER, "EVAL_PARSER_PARSER_T_INTEGER", "INTEGER"}, {EVAL_PARSER_PARSER_T_DEGUG_CMD, "EVAL_PARSER_PARSER_T_DEGUG_CMD", "DEGUG_CMD"}, {EVAL_PARSER_PARSER_T_LBRACKET, "EVAL_PARSER_PARSER_T_LBRACKET", "LBRACKET"}, {EVAL_PARSER_PARSER_T_RBRACKET, "EVAL_PARSER_PARSER_T_RBRACKET", "RBRACKET"}, {EVAL_PARSER_PARSER_T_COMMA, "EVAL_PARSER_PARSER_T_COMMA", "COMMA"}, {EVAL_PARSER_PARSER_T_RBRACE, "EVAL_PARSER_PARSER_T_RBRACE", "RBRACE"}, {EVAL_PARSER_PARSER_T_LBRACE, "EVAL_PARSER_PARSER_T_LBRACE", "LBRACE"}, {EVAL_PARSER_PARSER_T_RBB, "EVAL_PARSER_PARSER_T_RBB", "RBB"}, {EVAL_PARSER_PARSER_T_LBB, "EVAL_PARSER_PARSER_T_LBB", "LBB"}, {EVAL_PARSER_PARSER_T_DOLLAR, "EVAL_PARSER_PARSER_T_DOLLAR", "DOLLAR"}, {EVAL_PARSER_PARSER_T_LPAREN, "EVAL_PARSER_PARSER_T_LPAREN", "LPAREN"}, {EVAL_PARSER_PARSER_T_RPAREN, "EVAL_PARSER_PARSER_T_RPAREN", "RPAREN"}, {EVAL_PARSER_PARSER_T_HEAPVAR, "EVAL_PARSER_PARSER_T_HEAPVAR", "HEAPVAR"}, {EVAL_PARSER_PARSER_T_PLACEHOLDER, "EVAL_PARSER_PARSER_T_PLACEHOLDER", "PLACEHOLDER"}, {EVAL_PARSER_PARSER_T_UPFRAME, "EVAL_PARSER_PARSER_T_UPFRAME", "UPFRAME"}, {EVAL_PARSER_PARSER_T_UPFRAME_COUNT, "EVAL_PARSER_PARSER_T_UPFRAME_COUNT", "UPFRAME_COUNT"}, {EVAL_PARSER_PARSER_T_THEN, "EVAL_PARSER_PARSER_T_THEN", "THEN"}, {EVAL_PARSER_PARSER_T_ELSE, "EVAL_PARSER_PARSER_T_ELSE", "ELSE"}, {EVAL_PARSER_PARSER_T_CURRENT, "EVAL_PARSER_PARSER_T_CURRENT", "CURRENT"}, {EVAL_PARSER_PARSER_T_RESULT, "EVAL_PARSER_PARSER_T_RESULT", "RESULT"}, {EVAL_PARSER_PARSER_T_FALSE, "EVAL_PARSER_PARSER_T_FALSE", "FALSE"}, {EVAL_PARSER_PARSER_T_TRUE, "EVAL_PARSER_PARSER_T_TRUE", "TRUE"}, {EVAL_PARSER_PARSER_T_ALIAS, "EVAL_PARSER_PARSER_T_ALIAS", "ALIAS"}, {EVAL_PARSER_PARSER_T_IDENT_LPAREN, "EVAL_PARSER_PARSER_T_IDENT_LPAREN", "IDENT_LPAREN"}, {EVAL_PARSER_PARSER_T_CHARACTER, "EVAL_PARSER_PARSER_T_CHARACTER", "CHARACTER"}, {EVAL_PARSER_PARSER_T_STRING, "EVAL_PARSER_PARSER_T_STRING", "STRING"}, {EVAL_PARSER_PARSER_T_REAL, "EVAL_PARSER_PARSER_T_REAL", "REAL"}, {EVAL_PARSER_PARSER_T_IF, "EVAL_PARSER_PARSER_T_IF", "IF"}, {EVAL_PARSER_PARSER_T_IDENT_LBRACKET, "EVAL_PARSER_PARSER_T_IDENT_LBRACKET", "IDENT_LBRACKET"}, {EVAL_PARSER_PARSER_T_LMA, "EVAL_PARSER_PARSER_T_LMA", "LMA"}, {EVAL_PARSER_PARSER_T_RMA, "EVAL_PARSER_PARSER_T_RMA", "RMA"}, {EVAL_PARSER_PARSER_T_DOTDOT, "EVAL_PARSER_PARSER_T_DOTDOT", "DOTDOT"}, {EVAL_PARSER_PARSER_T_FREE1, "EVAL_PARSER_PARSER_T_FREE1", "FREE1"}, {EVAL_PARSER_PARSER_T_FREE2, "EVAL_PARSER_PARSER_T_FREE2", "FREE2"}, {EVAL_PARSER_PARSER_T_FREE3, "EVAL_PARSER_PARSER_T_FREE3", "FREE3"}, {EVAL_PARSER_PARSER_T_FREE4, "EVAL_PARSER_PARSER_T_FREE4", "FREE4"}, {EVAL_PARSER_PARSER_T_BULLET, "EVAL_PARSER_PARSER_T_BULLET", "BULLET"}, {EVAL_PARSER_PARSER_T_IDENTIFIER2, "EVAL_PARSER_PARSER_T_IDENTIFIER2", "IDENTIFIER2"}, {EVAL_PARSER_PARSER_T_ONCE_STRING, "EVAL_PARSER_PARSER_T_ONCE_STRING", "ONCE_STRING"}, {EVAL_PARSER_PARSER_T_INTEGER2, "EVAL_PARSER_PARSER_T_INTEGER2", "INTEGER2"}, {EVAL_PARSER_PARSER_T_REAL2, "EVAL_PARSER_PARSER_T_REAL2", "REAL2"}, {EVAL_PARSER_PARSER_T_REAL3, "EVAL_PARSER_PARSER_T_REAL3", "REAL3"}, {EVAL_PARSER_PARSER_T_CHAR2, "EVAL_PARSER_PARSER_T_CHAR2", "CHAR2"}, {EVAL_PARSER_PARSER_T_CHAR3, "EVAL_PARSER_PARSER_T_CHAR3", "CHAR3"}, {EVAL_PARSER_PARSER_T_STRING1, "EVAL_PARSER_PARSER_T_STRING1", "STRING1"}, {EVAL_PARSER_PARSER_T_STRING2, "EVAL_PARSER_PARSER_T_STRING2", "STRING2"}, {EVAL_PARSER_PARSER_T_SPACE, "EVAL_PARSER_PARSER_T_SPACE", "SPACE"}, {EVAL_PARSER_PARSER_T_NEWLINE, "EVAL_PARSER_PARSER_T_NEWLINE", "NEWLINE"}, {EVAL_PARSER_PARSER_T_NEWLINE2, "EVAL_PARSER_PARSER_T_NEWLINE2", "NEWLINE2"}, {0, NULL, NULL}};
+		GType eval_parser_parser_t_type_id;
+		eval_parser_parser_t_type_id = g_enum_register_static ("EvalT", values);
+		g_once_init_leave (&eval_parser_parser_t_type_id__volatile, eval_parser_parser_t_type_id);
+	}
+	return eval_parser_parser_t_type_id__volatile;
+}
+
+GType eval_parser_parser_s_get_type (void) {
+	static volatile gsize eval_parser_parser_s_type_id__volatile = 0;
+	if (g_once_init_enter (&eval_parser_parser_s_type_id__volatile)) {
+		static const GEnumValue values[] = {{EVAL_PARSER_PARSER_S_INITIAL, "EVAL_PARSER_PARSER_S_INITIAL", "INITIAL"}, {EVAL_PARSER_PARSER_S_IDENT, "EVAL_PARSER_PARSER_S_IDENT", "IDENT"}, {EVAL_PARSER_PARSER_S_CMD, "EVAL_PARSER_PARSER_S_CMD", "CMD"}, {0, NULL, NULL}};
+		GType eval_parser_parser_s_type_id;
+		eval_parser_parser_s_type_id = g_enum_register_static ("EvalS", values);
+		g_once_init_leave (&eval_parser_parser_s_type_id__volatile, eval_parser_parser_s_type_id);
+	}
+	return eval_parser_parser_s_type_id__volatile;
+}
+
+	EvalParserParser* eval_parser_parser_construct(GType object_type)
+	{	EvalParserParser * self = NULL;
+		self = (EvalParserParser*) g_object_new (object_type, NULL);
+		self->token_code = 0;
+		self->token_gobject = NULL;
+		self->is_match = TRUE;
+		self->n_tokens_matched = 0;
+		self->n_chars_read = 0;
+#		ifdef EVAL_PARSER_PARSER_LEX_ENABLED
+			eval_parser_parser_lex_init_extra(self, (yyscan_t*)&self->priv->lex_resource);
+#		endif
+#		ifdef EVAL_PARSER_PARSER_LEMON_ENABLED
+			self->priv->lemon_resource = EvalLemonAlloc(g_malloc);
+#		endif
+		return self;
+	}
+
+	EvalParserParser* eval_parser_parser_new(void)
+	{	return eval_parser_parser_construct(EVAL_TYPE_PARSER_PARSER);
+	}
+
+	void eval_parser_parser_add_token(EvalParserParser *self, gint token_code, void *token)
+	{	self->n_tokens_matched++;
+#		ifdef EVAL_PARSER_PARSER_LEMON_ENABLED
+			EvalToken *token_obj;
+			g_return_if_fail(self != NULL);
+			token_obj = token==NULL ? NULL : EVAL_TOKEN(g_object_ref(G_OBJECT(token)));
+			EvalLemon(self->priv->lemon_resource, token_code, token_obj, EVAL_PARSER(self));
+#		endif
+	}
+
+	void eval_parser_parser_end(EvalParserParser *self)
+	{
+#		ifdef EVAL_PARSER_PARSER_LEMON_ENABLED
+			g_return_if_fail(self != NULL);
+			EvalLemon(self->priv->lemon_resource, 0, NULL, EVAL_PARSER(self));
+#		endif
+	}
+
+#	ifdef EVAL_PARSER_PARSER_LEX_ENABLED
+		YY_BUFFER_STATE eval_parser_parser__create_buffer(FILE *file,int size ,yyscan_t yyscaevaler );
+		void eval_parser_parser_push_buffer_state(YY_BUFFER_STATE new_buffer ,yyscan_t yyscaevaler );
+		void eval_parser_parser_pop_buffer_state(yyscan_t yyscaevaler );
+#	endif
+
+	void eval_parser_parser_add_stream(EvalParserParser *self, FILE *stream)
+	{
+#		ifdef EVAL_PARSER_PARSER_LEX_ENABLED
+			gint token_code;
+			yyscan_t scaevaler;
+			if (self->is_match)
+			{	scaevaler = (yyscan_t)self->priv->lex_resource;
+				eval_parser_parser_push_buffer_state(eval_parser_parser__create_buffer(stream, YY_BUF_SIZE, scaevaler), scaevaler);
+				while ((token_code = eval_parser_parser_lex(scaevaler)) && self->is_match)
+				{	if (token_code != EVAL_PARSER_PARSER_T_NO_ADD_TOKEN)
+					{	eval_parser_parser_add_token(self, token_code, self->token_gobject);
+					}
+				}
+				eval_parser_parser_pop_buffer_state(scaevaler);
+			}
+#		endif
+	}
+
+	void eval_parser_parser_add_string(EvalParserParser *self, char *str)
+	{
+#		ifdef EVAL_PARSER_PARSER_LEX_ENABLED
+			gint token_code;
+			yyscan_t scaevaler;
+			YY_BUFFER_STATE buffer;
+			if (self->is_match)
+			{	scaevaler = (yyscan_t)self->priv->lex_resource;
+				buffer = eval_parser_parser__scan_string(str, scaevaler);
+				while ((token_code = eval_parser_parser_lex(scaevaler)) && self->is_match)
+				{	if (token_code != EVAL_PARSER_PARSER_T_NO_ADD_TOKEN)
+					{	eval_parser_parser_add_token(self, token_code, self->token_gobject);
+					}
+				}
+				eval_parser_parser__delete_buffer(buffer, scaevaler);
+			}
+#		endif
+	}
+
+	void eval_parser_parser_push_state(EvalParserParser *self, int state)
+	{
+#		ifdef EVAL_PARSER_PARSER_LEX_ENABLED
+			g_return_if_fail(self != NULL);
+			yy_push_state(state, self->priv->lex_resource);
+#		endif
+	}
+
+	void eval_parser_parser_pop_state(EvalParserParser *self)
+	{
+#		ifdef EVAL_PARSER_PARSER_LEX_ENABLED
+			g_return_if_fail(self != NULL);
+			yy_pop_state(self->priv->lex_resource);
+#		endif
+	}
+
+	int eval_parser_parser_top_state(EvalParserParser *self)
+	{
+#		ifdef EVAL_PARSER_PARSER_LEX_ENABLED
+			g_return_if_fail(self != NULL);
+			return (((struct yyguts_t*)self->priv->lex_resource)->yy_start - 1) / 2 /*yy_top_state(self->priv->lex_resource)*/;
+#		else
+			return 0;
+#		endif
+	}
+
+	static void eval_parser_parser_instance_init(EvalParserParser *self)
+	{	self->priv = EVAL_PARSER_PARSER_GET_PRIVATE(self);
+	}
+
+	static void eval_parser_parser_finalize(GObject *obj)
+	{	EvalParserParser * self;
+		self = EVAL_PARSER_PARSER (obj);
+#		ifdef EVAL_PARSER_PARSER_LEX_ENABLED
+			eval_parser_parser_lex_destroy((yyscan_t)self->priv->lex_resource);
+#		endif
+#		ifdef EVAL_PARSER_PARSER_LEMON_ENABLED
+			EvalLemonFree(self->priv->lemon_resource, g_free);
+#		endif
+		if (self->token_gobject != NULL)
+		{	g_object_unref(self->token_gobject);
+		}
+		G_OBJECT_CLASS(eval_parser_parser_parent_class)->finalize(obj);
+	}
+
+	static void eval_parser_parser_real_on_default_token(EvalParserParser *self, const gchar *value, gint value_len)
+	{
+#		ifdef EVAL_PARSER_PARSER_TRACE_TOKENS
+			fprintf(stderr, "*TRACE on_default_token(): %s\n", value);
+#		endif
+#		ifdef EVAL_PARSER_PARSER_LEX_ENABLED
+			self->is_match = FALSE;
+#		endif
+	}
+
+	static void eval_parser_parser_real_on_parse_failed(EvalParserParser *self)
+	{	self->is_match = FALSE;
+	}
+
+	static void eval_parser_parser_real_on_syntax_error(EvalParserParser *self)
+	{	self->is_match = FALSE;
+	}
+
+	static void eval_parser_parser_real_on_parse_accept(EvalParserParser *self)
+	{
+	}
+
+	void eval_parser_parser_on_default_token(EvalParserParser *self, const gchar *value, gint value_len)
+	{
+#		ifdef EVAL_PARSER_PARSER_LEX_ENABLED
+			EVAL_PARSER_PARSER_GET_CLASS(self)->on_default_token(self, value, value_len);
+#		endif
+	}
+
+	void eval_parser_parser_on_parse_failed(EvalParserParser *self)
+	{
+#		ifdef EVAL_PARSER_PARSER_LEX_ENABLED
+			EVAL_PARSER_PARSER_GET_CLASS(self)->on_parse_failed(self);
+#		endif
+	}
+
+	void eval_parser_parser_on_syntax_error(EvalParserParser *self)
+	{
+#		ifdef EVAL_PARSER_PARSER_LEX_ENABLED
+			EVAL_PARSER_PARSER_GET_CLASS(self)->on_syntax_error(self);
+#		endif
+	}
+
+	void eval_parser_parser_on_parse_accept(EvalParserParser *self)
+	{
+#		ifdef EVAL_PARSER_PARSER_LEX_ENABLED
+			EVAL_PARSER_PARSER_GET_CLASS(self)->on_parse_accept(self);
+#		endif
+	}
+
+	static void eval_parser_parser_class_init(EvalParserParserClass *klass)
+	{	eval_parser_parser_parent_class = g_type_class_peek_parent(klass);
+		g_type_class_add_private(klass, sizeof(EvalParserParserPrivate));
+		G_OBJECT_CLASS(klass)->finalize = eval_parser_parser_finalize;
+		EVAL_PARSER_PARSER_CLASS(klass)->on_default_token = eval_parser_parser_real_on_default_token;
+		EVAL_PARSER_PARSER_CLASS(klass)->on_parse_failed = eval_parser_parser_real_on_parse_failed;
+		EVAL_PARSER_PARSER_CLASS(klass)->on_syntax_error = eval_parser_parser_real_on_syntax_error;
+		EVAL_PARSER_PARSER_CLASS(klass)->on_parse_accept = eval_parser_parser_real_on_parse_accept;
+	}
+
+	GType eval_parser_parser_get_type(void)
+	{	static volatile gsize eval_parser_parser_type_id__volatile = 0;
+		if (g_once_init_enter (&eval_parser_parser_type_id__volatile)) {
+			static const GTypeInfo g_define_type_info = { sizeof (EvalParserParserClass), (GBaseInitFunc) NULL, (GBaseFinalizeFunc) NULL, (GClassInitFunc) eval_parser_parser_class_init, (GClassFinalizeFunc) NULL, NULL, sizeof (EvalParserParser), 0, (GInstanceInitFunc) eval_parser_parser_instance_init, NULL };
+			GType eval_parser_parser_type_id;
+			eval_parser_parser_type_id = g_type_register_static (G_TYPE_OBJECT, "EvalParserParser", &g_define_type_info, 0);
+			g_once_init_leave (&eval_parser_parser_type_id__volatile, eval_parser_parser_type_id);
+		}
+		return eval_parser_parser_type_id__volatile;
+	}
+
+}

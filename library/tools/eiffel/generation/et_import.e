@@ -14,6 +14,7 @@ inherit
 	KL_SHARED_FILE_SYSTEM
 		export
 			{} all
+			{ANY} deep_copy, deep_twin, is_deep_equal, standard_is_equal
 		undefine
 			copy,
 			is_equal,
@@ -25,6 +26,7 @@ inherit
 	KL_SHARED_EXECUTION_ENVIRONMENT
 		export
 			{} all
+			{ANY} deep_copy, deep_twin, is_deep_equal, standard_is_equal
 		redefine
 			default_create
 		end

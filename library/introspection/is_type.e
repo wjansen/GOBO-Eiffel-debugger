@@ -60,7 +60,7 @@ feature -- Access
 			validity: Result = (0 <= i and then i < generic_count)
 		end
 
-	generic_at (i: INTEGER): IS_TYPE
+	generic_at (i: INTEGER): attached IS_TYPE
 		note
 			return: "Type of the `i'-th actual generic parameter."
 		require
@@ -94,7 +94,7 @@ feature -- Access
 			validity: Result = (0 <= i and then i < effector_count)
 		end
 
-	effector_at (i: INTEGER): IS_TYPE
+	effector_at (i: INTEGER): attached IS_TYPE
 		note
 			return: "Type of `i'-th effective descentant."
 		require
@@ -127,7 +127,7 @@ feature -- Access
 			validity: Result = (0 <= i and then i < field_count)
 		end
 
-	field_at (i: INTEGER): IS_FIELD
+	field_at (i: INTEGER): attached IS_FIELD
 		note
 			return: "`i'-th variable field."
 		require
@@ -159,7 +159,7 @@ feature -- Access
 			validity: Result = (0 <= i and then i < constant_count)
 		end
 
-	constant_at (i: INTEGER): IS_CONSTANT
+	constant_at (i: INTEGER): attached IS_CONSTANT
 		note
 			return: "`i'-th variable constant."
 		require
@@ -167,7 +167,7 @@ feature -- Access
 		local
 			aa: like constants
 		do
-			aa := fields
+			aa := constants
 			check attached aa end
 			Result := aa [i]
 		end
@@ -191,7 +191,7 @@ feature -- Access
 			validity: Result = (0 <= i and then i < routine_count)
 		end
 
-	routine_at (i: INTEGER): IS_ROUTINE
+	routine_at (i: INTEGER): attached IS_ROUTINE
 		note
 			return: "`i'-th routine."
 		require
@@ -503,9 +503,10 @@ feature {IS_FACTORY} -- Factory
 
 feature {IS_FIELD} -- Factory 
 
-	field_typeset (f: IS_FACTORY; i: INTEGER): detachable IS_SEQUENCE [IS_TYPE]
+	field_typeset (f: IS_FACTORY; i: INTEGER; attac: BOOLEAN):
+			detachable IS_SEQUENCE [attached IS_TYPE]
 		do
-			f.set_field_typeset (Current, i)
+			f.set_field_typeset (ident, i, attac)
 			Result := f.last_typeset
 		end
 
@@ -537,14 +538,14 @@ feature -- Instance sizes
 
 feature -- Comparison 
 
-	is_equal (other: IS_TYPE): BOOLEAN
+	is_equal (other: attached like Current): BOOLEAN
 		note
 			return: "Comparison by ident."
 		do
 			Result := ident = other.ident
 		end
 
-	is_less alias "<" (other: IS_TYPE): BOOLEAN
+	is_less alias "<" (other: attached IS_TYPE): BOOLEAN
 		note
 			return: "Comparison by ident."
 		do
@@ -565,7 +566,7 @@ feature -- Comparison
 					sign := flags.three_way_comparison (other.flags)
 				end
 			until sign /= 0 or else i = n loop
-				if generic_at (i) < other.generic_at (i) then
+				if generic_at (i).less_by_name (other.generic_at (i)) then
 					sign := -1
 				elseif other.generic_at (i) < generic_at (i) then
 					sign := 1

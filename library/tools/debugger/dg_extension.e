@@ -20,7 +20,7 @@ inherit
 	
 	EXECUTION_ENVIRONMENT
 		export
-			{} all
+			{NONE} all
 		undefine
 			default_create,
 			copy, is_equal, out
@@ -43,12 +43,10 @@ create
 
 	make
 
-feature {} -- Initialization
+feature {NONE} -- Initialization
 	
 	make (a_generator: like c_generator; a_compilee: like compilee;
 			a_c_names: like c_names; max_line, max_column: INTEGER)
-		require
-			a_generator_has_c_names: attached a_generator.c_names
 		local
 			n, id_bits, line_bits, col_bits: INTEGER
 		do
@@ -96,7 +94,7 @@ feature -- Basic operation
 			l_table: PC_ANY_TABLE [PC_TYPED_IDENT [NATURAL]]
 			l_source: DG_SOURCE
 			l_target: DG_TARGET
-			l_driver: PC_FORWARD_DRIVER [NATURAL, ANY]
+			l_driver: PC_FORWARD_DRIVER [NATURAL, attached ANY]
 			l_name: STRING
 			l_filename: PATH
 		do
@@ -112,7 +110,7 @@ feature -- Basic operation
 			c0_file.put_string (l_name)
 			c0_file.put_string (".h%"%N%N")
 			put_structs (False)
-			create l_filename.make_from_string(get("GOBO"))
+			create l_filename.make_from_string(item("GOBO"))
 			l_filename := l_filename.extended("library")
 			l_filename := l_filename.extended("tools")
 			l_filename := l_filename.extended("debugger")
@@ -169,7 +167,7 @@ feature -- Basic operation
 			c0_file.close
 		end
 
-feature {} -- Extension parts
+feature {NONE} -- Extension parts
 
 	print_defines
 		do
@@ -198,10 +196,11 @@ feature {} -- Extension parts
 			-- Define system and frame struct
 			print_forward_variable (True, c_names.frame_struct_name,
 															c_names.c_stacktop_name, "0")
+			print_forward_variable (False, "int", c_names.c_interrupt_name, "0")
+			print_forward_variable (False, "int", c_names.c_step_name, "1")
 			h_file.put_string ("extern void ")
 			h_file.put_string (c_names.c_crash_name)
 			h_file.put_string ("(EIF_NATURAL_32 code,EIF_NATURAL_32 sig);%N")
-			print_forward_variable (True, "int", c_names.c_interrupt_name, "0")
 			if not c_generator.pma_only then
 				-- Define `break'
 				h_file.put_string ("DllImport ")
@@ -221,7 +220,6 @@ feature {} -- Extension parts
 				h_file.put_string (c_names.c_break_name)
 				h_file.put_string ("(EIF_INTEGER_32 code);%N")
 			end
-			print_forward_variable (False, "EIF_NATURAL_32", c_names.c_step_name, "1")
 			
 			print_pos_definition
 			-- Declare `routine', `local_offset'
@@ -245,10 +243,10 @@ feature {} -- Extension parts
 			h_file.put_string ("),index)%N")
 			-- Declare `type', `field_offset'
 			h_file.put_string ("void* ")
-			h_file.put_string (c_names.c_get_type,)
+			h_file.put_string (c_names.c_get_type)
 			h_file.put_string ("(EIF_NATURAL_32);%N")
 			h_file.put_string ("void ")
-			h_file.put_string (c_names.c_field_offset_name,)
+			h_file.put_string (c_names.c_field_offset_name)
 			h_file.put_string ("(void*,EIF_INTEGER_32,EIF_NATURAL_32);%N")
 			h_file.put_string ("#define ")
 			h_file.put_string (c_names.c_set_field)
@@ -263,14 +261,11 @@ feature {} -- Extension parts
 			c_generator.flush_to_c_file
 		end
 
-feature {} -- Print C structs 
+feature {NONE} -- Print C structs 
 
 	id_shift, line_shift: INTEGER
 	
 	print_pos_definition
-		local
-			s: IS_SYSTEM
-			n: INTEGER
 		once
 				-- Define `skip', `info', `pos', `jump' 
 			h_file.put_string ("#define ")
@@ -358,7 +353,6 @@ feature {} -- Print C structs
 		local
 			l_type: IS_TYPE
 			l_string: STRING
-			i: INTEGER
 		do
 				-- Define global data
 			c0_file.put_string ("GE_jmp_buf ")
@@ -508,7 +502,7 @@ feature {} -- Print C structs
 			c_file.put_string ("=0;%N")
 		end
 	
-feature {} -- Print C structs 
+feature {NONE} -- Print C structs 
 
 	print_typedefs
 		local
@@ -580,10 +574,8 @@ feature {} -- Print C structs
 
 	put_struct (nt: IS_NORMAL_TYPE; f: KI_TEXT_OUTPUT_STREAM)
 		local
-			cls: IS_CLASS_TEXT
 			ft: IS_TYPE
 			a: IS_FIELD
-			nm: STRING
 			i, m: INTEGER
 		do
 			if not nt.is_subobject then
@@ -649,7 +641,7 @@ feature {} -- Print C structs
 			n := l_pool.count
 			n := l_pool.count
 			from
-				create l_array.make (0, n)
+				create l_array.make_filled ("", 0, n)
 				l_pool.start
 			until l_pool.after loop
 				l_signature := l_pool.key_for_iteration
@@ -659,7 +651,7 @@ feature {} -- Print C structs
 			end
 			from
 			until i = n loop
-				tmp_str.clear_all
+				tmp_str.wipe_out
 				l_signature := l_array [i]
 				l_comma := False
 				c0_file.put_string (once "  case ")
@@ -782,7 +774,7 @@ feature {} -- Print C structs
 			c0_file.put_character (')')
 		end
 			
-feature {} -- Implemantation
+feature {NONE} -- Implemantation
 
 	c0_file: KL_TEXT_OUTPUT_FILE
 

@@ -6,7 +6,7 @@ class IS_STACK_FRAME
 
 inherit
 
-	ANY
+	IS_BASE
 		redefine
 			default_create
 		end

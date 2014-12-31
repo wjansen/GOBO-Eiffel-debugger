@@ -70,16 +70,20 @@ feature -- Access
 	target_root_ident: detachable TI_
 			-- Root of traversal in `target'. 
 		do
-			if source_root_ident /= source_void_ident then
-				Result := known_objects [source_root_ident].ident
+			if source_root_ident /= source_void_ident
+				and then attached source_root_ident as si
+			 then
+				Result := known_objects [si].ident
 			end
 		end
 
 	root_type: IS_TYPE
 			-- Type of root of traversal. 
 		do
-			if source_root_ident /= source_void_ident then
-				Result := known_objects [source_root_ident].type
+			if source_root_ident /= source_void_ident 
+				and then attached source_root_ident as si
+			 then
+				Result := known_objects [si].type
 			end
 		end
 
@@ -120,7 +124,6 @@ feature {NONE} -- Scanning structures
 		note
 			action: "Deep traversal of an object given the `source'."
 		local
-			si: SI_
 			was_collecting: BOOLEAN
 		do
 			reset
@@ -137,8 +140,9 @@ feature {NONE} -- Scanning structures
 			if attached target.finalize as fin then
 				known_objects.do_values (fin)
 			end
-			si := source_root_ident
-			if si /= Void then
+			if source_root_ident /= source_void_ident
+				and then attached source_root_ident as si
+			 then
 				target.finish (known_objects [si])
 			end
 		end
@@ -162,7 +166,7 @@ feature {NONE} -- Scanning structures
 			not_known: not known_objects.has (si)
 		local
 			tid: PC_TYPED_IDENT [TI_]
-			ti, ti0: detachable TI_
+			ti: TI_
 			dyn: IS_TYPE
 			n: NATURAL
 		do
@@ -203,21 +207,21 @@ feature {NONE} -- Scanning structures
 			known: known_objects.has (si)
 		local
 			tid: PC_TYPED_IDENT [TI_]
-			ti: TI_
 			t: IS_TYPE
 		do
 			tid := known_objects [si]
-			ti := tid.ident
-			if not deep then
-				target.put_next_ident (ti)
-			end
-			t := tid.type
-			if t.is_special and then attached {IS_SPECIAL_TYPE} t as s then
-				process_special (s, tid.count, si, ti, False)
-			elseif t.is_agent and then attached {IS_AGENT_TYPE} t as a then
-				process_agent (a, si, ti, False)
-			else
-				process_normal_or_tuple (t, si, ti, False)
+			if attached tid.ident as ti then
+				if not deep then
+					target.put_next_ident (ti)
+				end
+				t := tid.type
+				if t.is_special and then attached {IS_SPECIAL_TYPE} t as s then
+					process_special (s, tid.count, si, ti, False)
+				elseif t.is_agent and then attached {IS_AGENT_TYPE} t as a then
+					process_agent (a, si, ti, False)
+				else
+					process_normal_or_tuple (t, si, ti, False)
+				end
 			end
 		ensure
 			known: known_objects.has (si)
@@ -384,6 +388,7 @@ feature {NONE} -- Scanning structures
 			si, si0: detachable SI_
 			ti0: detachable TI_
 			t: IS_TYPE
+			ready: BOOLEAN
 		do
 			t := f.type
 			if t.is_basic then
@@ -394,11 +399,16 @@ feature {NONE} -- Scanning structures
 				source.read_field_ident
 				si := source.last_ident
 				if si /= source_void_ident then
+					check si /= Void end
 					if known_objects.has (si) then
 						tid := known_objects [si]
-						t := source.last_dynamic_type
-						target.put_known_ident (tid.ident, tid.type)
-					else
+						if tid.ident /= target_void_ident and then attached tid.ident as ti then
+							t := source.last_dynamic_type
+							target.put_known_ident (ti, tid.type)
+							ready := True
+						end
+					end
+					if not ready then
 						process_announcement (si)
 					end
 				else

@@ -43,8 +43,6 @@ create {ET_IS_CLASS_TEXT}
 feature {NONE} -- Initialization 
 
 	declare_from_feature (f: ET_FEATURE; h: like home; s: ET_IS_SYSTEM)
-		local
-			k, n: INTEGER
 		do
 			Precursor (f, h, s)
 			flags := Routine_flag
@@ -106,9 +104,9 @@ feature -- Access
 
 	home: ET_IS_CLASS_TEXT
 
-	renames: ET_IS_ROUTINE_TEXT
+	renames: detachable ET_IS_ROUTINE_TEXT
 
-	tuple_labels: detachable IS_SEQUENCE [ET_IS_FEATURE_TEXT]
+	tuple_labels: detachable IS_SEQUENCE [attached ET_IS_FEATURE_TEXT]
 
 	var_at (i: INTEGER): detachable ET_IS_FEATURE_TEXT
 		do
@@ -117,7 +115,7 @@ feature -- Access
 			end		
 		end
 
-	inline_text_at (i: INTEGER): ET_IS_ROUTINE_TEXT
+	inline_text_at (i: INTEGER): attached ET_IS_ROUTINE_TEXT
 		do
 			if attached inline_texts as it then
 				Result := it [i]
@@ -145,7 +143,7 @@ feature -- Status setting
 			end
 		end
 
-	add_inline (rt: ET_IS_ROUTINE_TEXT)
+	add_inline (rt: attached ET_IS_ROUTINE_TEXT)
 		do
 			if attached inline_texts then
 			else
@@ -180,9 +178,9 @@ feature -- Status setting
 							create vars.make (n, x0)
 						until k = n loop
 							if attached r.vars[k] as v then
-								vars.add (v.text)
+								vars.force (v.text, k)
 							else
-								vars.add (Void)
+								vars.force (Void, k)
 							end
 							k := k + 1
 						end

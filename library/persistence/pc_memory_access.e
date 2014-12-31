@@ -54,7 +54,6 @@ feature -- Access
 			return: "Object at field in `object' according to the `offset'."
 		local
 			act: POINTER
-			id: INTEGER
 		do
 			if address /= null then
 				act := address + offset
@@ -79,14 +78,6 @@ feature -- Access
 	last_string: STRING
 	last_unicode: STRING_32
 
-feature -- Status setting
-	
-	set_address (a: POINTER; n: INTEGER)
-		do
-			Precursor (a, n)
-			offset := 0
-		end
-	
 feature {PC_DRIVER} -- Reading elementary data
 	
 	read_boolean 
@@ -231,14 +222,14 @@ feature {PC_DRIVER} -- Reading elementary data
 
 feature {PC_DRIVER} -- Object location 
 
-	set_field (f: attached like field; in: detachable ANY)
+	set_field (f: attached like field; in: attached ANY)
 		do
 			field := f
 			field_type := f.type
 			set_offset (f)
 		end
 
-	set_index (s: IS_SPECIAL_TYPE; i: NATURAL; in: ANY)
+	set_index (s: IS_SPECIAL_TYPE; i: NATURAL; in: attached ANY)
 		do
 			field := s.item_0
 			field_type := s.item_type

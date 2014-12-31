@@ -23,7 +23,7 @@ feature -- Initialization
 	
 feature -- Access
 
-	ident: I_
+	ident: detachable I_
 
 	type: IS_TYPE
 

@@ -13,8 +13,6 @@ feature {NONE} -- Initialization
 	
 	make (a_generator: like c_generator; a_compilee: like compilee;
 			a_c_names: like c_names)
-		require
-			a_generator_has_c_names: attached a_generator.c_names 
 		do
 			c_generator := a_generator
 			compilee := a_compilee
@@ -52,11 +50,6 @@ feature {NONE} -- Extension parts
 	
 	print_defines
 		do
-			h_file.put_string ("#ifndef ")
-			h_file.put_string (c_names.struct_name)
-			h_file.put_string ("INTRO%N#define ")
-			h_file.put_string (c_names.struct_name)
-			h_file.put_string ("INTRO%N#endif%N")
 		end
 	
 	print_typedefs
@@ -131,7 +124,7 @@ feature {NONE} -- Elementary IO
 			type: "type name in C"
 			name: "top object name in C"
 		do
-			if attached h_fiel as h then
+			if attached h_file as h then
 				h_file.put_string (once "extern ")
 				h_file.put_string (type)
 				h_file.put_character (' ')
@@ -183,7 +176,7 @@ feature {NONE} -- Elementary IO
 			type_not_empty: not a_type.is_empty
 			name_not_empty: not a_name.is_empty
 		do
-			tmp_str.clear_all
+			tmp_str.wipe_out
 			tmp_str.copy (a_type)
 			tmp_str.extend (' ')
 			if as_address then
@@ -289,7 +282,7 @@ feature {NONE} -- Elementary IO
 				tmp_str.copy (sn)
 				tmp_str.extend (' ')
 			else
-				tmp_str.clear_all
+				tmp_str.wipe_out
 				tmp_str.append (once "void* ")
 			end
 			if n = 0 then

@@ -8,6 +8,7 @@ inherit
 
 	IS_TYPE
 		redefine
+			base_class,
 			is_actionable
 		end
 
@@ -90,6 +91,8 @@ feature -- Status
 
 	is_agent: BOOLEAN = False
 
+	base_class: attached IS_CLASS_TEXT
+	
 	is_actionable: BOOLEAN
 		do
 			Result := base_class.is_actionable

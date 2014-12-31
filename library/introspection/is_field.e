@@ -12,7 +12,10 @@ class IS_FIELD
 inherit
 
 	IS_ENTITY
-
+		redefine
+			type
+		end
+	
 create
 
 	make,
@@ -67,6 +70,8 @@ feature -- Access
 
 	is_attached: BOOLEAN 
 
+	type: attached IS_TYPE
+	
 feature {IS_BASE} -- Status setting 
 
 	set_name (nm: like fast_name)

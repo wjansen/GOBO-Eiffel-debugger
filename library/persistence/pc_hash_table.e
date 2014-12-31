@@ -7,7 +7,7 @@ note
 		 Hash codes are to be computed by implementing classes. 
 		 ]"
 
-deferred class PC_HASH_TABLE [V_, K_ -> attached ANY]
+deferred class PC_HASH_TABLE [V_ -> detachable ANY, K_ -> attached ANY]
 
 inherit
 
@@ -26,7 +26,7 @@ feature {NONE} -- Initialization
 			positive: n > 0
 		local
 			k0: detachable K_
-			v0: detachable V_
+			v0: V_
 		do
 			create keys.make_filled (k0, n)
 			create data.make_filled (v0, n)
@@ -37,18 +37,19 @@ feature {NONE} -- Initialization
 
 feature -- Access 
 
-	valid_key (key: K_): BOOLEAN
+	valid_key (key: detachable K_): BOOLEAN
 		deferred
 		end
 	
-	item alias "[]" (key: K_): attached V_
+	item alias "[]" (key: K_): V_
 		do
 			set_slot (key)
-			check attached data [slot] end
-			Result := data [slot]
+			if attached data [slot] as ds then
+				Result := ds
+			end
 		end
 
-	key_of_value (v: detachable V_): detachable K_
+	key_of_value (v: V_): detachable K_
 		local
 			k, k0: detachable K_
 			h: INTEGER
@@ -83,6 +84,7 @@ feature -- Status
 			k0: detachable K_
 		do
 			if key /= k0 then
+				check key /= Void end
 				set_slot (key)
 				Result := keys[slot] /= k0
 			end
@@ -108,7 +110,7 @@ feature -- Removal
 			action: "Remove `key' and its value if set."
 		local
 			k, k0: detachable K_
-			v0: detachable V_
+			v0: V_
 			h, h0, cap: INTEGER
 		do
 			if has (key) then
@@ -120,6 +122,7 @@ feature -- Removal
 				until k = k0 loop
 					k := keys [h]
 					if k /= k0 then
+						check k /= Void end
 						if hash (k) \\ cap = h then
 							k := k0
 						else
@@ -143,7 +146,7 @@ feature -- Removal
 			action: "Remove all elements."
 		local
 			k0: detachable K_
-			v0: detachable V_
+			v0: V_
 		do
 			keys.fill_with (k0, 0, keys.count - 1)
 			data.fill_with (v0, 0, data.count - 1)
@@ -180,7 +183,10 @@ feature -- Duplication and comparison
 					h := h - 1
 					k := keys [h]
 					if k /= k0 then
-						Result := other [k] = data [h]
+						check k /= Void end
+						if attached data [h] as dh then
+							Result := other [k] = dh
+						end
 					end
 				end
 			end
@@ -224,9 +230,9 @@ feature -- Traversal
 			end
 		end
 
-	do_values (action: PROCEDURE [ANY, TUPLE [attached V_]])
+	do_values (action: PROCEDURE [ANY, TUPLE [V_]])
 		local
-			t: detachable TUPLE [v: attached V_]
+			t: detachable TUPLE [v: V_]
 			k, k0: detachable K_
 			i, j, n: INTEGER
 		do
@@ -254,9 +260,10 @@ feature -- Traversal
 			end
 		end
 
-	do_pairs (action: PROCEDURE [ANY, TUPLE [attached V_, K_]])
+	do_pairs (action: PROCEDURE [ANY, TUPLE [V_, K_]])
 		local
-			t: detachable TUPLE [v: detachable V_; k: K_]
+			t: detachable TUPLE [v: V_; k: K_]
+			v: V_
 			k, k0: detachable K_
 			i, j, n: INTEGER
 		do
@@ -267,7 +274,9 @@ feature -- Traversal
 				k := keys [j]
 				j := j + 1
 				if k /= k0 then
-					t := [data [j], k]
+					check k /= Void end
+					v := data [j]
+					t := [v, k]
 					action.call (t)
 					i := j
 					j := n
@@ -278,6 +287,7 @@ feature -- Traversal
 			until i = n loop
 				k := keys [i]
 				if k /= k0 then
+					check k /= Void end
 					t.v := data [i]
 					t.k := k
 					action.call (t)
@@ -298,7 +308,7 @@ feature {PC_HASH_TABLE, PC_HASH_TABLE_CURSOR} -- Implementation
 
 	keys: SPECIAL [detachable K_]
 
-	data: SPECIAL [detachable V_]
+	data: SPECIAL [V_]
 
 	slot: INTEGER
 
@@ -306,7 +316,7 @@ feature {PC_HASH_TABLE, PC_HASH_TABLE_CURSOR} -- Implementation
 
 	max_clash_count: INTEGER
 
-	set_slot (key: K_)
+	set_slot (key: attached K_)
 		note
 			action:
 			"[
@@ -316,7 +326,7 @@ feature {PC_HASH_TABLE, PC_HASH_TABLE_CURSOR} -- Implementation
 		require
 			valid: valid_key (key)
 		local
-			k, k0: K_
+			k, k0: detachable K_
 			h, cap: INTEGER
 		do
 			if key /= keys[slot] then
@@ -338,7 +348,6 @@ feature {PC_HASH_TABLE, PC_HASH_TABLE_CURSOR} -- Implementation
 		require
 			valid: valid_key (key)
 			not_has_key: not has (key)
-			slot_set: slot = hash (key) \\ keys.count
 		local
 			cap: INTEGER
 		do
@@ -375,6 +384,7 @@ feature {PC_HASH_TABLE, PC_HASH_TABLE_CURSOR} -- Implementation
 				until h = old_n loop
 					k := old_keys [h]
 					if k /= k0 then
+						check k /= Void end
 						set_slot (k)	-- set `slot' to appropriate free slot
 						force (old_data [h], k, False)
 					end

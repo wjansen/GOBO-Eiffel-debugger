@@ -295,11 +295,10 @@ public class StackPart : Box, AbstractPart {
 		automatic = active;
 	}
 
-	private void do_refresh(int reason) { 
+	private void do_refresh(int reason, StackFrame* f) { 
 		if (main!=null && !automatic || dg==null) return;
 		Driver? dr = dg as Driver;
 		if (dr!=null && reason==dr.ProgramState.Running) return;
-		StackFrame* f = dg.frame();
 		refresh(f);
 		level = 0;
 	}
@@ -331,7 +330,8 @@ public class StackPart : Box, AbstractPart {
 		top = null;
 		level = 0;
 		if (dg!=null) {
-			dg.response.connect((dg,r,c,m,f,mc) => { if (!c) do_refresh(r); });
+			dg.response.connect((dg,r,c,m,f,mc) => 
+				{ if (!c) do_refresh(r, f); });
 			dg.notify["is-running"].connect(
 				(g,p) => { do_set_sensitive(dg.is_running); });
 		}

@@ -2,7 +2,7 @@ note
 
 	description: "Abstract class for traversal of a PC_TABLE."
 
-deferred class PC_CURSOR [V_, K_]
+deferred class PC_CURSOR [V_ -> detachable ANY, K_ -> attached ANY]
 
 inherit
 

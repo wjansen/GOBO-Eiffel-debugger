@@ -1,0 +1,28 @@
+CC ?= cc
+CFLAGS ?= `pkg-config --cflags glib-2.0 gobject-2.0`
+LIBS ?= `pkg-config --libs glib-2.0 gobject-2.0`
+LEX ?= lex
+LEMON ?= lemon
+CFLAGS_VALA ?=
+OUTPUT ?= a.out
+
+_GedbScannerLexer.lex _GedbScannerParser2.h : src_scanner.vala
+	../vle/vala-lemon-extractor
+
+src_scanner.c _Parser.h : src_scanner.vala _GedbScannerParser.vapi
+	valac ${CFLAGS_VALA} --vapidir=. -C -H _Parser.h --pkg _GedbScannerParser src_scanner.vala
+
+${OUTPUT} : src_scanner.c _GedbScannerParser.o
+	${CC} ${CFLAGS} -I. -o ${OUTPUT} src_scanner.c _GedbScannerParser.o ${LIBS}
+
+_GedbScannerLexer.c : _GedbScannerLexer.lex
+	${LEX} -o _GedbScannerLexer.c _GedbScannerLexer.lex
+
+_GedbScannerParser.o : _Parser.h _GedbScannerLexer.c
+	cat _Parser.h _GedbScannerLexer.c > _Parser.tmp.c
+	${CC} ${CFLAGS}  -I. -c _Parser.tmp.c -o _GedbScannerParser.o
+
+clean :
+	rm -f _GedbScannerLexer.lex _GedbScannerParser2.h _GedbScannerLexer.c src_scanner.c _GedbScannerParser.vapi _GedbScannerParser.o _Parser.h _Parser.tmp.c ${OUTPUT}
+
+all : ${OUTPUT}

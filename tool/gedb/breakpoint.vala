@@ -245,6 +245,7 @@ public class Breakpoint : GLib.Object {
 	public uint tid { get; set; }
 	public Expression? iff { get; set; }
 	public Expression? print { get; set; }
+	public string? formatted;
 	public bool cont { get; set; }
 	public bool enabled { get; set; }
 
@@ -275,7 +276,7 @@ public class Breakpoint : GLib.Object {
 
 	public string? catch_to_short_string() { return short_name_of_catch(exc); }
 
-	public string to_string(Gedb.StackFrame* f=null, System* s=null) {
+	public string to_string() {
 		string str;
 		if (id==0) {
 			str = "Temporary breakpoint";
@@ -299,18 +300,7 @@ public class Breakpoint : GLib.Object {
 				str += "Watch address has gone out of scope.\n";
 			}
 		}
-		if (print!=null && f!=null && s!=null) {
-			try {
-				print.compute_in_stack(f, s);
-				str += print.bottom().format_values(2,
-					print.Format.WITH_NAME |
-					print.Format.WITH_TYPE |
-					print.Format.INDEX_VALUE ,
-					f, s);
-			} catch (Error e) {
-				// TODO show parse error 
-			}
-		}
+		if (formatted!=null) str += formatted;
 		return str;
 	}
 

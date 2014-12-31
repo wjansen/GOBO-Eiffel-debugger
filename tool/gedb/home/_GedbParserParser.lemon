@@ -1,0 +1,1944 @@
+%type start {GedbStart*}
+start(l_this) ::= feature_decl(f). 
+{	l_this = gedb_start_new (l_ea, f);
+	#ifdef GEDB_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x66\x65\x61\x74\x75\x72\x65_\x64\x65\x63\x6C(\x66) {new GedbStart is %p}\n", l_this);
+	#endif
+	g_object_unref(f);
+}
+%nonassoc SEMICOLON.
+%nonassoc COLON.
+%nonassoc COMMA.
+%right ASSIGN.
+%nonassoc CREATE AGENT ATTACHED LIKE.
+%left IMPLIES.
+%left OR ORELSE XOR.
+%left AND ANDTHEN.
+%left EQ NE SIM NSIM LT LE GT GE.
+%left DOTDOT.
+%left PLUS MINUS.
+%left TIMES DIV IDIV IMOD.
+%right POWER.
+%left FREE_OP.
+%right NOT ADDRESS OLD.
+%right LPAREN LBRACKET LBRA   .
+%left DOT AS.
+%type feature_decl {GedbFeatureDecl*}
+feature_decl(l_this) ::= extended_name_list(el) result_typ(rt) obsolete(o). 
+{	l_this = gedb_feature_decl_new__1(l_ea, el, rt, o);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x65\x78\x74\x65\x6E\x64\x65\x64_\x6E\x61\x6D\x65_\x6C\x69\x73\x74(\x65\x6C) \x72\x65\x73\x75\x6C\x74_\x74\x79\x70(\x72\x74) \x6F\x62\x73\x6F\x6C\x65\x74\x65(\x6F) {new GedbFeatureDecl is %p}\n", l_this);
+	#endif
+	g_object_unref(el);
+	g_object_unref(rt);
+	g_object_unref(o);
+}
+feature_decl(l_this) ::= extended_name_list(el) result_typ(rt) EQ manifest(m) obsolete(o). 
+{	l_this = gedb_feature_decl_new__2(l_ea, el, rt, m, o);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x65\x78\x74\x65\x6E\x64\x65\x64_\x6E\x61\x6D\x65_\x6C\x69\x73\x74(\x65\x6C) \x72\x65\x73\x75\x6C\x74_\x74\x79\x70(\x72\x74) \x45\x51 \x6D\x61\x6E\x69\x66\x65\x73\x74(\x6D) \x6F\x62\x73\x6F\x6C\x65\x74\x65(\x6F) {new GedbFeatureDecl is %p}\n", l_this);
+	#endif
+	g_object_unref(el);
+	g_object_unref(rt);
+	g_object_unref(m);
+	g_object_unref(o);
+}
+feature_decl(l_this) ::= extended_name_list(el) result_typ(rt) obsolete(o) note_list(nl) routine_decl(rd). 
+{	l_this = gedb_feature_decl_new__3(l_ea, el, rt, o, nl, rd);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x65\x78\x74\x65\x6E\x64\x65\x64_\x6E\x61\x6D\x65_\x6C\x69\x73\x74(\x65\x6C) \x72\x65\x73\x75\x6C\x74_\x74\x79\x70(\x72\x74) \x6F\x62\x73\x6F\x6C\x65\x74\x65(\x6F) \x6E\x6F\x74\x65_\x6C\x69\x73\x74(\x6E\x6C) \x72\x6F\x75\x74\x69\x6E\x65_\x64\x65\x63\x6C(\x72\x64) {new GedbFeatureDecl is %p}\n", l_this);
+	#endif
+	g_object_unref(el);
+	g_object_unref(rt);
+	g_object_unref(o);
+	g_object_unref(nl);
+	g_object_unref(rd);
+}
+feature_decl(l_this) ::= extended_name_list(el) LPAREN declaration_list(dl) RPAREN result_typ(rt) obsolete(o) note_list(nl) routine_decl(rd). 
+{	l_this = gedb_feature_decl_new__4(l_ea, el, dl, rt, o, nl, rd);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x65\x78\x74\x65\x6E\x64\x65\x64_\x6E\x61\x6D\x65_\x6C\x69\x73\x74(\x65\x6C) \x4C\x50\x41\x52\x45\x4E \x64\x65\x63\x6C\x61\x72\x61\x74\x69\x6F\x6E_\x6C\x69\x73\x74(\x64\x6C) \x52\x50\x41\x52\x45\x4E \x72\x65\x73\x75\x6C\x74_\x74\x79\x70(\x72\x74) \x6F\x62\x73\x6F\x6C\x65\x74\x65(\x6F) \x6E\x6F\x74\x65_\x6C\x69\x73\x74(\x6E\x6C) \x72\x6F\x75\x74\x69\x6E\x65_\x64\x65\x63\x6C(\x72\x64) {new GedbFeatureDecl is %p}\n", l_this);
+	#endif
+	g_object_unref(el);
+	g_object_unref(dl);
+	g_object_unref(rt);
+	g_object_unref(o);
+	g_object_unref(nl);
+	g_object_unref(rd);
+}
+feature_decl(l_this) ::= AGENT inline_agent(ia). 
+{	l_this = gedb_feature_decl_new__5(l_ea, ia);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x41\x47\x45\x4E\x54 \x69\x6E\x6C\x69\x6E\x65_\x61\x67\x65\x6E\x74(\x69\x61) {new GedbFeatureDecl is %p}\n", l_this);
+	#endif
+	g_object_unref(ia);
+}
+%type routine_decl {GedbRoutineDecl*}
+routine_decl(l_this) ::= require(r) locals(ll) body(b). 
+{	l_this = gedb_routine_decl_new__1(l_ea, r, ll, b);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x72\x65\x71\x75\x69\x72\x65(\x72) \x6C\x6F\x63\x61\x6C\x73(\x6C\x6C) \x62\x6F\x64\x79(\x62) {new GedbRoutineDecl is %p}\n", l_this);
+	#endif
+	g_object_unref(r);
+	g_object_unref(ll);
+	g_object_unref(b);
+}
+%type extended_name_list {GedbExtendedNameList*}
+extended_name_list(l_this) ::= extended_name(en). 
+{	l_this = gedb_extended_name_list_new__1(l_ea, en);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x65\x78\x74\x65\x6E\x64\x65\x64_\x6E\x61\x6D\x65(\x65\x6E) {new GedbExtendedNameList is %p}\n", l_this);
+	#endif
+	g_object_unref(en);
+}
+extended_name_list(l_this) ::= extended_name_list(el) COMMA extended_name(en). 
+{	l_this = gedb_extended_name_list_new__2(l_ea, el, en);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x65\x78\x74\x65\x6E\x64\x65\x64_\x6E\x61\x6D\x65_\x6C\x69\x73\x74(\x65\x6C) \x43\x4F\x4D\x4D\x41 \x65\x78\x74\x65\x6E\x64\x65\x64_\x6E\x61\x6D\x65(\x65\x6E) {new GedbExtendedNameList is %p}\n", l_this);
+	#endif
+	g_object_unref(el);
+	g_object_unref(en);
+}
+%type extended_name {GedbExtendedName*}
+extended_name(l_this) ::= IDENTIFIER(i). 
+{	l_this = gedb_extended_name_new__1(l_ea, i);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x49\x44\x45\x4E\x54\x49\x46\x49\x45\x52(\x69) {new GedbExtendedName is %p}\n", l_this);
+	#endif
+	g_object_unref(i);
+}
+extended_name(l_this) ::= IDENTIFIER ALIAS STRING. 
+{	l_this = gedb_extended_name_new__2(l_ea);
+}
+extended_name(l_this) ::= FROZEN IDENTIFIER. 
+{	l_this = gedb_extended_name_new__3(l_ea);
+}
+extended_name(l_this) ::= FROZEN IDENTIFIER ALIAS STRING. 
+{	l_this = gedb_extended_name_new__4(l_ea);
+}
+%type declaration_list {GedbDeclarationList*}
+declaration_list(l_this) ::= declarations(dd). 
+{	l_this = gedb_declaration_list_new__1(l_ea, dd);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x64\x65\x63\x6C\x61\x72\x61\x74\x69\x6F\x6E\x73(\x64\x64) {new GedbDeclarationList is %p}\n", l_this);
+	#endif
+	g_object_unref(dd);
+}
+declaration_list(l_this) ::= declaration_list(dl) declarations(dd). 
+{	l_this = gedb_declaration_list_new__2(l_ea, dl, dd);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x64\x65\x63\x6C\x61\x72\x61\x74\x69\x6F\x6E_\x6C\x69\x73\x74(\x64\x6C) \x64\x65\x63\x6C\x61\x72\x61\x74\x69\x6F\x6E\x73(\x64\x64) {new GedbDeclarationList is %p}\n", l_this);
+	#endif
+	g_object_unref(dl);
+	g_object_unref(dd);
+}
+%type declarations {GedbDeclarations*}
+declarations(l_this) ::= key(k) typ(t). 
+{	l_this = gedb_declarations_new__1(l_ea, k, t);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x6B\x65\x79(\x6B) \x74\x79\x70(\x74) {new GedbDeclarations is %p}\n", l_this);
+	#endif
+	g_object_unref(k);
+	g_object_unref(t);
+}
+declarations(l_this) ::= key(k) typ(t) SEMICOLON. 
+{	l_this = gedb_declarations_new__2(l_ea, k, t);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x6B\x65\x79(\x6B) \x74\x79\x70(\x74) \x53\x45\x4D\x49\x43\x4F\x4C\x4F\x4E {new GedbDeclarations is %p}\n", l_this);
+	#endif
+	g_object_unref(k);
+	g_object_unref(t);
+}
+declarations(l_this) ::= IDENTIFIER(i) COMMA declarations(dd). 
+{	l_this = gedb_declarations_new__3(l_ea, i, dd);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x49\x44\x45\x4E\x54\x49\x46\x49\x45\x52(\x69) \x43\x4F\x4D\x4D\x41 \x64\x65\x63\x6C\x61\x72\x61\x74\x69\x6F\x6E\x73(\x64\x64) {new GedbDeclarations is %p}\n", l_this);
+	#endif
+	g_object_unref(i);
+	g_object_unref(dd);
+}
+%type result_typ {GedbResultTyp*}
+result_typ(l_this) ::= . 
+{	l_this = gedb_result_typ_new__1(l_ea);
+}
+result_typ(l_this) ::= COLON typ(t). 
+{	l_this = gedb_result_typ_new__2(l_ea, t);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x43\x4F\x4C\x4F\x4E \x74\x79\x70(\x74) {new GedbResultTyp is %p}\n", l_this);
+	#endif
+	g_object_unref(t);
+}
+result_typ(l_this) ::= COLON typ(t) ASSIGN identifier(i). 
+{	l_this = gedb_result_typ_new__3(l_ea, t, i);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x43\x4F\x4C\x4F\x4E \x74\x79\x70(\x74) \x41\x53\x53\x49\x47\x4E \x69\x64\x65\x6E\x74\x69\x66\x69\x65\x72(\x69) {new GedbResultTyp is %p}\n", l_this);
+	#endif
+	g_object_unref(t);
+	g_object_unref(i);
+}
+%type obsolete {GedbObsolete*}
+obsolete(l_this) ::= . 
+{	l_this = gedb_obsolete_new__1(l_ea);
+}
+obsolete(l_this) ::= OBSOLETE STRING(s). 
+{	l_this = gedb_obsolete_new__2(l_ea, s);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x4F\x42\x53\x4F\x4C\x45\x54\x45 \x53\x54\x52\x49\x4E\x47(\x73) {new GedbObsolete is %p}\n", l_this);
+	#endif
+	g_object_unref(s);
+}
+%type note_list {GedbNoteList*}
+note_list(l_this) ::= . 
+{	l_this = gedb_note_list_new__1(l_ea);
+}
+note_list(l_this) ::= NOTE. 
+{	l_this = gedb_note_list_new__2(l_ea);
+}
+note_list(l_this) ::= NOTE notes(nn). 
+{	l_this = gedb_note_list_new__3(l_ea, nn);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x4E\x4F\x54\x45 \x6E\x6F\x74\x65\x73(\x6E\x6E) {new GedbNoteList is %p}\n", l_this);
+	#endif
+	g_object_unref(nn);
+}
+%type notes {GedbNotes*}
+notes(l_this) ::= note(n). 
+{	l_this = gedb_notes_new__1(l_ea, n);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x6E\x6F\x74\x65(\x6E) {new GedbNotes is %p}\n", l_this);
+	#endif
+	g_object_unref(n);
+}
+notes(l_this) ::= notes(nn) note(n). 
+{	l_this = gedb_notes_new__2(l_ea, nn, n);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x6E\x6F\x74\x65\x73(\x6E\x6E) \x6E\x6F\x74\x65(\x6E) {new GedbNotes is %p}\n", l_this);
+	#endif
+	g_object_unref(nn);
+	g_object_unref(n);
+}
+notes(l_this) ::= notes(nn) SEMICOLON note(n). 
+{	l_this = gedb_notes_new__3(l_ea, nn, n);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x6E\x6F\x74\x65\x73(\x6E\x6E) \x53\x45\x4D\x49\x43\x4F\x4C\x4F\x4E \x6E\x6F\x74\x65(\x6E) {new GedbNotes is %p}\n", l_this);
+	#endif
+	g_object_unref(nn);
+	g_object_unref(n);
+}
+%type note {GedbNote*}
+note(l_this) ::= key(k) note_values(vv). 
+{	l_this = gedb_note_new__1(l_ea, k, vv);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x6B\x65\x79(\x6B) \x6E\x6F\x74\x65_\x76\x61\x6C\x75\x65\x73(\x76\x76) {new GedbNote is %p}\n", l_this);
+	#endif
+	g_object_unref(k);
+	g_object_unref(vv);
+}
+%type note_values {GedbNoteValues*}
+note_values(l_this) ::= note_value(v). 
+{	l_this = gedb_note_values_new__1(l_ea, v);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x6E\x6F\x74\x65_\x76\x61\x6C\x75\x65(\x76) {new GedbNoteValues is %p}\n", l_this);
+	#endif
+	g_object_unref(v);
+}
+note_values(l_this) ::= note_values(vv) COMMA note_value(v). 
+{	l_this = gedb_note_values_new__2(l_ea, vv, v);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x6E\x6F\x74\x65_\x76\x61\x6C\x75\x65\x73(\x76\x76) \x43\x4F\x4D\x4D\x41 \x6E\x6F\x74\x65_\x76\x61\x6C\x75\x65(\x76) {new GedbNoteValues is %p}\n", l_this);
+	#endif
+	g_object_unref(vv);
+	g_object_unref(v);
+}
+%type note_value {GedbNoteValue*}
+note_value(l_this) ::= IDENTIFIER(i). 
+{	l_this = gedb_note_value_new__1(l_ea, i);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x49\x44\x45\x4E\x54\x49\x46\x49\x45\x52(\x69) {new GedbNoteValue is %p}\n", l_this);
+	#endif
+	g_object_unref(i);
+}
+note_value(l_this) ::= manifest(m). 
+{	l_this = gedb_note_value_new__2(l_ea, m);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x6D\x61\x6E\x69\x66\x65\x73\x74(\x6D) {new GedbNoteValue is %p}\n", l_this);
+	#endif
+	g_object_unref(m);
+}
+%type require {GedbRequire*}
+require(l_this) ::= . 
+{	l_this = gedb_require_new__1(l_ea);
+}
+require(l_this) ::= REQUIRE. 
+{	l_this = gedb_require_new__2(l_ea);
+}
+require(l_this) ::= REQUIRE assertions(aa). 
+{	l_this = gedb_require_new__3(l_ea, aa);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x52\x45\x51\x55\x49\x52\x45 \x61\x73\x73\x65\x72\x74\x69\x6F\x6E\x73(\x61\x61) {new GedbRequire is %p}\n", l_this);
+	#endif
+	g_object_unref(aa);
+}
+require(l_this) ::= REQUIRE ELSE. 
+{	l_this = gedb_require_new__4(l_ea);
+}
+require(l_this) ::= REQUIRE ELSE assertions(aa). 
+{	l_this = gedb_require_new__5(l_ea, aa);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x52\x45\x51\x55\x49\x52\x45 \x45\x4C\x53\x45 \x61\x73\x73\x65\x72\x74\x69\x6F\x6E\x73(\x61\x61) {new GedbRequire is %p}\n", l_this);
+	#endif
+	g_object_unref(aa);
+}
+%type locals {GedbLocals*}
+locals(l_this) ::= . 
+{	l_this = gedb_locals_new__1(l_ea);
+}
+locals(l_this) ::= LOCAL. 
+{	l_this = gedb_locals_new__2(l_ea);
+}
+locals(l_this) ::= LOCAL(l) declaration_list(dl). 
+{	l_this = gedb_locals_new__3(l_ea, l, dl);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x4C\x4F\x43\x41\x4C(\x6C) \x64\x65\x63\x6C\x61\x72\x61\x74\x69\x6F\x6E_\x6C\x69\x73\x74(\x64\x6C) {new GedbLocals is %p}\n", l_this);
+	#endif
+	g_object_unref(l);
+	g_object_unref(dl);
+}
+%type body {GedbBody*}
+body(l_this) ::= DO compound(c) ensure(e) rescue(r) END. 
+{	l_this = gedb_body_new__1(l_ea, c, e, r);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x44\x4F \x63\x6F\x6D\x70\x6F\x75\x6E\x64(\x63) \x65\x6E\x73\x75\x72\x65(\x65) \x72\x65\x73\x63\x75\x65(\x72) \x45\x4E\x44 {new GedbBody is %p}\n", l_this);
+	#endif
+	g_object_unref(c);
+	g_object_unref(e);
+	g_object_unref(r);
+}
+body(l_this) ::= ONCE compound(c) ensure(e) rescue(r) END. 
+{	l_this = gedb_body_new__2(l_ea, c, e, r);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x4F\x4E\x43\x45 \x63\x6F\x6D\x70\x6F\x75\x6E\x64(\x63) \x65\x6E\x73\x75\x72\x65(\x65) \x72\x65\x73\x63\x75\x65(\x72) \x45\x4E\x44 {new GedbBody is %p}\n", l_this);
+	#endif
+	g_object_unref(c);
+	g_object_unref(e);
+	g_object_unref(r);
+}
+body(l_this) ::= DEFERRED ensure(e) END. 
+{	l_this = gedb_body_new__3(l_ea, e);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x44\x45\x46\x45\x52\x52\x45\x44 \x65\x6E\x73\x75\x72\x65(\x65) \x45\x4E\x44 {new GedbBody is %p}\n", l_this);
+	#endif
+	g_object_unref(e);
+}
+body(l_this) ::= EXTERNAL STRING ensure(e) END. 
+{	l_this = gedb_body_new__4(l_ea, e);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x45\x58\x54\x45\x52\x4E\x41\x4C \x53\x54\x52\x49\x4E\x47 \x65\x6E\x73\x75\x72\x65(\x65) \x45\x4E\x44 {new GedbBody is %p}\n", l_this);
+	#endif
+	g_object_unref(e);
+}
+body(l_this) ::= EXTERNAL STRING ALIAS STRING ensure(e) END. 
+{	l_this = gedb_body_new__5(l_ea, e);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x45\x58\x54\x45\x52\x4E\x41\x4C \x53\x54\x52\x49\x4E\x47 \x41\x4C\x49\x41\x53 \x53\x54\x52\x49\x4E\x47 \x65\x6E\x73\x75\x72\x65(\x65) \x45\x4E\x44 {new GedbBody is %p}\n", l_this);
+	#endif
+	g_object_unref(e);
+}
+%type ensure {GedbEnsure*}
+ensure(l_this) ::= . 
+{	l_this = gedb_ensure_new__1(l_ea);
+}
+ensure(l_this) ::= ENSURE. 
+{	l_this = gedb_ensure_new__2(l_ea);
+}
+ensure(l_this) ::= ENSURE assertions(aa). 
+{	l_this = gedb_ensure_new__3(l_ea, aa);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x45\x4E\x53\x55\x52\x45 \x61\x73\x73\x65\x72\x74\x69\x6F\x6E\x73(\x61\x61) {new GedbEnsure is %p}\n", l_this);
+	#endif
+	g_object_unref(aa);
+}
+ensure(l_this) ::= ENSURE THEN. 
+{	l_this = gedb_ensure_new__4(l_ea);
+}
+ensure(l_this) ::= ENSURE THEN assertions(aa). 
+{	l_this = gedb_ensure_new__5(l_ea, aa);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x45\x4E\x53\x55\x52\x45 \x54\x48\x45\x4E \x61\x73\x73\x65\x72\x74\x69\x6F\x6E\x73(\x61\x61) {new GedbEnsure is %p}\n", l_this);
+	#endif
+	g_object_unref(aa);
+}
+%type rescue {GedbRescue*}
+rescue(l_this) ::= . 
+{	l_this = gedb_rescue_new__1(l_ea);
+}
+rescue(l_this) ::= RESCUE compound(c). 
+{	l_this = gedb_rescue_new__2(l_ea, c);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x52\x45\x53\x43\x55\x45 \x63\x6F\x6D\x70\x6F\x75\x6E\x64(\x63) {new GedbRescue is %p}\n", l_this);
+	#endif
+	g_object_unref(c);
+}
+%type compound {GedbCompound*}
+compound(l_this) ::= . 
+{	l_this = gedb_compound_new__0(l_ea);
+}
+compound(l_this) ::= compound(c) instruction(i). 
+{	l_this = gedb_compound_new__1(l_ea, c, i);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x63\x6F\x6D\x70\x6F\x75\x6E\x64(\x63) \x69\x6E\x73\x74\x72\x75\x63\x74\x69\x6F\x6E(\x69) {new GedbCompound is %p}\n", l_this);
+	#endif
+	g_object_unref(c);
+	g_object_unref(i);
+}
+%type instruction {GedbInstruction*}
+instruction(l_this) ::= multi_dot(m). 
+{	l_this = gedb_instruction_new__0(l_ea, m);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x6D\x75\x6C\x74\x69_\x64\x6F\x74(\x6D) {new GedbInstruction is %p}\n", l_this);
+	#endif
+	g_object_unref(m);
+}
+instruction(l_this) ::= parenthesized(p). 
+{	l_this = gedb_instruction_new__1(l_ea, p);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x70\x61\x72\x65\x6E\x74\x68\x65\x73\x69\x7A\x65\x64(\x70) {new GedbInstruction is %p}\n", l_this);
+	#endif
+	g_object_unref(p);
+}
+instruction(l_this) ::= create(c). 
+{	l_this = gedb_instruction_new__2(l_ea, c);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x63\x72\x65\x61\x74\x65(\x63) {new GedbInstruction is %p}\n", l_this);
+	#endif
+	g_object_unref(c);
+}
+instruction(l_this) ::= assign(a). 
+{	l_this = gedb_instruction_new__3(l_ea, a);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x61\x73\x73\x69\x67\x6E(\x61) {new GedbInstruction is %p}\n", l_this);
+	#endif
+	g_object_unref(a);
+}
+instruction(l_this) ::= condition(c). 
+{	l_this = gedb_instruction_new__4(l_ea, c);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x63\x6F\x6E\x64\x69\x74\x69\x6F\x6E(\x63) {new GedbInstruction is %p}\n", l_this);
+	#endif
+	g_object_unref(c);
+}
+instruction(l_this) ::= inspect(i). 
+{	l_this = gedb_instruction_new__5(l_ea, i);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x69\x6E\x73\x70\x65\x63\x74(\x69) {new GedbInstruction is %p}\n", l_this);
+	#endif
+	g_object_unref(i);
+}
+instruction(l_this) ::= loop(l). 
+{	l_this = gedb_instruction_new__6(l_ea, l);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x6C\x6F\x6F\x70(\x6C) {new GedbInstruction is %p}\n", l_this);
+	#endif
+	g_object_unref(l);
+}
+instruction(l_this) ::= across(a). 
+{	l_this = gedb_instruction_new__7(l_ea, a);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x61\x63\x72\x6F\x73\x73(\x61) {new GedbInstruction is %p}\n", l_this);
+	#endif
+	g_object_unref(a);
+}
+instruction(l_this) ::= debug(d). 
+{	l_this = gedb_instruction_new__8(l_ea, d);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x64\x65\x62\x75\x67(\x64) {new GedbInstruction is %p}\n", l_this);
+	#endif
+	g_object_unref(d);
+}
+instruction(l_this) ::= check(c). 
+{	l_this = gedb_instruction_new__9(l_ea, c);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x63\x68\x65\x63\x6B(\x63) {new GedbInstruction is %p}\n", l_this);
+	#endif
+	g_object_unref(c);
+}
+instruction(l_this) ::= retry. 
+{	l_this = gedb_instruction_new__10(l_ea);
+}
+instruction(l_this) ::= instruction(i) SEMICOLON. 
+{	l_this = gedb_instruction_new__11(l_ea, i);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x69\x6E\x73\x74\x72\x75\x63\x74\x69\x6F\x6E(\x69) \x53\x45\x4D\x49\x43\x4F\x4C\x4F\x4E {new GedbInstruction is %p}\n", l_this);
+	#endif
+	g_object_unref(i);
+}
+%type create {GedbCreate*}
+create(l_this) ::= CREATE identifier(i) DOT query(q). 
+{	l_this = gedb_create_new__1(l_ea, i, q);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x43\x52\x45\x41\x54\x45 \x69\x64\x65\x6E\x74\x69\x66\x69\x65\x72(\x69) \x44\x4F\x54 \x71\x75\x65\x72\x79(\x71) {new GedbCreate is %p}\n", l_this);
+	#endif
+	g_object_unref(i);
+	g_object_unref(q);
+}
+create(l_this) ::= CREATE identifier(i). 
+{	l_this = gedb_create_new__2(l_ea, i);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x43\x52\x45\x41\x54\x45 \x69\x64\x65\x6E\x74\x69\x66\x69\x65\x72(\x69) {new GedbCreate is %p}\n", l_this);
+	#endif
+	g_object_unref(i);
+}
+create(l_this) ::= CREATE explicit_typ(ct) identifier(i) DOT query(q). 
+{	l_this = gedb_create_new__3(l_ea, ct, i, q);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x43\x52\x45\x41\x54\x45 \x65\x78\x70\x6C\x69\x63\x69\x74_\x74\x79\x70(\x63\x74) \x69\x64\x65\x6E\x74\x69\x66\x69\x65\x72(\x69) \x44\x4F\x54 \x71\x75\x65\x72\x79(\x71) {new GedbCreate is %p}\n", l_this);
+	#endif
+	g_object_unref(ct);
+	g_object_unref(i);
+	g_object_unref(q);
+}
+create(l_this) ::= CREATE explicit_typ(ct) identifier(i). 
+{	l_this = gedb_create_new__4(l_ea, ct, i);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x43\x52\x45\x41\x54\x45 \x65\x78\x70\x6C\x69\x63\x69\x74_\x74\x79\x70(\x63\x74) \x69\x64\x65\x6E\x74\x69\x66\x69\x65\x72(\x69) {new GedbCreate is %p}\n", l_this);
+	#endif
+	g_object_unref(ct);
+	g_object_unref(i);
+}
+%type explicit_typ {GedbExplicitTyp*}
+explicit_typ(l_this) ::= LBRACE typ(t) RBRACE. 
+{	l_this = gedb_explicit_typ_new__1(l_ea, t);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x4C\x42\x52\x41\x43\x45 \x74\x79\x70(\x74) \x52\x42\x52\x41\x43\x45 {new GedbExplicitTyp is %p}\n", l_this);
+	#endif
+	g_object_unref(t);
+}
+%type typ {GedbTyp*}
+typ(l_this) ::= direct_typ(y). 
+{	l_this = gedb_typ_new__1(l_ea, y);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x64\x69\x72\x65\x63\x74_\x74\x79\x70(\x79) {new GedbTyp is %p}\n", l_this);
+	#endif
+	g_object_unref(y);
+}
+typ(l_this) ::= QUESTION_MARK direct_typ(y). 
+{	l_this = gedb_typ_new__2(l_ea, y);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x51\x55\x45\x53\x54\x49\x4F\x4E_\x4D\x41\x52\x4B \x64\x69\x72\x65\x63\x74_\x74\x79\x70(\x79) {new GedbTyp is %p}\n", l_this);
+	#endif
+	g_object_unref(y);
+}
+typ(l_this) ::= EXCLAMATION_MARK direct_typ(y). 
+{	l_this = gedb_typ_new__3(l_ea, y);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x45\x58\x43\x4C\x41\x4D\x41\x54\x49\x4F\x4E_\x4D\x41\x52\x4B \x64\x69\x72\x65\x63\x74_\x74\x79\x70(\x79) {new GedbTyp is %p}\n", l_this);
+	#endif
+	g_object_unref(y);
+}
+typ(l_this) ::= ATTACHED direct_typ(y). 
+{	l_this = gedb_typ_new__4(l_ea, y);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x41\x54\x54\x41\x43\x48\x45\x44 \x64\x69\x72\x65\x63\x74_\x74\x79\x70(\x79) {new GedbTyp is %p}\n", l_this);
+	#endif
+	g_object_unref(y);
+}
+typ(l_this) ::= DETACHABLE direct_typ(y). 
+{	l_this = gedb_typ_new__5(l_ea, y);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x44\x45\x54\x41\x43\x48\x41\x42\x4C\x45 \x64\x69\x72\x65\x63\x74_\x74\x79\x70(\x79) {new GedbTyp is %p}\n", l_this);
+	#endif
+	g_object_unref(y);
+}
+%type direct_typ {GedbDirectTyp*}
+direct_typ(l_this) ::= IDENTIFIER(i) LBRACKET types(tt) RBRACKET. 
+{	l_this = gedb_direct_typ_new__1(l_ea, i, tt);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x49\x44\x45\x4E\x54\x49\x46\x49\x45\x52(\x69) \x4C\x42\x52\x41\x43\x4B\x45\x54 \x74\x79\x70\x65\x73(\x74\x74) \x52\x42\x52\x41\x43\x4B\x45\x54 {new GedbDirectTyp is %p}\n", l_this);
+	#endif
+	g_object_unref(i);
+	g_object_unref(tt);
+}
+direct_typ(l_this) ::= IDENTIFIER(i). [COLON]
+{	l_this = gedb_direct_typ_new__2(l_ea, i);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x49\x44\x45\x4E\x54\x49\x46\x49\x45\x52(\x69) {new GedbDirectTyp is %p}\n", l_this);
+	#endif
+	g_object_unref(i);
+}
+direct_typ(l_this) ::= TUPLE(t) LBRACKET declaration_list(dl) RBRACKET. 
+{	l_this = gedb_direct_typ_new__3(l_ea, t, dl);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x54\x55\x50\x4C\x45(\x74) \x4C\x42\x52\x41\x43\x4B\x45\x54 \x64\x65\x63\x6C\x61\x72\x61\x74\x69\x6F\x6E_\x6C\x69\x73\x74(\x64\x6C) \x52\x42\x52\x41\x43\x4B\x45\x54 {new GedbDirectTyp is %p}\n", l_this);
+	#endif
+	g_object_unref(t);
+	g_object_unref(dl);
+}
+direct_typ(l_this) ::= TUPLE(t) LBRACKET types(tt) RBRACKET. 
+{	l_this = gedb_direct_typ_new__4(l_ea, t, tt);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x54\x55\x50\x4C\x45(\x74) \x4C\x42\x52\x41\x43\x4B\x45\x54 \x74\x79\x70\x65\x73(\x74\x74) \x52\x42\x52\x41\x43\x4B\x45\x54 {new GedbDirectTyp is %p}\n", l_this);
+	#endif
+	g_object_unref(t);
+	g_object_unref(tt);
+}
+direct_typ(l_this) ::= TUPLE(t) LBRACKET RBRACKET. 
+{	l_this = gedb_direct_typ_new__5(l_ea, t);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x54\x55\x50\x4C\x45(\x74) \x4C\x42\x52\x41\x43\x4B\x45\x54 \x52\x42\x52\x41\x43\x4B\x45\x54 {new GedbDirectTyp is %p}\n", l_this);
+	#endif
+	g_object_unref(t);
+}
+direct_typ(l_this) ::= TUPLE(t). [COLON]
+{	l_this = gedb_direct_typ_new__6(l_ea, t);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x54\x55\x50\x4C\x45(\x74) {new GedbDirectTyp is %p}\n", l_this);
+	#endif
+	g_object_unref(t);
+}
+direct_typ(l_this) ::= LIKE expr(x). 
+{	l_this = gedb_direct_typ_new__7(l_ea, x);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x4C\x49\x4B\x45 \x65\x78\x70\x72(\x78) {new GedbDirectTyp is %p}\n", l_this);
+	#endif
+	g_object_unref(x);
+}
+%type types {GedbTypes*}
+types(l_this) ::= typ(t). 
+{	l_this = gedb_types_new__1(l_ea, t);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x74\x79\x70(\x74) {new GedbTypes is %p}\n", l_this);
+	#endif
+	g_object_unref(t);
+}
+types(l_this) ::= types(tt) COMMA typ(t). 
+{	l_this = gedb_types_new__2(l_ea, tt, t);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x74\x79\x70\x65\x73(\x74\x74) \x43\x4F\x4D\x4D\x41 \x74\x79\x70(\x74) {new GedbTypes is %p}\n", l_this);
+	#endif
+	g_object_unref(tt);
+	g_object_unref(t);
+}
+%type assign {GedbAssign*}
+assign(l_this) ::= multi_dot(m) ASSIGN expr(x). 
+{	l_this = gedb_assign_new__1(l_ea, m, x);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x6D\x75\x6C\x74\x69_\x64\x6F\x74(\x6D) \x41\x53\x53\x49\x47\x4E \x65\x78\x70\x72(\x78) {new GedbAssign is %p}\n", l_this);
+	#endif
+	g_object_unref(m);
+	g_object_unref(x);
+}
+%type condition {GedbCondition*}
+condition(l_this) ::= IF then_parts(t) END. 
+{	l_this = gedb_condition_new__1(l_ea, t);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x49\x46 \x74\x68\x65\x6E_\x70\x61\x72\x74\x73(\x74) \x45\x4E\x44 {new GedbCondition is %p}\n", l_this);
+	#endif
+	g_object_unref(t);
+}
+condition(l_this) ::= IF then_parts(t) else_part(e) END. 
+{	l_this = gedb_condition_new__2(l_ea, t, e);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x49\x46 \x74\x68\x65\x6E_\x70\x61\x72\x74\x73(\x74) \x65\x6C\x73\x65_\x70\x61\x72\x74(\x65) \x45\x4E\x44 {new GedbCondition is %p}\n", l_this);
+	#endif
+	g_object_unref(t);
+	g_object_unref(e);
+}
+%type then_parts {GedbThenParts*}
+then_parts(l_this) ::= then_part(t). 
+{	l_this = gedb_then_parts_new__1(l_ea, t);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x74\x68\x65\x6E_\x70\x61\x72\x74(\x74) {new GedbThenParts is %p}\n", l_this);
+	#endif
+	g_object_unref(t);
+}
+then_parts(l_this) ::= then_parts(tt) ELSEIF then_part(t). 
+{	l_this = gedb_then_parts_new__2(l_ea, tt, t);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x74\x68\x65\x6E_\x70\x61\x72\x74\x73(\x74\x74) \x45\x4C\x53\x45\x49\x46 \x74\x68\x65\x6E_\x70\x61\x72\x74(\x74) {new GedbThenParts is %p}\n", l_this);
+	#endif
+	g_object_unref(tt);
+	g_object_unref(t);
+}
+%type then_part {GedbThenPart*}
+then_part(l_this) ::= expr(i) THEN compound(c). 
+{	l_this = gedb_then_part_new__1(l_ea, i, c);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x65\x78\x70\x72(\x69) \x54\x48\x45\x4E \x63\x6F\x6D\x70\x6F\x75\x6E\x64(\x63) {new GedbThenPart is %p}\n", l_this);
+	#endif
+	g_object_unref(i);
+	g_object_unref(c);
+}
+%type else_part {GedbElsePart*}
+else_part(l_this) ::= ELSE compound(c). 
+{	l_this = gedb_else_part_new__1(l_ea, c);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x45\x4C\x53\x45 \x63\x6F\x6D\x70\x6F\x75\x6E\x64(\x63) {new GedbElsePart is %p}\n", l_this);
+	#endif
+	g_object_unref(c);
+}
+%type inspect {GedbInspect*}
+inspect(l_this) ::= inspect_init(ii) when_parts(wp) inspect_else(ie). 
+{	l_this = gedb_inspect_new__1(l_ea, ii, wp, ie);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x69\x6E\x73\x70\x65\x63\x74_\x69\x6E\x69\x74(\x69\x69) \x77\x68\x65\x6E_\x70\x61\x72\x74\x73(\x77\x70) \x69\x6E\x73\x70\x65\x63\x74_\x65\x6C\x73\x65(\x69\x65) {new GedbInspect is %p}\n", l_this);
+	#endif
+	g_object_unref(ii);
+	g_object_unref(wp);
+	g_object_unref(ie);
+}
+%type inspect_init {GedbInspectInit*}
+inspect_init(l_this) ::= INSPECT expr(x). 
+{	l_this = gedb_inspect_init_new__1(l_ea, x);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x49\x4E\x53\x50\x45\x43\x54 \x65\x78\x70\x72(\x78) {new GedbInspectInit is %p}\n", l_this);
+	#endif
+	g_object_unref(x);
+}
+%type inspect_else {GedbInspectElse*}
+inspect_else(l_this) ::= END. 
+{	l_this = gedb_inspect_else_new__1(l_ea);
+}
+inspect_else(l_this) ::= else_part(e) END. 
+{	l_this = gedb_inspect_else_new__2(l_ea, e);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x65\x6C\x73\x65_\x70\x61\x72\x74(\x65) \x45\x4E\x44 {new GedbInspectElse is %p}\n", l_this);
+	#endif
+	g_object_unref(e);
+}
+%type when_parts {GedbWhenParts*}
+when_parts(l_this) ::= when_part(w). 
+{	l_this = gedb_when_parts_new__1(l_ea, w);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x77\x68\x65\x6E_\x70\x61\x72\x74(\x77) {new GedbWhenParts is %p}\n", l_this);
+	#endif
+	g_object_unref(w);
+}
+when_parts(l_this) ::= when_parts(ww) when_part(w). 
+{	l_this = gedb_when_parts_new__2(l_ea, ww, w);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x77\x68\x65\x6E_\x70\x61\x72\x74\x73(\x77\x77) \x77\x68\x65\x6E_\x70\x61\x72\x74(\x77) {new GedbWhenParts is %p}\n", l_this);
+	#endif
+	g_object_unref(ww);
+	g_object_unref(w);
+}
+%type when_part {GedbWhenPart*}
+when_part(l_this) ::= WHEN choices(cc) THEN compound(c). 
+{	l_this = gedb_when_part_new__1(l_ea, cc, c);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x57\x48\x45\x4E \x63\x68\x6F\x69\x63\x65\x73(\x63\x63) \x54\x48\x45\x4E \x63\x6F\x6D\x70\x6F\x75\x6E\x64(\x63) {new GedbWhenPart is %p}\n", l_this);
+	#endif
+	g_object_unref(cc);
+	g_object_unref(c);
+}
+%type choices {GedbChoices*}
+choices(l_this) ::= choice_range(cr). 
+{	l_this = gedb_choices_new__1(l_ea, cr);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x63\x68\x6F\x69\x63\x65_\x72\x61\x6E\x67\x65(\x63\x72) {new GedbChoices is %p}\n", l_this);
+	#endif
+	g_object_unref(cr);
+}
+choices(l_this) ::= choices(cc) COMMA choice_range(cr). 
+{	l_this = gedb_choices_new__2(l_ea, cc, cr);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x63\x68\x6F\x69\x63\x65\x73(\x63\x63) \x43\x4F\x4D\x4D\x41 \x63\x68\x6F\x69\x63\x65_\x72\x61\x6E\x67\x65(\x63\x72) {new GedbChoices is %p}\n", l_this);
+	#endif
+	g_object_unref(cc);
+	g_object_unref(cr);
+}
+%type choice_range {GedbChoiceRange*}
+choice_range(l_this) ::= choice(c). 
+{	l_this = gedb_choice_range_new__1(l_ea, c);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x63\x68\x6F\x69\x63\x65(\x63) {new GedbChoiceRange is %p}\n", l_this);
+	#endif
+	g_object_unref(c);
+}
+choice_range(l_this) ::= choice(l) DOTDOT choice(r). 
+{	l_this = gedb_choice_range_new__2(l_ea, l, r);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x63\x68\x6F\x69\x63\x65(\x6C) \x44\x4F\x54\x44\x4F\x54 \x63\x68\x6F\x69\x63\x65(\x72) {new GedbChoiceRange is %p}\n", l_this);
+	#endif
+	g_object_unref(l);
+	g_object_unref(r);
+}
+%type choice {GedbChoice*}
+choice(l_this) ::= manifest(m). 
+{	l_this = gedb_choice_new__1(l_ea, m);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x6D\x61\x6E\x69\x66\x65\x73\x74(\x6D) {new GedbChoice is %p}\n", l_this);
+	#endif
+	g_object_unref(m);
+}
+choice(l_this) ::= multi_dot(m). 
+{	l_this = gedb_choice_new__2(l_ea, m);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x6D\x75\x6C\x74\x69_\x64\x6F\x74(\x6D) {new GedbChoice is %p}\n", l_this);
+	#endif
+	g_object_unref(m);
+}
+choice(l_this) ::= typ(t). 
+{	l_this = gedb_choice_new__3(l_ea, t);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x74\x79\x70(\x74) {new GedbChoice is %p}\n", l_this);
+	#endif
+	g_object_unref(t);
+}
+%type loop {GedbLoop*}
+loop(l_this) ::= from(i) loop_invariant(li) until(u) loop_body(b). 
+{	l_this = gedb_loop_new__1(l_ea, i, li, u, b);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x66\x72\x6F\x6D(\x69) \x6C\x6F\x6F\x70_\x69\x6E\x76\x61\x72\x69\x61\x6E\x74(\x6C\x69) \x75\x6E\x74\x69\x6C(\x75) \x6C\x6F\x6F\x70_\x62\x6F\x64\x79(\x62) {new GedbLoop is %p}\n", l_this);
+	#endif
+	g_object_unref(i);
+	g_object_unref(li);
+	g_object_unref(u);
+	g_object_unref(b);
+}
+%type from {GedbFrom*}
+from(l_this) ::= FROM compound(c). 
+{	l_this = gedb_from_new__2(l_ea, c);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x46\x52\x4F\x4D \x63\x6F\x6D\x70\x6F\x75\x6E\x64(\x63) {new GedbFrom is %p}\n", l_this);
+	#endif
+	g_object_unref(c);
+}
+%type until {GedbUntil*}
+until(l_this) ::= UNTIL expr(x). 
+{	l_this = gedb_until_new__1(l_ea, x);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x55\x4E\x54\x49\x4C \x65\x78\x70\x72(\x78) {new GedbUntil is %p}\n", l_this);
+	#endif
+	g_object_unref(x);
+}
+%type loop_body {GedbLoopBody*}
+loop_body(l_this) ::= LOOP compound(c) END. 
+{	l_this = gedb_loop_body_new__1(l_ea, c);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x4C\x4F\x4F\x50 \x63\x6F\x6D\x70\x6F\x75\x6E\x64(\x63) \x45\x4E\x44 {new GedbLoopBody is %p}\n", l_this);
+	#endif
+	g_object_unref(c);
+}
+%type loop_invariant {GedbLoopInvariant*}
+loop_invariant(l_this) ::= . 
+{	l_this = gedb_loop_invariant_new__0(l_ea);
+}
+loop_invariant(l_this) ::= INVARIANT. 
+{	l_this = gedb_loop_invariant_new__1(l_ea);
+}
+loop_invariant(l_this) ::= INVARIANT assertions(aa). 
+{	l_this = gedb_loop_invariant_new__2(l_ea, aa);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x49\x4E\x56\x41\x52\x49\x41\x4E\x54 \x61\x73\x73\x65\x72\x74\x69\x6F\x6E\x73(\x61\x61) {new GedbLoopInvariant is %p}\n", l_this);
+	#endif
+	g_object_unref(aa);
+}
+%type across {GedbAcross*}
+across(l_this) ::= across_header(ah) from_opt(f) loop_invariant(li) until_opt(u) across_body(b). 
+{	l_this = gedb_across_new__1(l_ea, ah, f, li, u, b);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x61\x63\x72\x6F\x73\x73_\x68\x65\x61\x64\x65\x72(\x61\x68) \x66\x72\x6F\x6D_\x6F\x70\x74(\x66) \x6C\x6F\x6F\x70_\x69\x6E\x76\x61\x72\x69\x61\x6E\x74(\x6C\x69) \x75\x6E\x74\x69\x6C_\x6F\x70\x74(\x75) \x61\x63\x72\x6F\x73\x73_\x62\x6F\x64\x79(\x62) {new GedbAcross is %p}\n", l_this);
+	#endif
+	g_object_unref(ah);
+	g_object_unref(f);
+	g_object_unref(li);
+	g_object_unref(u);
+	g_object_unref(b);
+}
+%type across_header {GedbAcrossHeader*}
+across_header(l_this) ::= ACROSS expr(x) AS IDENTIFIER(i). 
+{	l_this = gedb_across_header_new__1(l_ea, x, i);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x41\x43\x52\x4F\x53\x53 \x65\x78\x70\x72(\x78) \x41\x53 \x49\x44\x45\x4E\x54\x49\x46\x49\x45\x52(\x69) {new GedbAcrossHeader is %p}\n", l_this);
+	#endif
+	g_object_unref(x);
+	g_object_unref(i);
+}
+%type from_opt {GedbFromOpt*}
+from_opt(l_this) ::= . 
+{	l_this = gedb_from_opt_new__0(l_ea);
+}
+from_opt(l_this) ::= from(f). 
+{	l_this = gedb_from_opt_new__1(l_ea, f);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x66\x72\x6F\x6D(\x66) {new GedbFromOpt is %p}\n", l_this);
+	#endif
+	g_object_unref(f);
+}
+%type until_opt {GedbUntilOpt*}
+until_opt(l_this) ::= . 
+{	l_this = gedb_until_opt_new__0(l_ea);
+}
+until_opt(l_this) ::= until(f). 
+{	l_this = gedb_until_opt_new__1(l_ea, f);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x75\x6E\x74\x69\x6C(\x66) {new GedbUntilOpt is %p}\n", l_this);
+	#endif
+	g_object_unref(f);
+}
+%type across_body {GedbAcrossBody*}
+across_body(l_this) ::= loop_body(lb). 
+{	l_this = gedb_across_body_new__1(l_ea, lb);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x6C\x6F\x6F\x70_\x62\x6F\x64\x79(\x6C\x62) {new GedbAcrossBody is %p}\n", l_this);
+	#endif
+	g_object_unref(lb);
+}
+across_body(l_this) ::= SOME expr(x) variant(v) END. 
+{	l_this = gedb_across_body_new__2(l_ea, x, v);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x53\x4F\x4D\x45 \x65\x78\x70\x72(\x78) \x76\x61\x72\x69\x61\x6E\x74(\x76) \x45\x4E\x44 {new GedbAcrossBody is %p}\n", l_this);
+	#endif
+	g_object_unref(x);
+	g_object_unref(v);
+}
+across_body(l_this) ::= ALL expr(x) variant(v) END. 
+{	l_this = gedb_across_body_new__3(l_ea, x, v);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x41\x4C\x4C \x65\x78\x70\x72(\x78) \x76\x61\x72\x69\x61\x6E\x74(\x76) \x45\x4E\x44 {new GedbAcrossBody is %p}\n", l_this);
+	#endif
+	g_object_unref(x);
+	g_object_unref(v);
+}
+%type assertions {GedbAssertions*}
+assertions(l_this) ::= assertion(a). 
+{	l_this = gedb_assertions_new__1(l_ea, a);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x61\x73\x73\x65\x72\x74\x69\x6F\x6E(\x61) {new GedbAssertions is %p}\n", l_this);
+	#endif
+	g_object_unref(a);
+}
+assertions(l_this) ::= assertions(aa) assertion(a). 
+{	l_this = gedb_assertions_new__2(l_ea, aa, a);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x61\x73\x73\x65\x72\x74\x69\x6F\x6E\x73(\x61\x61) \x61\x73\x73\x65\x72\x74\x69\x6F\x6E(\x61) {new GedbAssertions is %p}\n", l_this);
+	#endif
+	g_object_unref(aa);
+	g_object_unref(a);
+}
+%type assertion {GedbAssertion*}
+assertion(l_this) ::= expr(x). [NOT]
+{	l_this = gedb_assertion_new__1(l_ea, x);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x65\x78\x70\x72(\x78) {new GedbAssertion is %p}\n", l_this);
+	#endif
+	g_object_unref(x);
+}
+assertion(l_this) ::= key(k) expr(x). [NOT]
+{	l_this = gedb_assertion_new__2(l_ea, k, x);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x6B\x65\x79(\x6B) \x65\x78\x70\x72(\x78) {new GedbAssertion is %p}\n", l_this);
+	#endif
+	g_object_unref(k);
+	g_object_unref(x);
+}
+%type variant {GedbVariant*}
+variant(l_this) ::= . 
+{	l_this = gedb_variant_new__0(l_ea);
+}
+variant(l_this) ::= VARIANT expr(x). 
+{	l_this = gedb_variant_new__1(l_ea, x);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x56\x41\x52\x49\x41\x4E\x54 \x65\x78\x70\x72(\x78) {new GedbVariant is %p}\n", l_this);
+	#endif
+	g_object_unref(x);
+}
+variant(l_this) ::= VARIANT IDENTIFIER(i) COLON expr(x). 
+{	l_this = gedb_variant_new__2(l_ea, i, x);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x56\x41\x52\x49\x41\x4E\x54 \x49\x44\x45\x4E\x54\x49\x46\x49\x45\x52(\x69) \x43\x4F\x4C\x4F\x4E \x65\x78\x70\x72(\x78) {new GedbVariant is %p}\n", l_this);
+	#endif
+	g_object_unref(i);
+	g_object_unref(x);
+}
+%type debug {GedbDebug*}
+debug(l_this) ::= DEBUG compound(c) END. 
+{	l_this = gedb_debug_new__1(l_ea, c);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x44\x45\x42\x55\x47 \x63\x6F\x6D\x70\x6F\x75\x6E\x64(\x63) \x45\x4E\x44 {new GedbDebug is %p}\n", l_this);
+	#endif
+	g_object_unref(c);
+}
+debug(l_this) ::= DEBUG_LPAREN manifests(mm) RPAREN compound(c) END. 
+{	l_this = gedb_debug_new__2(l_ea, mm, c);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x44\x45\x42\x55\x47_\x4C\x50\x41\x52\x45\x4E \x6D\x61\x6E\x69\x66\x65\x73\x74\x73(\x6D\x6D) \x52\x50\x41\x52\x45\x4E \x63\x6F\x6D\x70\x6F\x75\x6E\x64(\x63) \x45\x4E\x44 {new GedbDebug is %p}\n", l_this);
+	#endif
+	g_object_unref(mm);
+	g_object_unref(c);
+}
+%type manifests {GedbManifests*}
+manifests(l_this) ::= manifest(m). 
+{	l_this = gedb_manifests_new__1(l_ea, m);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x6D\x61\x6E\x69\x66\x65\x73\x74(\x6D) {new GedbManifests is %p}\n", l_this);
+	#endif
+	g_object_unref(m);
+}
+manifests(l_this) ::= manifests(mm) COMMA manifest(m). 
+{	l_this = gedb_manifests_new__2(l_ea, mm, m);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x6D\x61\x6E\x69\x66\x65\x73\x74\x73(\x6D\x6D) \x43\x4F\x4D\x4D\x41 \x6D\x61\x6E\x69\x66\x65\x73\x74(\x6D) {new GedbManifests is %p}\n", l_this);
+	#endif
+	g_object_unref(mm);
+	g_object_unref(m);
+}
+%type check {GedbCheck*}
+check(l_this) ::= CHECK assertions(aa) note_list END. 
+{	l_this = gedb_check_new__1(l_ea, aa);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x43\x48\x45\x43\x4B \x61\x73\x73\x65\x72\x74\x69\x6F\x6E\x73(\x61\x61) \x6E\x6F\x74\x65_\x6C\x69\x73\x74 \x45\x4E\x44 {new GedbCheck is %p}\n", l_this);
+	#endif
+	g_object_unref(aa);
+}
+check(l_this) ::= CHECK assertion(a) THEN END. 
+{	l_this = gedb_check_new__2(l_ea, a);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x43\x48\x45\x43\x4B \x61\x73\x73\x65\x72\x74\x69\x6F\x6E(\x61) \x54\x48\x45\x4E \x45\x4E\x44 {new GedbCheck is %p}\n", l_this);
+	#endif
+	g_object_unref(a);
+}
+%type retry {GedbRetry*}
+retry(l_this) ::= RETRY. 
+{	l_this = gedb_retry_new__1(l_ea);
+}
+%type identifier {GedbIdentifier*}
+identifier(l_this) ::= IDENTIFIER(i). 
+{	l_this = gedb_identifier_new__1(l_ea, i);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x49\x44\x45\x4E\x54\x49\x46\x49\x45\x52(\x69) {new GedbIdentifier is %p}\n", l_this);
+	#endif
+	g_object_unref(i);
+}
+%type key {GedbKey*}
+key(l_this) ::= IDENTIFIER(i) COLON. 
+{	l_this = gedb_key_new__1(l_ea, i);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x49\x44\x45\x4E\x54\x49\x46\x49\x45\x52(\x69) \x43\x4F\x4C\x4F\x4E {new GedbKey is %p}\n", l_this);
+	#endif
+	g_object_unref(i);
+}
+%type query {GedbQuery*}
+query(l_this) ::= identifier(i). [CREATE]
+{	l_this = gedb_query_new__1(l_ea, i);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x69\x64\x65\x6E\x74\x69\x66\x69\x65\x72(\x69) {new GedbQuery is %p}\n", l_this);
+	#endif
+	g_object_unref(i);
+}
+query(l_this) ::= identifier(i) LPAREN args(aa) RPAREN(r). 
+{	l_this = gedb_query_new__2(l_ea, i, aa, r);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x69\x64\x65\x6E\x74\x69\x66\x69\x65\x72(\x69) \x4C\x50\x41\x52\x45\x4E \x61\x72\x67\x73(\x61\x61) \x52\x50\x41\x52\x45\x4E(\x72) {new GedbQuery is %p}\n", l_this);
+	#endif
+	g_object_unref(i);
+	g_object_unref(aa);
+	g_object_unref(r);
+}
+query(l_this) ::= CREATE explicit_typ(ct) DOT query(q). 
+{	l_this = gedb_query_new__3(l_ea, ct, q);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x43\x52\x45\x41\x54\x45 \x65\x78\x70\x6C\x69\x63\x69\x74_\x74\x79\x70(\x63\x74) \x44\x4F\x54 \x71\x75\x65\x72\x79(\x71) {new GedbQuery is %p}\n", l_this);
+	#endif
+	g_object_unref(ct);
+	g_object_unref(q);
+}
+query(l_this) ::= CREATE explicit_typ(ct). 
+{	l_this = gedb_query_new__4(l_ea, ct);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x43\x52\x45\x41\x54\x45 \x65\x78\x70\x6C\x69\x63\x69\x74_\x74\x79\x70(\x63\x74) {new GedbQuery is %p}\n", l_this);
+	#endif
+	g_object_unref(ct);
+}
+%type precursor {GedbPrecursor*}
+precursor(l_this) ::= PRECURSOR. [CREATE]
+{	l_this = gedb_precursor_new__1(l_ea);
+}
+precursor(l_this) ::= PRECURSOR LPAREN args(aa) RPAREN. 
+{	l_this = gedb_precursor_new__2(l_ea, aa);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x50\x52\x45\x43\x55\x52\x53\x4F\x52 \x4C\x50\x41\x52\x45\x4E \x61\x72\x67\x73(\x61\x61) \x52\x50\x41\x52\x45\x4E {new GedbPrecursor is %p}\n", l_this);
+	#endif
+	g_object_unref(aa);
+}
+precursor(l_this) ::= PRECURSOR LBRACE typ RBRACE. [LBRACE]
+{	l_this = gedb_precursor_new__3(l_ea);
+}
+precursor(l_this) ::= PRECURSOR LBRACE typ RBRACE LPAREN args(aa) RPAREN. 
+{	l_this = gedb_precursor_new__4(l_ea, aa);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x50\x52\x45\x43\x55\x52\x53\x4F\x52 \x4C\x42\x52\x41\x43\x45 \x74\x79\x70 \x52\x42\x52\x41\x43\x45 \x4C\x50\x41\x52\x45\x4E \x61\x72\x67\x73(\x61\x61) \x52\x50\x41\x52\x45\x4E {new GedbPrecursor is %p}\n", l_this);
+	#endif
+	g_object_unref(aa);
+}
+%type multi_dot {GedbMultiDot*}
+multi_dot(l_this) ::= query(q). 
+{	l_this = gedb_multi_dot_new__1(l_ea, q);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x71\x75\x65\x72\x79(\x71) {new GedbMultiDot is %p}\n", l_this);
+	#endif
+	g_object_unref(q);
+}
+multi_dot(l_this) ::= explicit_typ(et) DOT query(q). 
+{	l_this = gedb_multi_dot_new__3(l_ea, et, q);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x65\x78\x70\x6C\x69\x63\x69\x74_\x74\x79\x70(\x65\x74) \x44\x4F\x54 \x71\x75\x65\x72\x79(\x71) {new GedbMultiDot is %p}\n", l_this);
+	#endif
+	g_object_unref(et);
+	g_object_unref(q);
+}
+multi_dot(l_this) ::= precursor(p). 
+{	l_this = gedb_multi_dot_new__4(l_ea, p);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x70\x72\x65\x63\x75\x72\x73\x6F\x72(\x70) {new GedbMultiDot is %p}\n", l_this);
+	#endif
+	g_object_unref(p);
+}
+multi_dot(l_this) ::= multi_dot(m) DOT query(q). 
+{	l_this = gedb_multi_dot_new__5(l_ea, m, q);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x6D\x75\x6C\x74\x69_\x64\x6F\x74(\x6D) \x44\x4F\x54 \x71\x75\x65\x72\x79(\x71) {new GedbMultiDot is %p}\n", l_this);
+	#endif
+	g_object_unref(m);
+	g_object_unref(q);
+}
+multi_dot(l_this) ::= multi_dot(m) LBRACKET args(aa) RBRACKET(r). 
+{	l_this = gedb_multi_dot_new__6(l_ea, m, aa, r);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x6D\x75\x6C\x74\x69_\x64\x6F\x74(\x6D) \x4C\x42\x52\x41\x43\x4B\x45\x54 \x61\x72\x67\x73(\x61\x61) \x52\x42\x52\x41\x43\x4B\x45\x54(\x72) {new GedbMultiDot is %p}\n", l_this);
+	#endif
+	g_object_unref(m);
+	g_object_unref(aa);
+	g_object_unref(r);
+}
+%type parenthesized {GedbParenthesized*}
+parenthesized(l_this) ::= LPAREN expr(x) RPAREN. 
+{	l_this = gedb_parenthesized_new__1(l_ea, x);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x4C\x50\x41\x52\x45\x4E \x65\x78\x70\x72(\x78) \x52\x50\x41\x52\x45\x4E {new GedbParenthesized is %p}\n", l_this);
+	#endif
+	g_object_unref(x);
+}
+parenthesized(l_this) ::= parenthesized(p) DOT query(q). 
+{	l_this = gedb_parenthesized_new__2(l_ea, p, q);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x70\x61\x72\x65\x6E\x74\x68\x65\x73\x69\x7A\x65\x64(\x70) \x44\x4F\x54 \x71\x75\x65\x72\x79(\x71) {new GedbParenthesized is %p}\n", l_this);
+	#endif
+	g_object_unref(p);
+	g_object_unref(q);
+}
+parenthesized(l_this) ::= parenthesized(p) LBRACKET args(aa) RBRACKET(r). 
+{	l_this = gedb_parenthesized_new__3(l_ea, p, aa, r);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x70\x61\x72\x65\x6E\x74\x68\x65\x73\x69\x7A\x65\x64(\x70) \x4C\x42\x52\x41\x43\x4B\x45\x54 \x61\x72\x67\x73(\x61\x61) \x52\x42\x52\x41\x43\x4B\x45\x54(\x72) {new GedbParenthesized is %p}\n", l_this);
+	#endif
+	g_object_unref(p);
+	g_object_unref(aa);
+	g_object_unref(r);
+}
+%type expr {GedbExpr*}
+expr(l_this) ::= multi_dot(m). 
+{	l_this = gedb_expr_new__0(l_ea, m);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x6D\x75\x6C\x74\x69_\x64\x6F\x74(\x6D) {new GedbExpr is %p}\n", l_this);
+	#endif
+	g_object_unref(m);
+}
+expr(l_this) ::= parenthesized(p). [NOT]
+{	l_this = gedb_expr_new__1(l_ea, p);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x70\x61\x72\x65\x6E\x74\x68\x65\x73\x69\x7A\x65\x64(\x70) {new GedbExpr is %p}\n", l_this);
+	#endif
+	g_object_unref(p);
+}
+expr(l_this) ::= PLUS(op) expr(x). [NOT]
+{	l_this = gedb_expr_new__2(l_ea, op, x);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x50\x4C\x55\x53(\x6F\x70) \x65\x78\x70\x72(\x78) {new GedbExpr is %p}\n", l_this);
+	#endif
+	g_object_unref(op);
+	g_object_unref(x);
+}
+expr(l_this) ::= MINUS(op) expr(x). [NOT]
+{	l_this = gedb_expr_new__3(l_ea, op, x);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x4D\x49\x4E\x55\x53(\x6F\x70) \x65\x78\x70\x72(\x78) {new GedbExpr is %p}\n", l_this);
+	#endif
+	g_object_unref(op);
+	g_object_unref(x);
+}
+expr(l_this) ::= NOT(op) expr(x). 
+{	l_this = gedb_expr_new__4(l_ea, op, x);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x4E\x4F\x54(\x6F\x70) \x65\x78\x70\x72(\x78) {new GedbExpr is %p}\n", l_this);
+	#endif
+	g_object_unref(op);
+	g_object_unref(x);
+}
+expr(l_this) ::= ADDRESS(op) expr(x). 
+{	l_this = gedb_expr_new__5(l_ea, op, x);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x41\x44\x44\x52\x45\x53\x53(\x6F\x70) \x65\x78\x70\x72(\x78) {new GedbExpr is %p}\n", l_this);
+	#endif
+	g_object_unref(op);
+	g_object_unref(x);
+}
+expr(l_this) ::= FREE_OP(op) expr(x). [NOT]
+{	l_this = gedb_expr_new__6(l_ea, op, x);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x46\x52\x45\x45_\x4F\x50(\x6F\x70) \x65\x78\x70\x72(\x78) {new GedbExpr is %p}\n", l_this);
+	#endif
+	g_object_unref(op);
+	g_object_unref(x);
+}
+expr(l_this) ::= expr(l) FREE_OP(op) expr(r). 
+{	l_this = gedb_expr_new__7(l_ea, l, op, r);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x65\x78\x70\x72(\x6C) \x46\x52\x45\x45_\x4F\x50(\x6F\x70) \x65\x78\x70\x72(\x72) {new GedbExpr is %p}\n", l_this);
+	#endif
+	g_object_unref(l);
+	g_object_unref(op);
+	g_object_unref(r);
+}
+expr(l_this) ::= expr(l) POWER(op) expr(r). 
+{	l_this = gedb_expr_new__8(l_ea, l, op, r);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x65\x78\x70\x72(\x6C) \x50\x4F\x57\x45\x52(\x6F\x70) \x65\x78\x70\x72(\x72) {new GedbExpr is %p}\n", l_this);
+	#endif
+	g_object_unref(l);
+	g_object_unref(op);
+	g_object_unref(r);
+}
+expr(l_this) ::= expr(l) TIMES(op) expr(r). 
+{	l_this = gedb_expr_new__9(l_ea, l, op, r);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x65\x78\x70\x72(\x6C) \x54\x49\x4D\x45\x53(\x6F\x70) \x65\x78\x70\x72(\x72) {new GedbExpr is %p}\n", l_this);
+	#endif
+	g_object_unref(l);
+	g_object_unref(op);
+	g_object_unref(r);
+}
+expr(l_this) ::= expr(l) DIV(op) expr(r). 
+{	l_this = gedb_expr_new__10(l_ea, l, op, r);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x65\x78\x70\x72(\x6C) \x44\x49\x56(\x6F\x70) \x65\x78\x70\x72(\x72) {new GedbExpr is %p}\n", l_this);
+	#endif
+	g_object_unref(l);
+	g_object_unref(op);
+	g_object_unref(r);
+}
+expr(l_this) ::= expr(l) IDIV(op) expr(r). 
+{	l_this = gedb_expr_new__11(l_ea, l, op, r);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x65\x78\x70\x72(\x6C) \x49\x44\x49\x56(\x6F\x70) \x65\x78\x70\x72(\x72) {new GedbExpr is %p}\n", l_this);
+	#endif
+	g_object_unref(l);
+	g_object_unref(op);
+	g_object_unref(r);
+}
+expr(l_this) ::= expr(l) IMOD(op) expr(r). 
+{	l_this = gedb_expr_new__12(l_ea, l, op, r);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x65\x78\x70\x72(\x6C) \x49\x4D\x4F\x44(\x6F\x70) \x65\x78\x70\x72(\x72) {new GedbExpr is %p}\n", l_this);
+	#endif
+	g_object_unref(l);
+	g_object_unref(op);
+	g_object_unref(r);
+}
+expr(l_this) ::= expr(l) PLUS(op) expr(r). 
+{	l_this = gedb_expr_new__13(l_ea, l, op, r);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x65\x78\x70\x72(\x6C) \x50\x4C\x55\x53(\x6F\x70) \x65\x78\x70\x72(\x72) {new GedbExpr is %p}\n", l_this);
+	#endif
+	g_object_unref(l);
+	g_object_unref(op);
+	g_object_unref(r);
+}
+expr(l_this) ::= expr(l) MINUS(op) expr(r). 
+{	l_this = gedb_expr_new__14(l_ea, l, op, r);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x65\x78\x70\x72(\x6C) \x4D\x49\x4E\x55\x53(\x6F\x70) \x65\x78\x70\x72(\x72) {new GedbExpr is %p}\n", l_this);
+	#endif
+	g_object_unref(l);
+	g_object_unref(op);
+	g_object_unref(r);
+}
+expr(l_this) ::= expr(l) DOTDOT(op) expr(r). 
+{	l_this = gedb_expr_new__15(l_ea, l, op, r);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x65\x78\x70\x72(\x6C) \x44\x4F\x54\x44\x4F\x54(\x6F\x70) \x65\x78\x70\x72(\x72) {new GedbExpr is %p}\n", l_this);
+	#endif
+	g_object_unref(l);
+	g_object_unref(op);
+	g_object_unref(r);
+}
+expr(l_this) ::= expr(l) EQ(op) expr(r). 
+{	l_this = gedb_expr_new__16(l_ea, l, op, r);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x65\x78\x70\x72(\x6C) \x45\x51(\x6F\x70) \x65\x78\x70\x72(\x72) {new GedbExpr is %p}\n", l_this);
+	#endif
+	g_object_unref(l);
+	g_object_unref(op);
+	g_object_unref(r);
+}
+expr(l_this) ::= expr(l) NE(op) expr(r). 
+{	l_this = gedb_expr_new__17(l_ea, l, op, r);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x65\x78\x70\x72(\x6C) \x4E\x45(\x6F\x70) \x65\x78\x70\x72(\x72) {new GedbExpr is %p}\n", l_this);
+	#endif
+	g_object_unref(l);
+	g_object_unref(op);
+	g_object_unref(r);
+}
+expr(l_this) ::= expr(l) SIM(op) expr(r). 
+{	l_this = gedb_expr_new__18(l_ea, l, op, r);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x65\x78\x70\x72(\x6C) \x53\x49\x4D(\x6F\x70) \x65\x78\x70\x72(\x72) {new GedbExpr is %p}\n", l_this);
+	#endif
+	g_object_unref(l);
+	g_object_unref(op);
+	g_object_unref(r);
+}
+expr(l_this) ::= expr(l) NSIM(op) expr(r). 
+{	l_this = gedb_expr_new__19(l_ea, l, op, r);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x65\x78\x70\x72(\x6C) \x4E\x53\x49\x4D(\x6F\x70) \x65\x78\x70\x72(\x72) {new GedbExpr is %p}\n", l_this);
+	#endif
+	g_object_unref(l);
+	g_object_unref(op);
+	g_object_unref(r);
+}
+expr(l_this) ::= expr(l) LT(op) expr(r). 
+{	l_this = gedb_expr_new__20(l_ea, l, op, r);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x65\x78\x70\x72(\x6C) \x4C\x54(\x6F\x70) \x65\x78\x70\x72(\x72) {new GedbExpr is %p}\n", l_this);
+	#endif
+	g_object_unref(l);
+	g_object_unref(op);
+	g_object_unref(r);
+}
+expr(l_this) ::= expr(l) LE(op) expr(r). 
+{	l_this = gedb_expr_new__21(l_ea, l, op, r);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x65\x78\x70\x72(\x6C) \x4C\x45(\x6F\x70) \x65\x78\x70\x72(\x72) {new GedbExpr is %p}\n", l_this);
+	#endif
+	g_object_unref(l);
+	g_object_unref(op);
+	g_object_unref(r);
+}
+expr(l_this) ::= expr(l) GT(op) expr(r). 
+{	l_this = gedb_expr_new__22(l_ea, l, op, r);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x65\x78\x70\x72(\x6C) \x47\x54(\x6F\x70) \x65\x78\x70\x72(\x72) {new GedbExpr is %p}\n", l_this);
+	#endif
+	g_object_unref(l);
+	g_object_unref(op);
+	g_object_unref(r);
+}
+expr(l_this) ::= expr(l) GE(op) expr(r). 
+{	l_this = gedb_expr_new__23(l_ea, l, op, r);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x65\x78\x70\x72(\x6C) \x47\x45(\x6F\x70) \x65\x78\x70\x72(\x72) {new GedbExpr is %p}\n", l_this);
+	#endif
+	g_object_unref(l);
+	g_object_unref(op);
+	g_object_unref(r);
+}
+expr(l_this) ::= expr(l) AND(op) expr(r). 
+{	l_this = gedb_expr_new__24(l_ea, l, op, r);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x65\x78\x70\x72(\x6C) \x41\x4E\x44(\x6F\x70) \x65\x78\x70\x72(\x72) {new GedbExpr is %p}\n", l_this);
+	#endif
+	g_object_unref(l);
+	g_object_unref(op);
+	g_object_unref(r);
+}
+expr(l_this) ::= expr(l) ANDTHEN(op) expr(r). 
+{	l_this = gedb_expr_new__25(l_ea, l, op, r);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x65\x78\x70\x72(\x6C) \x41\x4E\x44\x54\x48\x45\x4E(\x6F\x70) \x65\x78\x70\x72(\x72) {new GedbExpr is %p}\n", l_this);
+	#endif
+	g_object_unref(l);
+	g_object_unref(op);
+	g_object_unref(r);
+}
+expr(l_this) ::= expr(l) OR(op) expr(r). 
+{	l_this = gedb_expr_new__26(l_ea, l, op, r);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x65\x78\x70\x72(\x6C) \x4F\x52(\x6F\x70) \x65\x78\x70\x72(\x72) {new GedbExpr is %p}\n", l_this);
+	#endif
+	g_object_unref(l);
+	g_object_unref(op);
+	g_object_unref(r);
+}
+expr(l_this) ::= expr(l) ORELSE(op) expr(r). 
+{	l_this = gedb_expr_new__27(l_ea, l, op, r);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x65\x78\x70\x72(\x6C) \x4F\x52\x45\x4C\x53\x45(\x6F\x70) \x65\x78\x70\x72(\x72) {new GedbExpr is %p}\n", l_this);
+	#endif
+	g_object_unref(l);
+	g_object_unref(op);
+	g_object_unref(r);
+}
+expr(l_this) ::= expr(l) XOR(op) expr(r). 
+{	l_this = gedb_expr_new__28(l_ea, l, op, r);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x65\x78\x70\x72(\x6C) \x58\x4F\x52(\x6F\x70) \x65\x78\x70\x72(\x72) {new GedbExpr is %p}\n", l_this);
+	#endif
+	g_object_unref(l);
+	g_object_unref(op);
+	g_object_unref(r);
+}
+expr(l_this) ::= expr(l) IMPLIES(op) expr(r). 
+{	l_this = gedb_expr_new__29(l_ea, l, op, r);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x65\x78\x70\x72(\x6C) \x49\x4D\x50\x4C\x49\x45\x53(\x6F\x70) \x65\x78\x70\x72(\x72) {new GedbExpr is %p}\n", l_this);
+	#endif
+	g_object_unref(l);
+	g_object_unref(op);
+	g_object_unref(r);
+}
+expr(l_this) ::= attach_test(ot). 
+{	l_this = gedb_expr_new__31(l_ea, ot);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x61\x74\x74\x61\x63\x68_\x74\x65\x73\x74(\x6F\x74) {new GedbExpr is %p}\n", l_this);
+	#endif
+	g_object_unref(ot);
+}
+expr(l_this) ::= AGENT agent(a). 
+{	l_this = gedb_expr_new__32(l_ea, a);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x41\x47\x45\x4E\x54 \x61\x67\x65\x6E\x74(\x61) {new GedbExpr is %p}\n", l_this);
+	#endif
+	g_object_unref(a);
+}
+expr(l_this) ::= LMA args(aa) RMA. 
+{	l_this = gedb_expr_new__33(l_ea, aa);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x4C\x4D\x41 \x61\x72\x67\x73(\x61\x61) \x52\x4D\x41 {new GedbExpr is %p}\n", l_this);
+	#endif
+	g_object_unref(aa);
+}
+expr(l_this) ::= LBRACKET RBRACKET. 
+{	l_this = gedb_expr_new__34(l_ea);
+}
+expr(l_this) ::= LBRACKET args(aa) RBRACKET. 
+{	l_this = gedb_expr_new__35(l_ea, aa);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x4C\x42\x52\x41\x43\x4B\x45\x54 \x61\x72\x67\x73(\x61\x61) \x52\x42\x52\x41\x43\x4B\x45\x54 {new GedbExpr is %p}\n", l_this);
+	#endif
+	g_object_unref(aa);
+}
+expr(l_this) ::= OLD expr(x). 
+{	l_this = gedb_expr_new__36(l_ea, x);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x4F\x4C\x44 \x65\x78\x70\x72(\x78) {new GedbExpr is %p}\n", l_this);
+	#endif
+	g_object_unref(x);
+}
+expr(l_this) ::= across(a). 
+{	l_this = gedb_expr_new__37(l_ea, a);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x61\x63\x72\x6F\x73\x73(\x61) {new GedbExpr is %p}\n", l_this);
+	#endif
+	g_object_unref(a);
+}
+expr(l_this) ::= manifest(m). 
+{	l_this = gedb_expr_new__38(l_ea, m);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x6D\x61\x6E\x69\x66\x65\x73\x74(\x6D) {new GedbExpr is %p}\n", l_this);
+	#endif
+	g_object_unref(m);
+}
+%type attach_test {GedbAttachTest*}
+attach_test(l_this) ::= ATTACHED expr(x) AS IDENTIFIER. [AS]
+{	l_this = gedb_attach_test_new__1(l_ea, x);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x41\x54\x54\x41\x43\x48\x45\x44 \x65\x78\x70\x72(\x78) \x41\x53 \x49\x44\x45\x4E\x54\x49\x46\x49\x45\x52 {new GedbAttachTest is %p}\n", l_this);
+	#endif
+	g_object_unref(x);
+}
+attach_test(l_this) ::= ATTACHED expr(x). 
+{	l_this = gedb_attach_test_new__2(l_ea, x);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x41\x54\x54\x41\x43\x48\x45\x44 \x65\x78\x70\x72(\x78) {new GedbAttachTest is %p}\n", l_this);
+	#endif
+	g_object_unref(x);
+}
+attach_test(l_this) ::= ATTACHED explicit_typ(et) expr(x) AS IDENTIFIER. [AS]
+{	l_this = gedb_attach_test_new__3(l_ea, et, x);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x41\x54\x54\x41\x43\x48\x45\x44 \x65\x78\x70\x6C\x69\x63\x69\x74_\x74\x79\x70(\x65\x74) \x65\x78\x70\x72(\x78) \x41\x53 \x49\x44\x45\x4E\x54\x49\x46\x49\x45\x52 {new GedbAttachTest is %p}\n", l_this);
+	#endif
+	g_object_unref(et);
+	g_object_unref(x);
+}
+attach_test(l_this) ::= ATTACHED explicit_typ(et) expr(x). 
+{	l_this = gedb_attach_test_new__4(l_ea, et, x);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x41\x54\x54\x41\x43\x48\x45\x44 \x65\x78\x70\x6C\x69\x63\x69\x74_\x74\x79\x70(\x65\x74) \x65\x78\x70\x72(\x78) {new GedbAttachTest is %p}\n", l_this);
+	#endif
+	g_object_unref(et);
+	g_object_unref(x);
+}
+attach_test(l_this) ::= LBRACE key(k) typ(t) RBRACE expr(x). 
+{	l_this = gedb_attach_test_new__5(l_ea, k, t, x);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x4C\x42\x52\x41\x43\x45 \x6B\x65\x79(\x6B) \x74\x79\x70(\x74) \x52\x42\x52\x41\x43\x45 \x65\x78\x70\x72(\x78) {new GedbAttachTest is %p}\n", l_this);
+	#endif
+	g_object_unref(k);
+	g_object_unref(t);
+	g_object_unref(x);
+}
+%type agent {GedbAgent*}
+agent(l_this) ::= agent_unqualified(au). 
+{	l_this = gedb_agent_new__1(l_ea, au);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x61\x67\x65\x6E\x74_\x75\x6E\x71\x75\x61\x6C\x69\x66\x69\x65\x64(\x61\x75) {new GedbAgent is %p}\n", l_this);
+	#endif
+	g_object_unref(au);
+}
+agent(l_this) ::= agent_target(at) DOT agent_unqualified(au). 
+{	l_this = gedb_agent_new__2(l_ea, at, au);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x61\x67\x65\x6E\x74_\x74\x61\x72\x67\x65\x74(\x61\x74) \x44\x4F\x54 \x61\x67\x65\x6E\x74_\x75\x6E\x71\x75\x61\x6C\x69\x66\x69\x65\x64(\x61\x75) {new GedbAgent is %p}\n", l_this);
+	#endif
+	g_object_unref(at);
+	g_object_unref(au);
+}
+agent(l_this) ::= inline_agent(ia). [AGENT]
+{	l_this = gedb_agent_new__3(l_ea, ia);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x69\x6E\x6C\x69\x6E\x65_\x61\x67\x65\x6E\x74(\x69\x61) {new GedbAgent is %p}\n", l_this);
+	#endif
+	g_object_unref(ia);
+}
+agent(l_this) ::= inline_agent(ia) LPAREN agent_args RPAREN. 
+{	l_this = gedb_agent_new__4(l_ea, ia);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x69\x6E\x6C\x69\x6E\x65_\x61\x67\x65\x6E\x74(\x69\x61) \x4C\x50\x41\x52\x45\x4E \x61\x67\x65\x6E\x74_\x61\x72\x67\x73 \x52\x50\x41\x52\x45\x4E {new GedbAgent is %p}\n", l_this);
+	#endif
+	g_object_unref(ia);
+}
+%type agent_unqualified {GedbAgentUnqualified*}
+agent_unqualified(l_this) ::= identifier(i) LPAREN agent_args(aa) RPAREN. 
+{	l_this = gedb_agent_unqualified_new__1(l_ea, i, aa);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x69\x64\x65\x6E\x74\x69\x66\x69\x65\x72(\x69) \x4C\x50\x41\x52\x45\x4E \x61\x67\x65\x6E\x74_\x61\x72\x67\x73(\x61\x61) \x52\x50\x41\x52\x45\x4E {new GedbAgentUnqualified is %p}\n", l_this);
+	#endif
+	g_object_unref(i);
+	g_object_unref(aa);
+}
+agent_unqualified(l_this) ::= identifier(i). [AGENT]
+{	l_this = gedb_agent_unqualified_new__2(l_ea, i);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x69\x64\x65\x6E\x74\x69\x66\x69\x65\x72(\x69) {new GedbAgentUnqualified is %p}\n", l_this);
+	#endif
+	g_object_unref(i);
+}
+%type agent_target {GedbAgentTarget*}
+agent_target(l_this) ::= identifier(i). 
+{	l_this = gedb_agent_target_new__1(l_ea, i);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x69\x64\x65\x6E\x74\x69\x66\x69\x65\x72(\x69) {new GedbAgentTarget is %p}\n", l_this);
+	#endif
+	g_object_unref(i);
+}
+agent_target(l_this) ::= explicit_typ(et). 
+{	l_this = gedb_agent_target_new__3(l_ea, et);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x65\x78\x70\x6C\x69\x63\x69\x74_\x74\x79\x70(\x65\x74) {new GedbAgentTarget is %p}\n", l_this);
+	#endif
+	g_object_unref(et);
+}
+%type agent_args {GedbAgentArgs*}
+agent_args(l_this) ::= QUESTION_MARK. 
+{	l_this = gedb_agent_args_new__1(l_ea);
+}
+agent_args(l_this) ::= expr(x). 
+{	l_this = gedb_agent_args_new__2(l_ea, x);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x65\x78\x70\x72(\x78) {new GedbAgentArgs is %p}\n", l_this);
+	#endif
+	g_object_unref(x);
+}
+agent_args(l_this) ::= agent_args(a) COMMA QUESTION_MARK. 
+{	l_this = gedb_agent_args_new__3(l_ea, a);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x61\x67\x65\x6E\x74_\x61\x72\x67\x73(\x61) \x43\x4F\x4D\x4D\x41 \x51\x55\x45\x53\x54\x49\x4F\x4E_\x4D\x41\x52\x4B {new GedbAgentArgs is %p}\n", l_this);
+	#endif
+	g_object_unref(a);
+}
+agent_args(l_this) ::= agent_args(a) COMMA expr(x). 
+{	l_this = gedb_agent_args_new__4(l_ea, a, x);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x61\x67\x65\x6E\x74_\x61\x72\x67\x73(\x61) \x43\x4F\x4D\x4D\x41 \x65\x78\x70\x72(\x78) {new GedbAgentArgs is %p}\n", l_this);
+	#endif
+	g_object_unref(a);
+	g_object_unref(x);
+}
+%type inline_agent {GedbInlineAgent*}
+inline_agent(l_this) ::= result_typ(rt) routine_decl(rd). 
+{	l_this = gedb_inline_agent_new__1(l_ea, rt, rd);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x72\x65\x73\x75\x6C\x74_\x74\x79\x70(\x72\x74) \x72\x6F\x75\x74\x69\x6E\x65_\x64\x65\x63\x6C(\x72\x64) {new GedbInlineAgent is %p}\n", l_this);
+	#endif
+	g_object_unref(rt);
+	g_object_unref(rd);
+}
+inline_agent(l_this) ::= LPAREN declaration_list(dl) RPAREN result_typ(rt) routine_decl(rd). 
+{	l_this = gedb_inline_agent_new__2(l_ea, dl, rt, rd);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x4C\x50\x41\x52\x45\x4E \x64\x65\x63\x6C\x61\x72\x61\x74\x69\x6F\x6E_\x6C\x69\x73\x74(\x64\x6C) \x52\x50\x41\x52\x45\x4E \x72\x65\x73\x75\x6C\x74_\x74\x79\x70(\x72\x74) \x72\x6F\x75\x74\x69\x6E\x65_\x64\x65\x63\x6C(\x72\x64) {new GedbInlineAgent is %p}\n", l_this);
+	#endif
+	g_object_unref(dl);
+	g_object_unref(rt);
+	g_object_unref(rd);
+}
+%type args {GedbArgs*}
+args(l_this) ::= expr(x). 
+{	l_this = gedb_args_new__1(l_ea, x);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x65\x78\x70\x72(\x78) {new GedbArgs is %p}\n", l_this);
+	#endif
+	g_object_unref(x);
+}
+args(l_this) ::= args(a) COMMA expr(x). 
+{	l_this = gedb_args_new__2(l_ea, a, x);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x61\x72\x67\x73(\x61) \x43\x4F\x4D\x4D\x41 \x65\x78\x70\x72(\x78) {new GedbArgs is %p}\n", l_this);
+	#endif
+	g_object_unref(a);
+	g_object_unref(x);
+}
+%type manifest {GedbManifest*}
+manifest(l_this) ::= MANIFEST(m). 
+{	l_this = gedb_manifest_new__1(l_ea, m);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x4D\x41\x4E\x49\x46\x45\x53\x54(\x6D) {new GedbManifest is %p}\n", l_this);
+	#endif
+	g_object_unref(m);
+}
+manifest(l_this) ::= CHARACTER(c). 
+{	l_this = gedb_manifest_new__3(l_ea, c);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x43\x48\x41\x52\x41\x43\x54\x45\x52(\x63) {new GedbManifest is %p}\n", l_this);
+	#endif
+	g_object_unref(c);
+}
+manifest(l_this) ::= STRING(s). 
+{	l_this = gedb_manifest_new__4(l_ea, s);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x53\x54\x52\x49\x4E\x47(\x73) {new GedbManifest is %p}\n", l_this);
+	#endif
+	g_object_unref(s);
+}
+manifest(l_this) ::= INTEGER(i). 
+{	l_this = gedb_manifest_new__5(l_ea, i);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x49\x4E\x54\x45\x47\x45\x52(\x69) {new GedbManifest is %p}\n", l_this);
+	#endif
+	g_object_unref(i);
+}
+manifest(l_this) ::= PLUS INTEGER(i). 
+{	l_this = gedb_manifest_new__6(l_ea, i);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x50\x4C\x55\x53 \x49\x4E\x54\x45\x47\x45\x52(\x69) {new GedbManifest is %p}\n", l_this);
+	#endif
+	g_object_unref(i);
+}
+manifest(l_this) ::= MINUS INTEGER(i). 
+{	l_this = gedb_manifest_new__7(l_ea, i);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x4D\x49\x4E\x55\x53 \x49\x4E\x54\x45\x47\x45\x52(\x69) {new GedbManifest is %p}\n", l_this);
+	#endif
+	g_object_unref(i);
+}
+manifest(l_this) ::= REAL(r). 
+{	l_this = gedb_manifest_new__8(l_ea, r);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x52\x45\x41\x4C(\x72) {new GedbManifest is %p}\n", l_this);
+	#endif
+	g_object_unref(r);
+}
+manifest(l_this) ::= PLUS REAL(r). 
+{	l_this = gedb_manifest_new__9(l_ea, r);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x50\x4C\x55\x53 \x52\x45\x41\x4C(\x72) {new GedbManifest is %p}\n", l_this);
+	#endif
+	g_object_unref(r);
+}
+manifest(l_this) ::= MINUS REAL(r). 
+{	l_this = gedb_manifest_new__10(l_ea, r);
+	#ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE: \x4D\x49\x4E\x55\x53 \x52\x45\x41\x4C(\x72) {new GedbManifest is %p}\n", l_this);
+	#endif
+	g_object_unref(r);
+}
+l_translation_unit ::= start.
+%start_symbol {l_translation_unit}
+%name GedbLemon
+%token_prefix GEDB_PARSER_PARSER_T_
+%token_destructor
+{	if ($$ != NULL) g_object_unref($$);
+}
+%default_destructor
+{	g_object_unref($$);
+}
+%parse_failure
+{
+#	ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE on_parse_failed()\n");
+#	endif
+	gedb_parser_parser_on_parse_failed(GEDB_PARSER_PARSER(l_ea));
+}
+%syntax_error
+{
+#	ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE on_syntax_error()\n");
+#	endif
+	gedb_parser_parser_on_syntax_error(GEDB_PARSER_PARSER(l_ea));
+}
+%parse_accept
+{
+#	ifdef GEDB_PARSER_PARSER_TRACE_SYMBOLS
+		fprintf(stderr, "*TRACE on_parse_accept()\n");
+#	endif
+	gedb_parser_parser_on_parse_accept(GEDB_PARSER_PARSER(l_ea));
+}
+%token_type {GedbToken*}
+%extra_argument {GedbParser *l_ea}
+
+%include
+{#	include <_GedbParserParser2.h>
+
+#	define GEDB_PARSER_PARSER_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), GEDB_TYPE_PARSER_PARSER, GedbParserParserPrivate)) // for lex
+#	define yy_accept gedb_accept // lex's version conflicts with lemon one
+
+#	ifdef GEDB_PARSER_PARSER_LEMON_ENABLED
+		void *GedbLemonAlloc(void *(*mallocProc)(size_t));
+		void GedbLemonFree(void *p, void (*freeProc)(void*));
+		void GedbLemon(void *yyp, int yymajor, GedbToken *yyminor, GedbParser *l_ea);
+#	endif
+
+GType gedb_parser_parser_t_get_type (void) {
+	static volatile gsize gedb_parser_parser_t_type_id__volatile = 0;
+	if (g_once_init_enter (&gedb_parser_parser_t_type_id__volatile)) {
+		static const GEnumValue values[] = {{GEDB_PARSER_PARSER_T_END_OF_INPUT, "GEDB_PARSER_PARSER_T_END_OF_INPUT", "END_OF_INPUT"}, {GEDB_PARSER_PARSER_T_NO_ADD_TOKEN, "GEDB_PARSER_PARSER_T_NO_ADD_TOKEN", "NO_ADD_TOKEN"}, {GEDB_PARSER_PARSER_T_SEMICOLON, "GEDB_PARSER_PARSER_T_SEMICOLON", "SEMICOLON"}, {GEDB_PARSER_PARSER_T_COLON, "GEDB_PARSER_PARSER_T_COLON", "COLON"}, {GEDB_PARSER_PARSER_T_COMMA, "GEDB_PARSER_PARSER_T_COMMA", "COMMA"}, {GEDB_PARSER_PARSER_T_ASSIGN, "GEDB_PARSER_PARSER_T_ASSIGN", "ASSIGN"}, {GEDB_PARSER_PARSER_T_CREATE, "GEDB_PARSER_PARSER_T_CREATE", "CREATE"}, {GEDB_PARSER_PARSER_T_AGENT, "GEDB_PARSER_PARSER_T_AGENT", "AGENT"}, {GEDB_PARSER_PARSER_T_ATTACHED, "GEDB_PARSER_PARSER_T_ATTACHED", "ATTACHED"}, {GEDB_PARSER_PARSER_T_LIKE, "GEDB_PARSER_PARSER_T_LIKE", "LIKE"}, {GEDB_PARSER_PARSER_T_IMPLIES, "GEDB_PARSER_PARSER_T_IMPLIES", "IMPLIES"}, {GEDB_PARSER_PARSER_T_OR, "GEDB_PARSER_PARSER_T_OR", "OR"}, {GEDB_PARSER_PARSER_T_ORELSE, "GEDB_PARSER_PARSER_T_ORELSE", "ORELSE"}, {GEDB_PARSER_PARSER_T_XOR, "GEDB_PARSER_PARSER_T_XOR", "XOR"}, {GEDB_PARSER_PARSER_T_AND, "GEDB_PARSER_PARSER_T_AND", "AND"}, {GEDB_PARSER_PARSER_T_ANDTHEN, "GEDB_PARSER_PARSER_T_ANDTHEN", "ANDTHEN"}, {GEDB_PARSER_PARSER_T_EQ, "GEDB_PARSER_PARSER_T_EQ", "EQ"}, {GEDB_PARSER_PARSER_T_NE, "GEDB_PARSER_PARSER_T_NE", "NE"}, {GEDB_PARSER_PARSER_T_SIM, "GEDB_PARSER_PARSER_T_SIM", "SIM"}, {GEDB_PARSER_PARSER_T_NSIM, "GEDB_PARSER_PARSER_T_NSIM", "NSIM"}, {GEDB_PARSER_PARSER_T_LT, "GEDB_PARSER_PARSER_T_LT", "LT"}, {GEDB_PARSER_PARSER_T_LE, "GEDB_PARSER_PARSER_T_LE", "LE"}, {GEDB_PARSER_PARSER_T_GT, "GEDB_PARSER_PARSER_T_GT", "GT"}, {GEDB_PARSER_PARSER_T_GE, "GEDB_PARSER_PARSER_T_GE", "GE"}, {GEDB_PARSER_PARSER_T_DOTDOT, "GEDB_PARSER_PARSER_T_DOTDOT", "DOTDOT"}, {GEDB_PARSER_PARSER_T_PLUS, "GEDB_PARSER_PARSER_T_PLUS", "PLUS"}, {GEDB_PARSER_PARSER_T_MINUS, "GEDB_PARSER_PARSER_T_MINUS", "MINUS"}, {GEDB_PARSER_PARSER_T_TIMES, "GEDB_PARSER_PARSER_T_TIMES", "TIMES"}, {GEDB_PARSER_PARSER_T_DIV, "GEDB_PARSER_PARSER_T_DIV", "DIV"}, {GEDB_PARSER_PARSER_T_IDIV, "GEDB_PARSER_PARSER_T_IDIV", "IDIV"}, {GEDB_PARSER_PARSER_T_IMOD, "GEDB_PARSER_PARSER_T_IMOD", "IMOD"}, {GEDB_PARSER_PARSER_T_POWER, "GEDB_PARSER_PARSER_T_POWER", "POWER"}, {GEDB_PARSER_PARSER_T_FREE_OP, "GEDB_PARSER_PARSER_T_FREE_OP", "FREE_OP"}, {GEDB_PARSER_PARSER_T_NOT, "GEDB_PARSER_PARSER_T_NOT", "NOT"}, {GEDB_PARSER_PARSER_T_ADDRESS, "GEDB_PARSER_PARSER_T_ADDRESS", "ADDRESS"}, {GEDB_PARSER_PARSER_T_OLD, "GEDB_PARSER_PARSER_T_OLD", "OLD"}, {GEDB_PARSER_PARSER_T_LPAREN, "GEDB_PARSER_PARSER_T_LPAREN", "LPAREN"}, {GEDB_PARSER_PARSER_T_LBRACKET, "GEDB_PARSER_PARSER_T_LBRACKET", "LBRACKET"}, {GEDB_PARSER_PARSER_T_LBRA, "GEDB_PARSER_PARSER_T_LBRA", "LBRA"}, {GEDB_PARSER_PARSER_T_DOT, "GEDB_PARSER_PARSER_T_DOT", "DOT"}, {GEDB_PARSER_PARSER_T_AS, "GEDB_PARSER_PARSER_T_AS", "AS"}, {GEDB_PARSER_PARSER_T_RPAREN, "GEDB_PARSER_PARSER_T_RPAREN", "RPAREN"}, {GEDB_PARSER_PARSER_T_IDENTIFIER, "GEDB_PARSER_PARSER_T_IDENTIFIER", "IDENTIFIER"}, {GEDB_PARSER_PARSER_T_ALIAS, "GEDB_PARSER_PARSER_T_ALIAS", "ALIAS"}, {GEDB_PARSER_PARSER_T_STRING, "GEDB_PARSER_PARSER_T_STRING", "STRING"}, {GEDB_PARSER_PARSER_T_FROZEN, "GEDB_PARSER_PARSER_T_FROZEN", "FROZEN"}, {GEDB_PARSER_PARSER_T_OBSOLETE, "GEDB_PARSER_PARSER_T_OBSOLETE", "OBSOLETE"}, {GEDB_PARSER_PARSER_T_NOTE, "GEDB_PARSER_PARSER_T_NOTE", "NOTE"}, {GEDB_PARSER_PARSER_T_REQUIRE, "GEDB_PARSER_PARSER_T_REQUIRE", "REQUIRE"}, {GEDB_PARSER_PARSER_T_ELSE, "GEDB_PARSER_PARSER_T_ELSE", "ELSE"}, {GEDB_PARSER_PARSER_T_LOCAL, "GEDB_PARSER_PARSER_T_LOCAL", "LOCAL"}, {GEDB_PARSER_PARSER_T_DO, "GEDB_PARSER_PARSER_T_DO", "DO"}, {GEDB_PARSER_PARSER_T_END, "GEDB_PARSER_PARSER_T_END", "END"}, {GEDB_PARSER_PARSER_T_ONCE, "GEDB_PARSER_PARSER_T_ONCE", "ONCE"}, {GEDB_PARSER_PARSER_T_DEFERRED, "GEDB_PARSER_PARSER_T_DEFERRED", "DEFERRED"}, {GEDB_PARSER_PARSER_T_EXTERNAL, "GEDB_PARSER_PARSER_T_EXTERNAL", "EXTERNAL"}, {GEDB_PARSER_PARSER_T_ENSURE, "GEDB_PARSER_PARSER_T_ENSURE", "ENSURE"}, {GEDB_PARSER_PARSER_T_THEN, "GEDB_PARSER_PARSER_T_THEN", "THEN"}, {GEDB_PARSER_PARSER_T_RESCUE, "GEDB_PARSER_PARSER_T_RESCUE", "RESCUE"}, {GEDB_PARSER_PARSER_T_LBRACE, "GEDB_PARSER_PARSER_T_LBRACE", "LBRACE"}, {GEDB_PARSER_PARSER_T_RBRACE, "GEDB_PARSER_PARSER_T_RBRACE", "RBRACE"}, {GEDB_PARSER_PARSER_T_QUESTION_MARK, "GEDB_PARSER_PARSER_T_QUESTION_MARK", "QUESTION_MARK"}, {GEDB_PARSER_PARSER_T_EXCLAMATION_MARK, "GEDB_PARSER_PARSER_T_EXCLAMATION_MARK", "EXCLAMATION_MARK"}, {GEDB_PARSER_PARSER_T_DETACHABLE, "GEDB_PARSER_PARSER_T_DETACHABLE", "DETACHABLE"}, {GEDB_PARSER_PARSER_T_RBRACKET, "GEDB_PARSER_PARSER_T_RBRACKET", "RBRACKET"}, {GEDB_PARSER_PARSER_T_TUPLE, "GEDB_PARSER_PARSER_T_TUPLE", "TUPLE"}, {GEDB_PARSER_PARSER_T_IF, "GEDB_PARSER_PARSER_T_IF", "IF"}, {GEDB_PARSER_PARSER_T_ELSEIF, "GEDB_PARSER_PARSER_T_ELSEIF", "ELSEIF"}, {GEDB_PARSER_PARSER_T_INSPECT, "GEDB_PARSER_PARSER_T_INSPECT", "INSPECT"}, {GEDB_PARSER_PARSER_T_WHEN, "GEDB_PARSER_PARSER_T_WHEN", "WHEN"}, {GEDB_PARSER_PARSER_T_FROM, "GEDB_PARSER_PARSER_T_FROM", "FROM"}, {GEDB_PARSER_PARSER_T_UNTIL, "GEDB_PARSER_PARSER_T_UNTIL", "UNTIL"}, {GEDB_PARSER_PARSER_T_LOOP, "GEDB_PARSER_PARSER_T_LOOP", "LOOP"}, {GEDB_PARSER_PARSER_T_INVARIANT, "GEDB_PARSER_PARSER_T_INVARIANT", "INVARIANT"}, {GEDB_PARSER_PARSER_T_ACROSS, "GEDB_PARSER_PARSER_T_ACROSS", "ACROSS"}, {GEDB_PARSER_PARSER_T_SOME, "GEDB_PARSER_PARSER_T_SOME", "SOME"}, {GEDB_PARSER_PARSER_T_ALL, "GEDB_PARSER_PARSER_T_ALL", "ALL"}, {GEDB_PARSER_PARSER_T_VARIANT, "GEDB_PARSER_PARSER_T_VARIANT", "VARIANT"}, {GEDB_PARSER_PARSER_T_DEBUG, "GEDB_PARSER_PARSER_T_DEBUG", "DEBUG"}, {GEDB_PARSER_PARSER_T_DEBUG_LPAREN, "GEDB_PARSER_PARSER_T_DEBUG_LPAREN", "DEBUG_LPAREN"}, {GEDB_PARSER_PARSER_T_CHECK, "GEDB_PARSER_PARSER_T_CHECK", "CHECK"}, {GEDB_PARSER_PARSER_T_RETRY, "GEDB_PARSER_PARSER_T_RETRY", "RETRY"}, {GEDB_PARSER_PARSER_T_PRECURSOR, "GEDB_PARSER_PARSER_T_PRECURSOR", "PRECURSOR"}, {GEDB_PARSER_PARSER_T_LMA, "GEDB_PARSER_PARSER_T_LMA", "LMA"}, {GEDB_PARSER_PARSER_T_RMA, "GEDB_PARSER_PARSER_T_RMA", "RMA"}, {GEDB_PARSER_PARSER_T_MANIFEST, "GEDB_PARSER_PARSER_T_MANIFEST", "MANIFEST"}, {GEDB_PARSER_PARSER_T_CHARACTER, "GEDB_PARSER_PARSER_T_CHARACTER", "CHARACTER"}, {GEDB_PARSER_PARSER_T_INTEGER, "GEDB_PARSER_PARSER_T_INTEGER", "INTEGER"}, {GEDB_PARSER_PARSER_T_REAL, "GEDB_PARSER_PARSER_T_REAL", "REAL"}, {GEDB_PARSER_PARSER_T_ATTRIBUTE, "GEDB_PARSER_PARSER_T_ATTRIBUTE", "ATTRIBUTE"}, {GEDB_PARSER_PARSER_T_CLASS, "GEDB_PARSER_PARSER_T_CLASS", "CLASS"}, {GEDB_PARSER_PARSER_T_CONVERT, "GEDB_PARSER_PARSER_T_CONVERT", "CONVERT"}, {GEDB_PARSER_PARSER_T_EXPANDED, "GEDB_PARSER_PARSER_T_EXPANDED", "EXPANDED"}, {GEDB_PARSER_PARSER_T_EXPORT, "GEDB_PARSER_PARSER_T_EXPORT", "EXPORT"}, {GEDB_PARSER_PARSER_T_FEATURE, "GEDB_PARSER_PARSER_T_FEATURE", "FEATURE"}, {GEDB_PARSER_PARSER_T_INHERIT, "GEDB_PARSER_PARSER_T_INHERIT", "INHERIT"}, {GEDB_PARSER_PARSER_T_ONLY, "GEDB_PARSER_PARSER_T_ONLY", "ONLY"}, {GEDB_PARSER_PARSER_T_REDEFINE, "GEDB_PARSER_PARSER_T_REDEFINE", "REDEFINE"}, {GEDB_PARSER_PARSER_T_RENAME, "GEDB_PARSER_PARSER_T_RENAME", "RENAME"}, {GEDB_PARSER_PARSER_T_SELECT, "GEDB_PARSER_PARSER_T_SELECT", "SELECT"}, {GEDB_PARSER_PARSER_T_SEPARATE, "GEDB_PARSER_PARSER_T_SEPARATE", "SEPARATE"}, {GEDB_PARSER_PARSER_T_UNDEFINE, "GEDB_PARSER_PARSER_T_UNDEFINE", "UNDEFINE"}, {GEDB_PARSER_PARSER_T_DOLLAR, "GEDB_PARSER_PARSER_T_DOLLAR", "DOLLAR"}, {GEDB_PARSER_PARSER_T_FREE1, "GEDB_PARSER_PARSER_T_FREE1", "FREE1"}, {GEDB_PARSER_PARSER_T_FREE2, "GEDB_PARSER_PARSER_T_FREE2", "FREE2"}, {GEDB_PARSER_PARSER_T_FREE3, "GEDB_PARSER_PARSER_T_FREE3", "FREE3"}, {GEDB_PARSER_PARSER_T_FREE4, "GEDB_PARSER_PARSER_T_FREE4", "FREE4"}, {GEDB_PARSER_PARSER_T_ONCE_STRING, "GEDB_PARSER_PARSER_T_ONCE_STRING", "ONCE_STRING"}, {GEDB_PARSER_PARSER_T_FALSE_MANIFEST, "GEDB_PARSER_PARSER_T_FALSE_MANIFEST", "FALSE_MANIFEST"}, {GEDB_PARSER_PARSER_T_TRUE_MANIFEST, "GEDB_PARSER_PARSER_T_TRUE_MANIFEST", "TRUE_MANIFEST"}, {GEDB_PARSER_PARSER_T_VOID_MANIFEST, "GEDB_PARSER_PARSER_T_VOID_MANIFEST", "VOID_MANIFEST"}, {GEDB_PARSER_PARSER_T_INTEGER2, "GEDB_PARSER_PARSER_T_INTEGER2", "INTEGER2"}, {GEDB_PARSER_PARSER_T_INTEGER3, "GEDB_PARSER_PARSER_T_INTEGER3", "INTEGER3"}, {GEDB_PARSER_PARSER_T_INTEGER4, "GEDB_PARSER_PARSER_T_INTEGER4", "INTEGER4"}, {GEDB_PARSER_PARSER_T_INTEGER5, "GEDB_PARSER_PARSER_T_INTEGER5", "INTEGER5"}, {GEDB_PARSER_PARSER_T_REAL2, "GEDB_PARSER_PARSER_T_REAL2", "REAL2"}, {GEDB_PARSER_PARSER_T_REAL3, "GEDB_PARSER_PARSER_T_REAL3", "REAL3"}, {GEDB_PARSER_PARSER_T_REAL4, "GEDB_PARSER_PARSER_T_REAL4", "REAL4"}, {GEDB_PARSER_PARSER_T_REAL5, "GEDB_PARSER_PARSER_T_REAL5", "REAL5"}, {GEDB_PARSER_PARSER_T_REAL6, "GEDB_PARSER_PARSER_T_REAL6", "REAL6"}, {GEDB_PARSER_PARSER_T_CHAR2, "GEDB_PARSER_PARSER_T_CHAR2", "CHAR2"}, {GEDB_PARSER_PARSER_T_CHAR3, "GEDB_PARSER_PARSER_T_CHAR3", "CHAR3"}, {GEDB_PARSER_PARSER_T_STRING1, "GEDB_PARSER_PARSER_T_STRING1", "STRING1"}, {GEDB_PARSER_PARSER_T_STRING2, "GEDB_PARSER_PARSER_T_STRING2", "STRING2"}, {GEDB_PARSER_PARSER_T_STRING3, "GEDB_PARSER_PARSER_T_STRING3", "STRING3"}, {GEDB_PARSER_PARSER_T_VERBATIM1, "GEDB_PARSER_PARSER_T_VERBATIM1", "VERBATIM1"}, {GEDB_PARSER_PARSER_T_VERBATIM2, "GEDB_PARSER_PARSER_T_VERBATIM2", "VERBATIM2"}, {GEDB_PARSER_PARSER_T_VERBATIM3, "GEDB_PARSER_PARSER_T_VERBATIM3", "VERBATIM3"}, {GEDB_PARSER_PARSER_T_VERBATIM4, "GEDB_PARSER_PARSER_T_VERBATIM4", "VERBATIM4"}, {GEDB_PARSER_PARSER_T_VERBATIM5, "GEDB_PARSER_PARSER_T_VERBATIM5", "VERBATIM5"}, {GEDB_PARSER_PARSER_T_VERBATIM6, "GEDB_PARSER_PARSER_T_VERBATIM6", "VERBATIM6"}, {GEDB_PARSER_PARSER_T_VERBATIM7, "GEDB_PARSER_PARSER_T_VERBATIM7", "VERBATIM7"}, {GEDB_PARSER_PARSER_T_VERBATIM8, "GEDB_PARSER_PARSER_T_VERBATIM8", "VERBATIM8"}, {GEDB_PARSER_PARSER_T_VERBATIM9, "GEDB_PARSER_PARSER_T_VERBATIM9", "VERBATIM9"}, {GEDB_PARSER_PARSER_T_LEFT_VERBATIM1, "GEDB_PARSER_PARSER_T_LEFT_VERBATIM1", "LEFT_VERBATIM1"}, {GEDB_PARSER_PARSER_T_LEFT_VERBATIM2, "GEDB_PARSER_PARSER_T_LEFT_VERBATIM2", "LEFT_VERBATIM2"}, {GEDB_PARSER_PARSER_T_LEFT_VERBATIM3, "GEDB_PARSER_PARSER_T_LEFT_VERBATIM3", "LEFT_VERBATIM3"}, {GEDB_PARSER_PARSER_T_LEFT_VERBATIM4, "GEDB_PARSER_PARSER_T_LEFT_VERBATIM4", "LEFT_VERBATIM4"}, {GEDB_PARSER_PARSER_T_LEFT_VERBATIM5, "GEDB_PARSER_PARSER_T_LEFT_VERBATIM5", "LEFT_VERBATIM5"}, {GEDB_PARSER_PARSER_T_LEFT_VERBATIM6, "GEDB_PARSER_PARSER_T_LEFT_VERBATIM6", "LEFT_VERBATIM6"}, {GEDB_PARSER_PARSER_T_LEFT_VERBATIM7, "GEDB_PARSER_PARSER_T_LEFT_VERBATIM7", "LEFT_VERBATIM7"}, {GEDB_PARSER_PARSER_T_LEFT_VERBATIM8, "GEDB_PARSER_PARSER_T_LEFT_VERBATIM8", "LEFT_VERBATIM8"}, {GEDB_PARSER_PARSER_T_MS1, "GEDB_PARSER_PARSER_T_MS1", "MS1"}, {GEDB_PARSER_PARSER_T_MS2, "GEDB_PARSER_PARSER_T_MS2", "MS2"}, {GEDB_PARSER_PARSER_T_MS3, "GEDB_PARSER_PARSER_T_MS3", "MS3"}, {GEDB_PARSER_PARSER_T_MS4, "GEDB_PARSER_PARSER_T_MS4", "MS4"}, {GEDB_PARSER_PARSER_T_MS5, "GEDB_PARSER_PARSER_T_MS5", "MS5"}, {GEDB_PARSER_PARSER_T_MS6, "GEDB_PARSER_PARSER_T_MS6", "MS6"}, {GEDB_PARSER_PARSER_T_MS7, "GEDB_PARSER_PARSER_T_MS7", "MS7"}, {GEDB_PARSER_PARSER_T_COMMENT, "GEDB_PARSER_PARSER_T_COMMENT", "COMMENT"}, {GEDB_PARSER_PARSER_T_SPACE, "GEDB_PARSER_PARSER_T_SPACE", "SPACE"}, {GEDB_PARSER_PARSER_T_NEWLINE, "GEDB_PARSER_PARSER_T_NEWLINE", "NEWLINE"}, {GEDB_PARSER_PARSER_T_NEWLINE2, "GEDB_PARSER_PARSER_T_NEWLINE2", "NEWLINE2"}, {0, NULL, NULL}};
+		GType gedb_parser_parser_t_type_id;
+		gedb_parser_parser_t_type_id = g_enum_register_static ("GedbT", values);
+		g_once_init_leave (&gedb_parser_parser_t_type_id__volatile, gedb_parser_parser_t_type_id);
+	}
+	return gedb_parser_parser_t_type_id__volatile;
+}
+
+GType gedb_parser_parser_s_get_type (void) {
+	static volatile gsize gedb_parser_parser_s_type_id__volatile = 0;
+	if (g_once_init_enter (&gedb_parser_parser_s_type_id__volatile)) {
+		static const GEnumValue values[] = {{GEDB_PARSER_PARSER_S_INITIAL, "GEDB_PARSER_PARSER_S_INITIAL", "INITIAL"}, {GEDB_PARSER_PARSER_S_VS1, "GEDB_PARSER_PARSER_S_VS1", "VS1"}, {GEDB_PARSER_PARSER_S_VS2, "GEDB_PARSER_PARSER_S_VS2", "VS2"}, {GEDB_PARSER_PARSER_S_VS3, "GEDB_PARSER_PARSER_S_VS3", "VS3"}, {GEDB_PARSER_PARSER_S_LAVS1, "GEDB_PARSER_PARSER_S_LAVS1", "LAVS1"}, {GEDB_PARSER_PARSER_S_LAVS2, "GEDB_PARSER_PARSER_S_LAVS2", "LAVS2"}, {GEDB_PARSER_PARSER_S_LAVS3, "GEDB_PARSER_PARSER_S_LAVS3", "LAVS3"}, {GEDB_PARSER_PARSER_S_MS, "GEDB_PARSER_PARSER_S_MS", "MS"}, {GEDB_PARSER_PARSER_S_MSN, "GEDB_PARSER_PARSER_S_MSN", "MSN"}, {0, NULL, NULL}};
+		GType gedb_parser_parser_s_type_id;
+		gedb_parser_parser_s_type_id = g_enum_register_static ("GedbS", values);
+		g_once_init_leave (&gedb_parser_parser_s_type_id__volatile, gedb_parser_parser_s_type_id);
+	}
+	return gedb_parser_parser_s_type_id__volatile;
+}
+
+	GedbParserParser* gedb_parser_parser_construct(GType object_type)
+	{	GedbParserParser * self = NULL;
+		self = (GedbParserParser*) g_object_new (object_type, NULL);
+		self->token_code = 0;
+		self->token_gobject = NULL;
+		self->is_match = TRUE;
+		self->n_tokens_matched = 0;
+		self->n_chars_read = 0;
+#		ifdef GEDB_PARSER_PARSER_LEX_ENABLED
+			gedb_parser_parser_lex_init_extra(self, (yyscan_t*)&self->priv->lex_resource);
+#		endif
+#		ifdef GEDB_PARSER_PARSER_LEMON_ENABLED
+			self->priv->lemon_resource = GedbLemonAlloc(g_malloc);
+#		endif
+		return self;
+	}
+
+	GedbParserParser* gedb_parser_parser_new(void)
+	{	return gedb_parser_parser_construct(GEDB_TYPE_PARSER_PARSER);
+	}
+
+	void gedb_parser_parser_add_token(GedbParserParser *self, gint token_code, void *token)
+	{	self->n_tokens_matched++;
+#		ifdef GEDB_PARSER_PARSER_LEMON_ENABLED
+			GedbToken *token_obj;
+			g_return_if_fail(self != NULL);
+			token_obj = token==NULL ? NULL : GEDB_TOKEN(g_object_ref(G_OBJECT(token)));
+			GedbLemon(self->priv->lemon_resource, token_code, token_obj, GEDB_PARSER(self));
+#		endif
+	}
+
+	void gedb_parser_parser_end(GedbParserParser *self)
+	{
+#		ifdef GEDB_PARSER_PARSER_LEMON_ENABLED
+			g_return_if_fail(self != NULL);
+			GedbLemon(self->priv->lemon_resource, 0, NULL, GEDB_PARSER(self));
+#		endif
+	}
+
+#	ifdef GEDB_PARSER_PARSER_LEX_ENABLED
+		YY_BUFFER_STATE gedb_parser_parser__create_buffer(FILE *file,int size ,yyscan_t yyscagedber );
+		void gedb_parser_parser_push_buffer_state(YY_BUFFER_STATE new_buffer ,yyscan_t yyscagedber );
+		void gedb_parser_parser_pop_buffer_state(yyscan_t yyscagedber );
+#	endif
+
+	void gedb_parser_parser_add_stream(GedbParserParser *self, FILE *stream)
+	{
+#		ifdef GEDB_PARSER_PARSER_LEX_ENABLED
+			gint token_code;
+			yyscan_t scagedber;
+			if (self->is_match)
+			{	scagedber = (yyscan_t)self->priv->lex_resource;
+				gedb_parser_parser_push_buffer_state(gedb_parser_parser__create_buffer(stream, YY_BUF_SIZE, scagedber), scagedber);
+				while ((token_code = gedb_parser_parser_lex(scagedber)) && self->is_match)
+				{	if (token_code != GEDB_PARSER_PARSER_T_NO_ADD_TOKEN)
+					{	gedb_parser_parser_add_token(self, token_code, self->token_gobject);
+					}
+				}
+				gedb_parser_parser_pop_buffer_state(scagedber);
+			}
+#		endif
+	}
+
+	void gedb_parser_parser_add_string(GedbParserParser *self, char *str)
+	{
+#		ifdef GEDB_PARSER_PARSER_LEX_ENABLED
+			gint token_code;
+			yyscan_t scagedber;
+			YY_BUFFER_STATE buffer;
+			if (self->is_match)
+			{	scagedber = (yyscan_t)self->priv->lex_resource;
+				buffer = gedb_parser_parser__scan_string(str, scagedber);
+				while ((token_code = gedb_parser_parser_lex(scagedber)) && self->is_match)
+				{	if (token_code != GEDB_PARSER_PARSER_T_NO_ADD_TOKEN)
+					{	gedb_parser_parser_add_token(self, token_code, self->token_gobject);
+					}
+				}
+				gedb_parser_parser__delete_buffer(buffer, scagedber);
+			}
+#		endif
+	}
+
+	void gedb_parser_parser_push_state(GedbParserParser *self, int state)
+	{
+#		ifdef GEDB_PARSER_PARSER_LEX_ENABLED
+			g_return_if_fail(self != NULL);
+			yy_push_state(state, self->priv->lex_resource);
+#		endif
+	}
+
+	void gedb_parser_parser_pop_state(GedbParserParser *self)
+	{
+#		ifdef GEDB_PARSER_PARSER_LEX_ENABLED
+			g_return_if_fail(self != NULL);
+			yy_pop_state(self->priv->lex_resource);
+#		endif
+	}
+
+	int gedb_parser_parser_top_state(GedbParserParser *self)
+	{
+#		ifdef GEDB_PARSER_PARSER_LEX_ENABLED
+			g_return_if_fail(self != NULL);
+			return (((struct yyguts_t*)self->priv->lex_resource)->yy_start - 1) / 2 /*yy_top_state(self->priv->lex_resource)*/;
+#		else
+			return 0;
+#		endif
+	}
+
+	static void gedb_parser_parser_instance_init(GedbParserParser *self)
+	{	self->priv = GEDB_PARSER_PARSER_GET_PRIVATE(self);
+	}
+
+	static void gedb_parser_parser_finalize(GObject *obj)
+	{	GedbParserParser * self;
+		self = GEDB_PARSER_PARSER (obj);
+#		ifdef GEDB_PARSER_PARSER_LEX_ENABLED
+			gedb_parser_parser_lex_destroy((yyscan_t)self->priv->lex_resource);
+#		endif
+#		ifdef GEDB_PARSER_PARSER_LEMON_ENABLED
+			GedbLemonFree(self->priv->lemon_resource, g_free);
+#		endif
+		if (self->token_gobject != NULL)
+		{	g_object_unref(self->token_gobject);
+		}
+		G_OBJECT_CLASS(gedb_parser_parser_parent_class)->finalize(obj);
+	}
+
+	static void gedb_parser_parser_real_on_default_token(GedbParserParser *self, const gchar *value, gint value_len)
+	{
+#		ifdef GEDB_PARSER_PARSER_TRACE_TOKENS
+			fprintf(stderr, "*TRACE on_default_token(): %s\n", value);
+#		endif
+#		ifdef GEDB_PARSER_PARSER_LEX_ENABLED
+			self->is_match = FALSE;
+#		endif
+	}
+
+	static void gedb_parser_parser_real_on_parse_failed(GedbParserParser *self)
+	{	self->is_match = FALSE;
+	}
+
+	static void gedb_parser_parser_real_on_syntax_error(GedbParserParser *self)
+	{	self->is_match = FALSE;
+	}
+
+	static void gedb_parser_parser_real_on_parse_accept(GedbParserParser *self)
+	{
+	}
+
+	void gedb_parser_parser_on_default_token(GedbParserParser *self, const gchar *value, gint value_len)
+	{
+#		ifdef GEDB_PARSER_PARSER_LEX_ENABLED
+			GEDB_PARSER_PARSER_GET_CLASS(self)->on_default_token(self, value, value_len);
+#		endif
+	}
+
+	void gedb_parser_parser_on_parse_failed(GedbParserParser *self)
+	{
+#		ifdef GEDB_PARSER_PARSER_LEX_ENABLED
+			GEDB_PARSER_PARSER_GET_CLASS(self)->on_parse_failed(self);
+#		endif
+	}
+
+	void gedb_parser_parser_on_syntax_error(GedbParserParser *self)
+	{
+#		ifdef GEDB_PARSER_PARSER_LEX_ENABLED
+			GEDB_PARSER_PARSER_GET_CLASS(self)->on_syntax_error(self);
+#		endif
+	}
+
+	void gedb_parser_parser_on_parse_accept(GedbParserParser *self)
+	{
+#		ifdef GEDB_PARSER_PARSER_LEX_ENABLED
+			GEDB_PARSER_PARSER_GET_CLASS(self)->on_parse_accept(self);
+#		endif
+	}
+
+	static void gedb_parser_parser_class_init(GedbParserParserClass *klass)
+	{	gedb_parser_parser_parent_class = g_type_class_peek_parent(klass);
+		g_type_class_add_private(klass, sizeof(GedbParserParserPrivate));
+		G_OBJECT_CLASS(klass)->finalize = gedb_parser_parser_finalize;
+		GEDB_PARSER_PARSER_CLASS(klass)->on_default_token = gedb_parser_parser_real_on_default_token;
+		GEDB_PARSER_PARSER_CLASS(klass)->on_parse_failed = gedb_parser_parser_real_on_parse_failed;
+		GEDB_PARSER_PARSER_CLASS(klass)->on_syntax_error = gedb_parser_parser_real_on_syntax_error;
+		GEDB_PARSER_PARSER_CLASS(klass)->on_parse_accept = gedb_parser_parser_real_on_parse_accept;
+	}
+
+	GType gedb_parser_parser_get_type(void)
+	{	static volatile gsize gedb_parser_parser_type_id__volatile = 0;
+		if (g_once_init_enter (&gedb_parser_parser_type_id__volatile)) {
+			static const GTypeInfo g_define_type_info = { sizeof (GedbParserParserClass), (GBaseInitFunc) NULL, (GBaseFinalizeFunc) NULL, (GClassInitFunc) gedb_parser_parser_class_init, (GClassFinalizeFunc) NULL, NULL, sizeof (GedbParserParser), 0, (GInstanceInitFunc) gedb_parser_parser_instance_init, NULL };
+			GType gedb_parser_parser_type_id;
+			gedb_parser_parser_type_id = g_type_register_static (G_TYPE_OBJECT, "GedbParserParser", &g_define_type_info, 0);
+			g_once_init_leave (&gedb_parser_parser_type_id__volatile, gedb_parser_parser_type_id);
+		}
+		return gedb_parser_parser_type_id__volatile;
+	}
+
+}

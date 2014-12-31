@@ -9,7 +9,6 @@ inherit
 
 	ET_EXTENSION
 		redefine
-			print_defines,
 			print_typedefs
 		end
 
@@ -50,12 +49,6 @@ feature -- Basic operation
 			c_generator.flush_to_c_file
 		end
 	
-feature {NONE} -- Extension parts
-
-	print_defines
-		do
-		end
-	
 feature {NONE} -- Print C structs 
 
 	print_typedefs 
@@ -71,7 +64,6 @@ feature {NONE} -- Print C structs
 
 	put_type_struct_fields (a_type: ET_IS_TYPE)
 		local
-			l_type: ET_IS_TYPE
 			l_dynamic: ET_DYNAMIC_TYPE
 			id, m, ng, na, nr: INTEGER
 			boxed: BOOLEAN
@@ -90,7 +82,7 @@ feature {NONE} -- Print C structs
 				end
 			end
 			ng := a_type.generic_count
-			boxed := a_type.is_subobject and then a_type.generic_count = 0
+			boxed := a_type.is_subobject --and then a_type.generic_count = 0
 			if (boxed or else a_type.is_agent) then
 				c_file.put_character ('{')
 			end
@@ -281,7 +273,7 @@ feature {NONE} -- Print C structs
 			from i := 1 until i = n loop
 				tmp_str.extend (',')
 				write_line (tmp_str)
-				tmp_str.clear_all
+				tmp_str.wipe_out
 				if attached compilee.class_at (i) as c then
 					tmp_str.extend ('"')
 					c.append_name (tmp_str)
@@ -309,7 +301,7 @@ feature {NONE} -- Print C structs
 			from i := 1 until i = n loop
 				tmp_str.extend (',')
 				write_line (tmp_str)
-				tmp_str.clear_all
+				tmp_str.wipe_out
 				if attached compilee.class_at (i) as c then
 					tmp_str.append_integer (c.flags)
 				else
@@ -325,8 +317,7 @@ feature {NONE} -- Print C structs
 
 	put_type_tables
 		local
-			i, nt, na: INTEGER
-			boxed: BOOLEAN
+			i, nt: INTEGER
 		do
 			nt := compilee.type_count
 			from
@@ -356,7 +347,7 @@ feature {NONE} -- Print C structs
 			from i := 1 until i = nt loop
 				tmp_str.extend (',')
 				write_line (tmp_str)
-				tmp_str.clear_all
+				tmp_str.wipe_out
 				if attached compilee.type_at (i) as t then
 					if t.is_subobject or else t.is_agent then
 						tmp_str.extend ('(')
@@ -386,7 +377,7 @@ feature {NONE} -- Print C structs
     local
       l_names: ARRAY [READABLE_STRING_8]
       l_name: READABLE_STRING_8
-      i, j, m, n: INTEGER
+      i, j, n: INTEGER
 			c: CHARACTER
     do
       l_names := compilee.names_array
@@ -396,7 +387,7 @@ feature {NONE} -- Print C structs
       from until i = n loop
         c_file.put_character (',')
         i := i + 1
-        tmp_str.clear_all
+        tmp_str.wipe_out
         l_name := l_names [i]
 				if attached l_name as nm then
 					tmp_str.extend ('"')
@@ -427,11 +418,11 @@ feature {NONE} -- Print C structs
       c_generator.flush_to_c_file
     end
 
-feature -- Building runtime descriptors 
+feature {NONE} -- Building runtime descriptors 
 
 	put_c_normal (a_type: ET_IS_TYPE)
 		local
-			i, ng, na: INTEGER
+			ng, na: INTEGER
 		do
 			if a_type.is_alive then
 				na := a_type.field_count
@@ -446,7 +437,7 @@ feature -- Building runtime descriptors
 			if ng > 0 then
 				put_generic_table (a_type)
 			end
-			if a_type.is_subobject and then ng = 0 then
+			if a_type.is_subobject then --and then ng = 0 then
 				c_file.put_string (static)
 				c_generator.print_boxed_type_name (a_type.origin, c_file)
 				c_file.put_character (' ')
@@ -487,8 +478,6 @@ feature -- Building runtime descriptors
 		end
 
 	put_c_agent (a_type: ET_IS_AGENT_TYPE)
-		local
-			i, id: INTEGER
 		do
 			put_field_table (a_type)
 			put_type_struct (a_type)
@@ -546,7 +535,7 @@ feature -- Building runtime descriptors
 					l_field := l_type.field_at (i)
 				end
 				l_field_name := a_type.field_at (i).name
-				tmp_str.clear_all
+				tmp_str.wipe_out
 				if i > 0 then
 					tmp_str.extend (',')
 					tmp_str.extend ('%N')
@@ -556,7 +545,7 @@ feature -- Building runtime descriptors
 				tmp_str.extend ('{')
 				tmp_str.append (void_address)
 				c_file.put_string (tmp_str)
-				tmp_str.clear_all				
+				tmp_str.wipe_out				
 				c_generator.print_default_name (l_type.origin, c_file)
  				c_file.put_character ('.')
 				if l_type.is_normal then
@@ -611,11 +600,11 @@ feature -- Building runtime descriptors
 
 	put_typeset_table 
 		require
-			has_typesets: attached compilee.typeset_table
+			has_typesets: compilee.typeset_table /= Void
 		local
-			table: DS_HASH_TABLE [INTEGER, IS_SET [ET_IS_TYPE]]
-			linear: ARRAY [IS_SET [ ET_IS_TYPE]]
-			ts: IS_SET [ET_IS_TYPE]
+			table: DS_HASH_TABLE [INTEGER, IS_SET [attached ET_IS_TYPE]]
+			linear: ARRAY [IS_SET [attached ET_IS_TYPE]]
+			ts: IS_SET [attached ET_IS_TYPE]
 			ts_name: STRING
 			i, j, k, l, n: INTEGER
 		do
@@ -626,7 +615,7 @@ feature -- Building runtime descriptors
 			end
 			if n > 0 then
 				with_typesets := compilee.needs_typeset 
-				create linear.make (1, n * 2)
+				create linear.make_filled (Void, 1, n * 2)
 				l := log(compilee.type_count).floor + 2
 				from 
 					n := 0

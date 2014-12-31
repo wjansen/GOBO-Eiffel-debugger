@@ -29,7 +29,6 @@ feature {NONE} -- Initialization
 			name_set: fast_name.is_equal (nm)
 			home_set: home = h
 			type_set: type = t
-			value_set: value = v
 			flags_set: flags = fl
 			text_set: text = f
 		end
@@ -38,7 +37,7 @@ feature -- Access
 
 	flags: INTEGER
 
-	home: IS_CLASS_TEXT
+	home: attached IS_CLASS_TEXT
 			-- Declaring class
 
 feature -- Status 
@@ -118,12 +117,12 @@ feature -- Status
 	
 	string_8_value: STRING_8
 		do
-			Result := c_string(ref)
+			Result := ms
 		end
 	
 	string_value, string_32_value: STRING_32
 		do
-			Result := c_unicode(ref)
+			Result := ms
 		end
 	
 feature {IS_BASE} -- Status setting 
@@ -178,7 +177,7 @@ feature {IS_BASE} -- Status setting
 		do
 			basic := i.to_natural_64
 		ensure
-			character_value_set: integer_64_value = n
+			character_value_set: integer_64_value = i
 		end
 
 	set_natural_8_value (n: NATURAL_8)
@@ -213,14 +212,14 @@ feature {IS_BASE} -- Status setting
 		do
 			basic := c_from_float($r)
 		ensure
-			character_value_set: real_32_value = n
+			character_value_set: real_32_value = r
 		end
 
 	set_real_64_value (r: REAL_64)
 		do
 			basic := c_from_double($r)
 		ensure
-			character_value_set: real_64_value = n
+			character_value_set: real_64_value = r
 		end
 
 	set_string_value (s: STRING)
@@ -243,22 +242,11 @@ feature -- Status setting
 		do
 		end
 
-feature -- Output 
-
-	indented_out (indent: INTEGER): STRING
-		do
-			create Result.make (0)
-			pad_right (Result, indent)
-			append_name (Result)
-			Result.append (once " = ")
-			Result.append (value.out)
-		end
-
 feature {IS_BASE} -- Access
 
 	basic: NATURAL_64
 			-- Buffer of value if `type.is_basic',
-			-- needs bitwise conersion when accessed.
+			-- needs bitwise conversion when accessed.
 	
 	ms: detachable STRING
 		-- Value if `type.is_string', UTF8 of value if `type.is_unicode'.
@@ -267,12 +255,12 @@ feature {NONE} -- External implementation
 
 	c_double(p: POINTER): REAL_64
 		external "C inline"
-		alias "*(double*)$n"
+		alias "*(double*)$p"
 		end
 	
 	c_float(p: POINTER): REAL_32
 		external "C inline"
-		alias "*(float*)$n"
+		alias "*(float*)$p"
 		end
 	
 	c_char(n: NATURAL_64): CHARACTER_8
@@ -287,7 +275,7 @@ feature {NONE} -- External implementation
 	
 	c_string(p: POINTER): STRING_8
 		external "C inline"
-		alias "$r"
+		alias "$p"
 		end
 	
 	c_unicode(p: POINTER): STRING_32

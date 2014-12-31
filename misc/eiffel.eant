@@ -72,11 +72,12 @@
 		<delete file="${system}${exe}"/>
 		<set name="finalize" value="true"/>
 		<set name="finalize" value="false" if="${debug}"/>
-		<set name="gedb" value="full" if="${debug}"/>
+		<set name="gedb" value="false"/>
+		<set name="gedb" value="true" if="${debug}"/>
 		<set name="split" value="true"/>
 		<set name="split" value="false" if="${no_split}"/>
 		<set name="gelint_option" value="false" unless="${gelint_option}"/>
-		<gec ace="${ace_filename}" finalize="${finalize}" gedb="${debug}" gelint="${gelint_option}" c_compile="false" catcall="error" split="${split}"/>
+		<gec ace="${ace_filename}" finalize="${finalize}" gedb="${gedb}" gelint="${gelint_option}" c_compile="false" catcall="error" split="${split}"/>
 		<exec executable=".\${system}.bat" if="${GOBO_OS}=windows"/>
 		<exec executable="./${system}.sh" unless="${GOBO_OS}=windows"/>
 	</target>

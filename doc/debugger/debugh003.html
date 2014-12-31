@@ -34,13 +34,9 @@ which debugger variant will be added to the system:
 </li></ul><p>
 (so, no option or the parameterless option will be sufficient in most cases).
 It is also possible to generate a debugged system by use of <span style="font-style:oblique">geant</span>: 
-add option <span style="font-family:monospace">-Ddebug</span> to the command line. 
+add option <span style="font-family:monospace">-Ddebug</span> to the command line when the task is <span style="font-family:monospace">compile</span>. 
 This option is originally used to prevent 
-finalizing, now it has the second effect of adding the post mortem analyser. 
-The result of the compilation is an executable program 
-if the post mortem analyser is added but it is a loadable library 
-if the runtime analyser is added (precisely, the runtime analyser 
-is the executable program that loads the library). 
+finalizing, now it has the second effect of adding the runtime analyser. 
 </p><p>The generation of debugging code may be switched off or on 
 for particular classes or for the classes in chosen clusters. To this end, 
 options like the following have to be added to the <span style="font-family:monospace">.xace</span> file:

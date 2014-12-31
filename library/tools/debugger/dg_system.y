@@ -47,8 +47,8 @@ create
 
 %type <STRING> header enum entries entry delegate args arg
 %type <IS_TYPE> typedef struct 
-%type <IS_FIELD> field 
-%type <IS_SEQUENCE[IS_FIELD]> fields
+%type <attached IS_FIELD> field 
+%type <IS_SEQUENCE[attached IS_FIELD]> fields
 
 %start header
  
@@ -129,7 +129,7 @@ field	: CLASS_NAME IDENTIFIER ';'
 
 %% 
  
-feature {} -- Initialization 
+feature {NONE} -- Initialization 
 
 	default_create
 		do
@@ -167,7 +167,7 @@ feature {} -- Initialization
  
 feature -- Access
 
-	any_type: IS_NORMAL_TYPE
+	any_type: attached IS_NORMAL_TYPE
 
 	none_type: like any_type
 
@@ -212,12 +212,12 @@ feature -- Basic operation
 			end
 		end
 
-	new_special_type (ti: IS_TYPE): IS_TYPE
+	new_special_type (ti: attached IS_TYPE): attached IS_TYPE
 		local
 			tc: IS_TYPE
 			ts: IS_SPECIAL_TYPE
 			f: IS_FIELD
-			ff: IS_SEQUENCE [IS_FIELD]
+			ff: IS_SEQUENCE [attached IS_FIELD]
 			fl: INTEGER
 		do
 			if attached special_type_by_item_type (ti, True) as st then
@@ -270,7 +270,7 @@ feature -- Basic operation
 			end
 		end
 	
-feature {} -- Implementation
+feature {NONE} -- Implementation
 
 	max_type_id: INTEGER
 	max_class_id: INTEGER
@@ -330,7 +330,7 @@ feature {} -- Implementation
 			Result.to_upper
 		end
 
-	type_of_name (nm, c: STRING): IS_TYPE
+	type_of_name (nm, c: STRING): attached IS_TYPE
 		local
 			cn: STRING
 		do
@@ -360,11 +360,11 @@ feature {} -- Implementation
 			end
 		end
 
-	expanded_type (nm, cn: STRING): IS_EXPANDED_TYPE
+	expanded_type (nm, cn: STRING): attached IS_EXPANDED_TYPE
 		local
-			base, ft: IS_TYPE
-			f: IS_FIELD
-			ff: IS_SEQUENCE[IS_FIELD]
+			base, ft: attached IS_TYPE
+			f: attached IS_FIELD
+			ff: IS_SEQUENCE[attached IS_FIELD]
 			id, i, n: INTEGER
 		do
 			base := type_of_name (nm, cn)
@@ -375,7 +375,9 @@ feature {} -- Implementation
 				id := max_type_id
 				from
 					n := base.field_count
-					create ff.make (n, Void)
+					if n > 0 then
+						create ff.make (n, base.field_at(0))
+					end
 				until i = n loop
 					f := base.field_at(i)
 					ft := f.type

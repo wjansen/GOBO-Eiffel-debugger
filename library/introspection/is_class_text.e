@@ -131,7 +131,7 @@ feature -- Access
 			validity: Result = (0 <= i and then i < parent_count)
 		end
 
-	parent_at (i: INTEGER): IS_CLASS_TEXT
+	parent_at (i: INTEGER): attached IS_CLASS_TEXT
 		note
 			return: "The `i'-th direct parent."
 		require
@@ -160,7 +160,7 @@ feature -- Access
 			validity: Result = (0 <= i and then i < feature_count)
 		end
 
-	feature_at (i: INTEGER): IS_FEATURE_TEXT
+	feature_at (i: INTEGER): attached IS_FEATURE_TEXT
 		note
 			return: "The `i'-th feature."
 		require
@@ -230,14 +230,14 @@ feature {IS_SYSTEM} -- Status setting
 	
 feature -- Comparison 
 
-	is_less alias "<" (other: IS_CLASS_TEXT): BOOLEAN
+	is_less alias "<" (other: attached like Current): BOOLEAN
 		note
 			return: "Comparison by name."
 		do
 			Result := fast_name < other.fast_name
 		end
 
-	three_way_comparison (other: IS_CLASS_TEXT): INTEGER
+	three_way_comparison (other: attached like Current): INTEGER
 		note
 			return: "Comparison by name."
 		do

@@ -61,7 +61,6 @@ feature {NONE}
 						 and then known_objects [si].ident = target.void_ident
 		local	
 			tid: PC_TYPED_IDENT [TI_]		
-			ti: TI_
 			t: IS_TYPE
 			count, cap: NATURAL
 		do
@@ -215,30 +214,30 @@ feature {NONE} -- Implementation
 			action: "Announce entity."
 		local
 			tid: PC_TYPED_IDENT [TI_]
-			si: SI_
 			ti: TI_
 			t: IS_TYPE
 			count: NATURAL
 		do
 			source.read_field_ident
-			if static.is_subobject then
-				 forward_fields (static, source.last_ident)
-			else
-				si := source.last_ident
-				if si /= source_void_ident then
-					if not known_objects.has (si) then
-						process_announcement (si)
-					elseif known_objects [si].ident = target_void_ident then
-						t := source.last_dynamic_type
-						if t.is_special and then attached {IS_SPECIAL_TYPE} t as s then
-							count := source.last_count
-							target.put_new_special (s, count, source.last_capacity)
-						else
-							target.put_new_object (t)
+			if attached source.last_ident as si then 
+				if static.is_subobject then
+					forward_fields (static, si)
+				else
+					if si /= source_void_ident then
+						if not known_objects.has (si) then
+							process_announcement (si)
+						elseif known_objects [si].ident = target_void_ident then
+							t := source.last_dynamic_type
+							if t.is_special and then attached {IS_SPECIAL_TYPE} t as s then
+								count := source.last_count
+								target.put_new_special (s, count, source.last_capacity)
+							else
+								target.put_new_object (t)
+							end
+							ti := target.last_ident
+							tid.make (ti, t, count)
+							known_objects [si] := tid
 						end
-						ti := target.last_ident
-						tid.make (ti, t, count)
-						known_objects [si] := tid
 					end
 				end
 			end

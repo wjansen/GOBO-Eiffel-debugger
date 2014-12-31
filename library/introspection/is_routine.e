@@ -69,7 +69,6 @@ feature {NONE} -- Initialization
 			local_count_set: local_count = lc
 			old_value_count_set: old_value_count = oc
 			vars_set: vars = v
-			once_call_set: once_call = o
 		end
 
 feature -- Access. 
@@ -394,7 +393,7 @@ feature -- Access.
 			Result := 0 <= i and then i < inline_routine_count
 		end
 
-	inline_routine_at (i: INTEGER): IS_ROUTINE
+	inline_routine_at (i: INTEGER): attached IS_ROUTINE
 		note
 			return: "`i'-th inline routine defined within `Current'."
 		require
@@ -449,7 +448,7 @@ feature -- Searching
 
 feature -- COMPARABLE 
 
-	is_less alias "<" (other: IS_ROUTINE): BOOLEAN
+	is_less alias "<" (other: attached IS_ROUTINE): BOOLEAN
 		do
 			Result := Precursor (other)
 			if not Result and then same_name (other) then
@@ -493,7 +492,7 @@ feature -- Output
 
 feature {IS_BASE} -- Implementation 
 
-	vars: IS_SEQUENCE [like var_at]
+	vars: IS_SPARSE_ARRAY [like var_at]
 
 feature {NONE} -- Implementation 
 
