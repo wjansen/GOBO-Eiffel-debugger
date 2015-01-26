@@ -11,6 +11,15 @@ inherit
 			default_create
 		end
 
+	DT_SHARED_SYSTEM_CLOCK
+		undefine
+			copy,
+			is_equal,
+			out
+		redefine
+			default_create
+		end
+	
 	PLATFORM
 		undefine
 			copy,
@@ -143,9 +152,9 @@ feature -- Access
 		note
 			return: "Is `i' the index of a type?"
 		do
-			Result := 0 <= i and then i < type_count and then attached all_types as ts and then attached ts [i]
+			Result := 0 <= i and then i < type_count and then all_types [i] /= Void
 		ensure
-			validity: Result = (0 <= i and then i < type_count and then attached all_types as ts and then attached ts [i])
+			validity: Result = (0 <= i and then i < type_count and then all_types [i] /= Void)
 		end
 
 	type_at (i: INTEGER): detachable IS_TYPE
@@ -198,7 +207,6 @@ feature -- Access
 			if valid_type (Integer_ident) then
 				t := type_at (Integer_ident)
 			end
-			check attached t end
 			Result := t
 		end
 
@@ -696,11 +704,13 @@ feature -- Searching
 		note
 			return: "Descriptor of the SPECIAL type of `it' items."
 		do
-			push_type (it.ident)
-			if attached {IS_SPECIAL_TYPE} type_by_class_and_generics (once "SPECIAL", 1, attac) as s then
-				Result := s
+			if valid_type (it.ident) then
+				push_type (it.ident)
+				if attached {IS_SPECIAL_TYPE} type_by_class_and_generics (once "SPECIAL", 1, attac) as s then
+					Result := s
+				end
+				pop_types (1)
 			end
-			pop_types (1)
 		ensure
 			when_found: attached {like type_at} Result as r
 									implies Result.is_special and then Result.generic_at (0) = it
@@ -832,6 +842,18 @@ feature -- Output
 			end
 		end
 
+feature -- Time stamp
+
+	actual_time_as_integer: INTEGER_64
+		local
+			now: DT_DATE_TIME
+		do
+			now :=  utc_system_clock.date_time_now
+			Result := now.day_count
+			Result := Result * now.Milliseconds_in_day
+			Result := Result + now.millisecond_count
+		end
+	
 feature {IS_BASE} -- Implementation 
 
 	all_classes: IS_SPARSE_ARRAY [like class_at]

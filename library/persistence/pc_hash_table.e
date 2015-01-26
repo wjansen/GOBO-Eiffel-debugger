@@ -21,18 +21,20 @@ feature {NONE} -- Initialization
 
 	make (n: INTEGER)
 		note
-			action: "Create the table with capacity `n'."
+			action: "Create the table with capacity at least `n'."
 		require
 			positive: n > 0
 		local
 			k0: detachable K_
 			v0: V_
+			prim: INTEGER
 		do
-			create keys.make_filled (k0, n)
-			create data.make_filled (v0, n)
+			prim := primes.higher_prime (n)
+			create keys.make_filled (k0, prim)
+			create data.make_filled (v0, prim)
 			slot := 0
 			clash_count := 0
-			max_clash_count := n // 3 + 1
+			max_clash_count := prim // 6
 		end
 
 feature -- Access 
@@ -41,11 +43,15 @@ feature -- Access
 		deferred
 		end
 	
-	item alias "[]" (key: K_): V_
+	item alias "[]" (key: K_): V_ assign put
+		local
+			k0: K_
 		do
-			set_slot (key)
-			if attached data [slot] as ds then
-				Result := ds
+			if key /= k0 then
+				if keys[slot] /= key then
+					set_slot (key, False)
+				end
+				Result := data [slot]
 			end
 		end
 
@@ -54,13 +60,14 @@ feature -- Access
 			k, k0: detachable K_
 			h: INTEGER
 		do
-			slot := 0
 			from
 				h := keys.count
 			until h = 0 loop
 				h := h - 1
 				k := keys [h]
-				if k /= k0 and then data [h] = v then
+				if k = k0 then
+					slot := h
+				elseif data [h] = v then
 					Result := k
 					slot := h
 					h := 0
@@ -84,8 +91,7 @@ feature -- Status
 			k0: detachable K_
 		do
 			if key /= k0 then
-				check key /= Void end
-				set_slot (key)
+				set_slot (key, False)
 				Result := keys[slot] /= k0
 			end
 		ensure then
@@ -95,11 +101,14 @@ feature -- Status
 feature -- Element change 
 
 	put (value: V_; key: K_)
+		local
+			k0: K_
 		do
-			if has (key) then
-				data [slot] := value
-			else
+			set_slot (key, True)
+			if keys[slot] = k0 then
 				force (value, key, True)
+			else				
+				data [slot] := value
 			end
 		end
 
@@ -111,34 +120,42 @@ feature -- Removal
 		local
 			k, k0: detachable K_
 			v0: V_
-			h, h0, cap: INTEGER
+			h, h0, hk, cap, diff: INTEGER
+			todo: BOOLEAN
 		do
 			if has (key) then
 				cap := keys.count
 				from
-					k := key
 					h0 := slot
 					h := (h0 + 1) \\ cap
-				until k = k0 loop
 					k := keys [h]
+				until k = k0 loop
 					if k /= k0 then
-						check k /= Void end
-						if hash (k) \\ cap = h then
-							k := k0
+						hk := hash (k) \\ cap
+						if h > h0 then
+							todo := hk <= h0 or else hk > h
 						else
+							todo := hk <= h0 and then hk > h
+						end
+						 if todo then
 							keys [h0] := k
 							data [h0] := data [h]
+							diff := h - h0
+							 if diff < 0 then
+								 diff := diff + cap
+							 end
+							clash_count := clash_count - diff
 							h0 := h
-							h := (h + 1) \\ cap
 						end
-					end
+						h := (h + 1) \\ cap
+						k := keys [h]
 				end
+				end
+				slot := h
 				keys [h0] := k0
 				data [h0] := v0
 				count := count - 1
 			end
-		ensure
-			removed: not has (key)
 		end
 
 	clear
@@ -316,12 +333,12 @@ feature {PC_HASH_TABLE, PC_HASH_TABLE_CURSOR} -- Implementation
 
 	max_clash_count: INTEGER
 
-	set_slot (key: attached K_)
+	set_slot (key: attached K_; inserting: BOOLEAN)
 		note
 			action:
 			"[
 			 Set `slot' such that `keys[slot]=key' if `key' is in the table, 
-			 otherwise, set `slot' to the next free slot at or ofter `hash(key)'.
+			 otherwise, set `slot' to the next free slot at or after `hash(key)'.
 			 ]"
 		require
 			valid: valid_key (key)
@@ -329,12 +346,16 @@ feature {PC_HASH_TABLE, PC_HASH_TABLE_CURSOR} -- Implementation
 			k, k0: detachable K_
 			h, cap: INTEGER
 		do
+			cap := keys.count
 			if key /= keys[slot] then
-				cap := keys.count
+				slot := hash (key) \\ cap
 				from
-					h := hash (key) \\ cap
+					h := slot
 					k := keys [h]					
-				until k = k0 or else k = key loop
+				until k = key or else k = k0 loop
+					if inserting then
+						clash_count := clash_count + 1
+					end
 					h := (h + 1) \\ cap
 					k := keys [h]
 				end
@@ -348,18 +369,20 @@ feature {PC_HASH_TABLE, PC_HASH_TABLE_CURSOR} -- Implementation
 		require
 			valid: valid_key (key)
 			not_has_key: not has (key)
+			slot_set: -- `slot' is set according to `key'.
 		local
 			cap: INTEGER
 		do
 			cap := keys.count
-			if growing and then (clash_count > max_clash_count
-													 or else count + 1 >= cap) then
-				resize (2*cap + 1)
-				set_slot (key)
+			if growing and then (clash_count > max_clash_count 
+													 or else count + 1 >= cap)	-- ensure one free slot
+			 then
+				resize (2*cap)
+				set_slot (key, False)
 			end
 			keys [slot] := key
-			data [slot] := value
 			count := count + 1
+			data [slot] := value
 		ensure
 			has_key: has (key)
 			extended: count = old count + 1
@@ -384,8 +407,7 @@ feature {PC_HASH_TABLE, PC_HASH_TABLE_CURSOR} -- Implementation
 				until h = old_n loop
 					k := old_keys [h]
 					if k /= k0 then
-						check k /= Void end
-						set_slot (k)	-- set `slot' to appropriate free slot
+						set_slot (k, True)
 						force (old_data [h], k, False)
 					end
 					h := h + 1
@@ -396,13 +418,17 @@ feature {PC_HASH_TABLE, PC_HASH_TABLE_CURSOR} -- Implementation
 			same_count: count = old count
 		end
 
+	primes: PRIMES
+		once
+			create Result
+		end
+	
 invariant
 
 	same_capacity: data.count = keys.count
 	has_free_slots: count < keys.count
 	clash_count_small_enough: clash_count <= max_clash_count
 	valid_slot: 0 <= slot and slot < keys.count
-
 
 note
 

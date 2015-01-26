@@ -1826,7 +1826,7 @@ public abstract class Expression : Object {
 				throw new ExpressionError.NO_STACK ("No valid stack frame.");
 			f = f.caller;
 		}
-		Routine* r = f!=null ? f.routine : null;
+		Routine* r = (!is_down() && f!=null) ? f.routine : null;
 		if (pt==null) 
 			pt = r.vars[0]._entity.type;
 		e = pt.query_by_name(out n, name, arg==null, r);
@@ -2027,7 +2027,7 @@ public abstract class Expression : Object {
 			e = (Entity*)r.vars[i];
 			if (!e.is_assignable_from(ab.dynamic_type)) 
 				throw new ExpressionError.INVALID_ARGUMENTS
-					(@"Argument $i is does not conform to formal type.");
+					(@"Argument $i does not conform to formal type.");
 		}
 		for (a=arg; a!=null; a=a.next) {
 			if (a.down!=null) a.down.adjust_to_parent();
@@ -2054,12 +2054,15 @@ public abstract class Expression : Object {
 			int old_range, vi;
 			check_args(true);
 			void*[] addresses = n>1 ? new void*[n-1] : null;
+			if (r.call==null) 
+				throw new ExpressionError.CALL_ERROR
+					("C code not known to debugger.");
 			try {
 				for (k=0, ex=arg; ex!=null; ex=ex.next, ++k) 
 					addresses[k] = ex.bottom().address();
 				wrap_func(r.wrap, r.call, obj, &addresses[0], result);
 			} catch (Error err) {
-				throw new ExpressionError.CALL_ERROR
+				throw new ExpressionError.CALL_ERROR 
 					("Error in called function.");
 			}
 		}

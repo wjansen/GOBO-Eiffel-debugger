@@ -140,7 +140,7 @@ feature {PC_DRIVER} -- Push and pop data
 
 feature {PC_DRIVER} -- Writing elementary data
 
-	put_known_ident (id: detachable NATURAL; t: IS_TYPE)
+	put_known_ident (t: Is_TYPE; id: detachable NATURAL)
 		local
 			item: like no_item
 			d: INTEGER

@@ -80,18 +80,20 @@ Moreover the effect of buttons is modified by the radio buttons
 </p><dl class="description"><dt class="dt-description"><span style="font-family:sans-serif">break</span></dt><dd class="dd-description"> treat breakpoints and tracepoints as defined;
 </dd><dt class="dt-description"><span style="font-family:sans-serif">trace</span></dt><dd class="dd-description"> treat breakpoints as tracepoints, i.e. do not stop;
 </dd><dt class="dt-description"><span style="font-family:sans-serif">silent</span></dt><dd class="dd-description"> ignore breakpoints and tracepoints at all.
-</dd></dl><p>The effect of button <span style="font-family:sans-serif">Stop</span> 
-(The button label <span style="font-family:sans-serif">Stop</span> is suppressed on some platforms 
-in favour of the keyboard accelerator <span style="font-family:sans-serif">Pause</span>. 
-You may need to read <span style="font-family:sans-serif">Pause</span> for <span style="font-family:sans-serif">Stop</span> in the following.
-)
-is complementary to that of the other buttons. 
+</dd></dl><p>The effect of button <span style="font-family:sans-serif">Stop</span> is complementary to that of the other buttons&#XA0;(the 
+button label <span style="font-family:sans-serif">Stop</span> is suppressed on some platforms 
+in favour of the keyboard accelerator <span style="font-family:sans-serif">Pause</span>, 
+you may need to read <span style="font-family:sans-serif">Pause</span> for <span style="font-family:sans-serif">Stop</span> in the following). 
 Quite naturally, also its sensitivity is complementary:
 if the debuggee has stopped for some reason then <span style="font-family:sans-serif">Stop</span> is insensitive 
 while the other &#X201C;dynamic&#X201D; buttons are sensitive, 
 but if the debuggee is running then <span style="font-family:sans-serif">Stop</span> is sensitive while 
 the dynamic buttons (and most GUI elements) are insensitive.
-</p><p>Some remarks seem to be in order to explain when the <span style="font-family:sans-serif">Next</span> 
+</p><blockquote class="quote">
+<div class="center"><span style="font-weight:bold">Hint</span></div> 
+The <span style="font-family:sans-serif">Stop</span> button has a second effect: pressing it will cancel 
+a long running function evaluation (e.g. if it entered an endless loop).
+</blockquote><p>Some remarks seem to be in order to explain when the <span style="font-family:sans-serif">Next</span> 
 and <span style="font-family:sans-serif">Step</span> commands actually stop. 
 Command <span style="font-family:sans-serif">Next</span> stops before the next instruction. 
 In particular, it stops at the keywords and special symbols 
@@ -100,9 +102,8 @@ In particular, it stops at the keywords and special symbols
 <span style="font-family:monospace">create</span> (if an instruction), <span style="font-family:monospace">retry</span>, 
 <span style="font-family:monospace">:=</span>, and <span style="font-family:monospace">?=</span>, 
 as well as before a procedure call (qualified or not). 
-</p><blockquote class="quote">
-<div class="center"><span style="font-weight:bold">Hint</span></div> These program points are those where a breakpoint can be set. 
-</blockquote><p>The stop of command <span style="font-family:sans-serif">Step</span> is more involved. 
+These program points are also those where a breakpoint can be set. 
+</p><p>The stop of command <span style="font-family:sans-serif">Step</span> is more involved. 
 If stopped just before an instruction (e.g. as the result of a <span style="font-family:sans-serif">Next</span> command) 
 then the program continues to the next routine call or instruction; 
 but if it stopped at (not before!) a routine call 
@@ -111,7 +112,7 @@ and stops there at the <span style="font-family:monospace">do</span> or <span st
 (or at the <span style="font-family:monospace">end</span> keyword in case of an already initialised once routine) 
 what is considered stopping at an instruction. 
 The two stages of the <span style="font-family:sans-serif">Step</span> command have been introduced to be able 
-to stop before nested function calls, and to make those stops visible. 
+to stop before nested function calls and to make those stops visible. 
 For example, consider the procedure call 
 <span style="font-family:monospace">some_proc&#XA0;(some_func&#XA0;(arg))</span> 
 (where for simplicity <span style="font-family:monospace">arg</span> is not a function call) 
@@ -187,7 +188,7 @@ as the button name indicates, by clicking <span style="font-family:sans-serif">R
 This form of restoring does even a bit more: the string in text field 
 <span style="font-family:sans-serif">Arguments</span> becomes the new command line arguments. 
 After editing this field its contents does <U>not</U> 
-present the actual arguments as long as the <span style="font-family:sans-serif">Restart</span> button 
+represent the actual arguments as long as the <span style="font-family:sans-serif">Restart</span> button 
 has not been clicked.
 </p><blockquote class="quote">
 <div class="center"><span style="font-weight:bold">Hint</span></div> 

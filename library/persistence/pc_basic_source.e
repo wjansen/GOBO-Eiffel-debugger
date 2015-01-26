@@ -10,19 +10,37 @@ class PC_BASIC_SOURCE
 
 inherit
 
-	PC_MEDIUM_SOURCE
+	PC_SOURCE [NATURAL]
 		redefine
+			must_expand_strings,
 			reset,
-			set_file,
 			read_once
 		end
 
+	IS_BASE
+		undefine
+			default_create,
+			copy, is_equal, out
+		end 
+	
 create
 
 	make
 
 feature -- Initialization
 
+	make (flags: INTEGER)
+		do
+			system := runtime_system
+			make_source
+			reset
+			must_expand_strings := False
+			can_expand_strings := False
+			has_consecutive_indices := flags & Non_consecutive_flag = 0 
+			has_position_indices := flags & File_position_flag /= 0 
+			has_capacities := flags & Capacity_flag /= 0 
+		end
+	
 	reset
 		do
 			Precursor
@@ -34,27 +52,53 @@ feature -- Initialization
 
 feature -- Access
 
+	has_position_indices: BOOLEAN
+
+	has_consecutive_indices: BOOLEAN
+
+	has_capacities: BOOLEAN
+	
+	void_ident: NATURAL = 0
+
+	top_ident: NATURAL
+
+	system: IS_SYSTEM
+
+	medium: IO_MEDIUM
+
+	file: detachable FILE
+	
 	has_integer_indices: BOOLEAN = True
 
-	can_expand_strings: BOOLEAN = False
+	can_expand_strings: BOOLEAN
 
-	must_expand_strings: BOOLEAN = False
+	must_expand_strings: BOOLEAN
 
+	is_serial: BOOLEAN
+		do
+			Result := True
+		end
+	
 	byte_count: INTEGER
 		do
 			Result := position - start_position
 		end
 
 feature -- Status setting
-
+	
+	set_version (major, minor: INTEGER)
+		do
+		end
+	
 	set_file (m: like medium)
 		do
 			medium := m
-			--if attached {FILE} m as f then
-			--	position := f.position
-			--else
+			if attached {FILE} m as f and then not attached {CONSOLE} f then
+				file := f
+				position := f.position
+			else
 				position := 0
-			--end
+			end
 			start_position := position
 		end
 
@@ -74,8 +118,13 @@ feature {PC_BASE} -- Reading header information
 			end
 		end
 
-feature {PC_DRIVER} -- Reading structure definitions
-
+feature {PC_BASE} -- Reading structure definitions
+	
+	set_ident (id: like last_ident)
+		do
+			last_ident := id
+		end
+	
 	read_next_ident
 		do
 			read_uint
@@ -102,9 +151,9 @@ feature {PC_DRIVER} -- Reading structure definitions
 			end
 		end
 
-feature {PC_DRIVER} -- Reading object definitions 
+feature {PC_BASE} -- Reading object definitions 
 
-	adjust_to (id: like last_ident)
+	read_description
 		do
 			read_int
 			read_type (last_int)
@@ -119,6 +168,7 @@ feature {PC_DRIVER} -- Reading object definitions
 				end
 			else
 				last_count := 0
+				last_capacity := 0
 			end			
 		end
 	
@@ -160,7 +210,7 @@ feature {PC_DRIVER} -- Reading object definitions
 			end
 		end
 
-feature {PC_DRIVER, PC_HEADER} -- Reading elementary data
+feature {PC_BASE} -- Reading elementary data
 
 	read_boolean
 		do
@@ -224,7 +274,7 @@ feature {PC_DRIVER, PC_HEADER} -- Reading elementary data
 
 	read_natural_64
 		do
-			read_uint
+			read_uint64
 			last_natural_64 := last_uint64
 		end
 
@@ -294,6 +344,12 @@ feature {PC_DRIVER, PC_HEADER} -- Reading elementary data
 			last_unicode := last_str
 		end
 
+feature {PC_DRIVER} -- Object location
+	
+	set_index (s: IS_SPECIAL_TYPE; i: NATURAL; in: NATURAL)
+		do
+		end
+
 feature {NONE} -- Implementation
 
 	start_position: INTEGER
@@ -332,19 +388,19 @@ feature {NONE} -- Implementation
 						b := b - 0x40
 					end
 				else
-						-- remove continuation bit
+					-- remove continuation bit
 					b := b - 0x80
 				end
-					-- shift to the left
+				-- shift to the left
 				b := b |<< offset
-					-- >>
-					-- update shift distance
+				-- >>
+				-- update shift distance
 				offset := offset + 7
-					-- put into result
+				-- put into result
 				last_int := last_int + b
 			end
 			if neg then
-					-- apply one's complement
+				-- apply one's complement
 				last_int := -last_int - 1
 			end
 		end
@@ -364,15 +420,15 @@ feature {NONE} -- Implementation
 				b := last_byte
 				ready := b < 0x80
 				if not ready then
-						-- remove continuation bit
+					-- remove continuation bit
 					b := b - 0x80
 				end
-					-- shift to the left
+				-- shift to the left
 				b := b |<< offset
-					-- >>
-					-- update shift distance
+				-- >>
+				-- update shift distance
 				offset := offset + 7
-					-- put into result
+				-- put into result
 				last_uint := last_uint + b
 			end
 		end
@@ -740,38 +796,6 @@ feature {NONE} -- Implementation
 			end
 		end
 
-	read_strings (n: NATURAL)
-		local
-			i, k: INTEGER
-		do
-			k := n.to_integer_32
-			if k > strings.count then
-				strings := strings.aliased_resized_area_with_default (Void, k)
-			end
-			from
-			until i = k loop
-				read_string
-				strings [i] := last_string
-				i := i + 1
-			end
-		end
-
-	read_unicodes (n: NATURAL)
-		local
-			i, k: INTEGER
-		do
-			k := n.to_integer_32
-			if k > unicodes.count then
-				unicodes := unicodes.aliased_resized_area_with_default (Void, k)
-			end
-			from
-			until i = k loop
-				read_unicode
-				unicodes [i] := last_unicode
-				i := i + 1
-			end
-		end
-
 feature {NONE} -- Implementation
 
 	scoop: BOOLEAN
@@ -798,6 +822,10 @@ feature {NONE} -- External implementation
 			"((union { EIF_REAL_64 f;  EIF_INTEGER_64 i;}*)&$n)->f"
 		end
 
+invariant
+
+	when_not_serial: not serial implies file /= Void
+	
 note
 
 	author: "Wolfgang Jansen"

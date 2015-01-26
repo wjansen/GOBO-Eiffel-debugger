@@ -202,7 +202,7 @@ feature {PC_DRIVER} -- Forward data
 		do
 			Precursor (t)
 			if flat then
-				put_known_ident (last_ident, t)
+				put_known_ident (t, last_ident)
 			end
 		end
 
@@ -210,7 +210,7 @@ feature {PC_DRIVER} -- Forward data
 		do
 			Precursor (s, n, cap)
 			if flat then
-				put_known_ident (last_ident, s)
+				put_known_ident (s, last_ident)
 			end
 		end
 
@@ -465,10 +465,10 @@ feature {PC_DRIVER} -- Writing elementary data
 			file.put_new_line
 		end
 
-	put_known_ident (id: NATURAL; t: IS_TYPE)
+	put_known_ident (t: IS_TYPE; id: NATURAL)
 		do
 			if id = void_ident then
-				put_void_ident (field_type)
+				put_void_ident (t)
 			else
 				write_name
 				write_ident (id)

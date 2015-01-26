@@ -148,6 +148,7 @@ public class ExpressionChecker : Expander {
 				}
 			}
 		} else {
+			parsed = null;
 			ClassText* ct = null;
 			RoutineText* rt = null;	
 			head = parser.error.message;

@@ -79,6 +79,12 @@ feature -- Element change
 
 feature -- Removal 
 
+	remove (key: K_)
+		deferred
+		ensure
+			removed: not has (k)
+		end
+	
 	clear
 		deferred
 		ensure

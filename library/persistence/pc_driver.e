@@ -17,19 +17,33 @@ inherit
 
 feature {NONE} -- Initialization 
 
-	common_make (t: like target; s: like source; opts: INTEGER;
+	make (t: like target; s: like source; order, opts: INTEGER;
 			oo: like known_objects)
-		local
-			ord: INTEGER
+		note
+			action: ""
+			t: "traversal target"
+			s: "traversal source"
+			ord: 
+				"[
+				 traversal ordering:
+				 one of `Fifo_flag', `Lifo_flag', `Deep_flag', `Forward_flag'
+				 ]"
+			opts: "ORing of non-traversal options"
+			oo: "auxiliary storage"
+		require
+			valid_target: target_valid (t)
+			valid_source: source_valid (s)
+			valid_flags: valid_flags (opts)
+			when_target_expands_strings: t.must_expand_strings implies s.can_expand_strings
+			when_source_expands_strings: s.must_expand_strings implies t.can_expand_strings
 		do
 			target := t
 			source := s
-			known_objects := oo
 			once_observing := opts & Once_observation_flag /= 0
-			ord := opts & Order_flag
-			deep := ord & Deep_flag > 0 and then ord /= Forward_flag
+			deep := order & Deep_flag > 0 and then order /= Forward_flag
 			forward := False
 			expand_strings := target.must_expand_strings or source.must_expand_strings
+			known_objects := oo
 		ensure
 			taget_set: target = t
 			source_set: source = s
@@ -69,26 +83,40 @@ feature -- Access
 
 	target_root_ident: detachable TI_
 			-- Root of traversal in `target'. 
+		local
+			tid: PC_TYPED_IDENT [TI_]
 		do
 			if source_root_ident /= source_void_ident
 				and then attached source_root_ident as si
 			 then
-				Result := known_objects [si].ident
+				tid := known_objects [si]
+				Result := tid.ident
 			end
 		end
 
 	root_type: IS_TYPE
-			-- Type of root of traversal. 
+			-- Type of root of traversal.
+		local
+			tid: PC_TYPED_IDENT [TI_]
 		do
-			if source_root_ident /= source_void_ident 
-				and then attached source_root_ident as si
-			 then
-				Result := known_objects [si].type
+			if source_root_ident /= source_void_ident then
+				tid := known_objects [source_root_ident]
+				Result := tid.type
 			end
 		end
 
+	known_objects: PC_TABLE [PC_TYPED_IDENT [TI_], SI_]
+
 feature -- Status 
 
+	valid_target (t: like target): BOOLEAN
+		deferred
+		end
+			
+	valid_source (s: like source): BOOLEAN
+		deferred
+		end
+			
 	is_in_order: BOOLEAN
 		do
 			Result := deep
@@ -120,10 +148,15 @@ feature -- Basic operation
 	
 feature {NONE} -- Scanning structures 
 
-	common_traverse
+	traverse
 		note
-			action: "Deep traversal of an object given the `source'."
+			action:
+			"[
+			 Deep traversal of an object given the `source'.
+			 Set `source_root_ident' accordingly.
+			 ]"
 		local
+			tid: PC_TYPED_IDENT [TI_]
 			was_collecting: BOOLEAN
 		do
 			reset
@@ -141,16 +174,37 @@ feature {NONE} -- Scanning structures
 				known_objects.do_values (fin)
 			end
 			if source_root_ident /= source_void_ident
-				and then attached source_root_ident as si
 			 then
-				target.finish (known_objects [si])
+				tid := known_objects [source_root_ident]
+				target.finish (tid.ident, tid.type)
 			end
 		end
 
 	process_closure
 		note
-			action: "Process a whole persistence closure."
-		deferred
+			action:
+			"[
+			 Process the persistence closure of the `source_root_ident'.
+			 ]"
+		require
+			nothing_todo: todo_count = 0
+		local
+			tid: PC_TYPED_IDENT [TI_]
+		do
+			move_to_next_ident
+			from
+				if next_ident /= source_void_ident then
+					process_announcement (next_ident)
+				end
+			until todo_count = 0 loop
+				move_to_next_ident
+				tid := known_objects[next_ident]
+				process_data (next_ident, tid)
+			end
+			move_to_next_ident
+			source_root_ident := next_ident
+		ensure
+			ready: todo_count = 0
 		end
 
 	process_announcement (si: SI_)
@@ -163,21 +217,21 @@ feature {NONE} -- Scanning structures
 			si: "source ident"
 		require
 			is_object: si /= source_void_ident
-			not_known: not known_objects.has (si)
+			unknown: not known_objects.has (si)
 		local
 			tid: PC_TYPED_IDENT [TI_]
+			t: IS_TYPE
 			ti: TI_
-			dyn: IS_TYPE
 			n: NATURAL
 		do
-			source.adjust_to (si)
-			dyn := source.last_dynamic_type
-			check dyn /= Void end
-			if dyn.is_special and then attached {IS_SPECIAL_TYPE} dyn as st then
-				n := source.last_count
-				target.put_new_special (st, n, source.last_capacity)
+			source.read_description
+			t := source.last_dynamic_type
+			n := source.last_count
+			tid.make (target.void_ident, t, n)
+			if t.is_special and then attached {IS_SPECIAL_TYPE} t as st then
+				target.put_new_special (st, n, n)
 			else
-				target.put_new_object (dyn)
+				target.put_new_object (t)
 			end
 			ti := target.last_ident
 			if once_observing then
@@ -185,50 +239,47 @@ feature {NONE} -- Scanning structures
 				target.put_once (source.last_class, source.last_string, ti)
 				ti := target.last_ident
 			end
-			tid.make (ti, dyn, n)
+			tid.make (ti, t, tid.count)
 			known_objects [si] := tid
 			if deep then
-				process_data (si)
+				process_data (si, tid)
 			else
-				add_announced (si)
+				add_todo (si)
 			end
 		ensure
 			known: known_objects.has (si)
 		end
 
-	add_announced (si: SI_)
-		note
-			action: "Add `si' to the set of announced objects"
-		deferred
-		end
-	
-	process_data (si: SI_)
-		require
+	process_data (si: SI_; tid: PC_TYPED_IDENT [TI_])
+ 		require
+			todo: todo_count > 0
+			is_object: si /= source_void_ident
 			known: known_objects.has (si)
 		local
-			tid: PC_TYPED_IDENT [TI_]
 			t: IS_TYPE
+			ti: TI_
+			n: NATURAL
 		do
-			tid := known_objects [si]
-			if attached tid.ident as ti then
-				if not deep then
-					target.put_next_ident (ti)
-				end
-				t := tid.type
-				if t.is_special and then attached {IS_SPECIAL_TYPE} t as s then
-					process_special (s, tid.count, si, ti, False)
-				elseif t.is_agent and then attached {IS_AGENT_TYPE} t as a then
-					process_agent (a, si, ti, False)
-				else
-					process_normal_or_tuple (t, si, ti, False)
-				end
+			remove_todo (si)
+			ti := tid.ident
+			t := tid.type
+			if not deep then
+				target.put_next_ident (ti)
 			end
-		ensure
+			if t.is_special and then attached {IS_SPECIAL_TYPE} t as st then
+				n := tid.count
+				process_special (st, n, si, ti)
+			elseif t.is_agent and then attached {IS_AGENT_TYPE} t as at then
+				process_agent (at, si, ti)
+			else
+				process_normal_or_tuple (t, si, ti)
+			end
+		ensure	
 			known: known_objects.has (si)
+						 and then known_objects [si].ident /= target_void_ident
 		end
 
-	process_normal_or_tuple (t: IS_TYPE; si: detachable SI_; ti: detachable TI_;
-													 in_process: BOOLEAN)
+	process_normal_or_tuple (t: IS_TYPE; si: detachable SI_; ti: detachable TI_)
 		require
 			not_special: not t.is_special
 			not_agent: not t.is_agent
@@ -242,10 +293,8 @@ feature {NONE} -- Scanning structures
 				is_string := t.is_string
 				is_unicode := t.is_unicode
 			end
-			if not in_process then
-				source.pre_object (t, si)
-				target.pre_object (t, ti)
-			end
+			source.pre_object (t, si)
+			target.pre_object (t, ti)
 			if is_string then
 				source.read_string
 				target.put_string (source.last_string)
@@ -259,18 +308,15 @@ feature {NONE} -- Scanning structures
 					f := t.field_at (k)
 					source.set_field (f, si)
 					target.set_field (f, ti)
-					process_entity (f)
+					process_entity (f.type)
 					k := k + 1
 				end
 			end
-			if not in_process then
-				source.post_object (t, si)
-				target.post_object (t, ti)
-			end
+			source.post_object (t, si)
+			target.post_object (t, ti)
 		end
 
-	process_agent (a: IS_AGENT_TYPE; si: SI_; ti: detachable TI_;
-													 in_process: BOOLEAN)
+	process_agent (a: IS_AGENT_TYPE; si: SI_; ti: TI_)
 		require
 			si_not_null: si /= source_void_ident
 		local
@@ -278,10 +324,8 @@ feature {NONE} -- Scanning structures
 			k, n: INTEGER
 		do
 			n := a.closed_operand_count
-			if not in_process then
-				source.pre_object (a, si)
-				target.pre_object (a, ti)
-			end
+			source.pre_object (a, si)
+			target.pre_object (a, ti)
 			if n > 0 then
 				source.pre_agent (a, si)
 				target.pre_agent (a, ti)
@@ -291,7 +335,7 @@ feature {NONE} -- Scanning structures
 					f := a.field_at (k)
 					source.set_field (f, si)
 					target.set_field (f, ti)
-					process_entity (f)
+					process_entity (f.type)
 					k := k + 1
 				end
 				source.post_agent (a, si)
@@ -300,16 +344,13 @@ feature {NONE} -- Scanning structures
 			if attached a.last_result as r then
 				source.set_field (r, si)
 				target.set_field (r, ti)
-				process_entity (r)
+				process_entity (r.type)
 			end
-			if not in_process then
-				source.post_object (a, si)
-				target.post_object (a, ti)
-			end
+			source.post_object (a, si)
+			target.post_object (a, ti)
 		end
 
-	process_special (s: IS_SPECIAL_TYPE; n: NATURAL; si: SI_; ti: detachable TI_;
-			in_process: BOOLEAN)
+	process_special (s: IS_SPECIAL_TYPE; n: NATURAL; si: SI_; ti: TI_)
 		note
 			action: "Process `SPECIAL' of generic type `s'."
 			n: "count"
@@ -324,10 +365,8 @@ feature {NONE} -- Scanning structures
 			i: INTEGER
 		do
 			it := s.item_type
-			if not in_process then
-				source.pre_special (s, n, si)
-				target.pre_special (s, n, ti)
-			end
+			source.pre_special (s, n, si)
+			target.pre_special (s, n, ti)
 			if it.is_basic then
 				source.set_index (s, 0, si)
 				target.set_index (s, 0, ti)
@@ -369,50 +408,44 @@ feature {NONE} -- Scanning structures
 				until k = n loop
 					source.set_index (s, k, si)
 					target.set_index (s, k, ti)
-					process_entity (f)
+					process_entity (f.type)
 					k := k + 1
 				end
 			end
-			if not in_process then
-				source.post_special (s, si)
-				target.post_special (s, ti)
-			end
+			source.post_special (s, si)
+			target.post_special (s, ti)
 		end
 
-	process_entity (f: IS_ENTITY)
+	process_entity (static: IS_TYPE)
 		note
 			action: "Process entity `f'."
 			f: "field descriptor"
 		local
 			tid: PC_TYPED_IDENT [TI_]
-			si, si0: detachable SI_
-			ti0: detachable TI_
-			t: IS_TYPE
-			ready: BOOLEAN
+			ti: TI_
+			si: detachable SI_
 		do
-			t := f.type
-			if t.is_basic then
-				process_basic_field (t)
-			elseif t.is_subobject then
-				process_normal_or_tuple (t, si0, ti0, False)
+			if static.is_basic then
+				process_basic_field (static)
+			elseif static.is_subobject then
+				process_normal_or_tuple (static, source_void_ident, target_void_ident)
 			else
 				source.read_field_ident
 				si := source.last_ident
 				if si /= source_void_ident then
-					check si /= Void end
 					if known_objects.has (si) then
 						tid := known_objects [si]
-						if tid.ident /= target_void_ident and then attached tid.ident as ti then
-							t := source.last_dynamic_type
-							target.put_known_ident (ti, tid.type)
-							ready := True
+						ti := tid.ident
+						if ti /= target_void_ident then
+							target.put_known_ident (tid.type, ti)
+						else
+							target.put_void_ident (static)
 						end
-					end
-					if not ready then
+					else
 						process_announcement (si)
 					end
 				else
-					target.put_void_ident (t)
+					target.put_void_ident (static)
 				end
 			end
 		end
@@ -479,12 +512,50 @@ feature {NONE} -- Implementation
 
 	expand_strings: BOOLEAN
 
-	known_objects: PC_TABLE [ PC_TYPED_IDENT [TI_], SI_]
-
+	todo_count: INTEGER
+		deferred
+		end
+	
+	add_todo (si: SI_)
+		note
+			action: "Add `si' to the set of announced objects."
+		deferred
+		ensure
+			added: todo_count = old todo_count + 1
+		end
+	
+	remove_todo (si: SI_)
+		note
+			action: "Add `si' to the set of announced objects."
+		deferred
+		ensure
+			removed: todo_count = old todo_count - 1
+		end
+	
+	next_ident: like source_void_ident
+	next_tid: PC_TYPED_IDENT [TI_]
+	
+	move_to_next_ident
+		note
+			action:
+			"[
+			 Set `next_typed_ident' to the ident whose data are to be processed next
+			 if `todo_count>0', otherwise, to `source_root_ident'.
+			 ]"
+			 with_description: "Is `next_tid' to be filled?"
+		require
+			todo: todo_count > 0 
+		deferred
+		ensure
+			not_changed: todo_count = old todo_count
+			when_ready: todo_count = 0 implies next_ident = source_root_ident
+		end
+	
 invariant
 
 	deep_definition: deep = ((flags & Order_flag) = Deep_flag)
 	forward_definition: forward = ((flags & Order_flag) = Forward_flag)
+	todo_count_not_negative: todo_count >= 0
 
 note
 

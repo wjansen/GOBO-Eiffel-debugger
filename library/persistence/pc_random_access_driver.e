@@ -13,38 +13,25 @@ class PC_RANDOM_ACCESS_DRIVER [TI_, SI_ -> attached ANY]
 inherit
 
 	PC_DRIVER [TI_, SI_]
+		rename
+			traverse as common_traverse
 		redefine
-			source,
+			make,
 			reset
 		end
 
 create
 
 	make
-	
-feature {NONE} -- Initialization
-	
+
+feature {NONE} -- Initialization 
+
 	make (t: like target; s: like source; ord, opts: INTEGER;
-			oo: like known_objects)
-		note
-			action: ""
-			t: "traversal target"
-			s: "traversal source"
-			ord: 
-				"[
-				 traversal ordering:
-				 one of `Fifo_flag', `Lifo_flag', `Deep_flag', `Forward_flag'
-				 ]"
-			opts: "ORing of non-traversal options"
-			oo: "auxiliary storage"
-		require
-			valid_flags: valid_flags (opts)
-			when_target_expands_strings: t.must_expand_strings implies s.can_expand_strings
-			when_source_expands_strings: s.must_expand_strings implies t.can_expand_strings
+		oo: like known_objects)
 		local
 			n: INTEGER
 		do
-			common_make (t, s, ord | opts, oo)
+			Precursor (t, s, ord, opts, oo)
 			if deep then
 			 	-- Create only a dummy dispenser:
 				n := 1
@@ -52,30 +39,37 @@ feature {NONE} -- Initialization
 				n := 199
 			end
 			if ord & Lifo_flag = Lifo_flag then
-				create {ARRAYED_STACK [SI_]} todo_objects.make (n)
+				create {ARRAYED_STACK [SI_]} todo_idents.make (n)
 			else
-				create {ARRAYED_QUEUE [SI_]} todo_objects.make (n)
+				create {ARRAYED_QUEUE [SI_]} todo_idents.make (n)
 			end
-		ensure
-			taget_set: target = t
-			source_set: source = s
 		end
 
 	reset
 		do
 			Precursor
-			todo_objects.wipe_out
+			todo_idents.wipe_out
 		end
 	
 feature -- Access
-
-	source: PC_RANDOM_ACCESS_SOURCE [SI_]
 
 	valid_flags (f: INTEGER): BOOLEAN
 		do
 			Result := f & Forward_flag < Forward_flag
 		end
 
+feature -- Status
+
+	valid_target (t: like target): BOOLEAN
+		do
+			Result := True
+		end
+			
+	valid_source (s: like source): BOOLEAN
+		do
+			Result := not s.is_serial
+		end
+			
 feature -- Basic operation
 	
 	traverse (id: like source_root_ident) 
@@ -83,37 +77,42 @@ feature -- Basic operation
 			action: "Deep traversal of object `id'."
 		do
 			source_root_ident := id
+			source.set_ident (id)
 			common_traverse 
-		end
-
-feature {NONE} -- Scanning structures 
-
-	process_closure
-		local
-			si: detachable SI_
-		do
-			if attached source_root_ident as sr then
-				from
-					check not todo_objects.is_empty end
-					source.set_ident (sr)
-					process_announcement (sr)
-				until todo_objects.is_empty loop
-					si := todo_objects.item
-					todo_objects.remove
-					source.set_ident (si)
-					process_data (si)
-				end
-			end
-		end
-
-	add_announced (si: SI_)
-		do
-			todo_objects.extend (si)
 		end
 
 feature {NONE} -- Implementation 
 
-	todo_objects: detachable DISPENSER [SI_]
+	todo_idents: DISPENSER [SI_]
+
+	todo_count: INTEGER
+		do
+			Result := todo_idents.count
+		end
+	
+	add_todo (si: SI_)
+		do
+			todo_idents.extend (si)
+		end
+
+	remove_todo (si: SI_)
+		do
+			if todo_idents.item = si then
+				todo_idents.remove
+			else
+				-- What now?
+			end
+		end
+
+	move_to_next_ident
+		do
+			if todo_idents.is_empty then
+				next_ident := source_root_ident
+			else
+				next_ident := todo_idents.item
+			end
+			source.set_ident (next_ident)
+		end
 	
 invariant
 	

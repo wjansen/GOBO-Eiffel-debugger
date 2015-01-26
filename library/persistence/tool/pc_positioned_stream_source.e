@@ -3,7 +3,7 @@ note
 	description:
 		"[ 
 		 Scanning the persistence closure from a file. 
-		 Objects are located at known positions (e.g. got by previous scanning 
+		 Objects are located at known data positions (e.g. got by previous scanning 
 		 of the file). 
 		 ]"
 
@@ -11,46 +11,23 @@ class PC_POSITIONED_STREAM_SOURCE
 
 inherit
 
-	PC_BASIC_SOURCE
-		rename
-			make as make_stream_source,
-			medium as file,
-			system as origin
-		undefine
-			default_create,
-			make_stream_source
-		redefine
-			origin,
-			file,
-			pre_object,
-			pre_special,
-			read_field_ident,
-			read_once
-		select
-			read_type,
-			read_once
-		end
-
 	PC_STREAM_SOURCE
 		rename
-			make as make_stream_source,
-			medium as file,
-			system as origin,
-			read_type as orig_read_type,
-			read_once as orig_read_once
-		undefine
-			reset,
-			read_header
+			make as make_basic
 		redefine
-			origin,
 			file,
-			pre_object,
-			pre_special,
+			set_ident,
 			read_field_ident,
+			read_description,
+			pre_object,
+			post_object,
+			pre_special,
+			post_special,
 			new_type,
 			new_class,
+			class_at,
 			type_at,
-			class_at
+			integer_type
 		end
 
 create
@@ -59,43 +36,24 @@ create
 
 feature {NONE} -- Initialization 
 
-	make (o: PC_TOOL_SOURCE; with_onces: BOOLEAN)
-		do	
-			class_positions := o.class_positions
-			type_positions := o.type_positions
-			data_positions := o.data_positions
-			announce_positions := o.announce_positions
-			types := o.object_types
-			capacities := o.capacities
-			onces := o.onces
-			make_stream_source (Once_observation_flag)
+	make (o: PC_TOOL_SOURCE)
+		require
+			has_file: o.file /= Void
+			has_positions: not o.data_positions.is_empty
+		do
 			origin := o
-			create all_classes.make (o.class_count, Void)
-			create all_types.make (o.type_count, Void)
-			file := o.file
-			is_once_observing := with_onces
-			set_top (o.top_ident)
+			make_basic (o.flags)
+			can_expand_strings := o.can_expand_strings
+			must_expand_strings := o.must_expand_strings
+			create position_stack.make (100)
+			set_file (o.file)
 		end
 
 feature -- Access 
 
 	file: FILE
-
-	types: PC_LINEAR_TABLE [detachable IS_TYPE]
-
-	capacities: PC_LINEAR_TABLE [NATURAL]
-
-	onces: PC_LINEAR_TABLE [detachable IS_ONCE]
-
-	data_positions: PC_LINEAR_TABLE [INTEGER]
-
-	announce_positions: PC_LINEAR_TABLE [INTEGER]
-
-	class_positions: PC_LINEAR_TABLE [INTEGER]
-
-	type_positions: PC_LINEAR_TABLE [INTEGER]
-
-	class_at (i: INTEGER): detachable IS_CLASS_TEXT
+	
+  class_at (i: INTEGER): detachable IS_CLASS_TEXT
 		do
 			Result := origin.class_at (i)
 		end
@@ -105,95 +63,142 @@ feature -- Access
 			Result := origin.type_at (i)
 		end
 	
-feature -- Status setting 
-
-	set_top (id: NATURAL)
-		do
-			top_ident := id
-			position := data_positions [top_ident]
-			file.go (position)
-			in_object := id
-		end
-
 feature {PC_DRIVER} -- Reading structure definitions
+
+	set_ident (id: NATURAL)
+		do
+			last_ident := id
+			position := origin.data_positions [id]
+			file.go (position)
+		end
 
 	read_field_ident
 		local
-			id: like last_ident
+			p, ap: INTEGER
 		do
 			Precursor
+			p := position
+			ap := origin.announce_positions [last_ident]
+			if p = ap then
+				read_description
+			end
+		end
+	
+	read_description
+		local
+			id: NATURAL
+			p, ap: INTEGER
+		do
 			id := last_ident
-			if announce_positions.has (id)
-				and then announce_positions [id] = position
-			 then
-				read_int
-				orig_read_type (last_int)
-				if last_type.is_special then
-					read_uint
-					check last_uint = capacities [id] end
-				end
-				if is_once_observing then
-					orig_read_once (id)
-				end
+			p := position
+			ap := origin.announce_positions[id]
+			if ap = p then
+				Precursor
+			else
+				last_dynamic_type := origin.object_types[id]
+				last_count := origin.counts[id]
+				last_capacity := origin.capacities[id]
 			end
 		end
 	
-	read_once (id: NATURAL)
-		do
-			if onces.has (id) then
-				last_once := onces [id]
-			end
-		end
-	
-feature {PC_DRIVER} -- Push and pop data 
-
 	pre_object (t: IS_TYPE; id: NATURAL)
+		local
+			p: INTEGER
 		do
-			if id /= void_ident then
-				position := data_positions [id]
-				file.go (position)
+			if not t.is_subobject then
+				p := position
+				position := origin.data_positions [id]
+				if p = position then
+					p := 0
+				else
+					file.go (position)
+				end
+				position_stack.force (p)
 			end
 			Precursor (t, id)
-			in_object := id
 		end
-
-	pre_special (s: IS_SPECIAL_TYPE; cap: NATURAL; id: NATURAL)
-		do
-			position := data_positions [id]
-			file.go (position)
-			Precursor (s, cap, id)
-			in_object := id
-		end
-
-feature -- IS_FACTROY
-
-	new_class (id, fl: INTEGER)
-		do
-			if position = class_positions [id.to_natural_32] then	
-				Precursor (id, fl)
-			else
-				last_class := origin.all_classes [id]
-				all_classes.force (last_class, id)
-			end
-		end	
 	
-	new_type (id: INTEGER; attac: BOOLEAN)
+	post_object (t: IS_TYPE; id: NATURAL)
+		local
+			p: INTEGER
 		do
-			if position = type_positions [id.to_natural_32] then	
-				Precursor (id, attac)
+			Precursor (t, id)
+			if not t.is_subobject then
+				p := position_stack.item
+				position_stack.remove
+				if p /= 0 then --and then not t.is_agent then
+					position := p
+					file.go (p)
+				end
+			end
+		end
+
+	pre_special (st: IS_SPECIAL_TYPE; n: NATURAL; id: NATURAL)
+		local
+			p: INTEGER
+		do
+			p := position
+			position := origin.data_positions [id]
+			if p = position then
+				p := 0
 			else
-				last_type := origin.all_types [id]
-				all_types.force (last_type, id)
+				file.go (position)
+			end
+			position_stack.force (p)
+			Precursor (st, n, id)
+		end
+
+	post_special (st: IS_SPECIAL_TYPE; id: NATURAL)
+		local
+			p: INTEGER
+		do
+			Precursor (st, id)
+			p := position_stack.item
+			position_stack.remove
+			if p /= 0 then
+				position := p
+				file.go (p)
 			end
 		end
 	
 feature {NONE} -- Implementation
+
+	origin: PC_TOOL_SOURCE
 	
-	origin: IS_SYSTEM
-
-	in_object: like last_ident
-
+	position_stack: DS_ARRAYED_STACK [INTEGER]
+	
 	is_once_observing: BOOLEAN
+
+	new_class (cid, fl: INTEGER)
+		local
+			p, cp: INTEGER
+		do
+			p := position
+			cp := origin.class_positions [cid]
+			if position = cp then
+				Precursor (cid, fl)
+				all_classes.force (Void, cid)
+			end
+			last_class := origin.all_classes [cid]
+		end
+			
+	new_type (tid: INTEGER; attac: BOOLEAN)
+		local
+			p, tp: INTEGER
+		do
+			p := position
+			tp := origin.type_positions [tid]
+			if p = tp then
+				Precursor (tid, attac)
+				all_types.force(Void, tid)
+			end
+			last_type := origin.system.type_at (tid)
+		end
+
+	integer_type: attached like type_at
+		do
+			Result := origin.integer_type
+		end
 	
 invariant
 	

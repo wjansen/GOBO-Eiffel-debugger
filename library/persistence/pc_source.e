@@ -44,9 +44,6 @@ feature {NONE} -- Initialization
 			create reals.make_filled (0, 0)
 			create doubles.make_filled (0, 0)
 			create pointers.make_filled (default_pointer, 0)
-			create strings.make_filled (Void, 0)
-			create unicodes.make_filled (Void, 0)
-			create references.make_filled (void_ident, 0)
 			default_create
 			reset
 				-- Make some attributes alive: 
@@ -83,12 +80,16 @@ feature -- Access
 		note
 			return: "Are indices consecutive NATURALs?"
 		deferred
+		ensure
+			when_consecutive: Result implies has_integer_indices
 		end
 	
 	has_position_indices: BOOLEAN
 		note
 			return: "Are indices file positions?"
 		deferred
+		ensure
+			when_positions: Result implies has_integer_indices
 		end
 	
 	can_expand_strings: BOOLEAN
@@ -100,18 +101,34 @@ feature -- Access
 	must_expand_strings: BOOLEAN
 		note
 			return: "Are STRING and STRING_32 objects to be expanded?"
+		do
+		end
+
+	must_be_random_access: BOOLEAN
+		note
+			return: "Is the object order prescribed by the driver?"
+		do
+		ensure
+			when_random_access: Result implies not is_serial
+		end
+
+	must_be_serial: BOOLEAN
+		note
+			return: "Is the object order prescribed by the source?"
+		do
+		ensure
+			when_serial: Result implies is_serial
+		end
+
+	is_serial: BOOLEAN
+		note
+			return: "Is the object order prescribed by the source?"
 		deferred
 		end
 
 	has_capacities: BOOLEAN
 		note
 			return: "Is capacity of SPECIAL objects preserved?"
-		deferred
-		end
-	
-	is_serial: BOOLEAN
-		note
-			return: "Is the object order prescribed by the source?"
 		deferred
 		end
 
@@ -238,23 +255,43 @@ feature -- Status
 			-- Array filled with entries of most recently read
 			-- SPECIAL [POINTER] object.
 	
-	strings: SPECIAL [detachable STRING_8]
-			-- Array filled with entries of most recently read
-			-- SPECIAL [detachable STRING_8] object.
+feature {PC_BASE} -- Reading object definitions
 	
-	unicodes: SPECIAL [detachable STRING_32]
-			-- Array filled with entries of most recently read
-			-- SPECIAL [detachable STRING_32] object.
-	
-	references: SPECIAL [detachable I_]
-			-- Array filled with entries of most recently read
-			-- SPECIAL [detachable I_] object.
-	
-feature {PC_DRIVER} -- Reading object definitions 
-
-	adjust_to (id: like last_ident)
+	set_ident (id: like last_ident)
 		note
-			action: "Set `last_dynamic_type' and `last_count' according to `id'."
+			action:
+			"[
+			 Set `last_ident' to `id'. 
+			 Hint: use `read_next_ident' in case of `is_serial'.
+			 ]"
+		require
+			not_serial: not is_serial
+			is_object: id /= void_ident
+		deferred
+		ensure
+			last_ident_set: last_ident = id
+			lst_dynamic_type_set: last_dynamic_type /= Void
+		end
+	
+	read_next_ident
+		note
+			action:
+			"[
+			 Read a next object ident and put it into `last_ident'
+			 and its type into `last_type'.
+			 Hint: use `set_ident' in case of `not is_serial'.
+			 ]"
+		require
+			serial: is_serial
+		deferred
+		end
+
+	read_description
+		note
+			action:
+			"[
+			 Set `last_dynamic_type' and `last_count' according to `last_ident'.
+			 ]"
 		deferred
 		end
 

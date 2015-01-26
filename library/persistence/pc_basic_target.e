@@ -23,20 +23,9 @@ inherit
 			put_new_object,
 			put_new_special,
 			put_once,
-			finish,
-			copy,
-			is_equal
+			finish
 		end
 
-	TO_SPECIAL [NATURAL_8]
-		undefine
-			out
-		redefine
-			default_create,
-			copy,
-			is_equal
-		end
-	
 create
 
 	default_create
@@ -45,22 +34,23 @@ feature {NONE} -- Initialization
 
 	default_create
 		do
-			make_filled_area (0, buffer_capacity)
 			reset
-			create buffer_pointer.make (0)
+			create ptr.make (12)
 		end
 
 feature -- Initialization 
 
 	reset
 		note
-			action: "Clear counters and set `file' to `io.output'."
+			action:
+			"[
+			 Clear counters and remove contents of `file' (if not `Void'). 
+			 ]"
 		do
 			Precursor
-			file := io.output
-			medium := file
-			buffer_count := 0
-			flushed_count := 0
+			if file /= Void then
+				file.go (0)
+			end
 		end
 
 feature -- Access 
@@ -73,7 +63,9 @@ feature -- Access
 
 	position: INTEGER
 		do
-			Result := flushed_count + buffer_count
+			if file /= Void then
+				Result := file.position
+				end
 		end
 	
 	byte_count: INTEGER
@@ -83,23 +75,14 @@ feature -- Access
 	
 feature -- Status setting 
 
-	set_file (m: detachable like medium)
+	set_file (m: like medium)
 		require
 			is_open: m /= Void implies m.is_open_write
 		do
 			file := Void
-			flushed_count := 0
-			buffer_count := 0
-			if m /= Void then
-				medium := m
-			else
-				medium := io.output
-			end
-			if attached {like file} medium as f then
+			medium := m
+			if m /= Void and then attached {like file} medium as f then
 				file := f
-				if not attached {CONSOLE} f then
-					flushed_count := f.position
-				end
 			end
 			start_position := position
 		ensure
@@ -113,27 +96,14 @@ feature -- Status setting
 			has_capacities_set: has_capacities = opts & Capacity_flag = Capacity_flag
 		end
 	
-feature -- Duplication and Compatison
-
-	copy (other: like Current)
-		do
-			Precursor {PC_ABSTRACT_TARGET} (other)
-			Precursor {TO_SPECIAL} (other)
-		end
-	
-	is_equal (other: like Current): BOOLEAN
-		do
-			Result := Precursor {PC_ABSTRACT_TARGET} (other)
-				and Precursor {TO_SPECIAL} (other)
-		end
-	
 feature {PC_DRIVER} -- Pre and post handling of data 
 
-	finish (top: PC_TYPED_IDENT [NATURAL])
+	finish (top: NATURAL; type: IS_TYPE)
 		do
-			put_known_ident (top.ident, Void)
+			Precursor (top, type)
+			put_known_ident (type, top)
 			if file /= Void then
-				buffer_flush
+				file.flush
 			end
 		end
 
@@ -259,7 +229,7 @@ feature {PC_HEADER} -- Writing elementary data
 			write_str (u.to_string_8)
 		end
 
-	put_known_ident (id: NATURAL; t: IS_TYPE)
+	put_known_ident (t: IS_TYPE; id: NATURAL)
 		do
 			write_uint (id)
 		end
@@ -273,19 +243,23 @@ feature {PC_BASE} -- Writing of header information
 
 	write_header (src: IS_SYSTEM)
 		do
-			if attached {FILE} medium as f then
-				flushed_count := f.position
-			end
 		end
 
 feature {NONE} -- Implementation 
 
+	write_byte (b: NATURAL_8)
+		do
+			ptr.put_natural_8 (b, 0)
+			medium.put_managed_pointer (ptr, 0, 1)
+		end
+	
 	write_int (i: INTEGER_32)
 		note
 			action: "Write `i' to `medium'."
 		require
 			is_open: medium.is_open_write
 		local
+			l: INTEGER
 			k: INTEGER_32
 			b: NATURAL_8
 			neg: BOOLEAN
@@ -298,55 +272,59 @@ feature {NONE} -- Implementation
 				k := i
 			end
 			from
-					-- get 7 lowest bits 
-				b := (k \\ 0x80).to_natural_8
-					-- shift 7 bits to the right 
-				k := k // 0x80
+				-- get 7 lowest bits 
+				b := (k & 0x7f).to_natural_8
+				-- shift 7 bits to the right 
+				k := k |>> 7
 			until k = 0 loop
-					-- put continuation bit 
-				b := b + 0x80
-				write_byte (b)
-					-- get next 7 bits 
-				b := (k \\ 0x80).to_natural_8
+				-- put continuation bit 
+				b := b | 0x80
+				ptr.put_natural_8 (b, l)
+				l := l + 1
+				-- get next 7 bits 
+				b := (k & 0x7f).to_natural_8
 					-- shift 7 bits to the right 
-				k := k // 0x80
+				k := k |>> 7 --// 0x80
 			end
 			if b >= 0x40 then
-				b := b + 0x80
-				write_byte (b)
+				b := b | 0x80
+				ptr.put_natural_8 (b, l)
+				l := l + 1
 				b := 0
 			end
 			if neg then
-				b := b + 0x40
+				b := b | 0x40
 			end
-			write_byte (b)
+			ptr.put_natural_8 (b, l)
+			l := l + 1
+			medium.put_managed_pointer (ptr, 0, l)
 		end
 
 	write_uint (n: NATURAL_32)
-		note
-			action: "Write `n' to `medium'."
-		require
-			is_open: medium.is_open_write
 		local
-			k: NATURAL_64
+			k, k0: NATURAL_64
 			b: NATURAL_8
+			l: INTEGER
 		do
 			k := n
-				-- get 7 lowest bits 
-			b := (k \\ 0x80).to_natural_8
-				-- shift 7 bits to the right 
-			k := k // 0x80
 			from
-			until k = 0 loop
-					-- put continuation bit 
-				b := b + 0x80
-				write_byte (b)
-					-- get next 7 bits 
-				b := (k \\ 0x80).to_natural_8
+				-- get 7 lowest bits 
+				b := (k & 0x7f).to_natural_8
+				-- shift 7 bits to the right 
+				k := k |>> 7
+			until k = k0 loop
+				-- put continuation bit 
+				b := b | 0x80
+				ptr.put_natural_8 (b, l)
+				l := l + 1
+				-- get next 7 bits 
+				b := (k & 0x7f).to_natural_8
 					-- shift 7 bits to the right 
-				k := k // 0x80
+				k := k |>> 7 
 			end
-			write_byte (b)
+			ptr.put_natural_8 (b, l)
+			l := l + 1
+			medium.put_managed_pointer (ptr, 0, l)
 		end
 
 	write_int64 (i: INTEGER_64)
@@ -355,7 +333,8 @@ feature {NONE} -- Implementation
 		require
 			is_open: medium.is_open_write
 		local
-			k: INTEGER_64
+			l: INTEGER
+			k, k0: INTEGER_64
 			b: NATURAL_8
 			neg: BOOLEAN
 		do
@@ -368,27 +347,31 @@ feature {NONE} -- Implementation
 			end
 			from
 					-- get 7 lowest bits 
-				b := (k \\ 0x80).to_natural_8
+				b := (k & 0x7f).to_natural_8
 					-- shift 7 bits to the right 
-				k := k // 0x80
-			until k = 0 loop
+				k := k |>> 7
+			until k = k0 loop
 					-- put continuation bit 
-				b := b + 0x80
-				write_byte (b)
+				b := b | 0x80
+				ptr.put_natural_8 (b, l)
+				l := l + 1
 					-- get next 7 bits 
-				b := (k \\ 0x80).to_natural_8
+				b := (k & 0x7f).to_natural_8
 					-- shift 7 bits to the right 
-				k := k // 0x80
+				k := k |>> 7 --// 0x80
 			end
 			if b >= 0x40 then
-				b := b + 0x80
-				write_byte (b)
+				b := b | 0x80
+				ptr.put_natural_8 (b, l)
+				l := l + 1
 				b := 0
 			end
 			if neg then
-				b := b + 0x40
+				b := b | 0x40
 			end
-			write_byte (b)
+			ptr.put_natural_8 (b, l)
+			l := l + 1
+			medium.put_managed_pointer (ptr, 0, l)
 		end
 
 	write_uint64 (n: NATURAL_64)
@@ -397,25 +380,29 @@ feature {NONE} -- Implementation
 		require
 			is_open: medium.is_open_write
 		local
-			k: NATURAL_64
+			l: INTEGER
+			k, k0: NATURAL_64
 			b: NATURAL_8
 		do
 			k := n
-				-- get 7 lowest bits 
-			b := (k \\ 0x80).to_natural_8
-				-- shift 7 bits to the right 
-			k := k // 0x80
 			from
-			until k = 0 loop
-					-- put continuation bit 
-				b := b + 0x80
-				write_byte (b)
-					-- get next 7 bits 
-				b := (k \\ 0x80).to_natural_8
+				-- get 7 lowest bits 
+				b := (k & 0x7f).to_natural_8
+				-- shift 7 bits to the right 
+				k := k |>> 7
+			until k = k0 loop
+				-- put continuation bit 
+				b := b | 0x80
+				ptr.put_natural_8 (b, l)
+				l := l + 1
+				-- get next 7 bits 
+				b := (k & 0x7f).to_natural_8
 					-- shift 7 bits to the right 
-				k := k // 0x80
+				k := k |>> 7 --// 0x80
 			end
-			write_byte (b)
+			ptr.put_natural_8 (b, l)
+			l := l + 1
+			medium.put_managed_pointer (ptr, 0, l)
 		end
 
 	write_mantissa (m: NATURAL_64; neg: BOOLEAN)
@@ -423,6 +410,7 @@ feature {NONE} -- Implementation
 			action: "Write left aligned unsigned mantissa `m' to `medium'."
 			neg: "fraction is negative"
 		local
+			l: INTEGER
 			n: NATURAL_64
 			b: NATURAL_8
 		do
@@ -436,7 +424,8 @@ feature {NONE} -- Implementation
 			if n /= 0 then
 				b := b | 0x80
 			end
-			write_byte (b)
+			ptr.put_natural_8 (b, l)
+			l := l + 1
 			from
 			until n = 0 loop
 				b := (n |>> 57).to_natural_8
@@ -445,8 +434,10 @@ feature {NONE} -- Implementation
 				if n /= 0 then
 					b := b | 0x80
 				end
-				write_byte (b)
+				ptr.put_natural_8 (b, l)
+				l := l + 1
 			end
+			medium.put_managed_pointer (ptr, 0, l)
 		end
 
 	write_str (str: detachable STRING)
@@ -458,78 +449,20 @@ feature {NONE} -- Implementation
 			a: SPECIAL[CHARACTER]
 			n: INTEGER
 		do
-			if attached str as s then
-				n := s.count
-				write_int (n)
-				a := s.area
-				buffer_add($a, n)
-			else
-				write_int (0)
-			end
-		end
-
-	write_byte (i: NATURAL_8)
-		note
-			action: "Write `i' to `medium'."
-		require
-			is_open: medium.is_open_write
-		do
-			if file /= Void then
-				if buffer_count >= buffer_capacity then
-					buffer_flush
-				end
-				area [buffer_count] := i
-				buffer_count := buffer_count + 1
-			else
-				medium.put_natural_8 (i)
-			end
+			n := str.count
+			write_int (n)
+			a := str.area
+			medium.put_string (str)
 		end
 
 feature {NONE} -- Implementation 
 
 	file: detachable FILE
 
+	ptr: MANAGED_POINTER
+	
 	start_position: INTEGER
 
-	buffer_count: INTEGER
-
-	flushed_count: INTEGER
-
-	buffer_capacity: INTEGER = 4096
-
-	buffer_pointer: MANAGED_POINTER
-	
-	buffer_add (p: POINTER; n: INTEGER)
-		require
-			medium_is_file: attached file
-		local
-			k, l, m: INTEGER
-		do
-			from
-				k := n
-			until k <= 0 loop
-				m := k.min (buffer_capacity - buffer_count)
-				c_copy ($area + buffer_count, p + l, m)
-				buffer_count := buffer_count + m
-				if buffer_count = buffer_capacity then
-					buffer_flush
-				end
-				l := l + m
-				k := k - m
-			end
-		end
-
-	buffer_flush
-		do
-			buffer_pointer.set_from_pointer ($area, buffer_count)
-			file.put_managed_pointer (buffer_pointer, 0, buffer_count)
-			file.flush
-			flushed_count := flushed_count + buffer_count
-			buffer_count := 0
-		ensure
-			buffer_cleared: buffer_count = 0
-		end
-	
 	next_ident
 		do
 			Precursor
@@ -559,17 +492,9 @@ feature {NONE} -- External implementation
 			"((union { EIF_REAL_64 f;  EIF_INTEGER_64 i;}*)&$d)->i"
 		end
 
-	c_copy (dest, src: POINTER; n: INTEGER)
-		external
-			"C inline"
-		alias
-			"memcpy($dest,$src,$n)"
-		end
-	
 invariant
 
 	when_file: attached file as f implies f = medium
-	area_count: area.count = buffer_capacity
 
 note
 

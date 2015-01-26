@@ -442,7 +442,7 @@ The menu bar contains the entries <span style="font-family:sans-serif"><U>F</U><
 <span style="font-family:sans-serif"><U>W</U></span><span style="font-family:sans-serif">indow</span>, <span style="font-family:sans-serif"><U>P</U></span><span style="font-family:sans-serif">references</span>, 
 and <span style="font-family:sans-serif"><U>H</U></span><span style="font-family:sans-serif">elp</span>. 
 Menu <span style="font-family:sans-serif">File</span> has the following items:
-</p><dl class="description"><dt class="dt-description"><span style="font-family:sans-serif"><U>C</U></span><span style="font-family:sans-serif">ontinue</span></dt><dd class="dd-description">
+</p><dl class="description"><dt class="dt-description"><span style="font-family:sans-serif">Co</span><span style="font-family:sans-serif"><U>n</U></span><span style="font-family:sans-serif">tinue</span></dt><dd class="dd-description">
 the item exists only in the post mortem analyser, it enables to continue 
 the debuggee if it had been interrupted from the keyboard;
 </dd><dt class="dt-description"><span style="font-family:sans-serif"><U>S</U></span><span style="font-family:sans-serif">ave</span></dt><dd class="dd-description"> 
@@ -557,18 +557,20 @@ Moreover the effect of buttons is modified by the radio buttons
 </p><dl class="description"><dt class="dt-description"><span style="font-family:sans-serif">break</span></dt><dd class="dd-description"> treat breakpoints and tracepoints as defined;
 </dd><dt class="dt-description"><span style="font-family:sans-serif">trace</span></dt><dd class="dd-description"> treat breakpoints as tracepoints, i.e. do not stop;
 </dd><dt class="dt-description"><span style="font-family:sans-serif">silent</span></dt><dd class="dd-description"> ignore breakpoints and tracepoints at all.
-</dd></dl><p>The effect of button <span style="font-family:sans-serif">Stop</span> 
-(The button label <span style="font-family:sans-serif">Stop</span> is suppressed on some platforms 
-in favour of the keyboard accelerator <span style="font-family:sans-serif">Pause</span>. 
-You may need to read <span style="font-family:sans-serif">Pause</span> for <span style="font-family:sans-serif">Stop</span> in the following.
-)
-is complementary to that of the other buttons. 
+</dd></dl><p>The effect of button <span style="font-family:sans-serif">Stop</span> is complementary to that of the other buttons&#XA0;(the 
+button label <span style="font-family:sans-serif">Stop</span> is suppressed on some platforms 
+in favour of the keyboard accelerator <span style="font-family:sans-serif">Pause</span>, 
+you may need to read <span style="font-family:sans-serif">Pause</span> for <span style="font-family:sans-serif">Stop</span> in the following). 
 Quite naturally, also its sensitivity is complementary:
 if the debuggee has stopped for some reason then <span style="font-family:sans-serif">Stop</span> is insensitive 
 while the other &#X201C;dynamic&#X201D; buttons are sensitive, 
 but if the debuggee is running then <span style="font-family:sans-serif">Stop</span> is sensitive while 
 the dynamic buttons (and most GUI elements) are insensitive.
-</p><p>Some remarks seem to be in order to explain when the <span style="font-family:sans-serif">Next</span> 
+</p><blockquote class="quote">
+<div class="center"><span style="font-weight:bold">Hint</span></div> 
+The <span style="font-family:sans-serif">Stop</span> button has a second effect: pressing it will cancel 
+a long running function evaluation (e.g. if it entered an endless loop).
+</blockquote><p>Some remarks seem to be in order to explain when the <span style="font-family:sans-serif">Next</span> 
 and <span style="font-family:sans-serif">Step</span> commands actually stop. 
 Command <span style="font-family:sans-serif">Next</span> stops before the next instruction. 
 In particular, it stops at the keywords and special symbols 
@@ -577,9 +579,8 @@ In particular, it stops at the keywords and special symbols
 <span style="font-family:monospace">create</span> (if an instruction), <span style="font-family:monospace">retry</span>, 
 <span style="font-family:monospace">:=</span>, and <span style="font-family:monospace">?=</span>, 
 as well as before a procedure call (qualified or not). 
-</p><blockquote class="quote">
-<div class="center"><span style="font-weight:bold">Hint</span></div> These program points are those where a breakpoint can be set. 
-</blockquote><p>The stop of command <span style="font-family:sans-serif">Step</span> is more involved. 
+These program points are also those where a breakpoint can be set. 
+</p><p>The stop of command <span style="font-family:sans-serif">Step</span> is more involved. 
 If stopped just before an instruction (e.g. as the result of a <span style="font-family:sans-serif">Next</span> command) 
 then the program continues to the next routine call or instruction; 
 but if it stopped at (not before!) a routine call 
@@ -588,7 +589,7 @@ and stops there at the <span style="font-family:monospace">do</span> or <span st
 (or at the <span style="font-family:monospace">end</span> keyword in case of an already initialised once routine) 
 what is considered stopping at an instruction. 
 The two stages of the <span style="font-family:sans-serif">Step</span> command have been introduced to be able 
-to stop before nested function calls, and to make those stops visible. 
+to stop before nested function calls and to make those stops visible. 
 For example, consider the procedure call 
 <span style="font-family:monospace">some_proc&#XA0;(some_func&#XA0;(arg))</span> 
 (where for simplicity <span style="font-family:monospace">arg</span> is not a function call) 
@@ -664,7 +665,7 @@ as the button name indicates, by clicking <span style="font-family:sans-serif">R
 This form of restoring does even a bit more: the string in text field 
 <span style="font-family:sans-serif">Arguments</span> becomes the new command line arguments. 
 After editing this field its contents does <U>not</U> 
-present the actual arguments as long as the <span style="font-family:sans-serif">Restart</span> button 
+represent the actual arguments as long as the <span style="font-family:sans-serif">Restart</span> button 
 has not been clicked.
 </p><blockquote class="quote">
 <div class="center"><span style="font-weight:bold">Hint</span></div> 
@@ -935,13 +936,13 @@ the other parts may be specified later
 by manipulation in the <span style="font-family:sans-serif">Breakpoints</span> part. 
 </dd><dt class="dt-description"><span style="font-weight:bold"><span style="font-family:monospace">Control-k</span></span></dt><dd class="dd-description"> 
 Delete the breakpoint(s) next to the insertion cursor. 
-</dd><dt class="dt-description"><span style="font-weight:bold"><span style="font-family:monospace">Control-c</span></span></dt><dd class="dd-description"> 
+</dd><dt class="dt-description"><span style="font-weight:bold"><span style="font-family:monospace">Control-u</span></span></dt><dd class="dd-description"> 
 If the routine containing the insertion cursor belongs to the call stack 
 then continue debuggee execution to the point next to the insertion cursor 
 (or to the routine&#X2019;s caller if the point is not hit), 
 i.e. define a temporary breakpoint and issue a <span style="font-family:sans-serif">Cont</span> command 
 with <span style="font-family:sans-serif">repeat</span>=1, other breakpoint settings remain active. 
-</dd><dt class="dt-description"><span style="font-weight:bold"><span style="font-family:monospace">Control-C</span></span></dt><dd class="dd-description"> Like <span style="font-family:monospace">Control-c</span> but ignore all other breakpoints 
+</dd><dt class="dt-description"><span style="font-weight:bold"><span style="font-family:monospace">Control-U</span></span></dt><dd class="dd-description"> Like <span style="font-family:monospace">Control-u</span> but ignore all other breakpoints 
 (i.e. run in silent mode). 
 </dd><dt class="dt-description"><span style="font-weight:bold"><span style="font-family:monospace">single right click</span></span><span style="font-weight:bold"> or </span><span style="font-weight:bold"><span style="font-family:monospace">Control-x</span></span></dt><dd class="dd-description"> 
 If the feature name under the mouse pointer 
@@ -966,8 +967,9 @@ If the feature name under the mouse pointer is highlighted light pink
 then the <span style="font-family:sans-serif">Evaluation</span> part&#X2019;s <span style="font-family:sans-serif">Expr</span> field is cleared, 
 the feature is inserted in the field, and the evaluation is done immediately. 
 </dd></dl><p>
-The various control characters may be read as &#X201C;show actual&#X201D;, &#X201C;Breakpoint&#X201D;, &#X201C;Kill breakpoint&#X201D;, &#X201C;Come here&#X201D;, &#X201C;Come here in any case!&#X201D;, 
-&#X201C;teXt of&#X201D;, &#X201C;Evaluate&#X201D;, and &#X201C;Evaluate now!&#X201D;, respectively.
+The various control characters may be read as &#X201C;show actual&#X201D;, &#X201C;Breakpoint&#X201D;, &#X201C;Kill breakpoint&#X201D;, &#X201C;Until here&#X201D;, 
+&#X201C;Until here in any case!&#X201D;, &#X201C;teXt of&#X201D;, 
+&#X201C;Evaluate&#X201D;, and &#X201C;Evaluate now!&#X201D;, respectively.
 </p><p>Some final remarks on the phrases &#X201C;routine in the call stack&#X201D;
 and &#X201C;next to the insertion cursor&#X201D;. 
 A routine belongs to the call stack if it is the routine 

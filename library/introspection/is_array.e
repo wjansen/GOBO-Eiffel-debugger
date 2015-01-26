@@ -2,7 +2,7 @@ note
 
 	description: "Simple arrays of objects having types descenting from IS_NAME."
 
-deferred class IS_ARRAY [D_ -> detachable IS_NAME]
+class IS_ARRAY [D_ -> detachable IS_NAME]
 
 inherit
 
@@ -13,6 +13,10 @@ inherit
 			hash_code
 		end
 
+create
+
+	make_1, make_2
+	
 feature {NONE} -- Initialization 
 
 	make_1 (d: D_)
@@ -64,8 +68,8 @@ feature -- Access
 
 	capacity: INTEGER
 		do
-			if attached data as dt then
-				Result := dt.count
+			if data /= void then
+				Result := data.count
 			end
 		end
 
@@ -204,6 +208,19 @@ feature -- Status setting
 			empty: count = 0
 		end
 
+	compress
+		do
+			if data /= Void then
+				if count >0 then
+					data.keep_head (count)
+				else
+					data := Void
+				end
+			end
+		ensure
+			no_overhead: capacity = count
+		end
+	
 feature {IS_ARRAY, IS_BASE} -- Implementation 
 
 	data: detachable SPECIAL [D_]

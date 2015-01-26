@@ -1,6 +1,12 @@
 using Gtk;
 using Gedb;
 
+internal enum PreferenceType {
+	DEFAULT = 1,
+	CANCEL,
+	CLOSE
+}
+
 internal class History : Dialog {
 
 	private weak GUI gui;
@@ -100,53 +106,104 @@ of <b>Source/Console</b>) </span>"""
 
 internal class Appearance : Dialog {
 
+	private struct Settings {
+		int tab_width;
+		bool wrap_mode;
+		bool value_mode;
+		bool tree_lines;
+		bool non_defs_mode;
+		int max_items;
+		bool tooltips;
+	}
+
 	private weak GUI gui;
 
-	private SpinButton tabs;
-	private int tab_width = 3;
-	private CheckButton wrap;
-	private bool wrap_mode = false;
-	private CheckButton val;
-	private bool value_mode = false;
-	private CheckButton tree;
-	private bool tree_lines = false;
-	private CheckButton tips;
-	private bool tooltips = true;
+	private Settings defaults;
+	private Settings before;
+	private Settings now;
 
-	private void set_values() {
-		tab_width = (int)tabs.value;
-		gui.source.tab_width = tab_width;
-		wrap_mode = wrap.active;
-		gui.source.wrap_mode = wrap_mode;
-		// value_mode = val.active;
-		// gui.source.value_as_tooltip = value_mode;;
-		tree_lines = tree.active;
-		gui.data.tree_lines = tree_lines;;
-		tooltips = tips.active;
-		gui.set_tooltip(tooltips);
+	private SpinButton tabs;
+	private CheckButton wrap;
+	private CheckButton val;
+	private CheckButton tree;
+	private CheckButton non_defs;
+	private SpinButton item_count;
+	private CheckButton tips;
+
+	private void set_buttons() {
+		tabs.value = now.tab_width;
+		wrap.active = now.wrap_mode;
+		// val.active = now.value_mode;
+		tree.active = now.tree_lines;
+		non_defs.active = now.non_defs_mode;
+		item_count.value = now.max_items;
+		tips.active = now.tooltips;
 	}
 
 	private void do_appearance(int response) {
 		switch (response) {
-		case ResponseType.APPLY:
-			set_values();
+		case PreferenceType.DEFAULT:
+			now = defaults;
+			set_buttons();
 			break;
-		case ResponseType.CLOSE:
+		case PreferenceType.CANCEL:
 			hide();
-			tabs.value = tab_width;
-			wrap.active = wrap_mode;
-			tree.active = tree_lines;
-			// val.active = value_mode;
-			tips.active = tooltips;
+			now = before;
+			set_buttons();
 			break;
+		case PreferenceType.CLOSE:
+			hide();
+			before = now;
+			break;
+		}
+	}
+
+	private void do_toggle(ToggleButton check) {
+		if (check==wrap) {
+			now.wrap_mode = wrap.active;
+			gui.source.wrap_mode = now.wrap_mode;
+			// } else if (check==val) {
+			// now.value_mode = val.active;
+			// gui.source.value_as_tooltip = now.value_mode;;
+		} else if (check==tree) {
+			now.tree_lines = tree.active;
+			gui.data.tree_lines = now.tree_lines;
+		} else if (check==non_defs) {
+			now.non_defs_mode = non_defs.active;
+			gui.data.non_defaults = now.non_defs_mode;
+		} else if (check==tips) {
+			now.tooltips = tips.active;
+			gui.set_tooltip(now.tooltips);
+		}
+	}
+
+	private void do_spin(SpinButton spin) {
+		if (spin==tabs) {
+			now.tab_width = (int)spin.value;
+			gui.source.tab_width = now.tab_width;
+		} else if (spin==item_count) { 
+			now.max_items = (int)spin.value;
+			gui.data.max_items = now.max_items;
 		}
 	}
 
 	internal Appearance(GUI gui) {
 		this.gui = gui;
+
+		defaults.tab_width = gui.source.tab_width;
+		defaults.wrap_mode = gui.source.wrap_mode;
+		// defaults.value_mode = gui.source.value_as_tooltip;
+		defaults.tree_lines = gui.data.tree_lines;
+		defaults.non_defs_mode = gui.data.non_defaults;
+		defaults.max_items = gui.data.max_items;
+		defaults.tooltips = true;
+		before = defaults;
+		now = before;
+
 		title = compose_title("Appearance", null);
-		add_button(Gtk.Stock.APPLY, ResponseType.APPLY);
-		add_button(Gtk.Stock.CLOSE, ResponseType.CLOSE);
+		add_button("Default", PreferenceType.DEFAULT);
+		add_button("Cancel", PreferenceType.CANCEL);
+		add_button("Close", PreferenceType.CLOSE);
 		transient_for = gui;
 
 		var content = get_content_area () as Box;
@@ -164,23 +221,24 @@ internal class Appearance : Dialog {
 		label = new Label("Tabulator width ");
 		grid.attach_next_to(label, headline, PositionType.BOTTOM, 1, 1);
 		label.halign = Align.START;
-		tab_width = gui.source.tab_width;
 		tabs = new SpinButton.with_range(1, 8, 1);
 		tabs.numeric = true;
-		tabs.value = tab_width;
+		tabs.value = before.tab_width;
+		tabs.value_changed.connect(do_spin);
 		grid.attach_next_to(tabs, label, PositionType.RIGHT, 1, 1);
 		prev = label;
 		label = new Label("Wrap long lines ");
+		label.halign = Align.START;
 		grid.attach_next_to(label, prev, PositionType.BOTTOM, 1, 1);
-		wrap_mode = gui.source.wrap_mode;
 		wrap = new CheckButton();
-		wrap.active = wrap_mode;
+		wrap.toggled.connect(do_toggle);
+		
 		grid.attach_next_to(wrap, label, PositionType.RIGHT, 1, 1);
 		sep = new Separator(Orientation.HORIZONTAL);
 		grid.attach_next_to(sep, label, PositionType.BOTTOM, 2, 1);
 /* 
 		val = new CheckButton.with_label("Show values as tips");
-		val.active = gui.source.value_as_tooltip;
+		val.toggled.connect(do_toggle);
 		content.pack_start(val, false, false, 0);
 */
 		headline = new Label("");
@@ -189,13 +247,28 @@ internal class Appearance : Dialog {
 		headline.justify = Justification.LEFT;
 		grid.attach_next_to(headline, sep, PositionType.BOTTOM, 2, 1);
 		prev = label;
+
 		label = new Label("Show tree lines ");
 		grid.attach_next_to(label, headline, PositionType.BOTTOM, 1, 1);
 		label.halign = Align.START;
-		tree_lines = gui.data.tree_lines;
 		tree = new CheckButton();
-		tree.active = tree_lines;
+		tree.toggled.connect(do_toggle);
 		grid.attach_next_to(tree, label, PositionType.RIGHT, 1, 1);
+		prev = label;
+		label = new Label("Show only non-default SPECIAL items ");
+		label.halign = Align.START;
+		grid.attach_next_to(label, prev, PositionType.BOTTOM, 1, 1);
+		non_defs = new CheckButton();
+		non_defs.toggled.connect(do_toggle);
+		grid.attach_next_to(non_defs, label, PositionType.RIGHT, 1, 1);		
+		prev = label;
+		label = new Label("Maximum of SPECIAL items ");
+		label.halign = Align.START;
+		grid.attach_next_to(label, prev, PositionType.BOTTOM, 1, 1);
+		item_count = new SpinButton.with_range(1, int.MAX, 10);
+		item_count.value = before.max_items;
+		item_count.value_changed.connect(do_spin);
+		grid.attach_next_to(item_count, label, PositionType.RIGHT, 1, 1);		
 		sep = new Separator(Orientation.HORIZONTAL);
 		grid.attach_next_to(sep, label, PositionType.BOTTOM, 2, 1);
 
@@ -207,16 +280,18 @@ internal class Appearance : Dialog {
 		label = new Label("Show tooltips ");
 		label.halign = Align.START;
 		grid.attach_next_to(label, headline, PositionType.BOTTOM, 1, 1);
-		tooltips = true;
 		tips = new CheckButton();
-		tips.active = tooltips;
+		tips.toggled.connect(do_toggle);
 		grid.attach_next_to(tips, label, PositionType.RIGHT, 1, 1);
 		
 		sep = new Separator(Orientation.HORIZONTAL);
 		content.pack_start(sep, false, false, 5);
 
+		set_buttons();
+
 		response.connect(do_appearance);
 	}
+
 }
 
 internal class Menus : GLib.Object {
@@ -393,10 +468,10 @@ internal class Menus : GLib.Object {
 		{"Store_def", null, "_Store", "<control>S", 
 		 "Store breakpoints and alias definitions \nto default path", 
 		 do_store_def},
-		{"Store", null, "Store _as ...", null, 
+		{"Store", null, "Store _as ...", "<control><shift>S", 
 		 "Store breakpoints and alias definitions \nto chosen path", 
 		 do_store},
-		{"Restore", null, "_Restore from ...", null, 
+		{"Restore", null, "_Restore from ...", "<control><shift>R", 
 		 "Restore breakpoints and alias definitions\nfrom chosen path", 
 		 do_restore},
 		{"Quit", null, "_Quit", "<control>Q", "Quit debugger", do_quit},
@@ -648,6 +723,7 @@ internal class AliasDef : Window {
 		this.list = list;
 		checker = new ExpressionChecker();
 		checker.parser.set_aliases(list);
+
 		set_title(compose_title("Alias definition", gui.dg.rts));
 		var vbox = new Box(Orientation.VERTICAL, 0);
 		add(vbox);

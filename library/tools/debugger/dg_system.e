@@ -201,14 +201,92 @@ feature {NONE} -- Semantic actions
 
 	yy_do_action (yy_act: INTEGER)
 			-- Execute semantic action.
+		do
+			inspect yy_act
+			when 1 then
+					--|#line 57 "dg_system.y"
+				yy_do_action_1
+			when 2 then
+					--|#line 58 "dg_system.y"
+				yy_do_action_2
+			when 3 then
+					--|#line 59 "dg_system.y"
+				yy_do_action_3
+			when 4 then
+					--|#line 60 "dg_system.y"
+				yy_do_action_4
+			when 5 then
+					--|#line 61 "dg_system.y"
+				yy_do_action_5
+			when 6 then
+					--|#line 64 "dg_system.y"
+				yy_do_action_6
+			when 7 then
+					--|#line 66 "dg_system.y"
+				yy_do_action_7
+			when 8 then
+					--|#line 68 "dg_system.y"
+				yy_do_action_8
+			when 9 then
+					--|#line 71 "dg_system.y"
+				yy_do_action_9
+			when 10 then
+					--|#line 75 "dg_system.y"
+				yy_do_action_10
+			when 11 then
+					--|#line 76 "dg_system.y"
+				yy_do_action_11
+			when 12 then
+					--|#line 79 "dg_system.y"
+				yy_do_action_12
+			when 13 then
+					--|#line 84 "dg_system.y"
+				yy_do_action_13
+			when 14 then
+					--|#line 92 "dg_system.y"
+				yy_do_action_14
+			when 15 then
+					--|#line 98 "dg_system.y"
+				yy_do_action_15
+			when 16 then
+					--|#line 101 "dg_system.y"
+				yy_do_action_16
+			when 17 then
+					--|#line 102 "dg_system.y"
+				yy_do_action_17
+			when 18 then
+					--|#line 105 "dg_system.y"
+				yy_do_action_18
+			when 19 then
+					--|#line 108 "dg_system.y"
+				yy_do_action_19
+			when 20 then
+					--|#line 111 "dg_system.y"
+				yy_do_action_20
+			when 21 then
+					--|#line 116 "dg_system.y"
+				yy_do_action_21
+			when 22 then
+					--|#line 120 "dg_system.y"
+				yy_do_action_22
+			when 23 then
+					--|#line 123 "dg_system.y"
+				yy_do_action_23
+			else
+				debug ("GEYACC")
+					std.error.put_string ("Error in parser: unknown rule id: ")
+					std.error.put_integer (yy_act)
+					std.error.put_new_line
+				end
+				abort
+			end
+		end
+
+	yy_do_action_1
+			--|#line 57 "dg_system.y"
 		local
 			yyval3: STRING
-			yyval4: IS_TYPE
-			yyval6: IS_SEQUENCE [attached IS_FIELD]
-			yyval5: attached IS_FIELD
 		do
-				inspect yy_act
-when 1 then
 --|#line 57 "dg_system.y"
 debug ("GEYACC")
 	std.error.put_line ("Executing parser user-code from file 'dg_system.y' at line 57")
@@ -227,7 +305,13 @@ if yy_parsing_status >= yyContinue then
 	end
 	yyspecial_routines3.force (yyvs3, yyval3, yyvsp3)
 end
-when 2 then
+		end
+
+	yy_do_action_2
+			--|#line 58 "dg_system.y"
+		local
+			yyval3: STRING
+		do
 --|#line 58 "dg_system.y"
 debug ("GEYACC")
 	std.error.put_line ("Executing parser user-code from file 'dg_system.y' at line 58")
@@ -239,7 +323,13 @@ if yy_parsing_status >= yyContinue then
 	yyvsp4 := yyvsp4 -1
 	yyspecial_routines3.force (yyvs3, yyval3, yyvsp3)
 end
-when 3 then
+		end
+
+	yy_do_action_3
+			--|#line 59 "dg_system.y"
+		local
+			yyval3: STRING
+		do
 --|#line 59 "dg_system.y"
 debug ("GEYACC")
 	std.error.put_line ("Executing parser user-code from file 'dg_system.y' at line 59")
@@ -251,7 +341,13 @@ if yy_parsing_status >= yyContinue then
 	yyvsp4 := yyvsp4 -1
 	yyspecial_routines3.force (yyvs3, yyval3, yyvsp3)
 end
-when 4 then
+		end
+
+	yy_do_action_4
+			--|#line 60 "dg_system.y"
+		local
+			yyval3: STRING
+		do
 --|#line 60 "dg_system.y"
 debug ("GEYACC")
 	std.error.put_line ("Executing parser user-code from file 'dg_system.y' at line 60")
@@ -263,7 +359,13 @@ if yy_parsing_status >= yyContinue then
 	yyvsp3 := yyvsp3 -1
 	yyspecial_routines3.force (yyvs3, yyval3, yyvsp3)
 end
-when 5 then
+		end
+
+	yy_do_action_5
+			--|#line 61 "dg_system.y"
+		local
+			yyval3: STRING
+		do
 --|#line 61 "dg_system.y"
 debug ("GEYACC")
 	std.error.put_line ("Executing parser user-code from file 'dg_system.y' at line 61")
@@ -275,7 +377,13 @@ if yy_parsing_status >= yyContinue then
 	yyvsp3 := yyvsp3 -1
 	yyspecial_routines3.force (yyvs3, yyval3, yyvsp3)
 end
-when 6 then
+		end
+
+	yy_do_action_6
+			--|#line 64 "dg_system.y"
+		local
+			yyval4: IS_TYPE
+		do
 --|#line 64 "dg_system.y"
 debug ("GEYACC")
 	std.error.put_line ("Executing parser user-code from file 'dg_system.y' at line 64")
@@ -296,7 +404,13 @@ if yy_parsing_status >= yyContinue then
 	end
 	yyspecial_routines4.force (yyvs4, yyval4, yyvsp4)
 end
-when 7 then
+		end
+
+	yy_do_action_7
+			--|#line 66 "dg_system.y"
+		local
+			yyval4: IS_TYPE
+		do
 --|#line 66 "dg_system.y"
 debug ("GEYACC")
 	std.error.put_line ("Executing parser user-code from file 'dg_system.y' at line 66")
@@ -317,7 +431,13 @@ if yy_parsing_status >= yyContinue then
 	end
 	yyspecial_routines4.force (yyvs4, yyval4, yyvsp4)
 end
-when 8 then
+		end
+
+	yy_do_action_8
+			--|#line 68 "dg_system.y"
+		local
+			yyval4: IS_TYPE
+		do
 --|#line 68 "dg_system.y"
 debug ("GEYACC")
 	std.error.put_line ("Executing parser user-code from file 'dg_system.y' at line 68")
@@ -338,7 +458,13 @@ if yy_parsing_status >= yyContinue then
 	end
 	yyspecial_routines4.force (yyvs4, yyval4, yyvsp4)
 end
-when 9 then
+		end
+
+	yy_do_action_9
+			--|#line 71 "dg_system.y"
+		local
+			yyval3: STRING
+		do
 --|#line 71 "dg_system.y"
 debug ("GEYACC")
 	std.error.put_line ("Executing parser user-code from file 'dg_system.y' at line 71")
@@ -352,7 +478,13 @@ if yy_parsing_status >= yyContinue then
 	yyvsp1 := yyvsp1 -2
 	yyspecial_routines3.force (yyvs3, yyval3, yyvsp3)
 end
-when 10 then
+		end
+
+	yy_do_action_10
+			--|#line 75 "dg_system.y"
+		local
+			yyval3: STRING
+		do
 --|#line 75 "dg_system.y"
 debug ("GEYACC")
 	std.error.put_line ("Executing parser user-code from file 'dg_system.y' at line 75")
@@ -363,7 +495,13 @@ if yy_parsing_status >= yyContinue then
 	yyssp := yyssp - 1
 	yyspecial_routines3.force (yyvs3, yyval3, yyvsp3)
 end
-when 11 then
+		end
+
+	yy_do_action_11
+			--|#line 76 "dg_system.y"
+		local
+			yyval3: STRING
+		do
 --|#line 76 "dg_system.y"
 debug ("GEYACC")
 	std.error.put_line ("Executing parser user-code from file 'dg_system.y' at line 76")
@@ -376,7 +514,13 @@ if yy_parsing_status >= yyContinue then
 	yyvsp1 := yyvsp1 -1
 	yyspecial_routines3.force (yyvs3, yyval3, yyvsp3)
 end
-when 12 then
+		end
+
+	yy_do_action_12
+			--|#line 79 "dg_system.y"
+		local
+			yyval3: STRING
+		do
 --|#line 79 "dg_system.y"
 debug ("GEYACC")
 	std.error.put_line ("Executing parser user-code from file 'dg_system.y' at line 79")
@@ -390,7 +534,13 @@ if yy_parsing_status >= yyContinue then
 	yyssp := yyssp - 1
 	yyspecial_routines3.force (yyvs3, yyval3, yyvsp3)
 end
-when 13 then
+		end
+
+	yy_do_action_13
+			--|#line 84 "dg_system.y"
+		local
+			yyval3: STRING
+		do
 --|#line 84 "dg_system.y"
 debug ("GEYACC")
 	std.error.put_line ("Executing parser user-code from file 'dg_system.y' at line 84")
@@ -407,7 +557,13 @@ if yy_parsing_status >= yyContinue then
 	yyvsp2 := yyvsp2 -1
 	yyspecial_routines3.force (yyvs3, yyval3, yyvsp3)
 end
-when 14 then
+		end
+
+	yy_do_action_14
+			--|#line 92 "dg_system.y"
+		local
+			yyval4: IS_TYPE
+		do
 --|#line 92 "dg_system.y"
 debug ("GEYACC")
 	std.error.put_line ("Executing parser user-code from file 'dg_system.y' at line 92")
@@ -432,7 +588,13 @@ if yy_parsing_status >= yyContinue then
 	end
 	yyspecial_routines4.force (yyvs4, yyval4, yyvsp4)
 end
-when 15 then
+		end
+
+	yy_do_action_15
+			--|#line 98 "dg_system.y"
+		local
+			yyval3: STRING
+		do
 --|#line 98 "dg_system.y"
 debug ("GEYACC")
 	std.error.put_line ("Executing parser user-code from file 'dg_system.y' at line 98")
@@ -446,7 +608,13 @@ if yy_parsing_status >= yyContinue then
 	yyvsp1 := yyvsp1 -5
 	yyspecial_routines3.force (yyvs3, yyval3, yyvsp3)
 end
-when 16 then
+		end
+
+	yy_do_action_16
+			--|#line 101 "dg_system.y"
+		local
+			yyval3: STRING
+		do
 --|#line 101 "dg_system.y"
 debug ("GEYACC")
 	std.error.put_line ("Executing parser user-code from file 'dg_system.y' at line 101")
@@ -457,7 +625,13 @@ if yy_parsing_status >= yyContinue then
 	yyssp := yyssp - 1
 	yyspecial_routines3.force (yyvs3, yyval3, yyvsp3)
 end
-when 17 then
+		end
+
+	yy_do_action_17
+			--|#line 102 "dg_system.y"
+		local
+			yyval3: STRING
+		do
 --|#line 102 "dg_system.y"
 debug ("GEYACC")
 	std.error.put_line ("Executing parser user-code from file 'dg_system.y' at line 102")
@@ -470,7 +644,13 @@ if yy_parsing_status >= yyContinue then
 	yyvsp1 := yyvsp1 -1
 	yyspecial_routines3.force (yyvs3, yyval3, yyvsp3)
 end
-when 18 then
+		end
+
+	yy_do_action_18
+			--|#line 105 "dg_system.y"
+		local
+			yyval3: STRING
+		do
 --|#line 105 "dg_system.y"
 debug ("GEYACC")
 	std.error.put_line ("Executing parser user-code from file 'dg_system.y' at line 105")
@@ -482,7 +662,13 @@ if yy_parsing_status >= yyContinue then
 	yyvsp3 := yyvsp3 -1
 	yyspecial_routines3.force (yyvs3, yyval3, yyvsp3)
 end
-when 19 then
+		end
+
+	yy_do_action_19
+			--|#line 108 "dg_system.y"
+		local
+			yyval6: IS_SEQUENCE [attached IS_FIELD]
+		do
 --|#line 108 "dg_system.y"
 debug ("GEYACC")
 	std.error.put_line ("Executing parser user-code from file 'dg_system.y' at line 108")
@@ -503,7 +689,13 @@ if yy_parsing_status >= yyContinue then
 	end
 	yyspecial_routines6.force (yyvs6, yyval6, yyvsp6)
 end
-when 20 then
+		end
+
+	yy_do_action_20
+			--|#line 111 "dg_system.y"
+		local
+			yyval6: IS_SEQUENCE [attached IS_FIELD]
+		do
 --|#line 111 "dg_system.y"
 debug ("GEYACC")
 	std.error.put_line ("Executing parser user-code from file 'dg_system.y' at line 111")
@@ -516,7 +708,13 @@ if yy_parsing_status >= yyContinue then
 	yyvsp5 := yyvsp5 -1
 	yyspecial_routines6.force (yyvs6, yyval6, yyvsp6)
 end
-when 21 then
+		end
+
+	yy_do_action_21
+			--|#line 116 "dg_system.y"
+		local
+			yyval5: attached IS_FIELD
+		do
 --|#line 116 "dg_system.y"
 debug ("GEYACC")
 	std.error.put_line ("Executing parser user-code from file 'dg_system.y' at line 116")
@@ -539,7 +737,13 @@ if yy_parsing_status >= yyContinue then
 	end
 	yyspecial_routines5.force (yyvs5, yyval5, yyvsp5)
 end
-when 22 then
+		end
+
+	yy_do_action_22
+			--|#line 120 "dg_system.y"
+		local
+			yyval5: attached IS_FIELD
+		do
 --|#line 120 "dg_system.y"
 debug ("GEYACC")
 	std.error.put_line ("Executing parser user-code from file 'dg_system.y' at line 120")
@@ -561,7 +765,13 @@ if yy_parsing_status >= yyContinue then
 	end
 	yyspecial_routines5.force (yyvs5, yyval5, yyvsp5)
 end
-when 23 then
+		end
+
+	yy_do_action_23
+			--|#line 123 "dg_system.y"
+		local
+			yyval5: attached IS_FIELD
+		do
 --|#line 123 "dg_system.y"
 debug ("GEYACC")
 	std.error.put_line ("Executing parser user-code from file 'dg_system.y' at line 123")
@@ -585,14 +795,6 @@ if yy_parsing_status >= yyContinue then
 	end
 	yyspecial_routines5.force (yyvs5, yyval5, yyvsp5)
 end
-				else
-					debug ("GEYACC")
-						std.error.put_string ("Error in parser: unknown rule id: ")
-						std.error.put_integer (yy_act)
-						std.error.put_new_line
-					end
-					abort
-				end
 		end
 
 	yy_do_error_action (yy_act: INTEGER)
@@ -861,6 +1063,7 @@ feature {NONE} -- Initialization
 		do
 			default_create
 			origin := pattern
+			fast_name := origin.fast_name
 			force_type (Boolean_ident, pattern)
 			force_type (Char8_ident, pattern)
 			force_type (Char32_ident, pattern)

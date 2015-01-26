@@ -178,13 +178,11 @@ feature -- Low level access
 		local
 			tid: INTEGER
 		do
-			if attached any as a then
-				tid := c_ident (a)
-				if valid_type (tid) then
-					Result := type_at (tid)
-				end
-				if attached Result as r and then r.flags & Agent_expression_flag > 0 then
-					if attached {attached like type_at} as_agent (a) as ag then
+			if any /= Void then
+				tid := c_ident (any)
+				Result := type_at (tid)
+				if Result /= Void and then Result.flags & Agent_expression_flag /= 0 then
+					if attached {like type_at} as_agent (any) as ag then
 						Result := ag
 					else
 						Result := Void
@@ -199,8 +197,8 @@ feature -- Low level access
 		local
 			i, did: INTEGER
 		do
-			if attached any as a then
-				did := c_ident (a)
+			if any /= Void then
+				did := c_ident (any)
 				from
 					i := agent_count
 				until attached Result or else i = 0 loop
@@ -209,7 +207,7 @@ feature -- Low level access
 					if attached Result as at and then
 						(at.declared_type.ident /= did
 						 or else at.call_function
-						 	/= c_dereference (as_pointer(a) + at.function_offset))
+						 	/= c_dereference (as_pointer(any) + at.function_offset))
 					 then
 						Result := Void
 					end
@@ -266,8 +264,11 @@ feature -- Low level access
 		end
 
 	special_count (a: ANY; st: IS_SPECIAL_TYPE): NATURAL
+		local
+			c: IS_FIELD
 		do
-			if attached st.count as c then
+			c := st.count
+			if c /= Void then
 				($Result).memory_copy (as_pointer(a) + c.offset, natural_32_bytes)
 			end
 		ensure
@@ -283,12 +284,12 @@ feature -- Low level access
 			not_negative: Result >= 0
 		end
 
-	adjust_special_count (a: ANY; st: IS_SPECIAL_TYPE)
+	set_special_count (a: ANY; st: IS_SPECIAL_TYPE; n: NATURAL)
 		local
 			cap: NATURAL
 		do
 			if attached st.count as c then
-				cap := special_capacity (a, st)
+				cap := special_capacity (a, st).min (n)
 				(as_pointer(a) +c. offset).memory_copy ($cap, natural_32_bytes)
 			end
 		end
@@ -792,11 +793,11 @@ feature -- External implementation
 	
 feature {NONE} -- External implementation 
 	
-	c_ident (a: detachable ANY): INTEGER
+	c_ident (a: ANY): INTEGER
 		external
 			"C inline"
 		alias
-			"$a ? *(int*)$a : 0"
+			"*(int*)$a"
 		end
 	
 	c_new_object (call: POINTER): ANY

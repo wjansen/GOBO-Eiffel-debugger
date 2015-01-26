@@ -37,11 +37,13 @@ feature -- Factory
 			if cid < all_classes.count then
 				cls := all_classes [cid]
 			end
-			if not attached cls as c or else c.ident /= cid then
+			if cls = Void or else cls.ident /= cid then
 				create cls.make_in_system (cid, fl, class_name (cid), Current)
 				all_classes.force (cls, cid)
 			end
+			last_class := cls
 		ensure
+			last_class_set: last_class /= Void and then last_class.ident = cid
 			has_class: valid_class (cid)
 		end
 
@@ -67,6 +69,9 @@ feature -- Factory
 					fl := fl | Attached_flag
 				end
 				if fl & Flexible_flag = Flexible_flag then
+					if integer_type = Void then
+						new_type (Integer_ident, True)
+					end
 					new_special_type (tid, fl)
 					t := last_type
 				elseif fl & Tuple_flag = Tuple_flag then
@@ -80,19 +85,18 @@ feature -- Factory
 				else
 					cid := class_ident (tid)
 					new_class (cid, class_flags (cid))
-					if attached class_at (cid) as bc then
-						if fl & Subobject_flag = 0 then
-							new_normal_type (tid, fl, bc)
-						else
-							new_expanded_type (tid, fl, bc)
-						end
-						t := last_type
+					if fl & Subobject_flag = 0 then
+						new_normal_type (tid, fl, last_class)
+					else
+						new_expanded_type (tid, fl, last_class)
 					end
+					t := last_type
 				end
 				check attached t end
 				all_types.force (t, tid)
 			end
 		ensure
+			last_type_set: last_type /= Void and then last_type.ident = tid
 			has_type: valid_type (tid)
 		end
 
@@ -124,7 +128,7 @@ feature -- Factory
 			end
 			fid := field_type_ident (id, i)
 			new_type (fid, attac)
-			at := all_types [fid]
+			at := last_type
 			check attached at then end
 			if attached last then
 				last.scan_in_system (id, fid, Current)
@@ -137,6 +141,8 @@ feature -- Factory
 feature {IS_TYPE,IS_FIELD} -- Factory 
 
 	last_types: detachable IS_SEQUENCE [attached like type_at]
+
+	last_class: like class_at
 
 	last_type: like type_at
 
@@ -299,26 +305,32 @@ feature {IS_TYPE,IS_FIELD} -- Factory
 		note
 			return: "Name of agent's operand."
 			tid: "agent's type ident"
-			fid: "index within closed operands array"
-			oid: "index of routine operand"
+			fid: "index within closed operands array or negative for `last_result'"
+			oid: "index of routine operand or (if negative) of `last_result'"
 		require
 			fid_not_negative: fid >= 0
 			oid_large_enough: oid >= fid
+			when_last_result: (fid < 0) = (oid < 0)
 		local
 			str: STRING
 		do
-			if operand_names.upper < oid then
-				operand_names.conservative_resize_with_default ("", operand_names.lower, oid)
-			end
-			if attached operand_names [oid] as nm
-				and then not STRING_.same_string(nm, no_name) then
-				Result := nm
-			else
-				create str.make (8)
-				str.append (once "op_")
-				str.append_integer (oid)
-				operand_names.force (str, oid)
-				Result := str
+			if oid < 0 then
+				Result := last_result_name
+			else 
+				if operand_names.upper < oid then
+					operand_names.conservative_resize_with_default
+						(no_name, operand_names.lower, oid)
+				end
+				if attached operand_names [oid] as nm
+					and then not STRING_.same_string(nm, no_name) then
+					Result := nm
+				else
+					create str.make (8)
+					str.append (operand_prefix)
+					str.append_integer (oid)
+					operand_names.force (str, oid)
+					Result := str
+				end
 			end
 		end
 	
@@ -394,9 +406,23 @@ feature {NONE} -- Auxiliary routines of factory
 		end
 
 	type_flags (tid: INTEGER): INTEGER
+		deferred
+		end
+		
+	type_flags1 (tid: INTEGER): INTEGER
+			-- Implementation (should be deferred) 
+			-- for transition from persistence version 2.6 to 2.7:
+			-- `Result' is correct only for basic expanded types
+			-- in version 2.7, otherwise `Result' is negative
+			-- and has to be set in heir classes. 
 		require
 			type_exists: type_exists (tid)
-		deferred
+		do
+			if tid <= Pointer_ident and then known_basic_types then
+				Result := Basic_expanded_flag
+			else
+				Result := -1
+			end
 		end
 
 	class_ident (tid: INTEGER): INTEGER
@@ -498,11 +524,17 @@ feature {IS_TYPE} -- Auxiliary routines of factory
 	
 feature {NONE} -- Implementation 
 
+	known_basic_types: BOOLEAN
+	
 	item_names: ARRAY [READABLE_STRING_8]
 		once
 			create Result.make_filled (no_name, 0, 20)
 		end
 
+	operand_prefix: STRING = "op_"
+	
+	last_result_name: STRING = "last_result"
+	
 	operand_names: ARRAY [READABLE_STRING_8]
 		once
 			create Result.make_filled (no_name, 0, 20)

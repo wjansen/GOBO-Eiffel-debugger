@@ -220,33 +220,32 @@ feature -- Basic operation
 			f_is_open: f.exists and f.is_open_read
 		local
 			src: PC_BASIC_SOURCE
-			h: PC_HEADER
 			fast, retried: BOOLEAN
 		do
 			if not retried then
 				reset
 				create src.make (Deep_flag)
 				src.set_file (f)
-				create h.make_from_source (src)
-				store_order := h.order
-				with_onces := (h.options & Once_observation_flag) /= 0
+				create header.make_from_source (src)
+				store_order := header.order
+				with_onces := (header.options & Once_observation_flag) /= 0
 				byte_count := 0
-				is_basic := h.is_basic
-				compilation_time := h.compilation_time
-				creation_time := h.creation_time
-				store_time := h.store_time
+				is_basic := header.is_basic
+				compilation_time := header.compilation_time
+				creation_time := header.creation_time
+				store_time := header.store_time
 				fast := compilation_time.is_equal (runtime_system.compilation_time)
 					and then attached runtime_system.root_type as root
-					and then root.has_name (h.root_name)
+					and then root.has_name (header.root_name)
 				if is_basic then 
 					if not fast then 
 						raise_retrieval_exception (store_root_or_time_error)
 					end
-					read_basic_or_fast (f, h.options, store_order)
+					read_basic_or_fast (f, store_order, header.options)
 				elseif fast then
-					read_basic_or_fast (f, h.options, store_order)
+					read_basic_or_fast (f, store_order, header.options)
 				else
-					read_general (f, h.options, store_order, h.root_name)
+					read_general (f, store_order, header.options, header.root_name)
 				end
 			end
 		ensure
@@ -288,19 +287,23 @@ feature {NONE} -- Traversal
 			end
 		end
 
-	any_driver (t: PC_TARGET [detachable ANY]; s: PC_SERIAL_SOURCE [NATURAL];
-			opts: INTEGER): PC_SERIAL_DRIVER [detachable ANY]
+	any_driver (t: PC_TARGET [detachable ANY]; s: PC_SOURCE [NATURAL];
+			order, opts: INTEGER): PC_SERIAL_DRIVER [detachable ANY]
 		do
-			create Result.make (t, s, opts)
+			create Result.make (t, s, order, opts)
+		ensure
+			is_serial: Result.is_setrial
 		end
 
-	integer_driver (t: PC_TARGET [NATURAL]; s: PC_SERIAL_SOURCE [NATURAL];
-			opts: INTEGER): PC_SERIAL_DRIVER [NATURAL]
+	integer_driver (t: PC_TARGET [NATURAL]; s: PC_SOURCE [NATURAL];
+		order, opts: INTEGER): PC_SERIAL_DRIVER [NATURAL]
 		do
-			create Result.make (t, s, opts)
+			create Result.make (t, s, order, opts)
+		ensure
+			is_serial: Result.is_setrial
 		end
 
-	read_general (f: IO_MEDIUM; opts, order: INTEGER; name: READABLE_STRING_8)
+	read_general (f: IO_MEDIUM; order, opts: INTEGER; name: READABLE_STRING_8)
 		require
 			is_open: f.is_open_read
 		local
@@ -315,7 +318,7 @@ feature {NONE} -- Traversal
 					src.set_file (f)
 					src.set_name (name)
 					src.read_header
-					dr := any_driver (tgt, src, opts)
+					dr := any_driver (tgt, src, order, opts)
 					dr.traverse 
 					top_object := dr.target_root_ident
 					top_type := dr.root_type
@@ -329,7 +332,7 @@ feature {NONE} -- Traversal
 			retry
 		end
 
-	read_basic_or_fast (f: IO_MEDIUM; opts, order: INTEGER)
+	read_basic_or_fast (f: IO_MEDIUM; order, opts: INTEGER)
 		require
 			is_open: f.is_open_read
 		local
@@ -350,8 +353,9 @@ feature {NONE} -- Traversal
 				tgt.set_use_default_creation (False)
 				src := source (mode, order)
 				src.set_file (f)
+				src.set_version (header.major, header.minor)
 				src.read_header
-				dr := any_driver (tgt, src, opts)
+				dr := any_driver (tgt, src, order, opts)
 				dr.traverse 
 				top_object := dr.target_root_ident
 				top_type := dr.root_type
@@ -462,6 +466,8 @@ feature {NONE} -- Implementation
 
 	store_root_or_time_error: STRING = "Wrong root class or compilation time."
 
+	header: PC_HEADER
+	
 	top_type: detachable IS_TYPE
 
 	indirect_target: detachable PC_INDIRECT_MEMORY_TARGET

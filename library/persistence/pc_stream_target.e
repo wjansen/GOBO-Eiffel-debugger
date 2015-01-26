@@ -26,7 +26,8 @@ inherit
 
 	IS_FACTORY
 		rename
-			make as make_system
+			make as make_system,
+			top_type as system_top_type
 		redefine
 			default_create,
 			class_at,
@@ -147,9 +148,6 @@ feature {PC_DRIVER} -- Put elementary data
 			tid := t.ident
 			write_int (tid)
 			new_type (tid, True)
-			if attached file as f then
-				f.flush
-			end
 		end
 
 	put_new_special (s: IS_SPECIAL_TYPE; n, cap: NATURAL)
@@ -163,9 +161,6 @@ feature {PC_DRIVER} -- Put elementary data
 			write_uint (n)
 			if has_capacities then
 				write_uint (cap)
-			end
-			if attached file as f then
-				f.flush
 			end
 		end
 

@@ -224,44 +224,6 @@ feature {PC_DRIVER} -- Writing array data
 			end
 		end
 	
-	put_strings (ss: SPECIAL [detachable STRING_8]; n: INTEGER)
-		do
-			from
-				index := 0
-			until index = n loop
-				if attached ss [index] as s then 
-					put_string (s)
-				else
-					put_void_ident (Void)
-				end
-				index := index + 1
-			end
-		end
-	
-	put_unicodes (uu: SPECIAL [detachable STRING_32]; n: INTEGER)
-		do
-			from
-				index := 0
-			until index = n loop
-				if attached uu [index] as u then 
-					put_unicode (u)
-				else
-					put_void_ident (Void)
-				end
-				index := index + 1
-			end
-		end
-	
-	put_references (rr: SPECIAL [NATURAL]; n: INTEGER)
-		do
-			from
-				index := 0
-			until index = n loop
-				put_known_ident (rr [index], field_type)
-				index := index + 1
-			end
-		end
-	
 feature {NONE} -- Implementation 
 
 	max_ident: NATURAL

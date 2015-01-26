@@ -8,6 +8,7 @@ inherit
 
 	PC_BASIC_SOURCE
 		redefine
+			last_class,
 			default_create,
 			make, 
 			reset,
@@ -24,6 +25,7 @@ inherit
 			is_equal,
 			out
 		redefine
+			last_class,
 			default_create
 		end
 
@@ -74,6 +76,8 @@ feature -- Access
 
 	none_type: like any_type
 	
+	last_class: like class_at
+	
 feature -- Status setting 
 
 	set_name (nm: READABLE_STRING_8)
@@ -94,7 +98,6 @@ feature {PC_DRIVER} -- Reading structure definitions
 			cid := last_int
 			if cid > 0 then
 				new_class (cid, 0)
-				last_class := class_at (cid)
 				read_str
 				last_string := last_str
 			end

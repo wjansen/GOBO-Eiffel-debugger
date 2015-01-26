@@ -148,8 +148,9 @@ feature {PC_DRIVER} -- Reading object definitions
 			pop_offset
 		end
 
-	finish (top: PC_TYPED_IDENT[ANY])
+	finish (top: ANY; type: IS_TYPE)
 		do
+			Precursor (top, type)
 			across actionables as act loop
 				act.item.post_retrieve
 			end
@@ -175,7 +176,7 @@ feature {PC_DRIVER} -- Push and pop data
 	put_new_special (s: IS_SPECIAL_TYPE; n, cap: NATURAL)
 		do
 			last_ident := system.new_array (s, cap)
-			system.adjust_special_count (last_ident, s)
+			system.set_special_count (last_ident, s, n)
 			put_pointer (as_pointer(last_ident))
 		end
 
@@ -279,7 +280,7 @@ feature {PC_DRIVER} -- Writing elementary data
 			end
 		end
 
-	put_known_ident (id: detachable ANY; t: IS_TYPE)
+	put_known_ident (t: IS_TYPE; id: detachable ANY)
 		do
 			put_pointer (as_pointer(id))
 		end
@@ -287,6 +288,76 @@ feature {PC_DRIVER} -- Writing elementary data
 feature {PC_DRIVER} -- Writing array data
 	
 	put_booleans (bb: SPECIAL [BOOLEAN]; n: INTEGER)
+		do
+			put_mem (address, offset, bb.base_address, n*Boolean_bytes)
+		end
+	
+	put_characters (cc: SPECIAL [CHARACTER_8]; n: INTEGER)
+		do
+			put_mem (address, offset, cc.base_address, n*Character_8_bytes)
+		end
+	
+	put_characters_32 (cc: SPECIAL [CHARACTER_32]; n: INTEGER)
+		do
+			put_mem (address, offset, cc.base_address, n*Character_32_bytes)
+		end
+	
+	put_integers_8 (ii: SPECIAL [INTEGER_8]; n: INTEGER)
+		do
+			put_mem (address, offset, ii.base_address, n*Integer_8_bytes)
+		end
+	
+	put_integers_16 (ii: SPECIAL [INTEGER_16]; n: INTEGER)
+		do
+			put_mem (address, offset, ii.base_address, n*Integer_16_bytes)
+		end
+	
+	put_integers (ii: SPECIAL [INTEGER_32]; n: INTEGER)
+		do
+			put_mem (address, offset, ii.base_address, n*Integer_32_bytes)
+		end
+	
+	put_integers_64 (ii: SPECIAL [INTEGER_64]; n: INTEGER)
+		do
+			put_mem (address, offset, ii.base_address, n*Integer_64_bytes)
+		end
+	
+	put_naturals_8 (nn: SPECIAL [NATURAL_8]; n: INTEGER)
+		do
+			put_mem (address, offset, nn.base_address, n*Natural_8_bytes)
+		end
+	
+	put_naturals_16 (nn: SPECIAL [NATURAL_16]; n: INTEGER)
+		do
+			put_mem (address, offset, nn.base_address, n*Natural_16_bytes)
+		end
+	
+	put_naturals (nn: SPECIAL [NATURAL_32]; n: INTEGER)
+		do
+			put_mem (address, offset, nn.base_address, n*Natural_32_bytes)
+		end
+	
+	put_naturals_64 (nn: SPECIAL [NATURAL_64]; n: INTEGER)
+		do
+			put_mem (address, offset, nn.base_address, n*Natural_64_bytes)
+		end
+	
+	put_reals (rr: SPECIAL [REAL_32]; n: INTEGER)
+		do
+			put_mem (address, offset, rr.base_address, n*Real_32_bytes)
+		end
+	
+	put_doubles (dd: SPECIAL [REAL_64]; n: INTEGER)
+		do
+			put_mem (address, offset, dd.base_address, n*Real_64_bytes)
+		end
+	
+	put_pointers (pp: SPECIAL [POINTER]; n: INTEGER)
+		do
+			put_mem (address, offset, pp.base_address, n*Pointer_bytes)
+		end
+	
+	oldput_booleans (bb: SPECIAL [BOOLEAN]; n: INTEGER)
 		local
 			a: ANY
 		do
@@ -297,7 +368,7 @@ feature {PC_DRIVER} -- Writing array data
 			end
 		end
 	
-	put_characters (cc: SPECIAL [CHARACTER_8]; n: INTEGER)
+	oldput_characters (cc: SPECIAL [CHARACTER_8]; n: INTEGER)
 		local
 			a: ANY
 		do
@@ -308,7 +379,7 @@ feature {PC_DRIVER} -- Writing array data
 			end
 		end
 	
-	put_characters_32 (cc: SPECIAL [CHARACTER_32]; n: INTEGER)
+	oldput_characters_32 (cc: SPECIAL [CHARACTER_32]; n: INTEGER)
 		local
 			a: ANY
 		do
@@ -319,7 +390,7 @@ feature {PC_DRIVER} -- Writing array data
 			end
 		end
 	
-	put_integers_8 (ii: SPECIAL [INTEGER_8]; n: INTEGER)
+	oldput_integers_8 (ii: SPECIAL [INTEGER_8]; n: INTEGER)
 		local
 			a: ANY
 		do
@@ -330,7 +401,7 @@ feature {PC_DRIVER} -- Writing array data
 			end
 		end
 	
-	put_integers_16 (ii: SPECIAL [INTEGER_16]; n: INTEGER)
+	oldput_integers_16 (ii: SPECIAL [INTEGER_16]; n: INTEGER)
 		local
 			a: ANY
 		do
@@ -341,7 +412,7 @@ feature {PC_DRIVER} -- Writing array data
 			end
 		end
 	
-	put_integers (ii: SPECIAL [INTEGER_32]; n: INTEGER)
+	oldput_integers (ii: SPECIAL [INTEGER_32]; n: INTEGER)
 		local
 			a: ANY
 		do
@@ -352,7 +423,7 @@ feature {PC_DRIVER} -- Writing array data
 			end
 		end
 	
-	put_integers_64 (ii: SPECIAL [INTEGER_64]; n: INTEGER)
+	oldput_integers_64 (ii: SPECIAL [INTEGER_64]; n: INTEGER)
 		local
 			a: ANY
 		do
@@ -363,7 +434,7 @@ feature {PC_DRIVER} -- Writing array data
 			end
 		end
 	
-	put_naturals_8 (nn: SPECIAL [NATURAL_8]; n: INTEGER)
+	oldput_naturals_8 (nn: SPECIAL [NATURAL_8]; n: INTEGER)
 		local
 			a: ANY
 		do
@@ -374,7 +445,7 @@ feature {PC_DRIVER} -- Writing array data
 			end
 		end
 	
-	put_naturals_16 (nn: SPECIAL [NATURAL_16]; n: INTEGER)
+	oldput_naturals_16 (nn: SPECIAL [NATURAL_16]; n: INTEGER)
 		local
 			a: ANY
 		do
@@ -385,7 +456,7 @@ feature {PC_DRIVER} -- Writing array data
 			end
 		end
 	
-	put_naturals (nn: SPECIAL [NATURAL_32]; n: INTEGER)
+	oldput_naturals (nn: SPECIAL [NATURAL_32]; n: INTEGER)
 		local
 			a: ANY
 		do
@@ -396,7 +467,7 @@ feature {PC_DRIVER} -- Writing array data
 			end
 		end
 	
-	put_naturals_64 (nn: SPECIAL [NATURAL_64]; n: INTEGER)
+	oldput_naturals_64 (nn: SPECIAL [NATURAL_64]; n: INTEGER)
 		local
 			a: ANY
 		do
@@ -407,7 +478,7 @@ feature {PC_DRIVER} -- Writing array data
 			end
 		end
 	
-	put_reals (rr: SPECIAL [REAL_32]; n: INTEGER)
+	oldput_reals (rr: SPECIAL [REAL_32]; n: INTEGER)
 		local
 			a: ANY
 		do
@@ -418,7 +489,7 @@ feature {PC_DRIVER} -- Writing array data
 			end
 		end
 	
-	put_doubles (dd: SPECIAL [REAL_64]; n: INTEGER)
+	oldput_doubles (dd: SPECIAL [REAL_64]; n: INTEGER)
 		local
 			a: ANY
 		do
@@ -429,7 +500,7 @@ feature {PC_DRIVER} -- Writing array data
 			end
 		end
 	
-	put_pointers (pp: SPECIAL [POINTER]; n: INTEGER)
+	oldput_pointers (pp: SPECIAL [POINTER]; n: INTEGER)
 		local
 			a: ANY
 		do
@@ -437,39 +508,6 @@ feature {PC_DRIVER} -- Writing array data
 			a := object
 			if attached {SPECIAL [POINTER]} a as ss then
 				ss.copy_data (pp, 0, 0, n)
-			end
-		end
-	
-	put_strings (ss: SPECIAL [detachable STRING_8]; n: INTEGER)
-		local
-			a: ANY
-		do
-			a := ss
-			a := object
-			if attached {SPECIAL [detachable STRING_8]} a as aa then
-				aa.copy_data (ss, 0, 0, n)
-			end
-		end
-	
-	put_unicodes (uu: SPECIAL [detachable STRING_32]; n: INTEGER)
-		local
-			a: ANY
-		do
-			a := uu
-			a := object
-			if attached {SPECIAL [detachable STRING_32]} a as ss then
-				ss.copy_data (uu, 0, 0, n)
-			end
-		end
-	
-	put_references (rr: SPECIAL [detachable ANY]; n: INTEGER)
-		local
-			a: ANY
-		do
-			a := rr
-			a := object
-			if attached {SPECIAL [detachable ANY]} a as ss then
-				ss.copy_data (rr, 0, 0, n)
 			end
 		end
 	
@@ -482,6 +520,11 @@ feature {NONE} -- Implementation
 	first: BOOLEAN
 	
 	actionables: ARRAYED_LIST [PC_ACTIONABLE]
+
+	put_mem(addr: POINTER; off: INTEGER; p: POINTER; bytes: INTEGER)
+		external "C inline use <string.h>"
+		alias "memcpy(((char*)$addr)+$off, $p, $bytes)"
+		end
 
 invariant
 

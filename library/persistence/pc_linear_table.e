@@ -32,16 +32,16 @@ feature -- Access
 			Result := key > 0
 		end
 
-	item alias "[]" (key: NATURAL): V_
+	item alias "[]" (key: NATURAL): V_ assign put
 		local
 			i: INTEGER
 		do
 			if key = last_key then
 				Result := last_data
 			else
-				i := key.to_integer_32
-				if i < data.count and then attached data [i] as di then
-					Result := di
+				if key < free_index then
+					i := key.to_integer_32
+					Result := data [i]
 				else	-- should not happen, just to make the routine void safe
 				end
 			end
@@ -77,11 +77,9 @@ feature -- Status
 			last_data := v0
 			if key < free_index then
 				i := key.to_integer_32
-				if i < capacity then
-					last_key := key
-					last_data := data [i]
-					Result := last_data /= v0
-				end
+				last_key := key
+				last_data := data [i]
+				Result := last_data /= v0
 			else
 			end
 		end
@@ -96,6 +94,7 @@ feature -- Element change
 			i := key.to_integer_32
 			if value = v0 then
 				if key < free_index and then data [i] /= v0 then
+					data [i] := v0
 					count := count - 1
 				end
 			else
@@ -103,16 +102,25 @@ feature -- Element change
 					data := data.aliased_resized_area_with_default
 						(v0, 2 * capacity.max (i) + 1)
 				end
-				if data [i] /= v0 then
+				if data [i] = v0 then
 					count := count + 1
+					free_index := free_index.max (key + 1)
 				end
-				free_index := free_index.max (key) + 1
+				data [i] := value
 			end
-			data [i] := value
+			last_data := value
+			last_key := key
 		end
 
 feature -- Removal 
 
+	remove (key: NATURAL)
+		local
+			v0: detachable V_
+		do
+			put (v0, key)
+		end
+	
 	clear
 		local
 			v0: detachable V_
@@ -243,7 +251,8 @@ feature {PC_LINEAR_TABLE} -- Implementation
 invariant
 
 	capacity_large_enough: capacity >= count
-	free_index_large_enough: free_index > 0
-	item0_not_used: data [0] = pattern
+	free_index_posotive: free_index > 0
+	free_index_small_enough: free_index <= capacity
+	item0_not_used: data [0] = TYPE[V_].default
 	
 end

@@ -168,6 +168,7 @@ feature -- Initialization
 			if not defined then
 				defined := True
 				from
+					all_classes.compress
 					i := class_count
 				until i = 0 loop
 					i := i - 1
@@ -177,6 +178,7 @@ feature -- Initialization
 				end
 				resolve_no_ident_types
 				from
+					all_types.compress
 					i := type_count
 				until i = 0 loop
 					i := i - 1
@@ -185,6 +187,7 @@ feature -- Initialization
 					end
 				end
 				from
+					all_onces.compress
 					i := once_count
 					old_onces := all_onces
 					if i > 0 then
@@ -200,6 +203,7 @@ feature -- Initialization
 					end
 				end
 				all_onces.sort (agent once_less)
+				all_constants.compress
 				all_constants.sort (agent const_less)
 			end
 		end

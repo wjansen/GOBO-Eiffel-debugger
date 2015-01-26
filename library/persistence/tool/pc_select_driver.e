@@ -8,7 +8,7 @@ inherit
 
 	PC_SERIAL_DRIVER [NATURAL]
 		rename
-			make as make_driver
+			make as make_serial
 		redefine
 			source,
 			target,
@@ -95,7 +95,7 @@ feature {NONE} -- Initialization
 				create order.make (1)
 			end
 			order.extend (0)
-			make_driver (target, src, 0)
+			make_serial (target, src,  -1, 0)
 		end
 
 	all_heads 
@@ -231,9 +231,9 @@ feature -- Basic operation
 				process_announcement (id)
 				ti := target.last_ident
 				if t.is_special and then attached {IS_SPECIAL_TYPE} t as s then
-					process_special (s, source.capacities [id], id, ti, False)
+					process_special (s, source.capacities [id], id, ti)
 				else
-					process_normal_or_tuple (t, id, ti, False)
+					process_normal_or_tuple (t, id, ti)
 				end
 			end
 		end

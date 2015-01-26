@@ -9,17 +9,21 @@ public class DataCore : Box, AbstractPart {
 	public Debuggee? dg;
 	public FormatStyle style { get; protected set; }
 
+	protected Adjustment items;
+	protected Scrollbar items_bar;
 	protected TreeStore store;
 	protected TreeView view { get; protected set; }
 	protected CellRendererText cell;
 	protected Gee.List<uint> info_list;
 	public bool tree_lines { get; set; }
+	public bool non_defaults { get; set; }
+	public int max_items { get; set; }
 
 	public StackFrame* frame { get; protected set; }
 	protected Routine* routine;
 	
 	protected void set_value(TreeIter iter, uint8* addr, bool is_home,
-							 Entity* e, SpecialType* st, uint idx,
+							 Entity* e, SpecialType* st, int idx,
 							 char mode, string? name=null, 
 							 Expression? ex=null) 
 	requires (e!=null || st!=null || ex!=null || dg==null) {
@@ -39,14 +43,23 @@ public class DataCore : Box, AbstractPart {
 			addr = t.dereference(addr);
 		}
 		if (!t.is_subobject()) t = dg.rts.type_of_any(addr, t);
-		var value = format_value(addr, 0, false, t, style, known_objects);
-		var type = format_type(addr, 0, false, t, e!=null ? e.text:null);
-		var tid = dg.rts.object_type_id(addr, false, t);
+		string value, type;
+		uint tid;
+		if (t==null) {
+			value = "???";
+			type = "???";
+			tid = TypeIdent.NONE;
+		} else {
+			value = format_value(addr, 0, false, t, style, known_objects);
+			type = format_type(addr, 0, false, t, e!=null ? e.text : null);
+			tid = dg.rts.object_type_id(addr, false, t);
+		}
 		store.@set(iter, 
 				   ItemFlag.EXPR, ex,
-				   ItemFlag.FIELD, st==null ? e : null,
+				   ItemFlag.FIELD, e,
 				   ItemFlag.ADDR, addr,
 				   ItemFlag.INDEX, st!=null ? idx : -1,
+				   ItemFlag.FIRST, 0,
 				   ItemFlag.MODE, (int)mode,
 				   ItemFlag.NAME, nm, 
 				   ItemFlag.VALUE, value, 
@@ -97,8 +110,8 @@ public class DataCore : Box, AbstractPart {
 		TreeIter child = iter;
 		string str, old_val, value, old_type, type;
 		uint8* old_addr, heap;
-		uint n, n_old, tid, tid_old, step;
-		int i, off, idx;
+		uint n, m_old, tid, tid_old, step;
+		int i, j, m, off, idx, first;
 		char mode;
 		bool ok=true, changed;
 		store.@get(iter, 
@@ -106,6 +119,7 @@ public class DataCore : Box, AbstractPart {
 				   ItemFlag.EXPR, out ex,
 				   ItemFlag.FIELD, out e,
 				   ItemFlag.INDEX, out idx,
+				   ItemFlag.FIRST, out first,
 				   ItemFlag.ADDR, out old_addr,
 				   ItemFlag.NAME, out str,
 				   ItemFlag.VALUE, out old_val, 
@@ -121,7 +135,7 @@ public class DataCore : Box, AbstractPart {
 			if (e!=null) t = e.type;
 			else if (idx>=0) t = dg.rts.type_at(tid_old);
 			else return;
-			if (!t.is_subobject()) t = dg.rts.type_of_any(addr, t);
+			if (t==null || !t.is_subobject()) t = dg.rts.type_of_any(addr, t);
 		}
 		tid = t!=null ? t.ident : 0;
 		value = format_value(addr, 0, false, t, style, known_objects);
@@ -132,12 +146,10 @@ public class DataCore : Box, AbstractPart {
 					   ItemFlag.TYPE_ID, tid, ItemFlag.TYPE, type, -1);
 		}
 		store.@set(iter, ItemFlag.CHANGED, changed, -1);
-		n_old = store.iter_n_children(iter);
+		m_old = store.iter_n_children(iter);
 		if (t.is_special()) {
 			SpecialType* st = (SpecialType*)t;				
 			n = st.special_count(addr);
-			if (n>0 && n_old==0) 
-				add_dummy_item(iter, t);
 		} else {
 			n = t.field_count();
 		}
@@ -152,33 +164,12 @@ public class DataCore : Box, AbstractPart {
 		}
 		mode = DataMode.FIELD;
 		if (t.is_special()) {
-			SpecialType* st = (SpecialType*)t;				
-			e = (Entity*)st.item_0();
-			uint8* faddr = st.base_address(addr);
-			step = st.item_type().field_bytes();
-			for (i=0; i<n; ++i, faddr+=step) {
-				// if (is_default_value(faddr, TRUE, fid)) continue;
-				heap = e.type.dereference(faddr);
-				if (i<n_old) {
-					store.iter_nth_child(out child, iter, i);
-					update_subtree(child, heap);
-				} else {
-					store.append(out child, iter);
-					ft = dg.rts.type_of_any(heap, e.type);
-					str = @"[$i]";
-					set_value(child, faddr, true, e, st, i, mode, str);
-					store.@set(child, ItemFlag.CHANGED, true, -1);
-					add_dummy_item(child, ft);
-				}
-			}
-			for (; i<n_old; ++i) {
-				store.iter_nth_child(out child, iter, (int)n);
-				store.@remove(ref child);
-			}
+			move_items(iter, first, true);
 			if (n==0) {	// remove the dummy ident
 				while (store.iter_nth_child(out child, iter, (int)n))
 					store.@remove(ref child);
 			}
+			move_items(iter, first, true);
 		} else if (!t.is_string()) {
 			if (t.is_agent()) {
 				AgentType* ag = (AgentType*)t;
@@ -269,7 +260,7 @@ public class DataCore : Box, AbstractPart {
 			set_value(iter, target, false, (Entity*)loc, null, -1, 
 					  DataMode.CURRENT, null);
 			store.@set(iter, ItemFlag.CHANGED, true, -1);
-			add_dummy_item(iter, lt); 
+			add_dummy_item(iter, lt, true); 
 			path = store.get_path(iter);
 			view.expand_row(path, false);
 		}
@@ -318,13 +309,13 @@ public class DataCore : Box, AbstractPart {
 				store.insert(out iter, null, j);
 				set_value(iter, laddr, false, (Entity*)loc, null, -1, ch, null);
 				store.@set(iter, ItemFlag.CHANGED, true, -1);
-				add_dummy_item(iter, lt); 
+				add_dummy_item(iter, lt, true); 
 			}
 			++j;
 		}
 	}
 
-	protected void add_dummy_item(TreeIter iter, Gedb.Type* t) {
+	protected void add_dummy_item(TreeIter iter, Gedb.Type* t, bool anyway) {
 		if (t.is_string() || t.is_unicode() || t.field_count()==0) return;
 		if (t.is_special()) {
 			var st = (SpecialType*)t;
@@ -336,7 +327,7 @@ public class DataCore : Box, AbstractPart {
 		TreeIter child;
 		store.append(out child, iter);
 		store.@set(child, ItemFlag.MODE, DataMode.DUMMY, -1);
-		if (t.is_nonbasic_expanded()) {
+		if (anyway && t.is_nonbasic_expanded()) {
 			var path = store.get_path(iter);
 			view.expand_row(path, false);
 		}
@@ -352,6 +343,7 @@ public class DataCore : Box, AbstractPart {
 		string str;
 		uint8* addr, heap;
 		uint i, n, tid;
+		int first;
 		DataMode mode;
 		bool more;
 		n = store.iter_n_children(iter);
@@ -372,6 +364,7 @@ public class DataCore : Box, AbstractPart {
 		more = n==0;	// `n>0' means that the dummy item is to be replaced
 		store.@get(iter, 
 				   ItemFlag.ADDR, out addr,
+				   ItemFlag.FIRST, out first,
 				   ItemFlag.TYPE_ID, out tid, 
 				   ItemFlag.EXPR, out ex,
 				   -1);
@@ -382,23 +375,10 @@ public class DataCore : Box, AbstractPart {
 		if (t.is_special()) {
 			SpecialType* st = (SpecialType*)t;
 			n = st.special_count(addr);
-			if (n==0) return;
-			e = (Entity*)st.item_0();
-			uint8* faddr = st.base_address(addr);
-			uint step = st.item_type().field_bytes();
-			for (i=0; i<n; ++i, faddr+=step) {
-				// if (is_default_value(faddr, TRUE, fid)) continue;
-				heap = e.type.dereference(faddr);
-				if (more) 
-					store.append(out child, iter);
-				else
-					store.iter_nth_child(out child, iter, 0);
-				ft = dg.rts.type_of_any(heap, e.type);
-				str = "[%u]".printf(i);
-				set_value(child, heap, false, e, st, i, mode, str);
-				if (ft.field_count()>0) add_dummy_item(child, ft);
-				more = true;
-			}
+			if (store.iter_nth_child(out child, iter, 0))
+			store.@remove(ref child);
+			move_items(iter, first, false);
+			n = store.iter_n_children(iter);
 		} else if (!t.is_string() && !t.is_unicode()) {
 			uint8* ag_addr = null;
 			n = t.fields.length;
@@ -464,7 +444,7 @@ public class DataCore : Box, AbstractPart {
 		view.scroll_to_cell(path, null, false, 0.5F, 0.0F);
 	}
 
-	private void add_item(TreeIter iter, Entity*e, uint8* addr, DataMode mode,
+	private void add_item(TreeIter iter, Entity* e, uint8* addr, DataMode mode,
 						  int replace=-1, int array_idx=-1, int tuple_idx=-1) {
 		if (dg==null) return;
 		TreeIter child;
@@ -488,18 +468,16 @@ public class DataCore : Box, AbstractPart {
 				str = pe.text.tuple_labels[tuple_idx]._name.fast_name;
 		}
 		set_value(child, addr, false, e, null, -1, DataMode.FIELD, str);
-		add_dummy_item(child, ft);
+		add_dummy_item(child, ft, true);
 	}
 
 	protected virtual void do_collapse(TreeIter iter) {
 		if (dg==null) return;
 		Gedb.Type* t;
-		Expression? ex;
 		TreeIter child;
 		uint tid;
 		int mode;
-		store.@get(iter, ItemFlag.TYPE_ID, out tid, ItemFlag.EXPR, out ex, -1);
-		if (ex!=null) return;
+		store.@get(iter, ItemFlag.TYPE_ID, out tid, -1);
 		int i, n = store.iter_n_children(iter);
 		for (i=n; i-->0;) {
 			store.iter_nth_child(out child, iter, i);
@@ -507,7 +485,7 @@ public class DataCore : Box, AbstractPart {
 		}
 		t = dg.rts.type_at(tid);
 		if (t!=null && t.field_count()>0) {
-			add_dummy_item(iter, dg.rts.type_at(tid)); 
+			add_dummy_item(iter, dg.rts.type_at(tid), false); 
 		}
 	}
 
@@ -524,6 +502,127 @@ public class DataCore : Box, AbstractPart {
 
 	protected virtual bool valid_feature(TreeIter iter) { return true; }
 
+	private void move_items(TreeIter iter, int first, bool as_changed) {
+		Gedb.Type* t, ft;
+		TreeIter child;
+		uint8* addr, faddr, old, heap;
+		string val, str;
+		uint tid;
+		int mode, idx, i, j, l, m, n;
+		store.@get(iter, 
+				   ItemFlag.ADDR, out addr, 
+				   ItemFlag.TYPE_ID, out tid, 
+				   -1);
+	    t = dg.rts.type_at(tid);
+		if (t==null || !t.is_special()) return;
+		SpecialType* st = (SpecialType*)t;
+		t = st.item_type();
+		Entity* e = (Entity*)st.item_0();
+		faddr = addr + st.item_offset(first);
+		uint step = st.item_type().field_bytes();
+		l = store.iter_n_children(iter);
+		n = (int)st.special_count(addr);
+		m = int.min((int)n, max_items<0 ? int.MAX : max_items);
+		store.iter_nth_child(out child, iter, 0);
+		for (i=first, j=0; j<m && i<n; ++i, faddr+=step) {
+			heap = e.type.dereference(faddr);
+			if (non_defaults && (heap==null || is_zero_value(heap,step)))
+				continue;
+			idx = -1;	// meaningless, just make the compiler happy
+			val = null;
+			old = null;
+			for (; j<l;) {
+				store.iter_nth_child(out child, iter, j);
+				store.@get(child, 
+						   ItemFlag.MODE, out mode, 
+						   ItemFlag.INDEX, out idx, 
+						   ItemFlag.ADDR, out old, 
+						   ItemFlag.VALUE, out val, 
+						   -1);
+				if (idx>=i) break;
+				store.@remove(ref child);
+				--l;
+			}
+			if (i==idx) {
+				bool ok = old==heap;
+				if (ok) {
+					str = format_value(old, 0, false, t, style, known_objects);
+					ok = val==str;
+				}
+				if (!ok) {
+					update_subtree(child, heap);
+					store.@set(child, ItemFlag.CHANGED, as_changed, -1);
+				}
+			} else {
+				store.insert(out child, iter, j);
+				set_value(child, heap, false, e, st, i, 
+						  DataMode.FIELD, @"[$i]");
+				if (as_changed) 
+					store.@set(child, ItemFlag.CHANGED, true, -1);
+				ft = dg.rts.type_of_any(heap, e.type);
+				add_dummy_item(child, ft, false);
+				++l;
+			}
+			++j;
+		}
+		n = store.iter_n_children(iter);
+		i = j;
+		for (; j<n; ++j) {
+			if (store.iter_nth_child(out child, iter, i)) 
+				store.@remove(ref child);
+		}
+		store.@set(iter, ItemFlag.FIRST, first, -1);
+		if (n>0) {
+			var path = store.get_path(iter);
+			view.expand_row(path, false); 
+		}
+	}
+
+	protected virtual bool do_select(TreeSelection s, 
+									 TreeModel m, TreePath p, bool yes) {
+		Gedb.Type* t;
+		TreeIter iter, child;
+		uint tid;
+		m.get_iter(out iter, p);
+		m.@get(iter, ItemFlag.TYPE_ID, out tid, -1);
+		t = dg.rts.type_at(tid);
+		if (t==null || !t.is_special() || !view.is_row_expanded(p)) {
+			items_bar.sensitive = false;
+			return true;
+		}
+		SpecialType* st = (SpecialType*)t;
+		uint8* addr;
+		int low, high, l, n;
+		m.@get(iter, ItemFlag.ADDR, out addr, -1);
+		n = (int)st.capacity(addr);
+		l = m.iter_n_children(iter)-1;
+		assert (l>=0);
+		m.iter_nth_child(out child, iter, 0);
+		m.@get(child, ItemFlag.INDEX, out low, -1);
+		m.iter_nth_child(out child, iter, l);
+		m.@get(child, ItemFlag.INDEX, out high, -1);
+		items.lower = 0;
+		items.upper = n-1;
+		items.page_size = high-low;
+		items.value = low;
+		items_bar.sensitive = true;
+		return true;
+	}
+
+	private void do_move_items() {
+/*
+		stderr.printf("[%d,%d] in [%d, %d]\n", (int)items.value, 
+					  (int)(items.value+items.page_size),
+					  (int)items.lower, (int)items.upper);
+*/
+		if (!items_bar.sensitive) return;
+		TreeModel m;
+		TreeIter iter;
+		var sel = view.get_selection();
+		if (sel.get_selected(out m, out iter)) 
+			move_items(iter, (int)items.value, false);
+	}
+
 	private Gtk.Menu typeset_menu;
 
 	private bool do_typeset(Gdk.EventButton ev, TreeIter iter) {
@@ -532,9 +631,10 @@ public class DataCore : Box, AbstractPart {
 		Entity* e;
 		Gtk.MenuItem item, sel = null;
 		uint tid;
-		int i, n, mode;
+		int idx, i, n, mode;
 		store.@get(iter,
 				   ItemFlag.FIELD, out e,
+				   ItemFlag.INDEX, out idx,
 				   ItemFlag.TYPE_ID, out tid, 
 				   ItemFlag.MODE, out mode,
 				   -1);
@@ -615,6 +715,15 @@ public class DataCore : Box, AbstractPart {
 		view.enable_tree_lines = d.tree_lines;
 	}
 
+	protected void do_items() {
+		if (main!=null) {
+			non_defaults = main.non_defaults;
+			max_items = main.max_items;
+		}
+		StackFrame* f = stack.frame();
+		if (f!=null) do_refresh(f, f.class_id, f.pos); 
+	}
+	
 	protected virtual void do_set_sensitive(bool is_running) {
 		set_deep_sensitive(this, !is_running);
 	}
@@ -657,6 +766,7 @@ public class DataCore : Box, AbstractPart {
 							  typeof(Entity*),		// field
 							  typeof(uint8*),		// addr
 							  typeof(int),			// index
+							  typeof(int),			// first
 							  typeof(int),			// mode
 							  typeof(string),		// name
 							  typeof(string),		// value
@@ -711,12 +821,19 @@ public class DataCore : Box, AbstractPart {
 		type.expand = true;
 		type.clickable = true;
 		view.append_column(type);
-		do_tree_lines();
+
+		var box = new Box(Orientation.HORIZONTAL, 0);
+		pack_start(box, true, true, 3);
+		items = new Adjustment(10.0, 1.0, 100.0, 1.0, 10.0, 0.0);
+		items_bar = new Scrollbar(Orientation.VERTICAL, items);
+		items_bar.sensitive = false;
+		box.pack_start(items_bar, false,false, 3);
+		items.value_changed.connect((i) => do_move_items());
 
 		ScrolledWindow scroll = new ScrolledWindow(null, null);
-		pack_start(scroll, true, true, 3);
+		box.pack_start(scroll, true, true, 0);
 		scroll.min_content_width = 400;
-		scroll.min_content_height = 360;
+		scroll.min_content_height = 320;
 		scroll.@add(view);
 
 		view.row_expanded.connect((i,p)=> { do_expand(i); });
@@ -897,7 +1014,9 @@ public class DataPart : DataCore {
 	internal Gee.List<MoreDataPart> more_data;
 	internal Gee.Map<string,Expression> aliases;
 
-	private bool do_select(TreeSelection s, TreeModel m, TreePath p, bool yes) {
+	protected override bool do_select(TreeSelection s, 
+									  TreeModel m, TreePath p, bool yes) {
+		bool ok = base.do_select(s, m, p, yes);
 		TreeIter iter;
 		int mode;
 		m.get_iter(out iter, p);
@@ -916,7 +1035,6 @@ public class DataPart : DataCore {
 		sel.mode = SelectionMode.SINGLE;
 		sel.set_select_function(do_select);
 
-		notify["tree-lines"].connect((d,p) => { do_tree_lines(); });
 		sel.changed.connect((s) => { 
 				TreeModel model;
 				TreeIter iter;
@@ -928,6 +1046,13 @@ public class DataPart : DataCore {
 		stack.level_selected.connect(
 			(s,f,i,p) => { do_refresh(f,i,p); });
 		
+		tree_lines = false;
+		non_defaults = false;
+		max_items = 10;
+		notify["tree-lines"].connect((d,p) => { do_tree_lines(); });
+		notify["non-defaults"].connect((d,p) => { do_items(); });
+		notify["max-items"].connect((d,p) => { do_items(); });
+
 	}
 
 	public DataItem? selected_item() {
@@ -1124,7 +1249,7 @@ public class DataPart : DataCore {
 			} else if (exu!=null && exu.arg!=null) {
 				add_expression(exu.arg, iter); 
 			} else { 
-				add_dummy_item(iter, t);
+				add_dummy_item(iter, t, true);
 			}
 		}
 		if (at!=null) {
@@ -1138,7 +1263,7 @@ public class DataPart : DataCore {
 		more_data.insert(0,m);
 	}
 
-}
+} /* class DataPart */
 
 public class ExtraData : DataCore {
 
@@ -1164,7 +1289,12 @@ public class ExtraData : DataCore {
 		id = part_count;
 		updated = true;
 		own.level_selected.connect((s,f,i,p) => { do_refresh(f,i,p); });
+		tree_lines = main.tree_lines;
+		non_defaults = main.non_defaults;
+		max_items = main.max_items;
 		main.notify["tree-lines"].connect((d,p) => { do_tree_lines(); });
+		main.notify["non-defaults"].connect((d,p) => { do_items(); });
+		main.notify["max-items"].connect((d,p) => { do_items(); });
 	}
 
 	public int id { get; private set; }
@@ -1265,7 +1395,7 @@ public class FixedPart : DataCore {
 				   ItemFlag.ADDR, addr, 
 				   ItemFlag.VALUE, value, ItemFlag.TYPE, type, 
 				   Item.FRESH, fresh, -1);
-		if (!fresh) add_dummy_item(at, t);
+		if (!fresh) add_dummy_item(at, t, true);
 	}
 
 	protected override bool valid_feature(TreeIter iter) { 
@@ -1305,7 +1435,7 @@ public class FixedPart : DataCore {
 					} else {
 						store.@set(child, ItemFlag.CHANGED, false, -1);
 					}
-					if (!fresh) add_dummy_item(child, e.type);
+					if (!fresh) add_dummy_item(child, e.type, true);
 				} 
 			} while (store.iter_next(ref iter)); 
 		}
@@ -1423,6 +1553,7 @@ public class FixedPart : DataCore {
 							  typeof(Entity*),		// field
 							  typeof(uint8*),		// addr
 							  typeof(int),			// index
+							  typeof(int),			// first
 							  typeof(int),			// mode
 							  typeof(string),		// name
 							  typeof(string),		// value
@@ -1561,9 +1692,13 @@ public class FixedPart : DataCore {
 		info_list.@add(Item.CLS);
 
 		main.reformatted.connect(do_reformat);
+		tree_lines = main.tree_lines;
+		non_defaults = main.non_defaults;
+		max_items = main.max_items;
 		main.notify["tree-lines"].connect((d,p) => { do_tree_lines(); });
-		stack.level_selected.connect(
-			(s,f,i,p) => { do_refresh(f,i,p); });
+		main.notify["non-defaults"].connect((d,p) => { do_items(); });
+		main.notify["max-items"].connect((d,p) => { do_items(); });
+		stack.level_selected.connect((s,f,i,p) => { do_refresh(f,i,p); });
 		show_all();
 	}
 
@@ -1899,11 +2034,6 @@ public class EvalPart : Grid, AbstractPart, Cancellable {
 		set_result(ex); 
 	}
 	
-	private void do_changed() { 
-		changed = true; 
-		set_result(null);
-	}
-
 	private void do_edit_icon(EntryIconPosition pos) {
 		if (pos==EntryIconPosition.PRIMARY) {
 			if (checker.parsed!=null) data.add_expression(checker.parsed);
@@ -1996,8 +2126,7 @@ public class EvalPart : Grid, AbstractPart, Cancellable {
 		label.halign = Align.START;
 		history = new HistoryBox("Expressions");
 		attach(history, 1, 1, 3, 1);
-		history.selected.connect((h) => 
-			{ do_check_expression(); });
+		history.selected.connect((h) => { do_check_expression(); });
 		edit = history.get_child() as Entry;
 		edit.hexpand = true;
 		edit.editable = true;
@@ -2068,7 +2197,8 @@ public class EvalPart : Grid, AbstractPart, Cancellable {
 	}
 
 	public void post_action() {
-		var ex = (!) checker.parsed;
+	    var ex = checker.parsed;
+		if (ex==null) return;
 		history.add_item(ex.append_name(), false);
 		changed = false;
 		set_result(ex);

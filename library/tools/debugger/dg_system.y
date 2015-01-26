@@ -144,6 +144,7 @@ feature {NONE} -- Initialization
 		do
 			default_create
 			origin := pattern
+			fast_name := origin.fast_name
 			force_type (Boolean_ident, pattern)
 			force_type (Char8_ident, pattern)
 			force_type (Char32_ident, pattern)

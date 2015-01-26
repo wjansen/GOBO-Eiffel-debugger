@@ -46,7 +46,8 @@ feature {NONE} -- PC_ACTIONABLE
 		local
 			o0: O_
 		do
-				origin := o0
+			preserve
+			origin := o0
 		end
 
 	post_store

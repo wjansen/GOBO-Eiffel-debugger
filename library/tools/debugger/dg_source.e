@@ -66,8 +66,8 @@ feature {NONE} -- Initialization
 			x: IS_FEATURE_TEXT
 			r: IS_ROUTINE
 			f: IS_FIELD
-			a: IS_ARRAY [IS_NAME]
-			aa: ARRAY [IS_ARRAY[ IS_NAME]]
+			a: IS_ARRAY [detachable IS_NAME]
+			aa: ARRAY [IS_ARRAY[detachable IS_NAME]]
 			any: ANY
 			i, k: INTEGER
 			ready: BOOLEAN
@@ -109,6 +109,7 @@ feature {NONE} -- Initialization
 			end
 			if ready then
 				-- Add certain types to the typeset of `last_ident':
+				create a.make_1 (Void)
 				a := a_top.all_classes
 				a := a_top.all_types
 				a := a_top.all_agents
@@ -536,7 +537,7 @@ feature {NONE} -- Implementation
 	process_ident (id: like last_ident)
 		local
 			remote: like as_remote
-			self: attached like as_self
+			self: attached like self_type
 			obj: like last_ident
 			addr: POINTER
 			off: INTEGER

@@ -15,20 +15,22 @@ inherit
 
 	PC_DRIVER [TI_, NATURAL]
 		rename
-			common_traverse as traverse
+			make as make_driver
 		export {ANY}
 			traverse
 		redefine
-			source
+			reset,
+			known_objects,
+			todo_count
 		end
 	
 create
 
 	make
+
+feature {NONE} --
 	
-feature {NONE} -- Initialization
-	
-	make (t: like target; s: like source; opts: INTEGER)
+	make (t: like target; s: like source; order, opts: INTEGER)
 		note
 			action: ""
 			t: "traversal target"
@@ -39,59 +41,63 @@ feature {NONE} -- Initialization
 			when_target_expands_strings: t.must_expand_strings implies s.can_expand_strings
 			when_source_expands_strings: s.must_expand_strings implies t.can_expand_strings
 		local
-			oo: like known_objects;
+			oo: like known_objects
 			n: INTEGER
 		do
 			n := 100
-			create {PC_LINEAR_TABLE [PC_TYPED_IDENT [TI_]]} oo.make (n)
-			common_make (t, s, opts, oo)
+			create oo.make (n)	
+			make_driver (t, s, order, opts, oo)
 		ensure
 			taget_set: target = t
 			source_set: source = s
 		end
 
+	reset
+		do
+			Precursor
+			todo_count := 0
+		end
+	
 feature -- Access
-
-	source: PC_SERIAL_SOURCE [NATURAL]
 
 	valid_flags (f: INTEGER): BOOLEAN
 		do
 			Result := f & Forward_flag < Forward_flag
 		end
 
+	known_objects: PC_LINEAR_TABLE [PC_TYPED_IDENT [TI_]]
+	
+	todo_count: INTEGER
+
+feature --- Status
+	
+	valid_target (t: like target): BOOLEAN
+		do
+			Result := True
+		end
+			
+	valid_source (s: like source): BOOLEAN
+		do
+			Result := s.is_serial
+		end
+			
 feature {NONE} -- Scanning structures 
 	
-	process_closure
-		local
-			si, si0, si1: detachable NATURAL
-			ready: BOOLEAN
+	add_todo (si: NATURAL)
 		do
-			from
-				source.read_next_ident
-				si := source.last_ident
-				if deep or forward then
-					si1 := si
-				end
-				ready := si = si0
-				if not ready then
-					process_announcement (si)
-				end
-			until ready loop
-				source.read_next_ident
-				si := source.last_ident
-				ready := si = si1
-				if not ready then
-					process_data (si)
-				end
-				if si1 = si0 then
-					si1 := si
-				end
-			end
-			source_root_ident := si1
+			todo_count := todo_count + 1
+		end
+	
+	remove_todo (si: NATURAL)
+		do
+			todo_count := todo_count - 1
 		end
 
-	add_announced (si: NATURAL)
+	move_to_next_ident
 		do
+			source.read_next_ident
+			next_ident := source.last_ident
+			source_root_ident := next_ident
 		end
 	
 invariant

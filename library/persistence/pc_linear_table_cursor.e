@@ -12,46 +12,50 @@ inherit
 			target
 		end
 
+create
+
+	make
+
 feature {NONE} -- Initalization
 
 	make (t: like target)
 		do
 			Precursor (t)
-			index := -1
+			index := 0
 			forth
 		end
 	
 feature -- Access
 
-	target: PC_LINEAR_TABLE [V_, NATURAL]
+	target: PC_LINEAR_TABLE [V_]
 	
 	item: V_
 		do
-			Result := target.data [index]
+			Result := target [index]
 		end
 
 feature -- Status report
 
 	after: BOOLEAN
 		do
-			Result := index >= target.count
+			Result := index >= target.count.to_natural_32
 		end
 	
 feature -- Cursor movement
 	
 	forth
 		local
-			k, k0: NATURAL
+			k, k0: V_
 		do
 			from
 			until k /= k0 or else after loop
 				index := index + 1
-				k := target.keys [index]
+				k := target [index]
 			end
 		end
 	
 feature {NONE} -- Implementation
 
-	index: INTEGER
+	index: NATURAL
 	
 end

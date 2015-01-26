@@ -2,7 +2,6 @@ using Gedb;
 
 public delegate void* JumpBufferFunc();
 public delegate void* LongjmpFunc(void* buf, int val);
-public delegate void* InterruptableFunc(void* buf, void* target, void* func);
 public delegate void PositionFunc(uint id, uint l, uint c);
 public delegate void LimitsFunc(uint d, uint s);
 public delegate void OffsetFunc();
@@ -11,7 +10,6 @@ public delegate void RaiseFunc(int code);
 
 internal JumpBufferFunc jump_buffer_func;
 internal LongjmpFunc longjmp_func;
-internal InterruptableFunc interruptable_func;
 
 internal void** eif_markers;
 
@@ -221,15 +219,6 @@ public class Debuggee : Object {
 				});
 		}
 	}
-	protected void cancel_action(Cancellable? c, StackFrame* f) {
-		StackFrame* old = *top0;
-		if (f!=null) *top0 = f;
-		GLib.Idle.@add(() => { 
-				intern_action.post_cancel(old); 
-				is_running = false;	
-				return false; });
-		Thread<StackFrame*>.exit(old);
-	}
 
 	protected Debuggee.by_args(string[] args) {
 		this.args = args[0:args.length];
@@ -393,7 +382,6 @@ public class Driver : Debuggee {
 	private int os_signal;
 	private bool ignore_bp_table;
 	private int* step;
-	private void* intern_buffer;
 	private void* intern_buffer;
 
 	private void*** argv;
@@ -838,7 +826,6 @@ public class Driver : Debuggee {
 		base.set_addresses_and_offsets(address_of);
 		jump_buffer_func = (JumpBufferFunc)address_of("jmp_buffer");
 		longjmp_func = (LongjmpFunc)address_of("longjmp");
-		interruptable_func = (InterruptableFunc)address_of("interruptable");
 		eif_markers = address_of("markers");
 		raise_func = (RaiseFunc)address_of("raise");
 		set_pos_func = (PositionFunc)address_of("set_bp_pos");

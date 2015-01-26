@@ -8,8 +8,8 @@ inherit
 
 	PC_ABSTRACT_TARGET
 		redefine
-			reset,
 			must_expand_strings,
+			reset,
 			put_new_object,
 			put_new_special,
 			put_void_ident,
@@ -19,8 +19,6 @@ inherit
 			post_special,
 			pre_agent,
 			post_agent,
-			pre_new_object,
-			pre_new_special,
 			finish
 		end
 
@@ -35,9 +33,9 @@ create {IS_NAME}
 
 feature {NONE} -- Initialization 
 
-	make (c: like c_file; h: like h_file;
+	make (c: like c_file; h: like h_file; header_name: detachable STRING;
 			type_prefix, value_prefix: STRING; top_name: detachable STRING;
-			with_typedefs: BOOLEAN)
+			system: IS_SYSTEM; with_typedefs, expanded_strings: BOOLEAN)
 		note
 			action: "[
 							 Create object for storing the system description. 
@@ -46,38 +44,73 @@ feature {NONE} -- Initialization
 							 ]"
 			c: "C file"
 			h: "header file"
+			header_name: "name of `h' (without extension) for include clause"
 			type_prefix: "type name prefix"
 			value_prefix: "object name prefix"
 			top_name: "name of top object"
-			with_typedefs: "add type declarations"
+			system: "underlying IS_SYSTEM needed for its `type_count'"
+			with_typedefs: "Are C typedefs to be generated"
+			expanded_strings: "Are STRING_* objects already expanded?"
 		require
 			c_open: c.is_open_write
 			type_prefix_not_empty: not type_prefix.is_empty
 			value_prefix_not_empty: not value_prefix.is_empty
 		local
-			ch: like h_file
+			t: IS_TYPE
+			f: IS_FIELD
+			n: INTEGER
 		do
 			c_file := c
-			h_file := h
+			if h /= Void then
+				h_file := h
+				n := 200
+			else
+				h_file := c_file
+				n := 1
+			end
+			to_expand := not expanded_strings
+			must_expand_strings := expanded_strings
+			if to_expand then 
+				t := system.string_type
+				if t /= Void then
+					f := t.field_by_name ("area")
+					if f /= Void and then attached {like chars_type} f.type as ft then
+						chars_type := ft
+					end
+				end
+				t := system.string32_type
+				if t /= Void then
+					f := t.field_by_name ("area")
+					if f /= Void and then attached {like chars32_type} f.type as ft then
+						chars32_type := ft
+					end
+				end
+				delayed_declaration := ""
+			end
 			type_name_prefix := type_prefix
 			name_prefix := value_prefix
 			needs_typedefs := with_typedefs
-			if with_typedefs then
-				if h_file /=Void then
-					ch := h_file
-				else
-					ch := c_file
-				end
-				create typedefs.make (200)
-				ch.put_string ("#include <inttypes.h>%N")
-				ch.put_string ("typedef struct {int id;} T0;%N")
-				if h_file /= Void then
-					c_file.put_string ("#include %"")
-					c_file.put_string ("test.h")
-					c_file.put_string ("%"%N")
-				end
+			create extra_typedefs.make (100)
+			create declarations.make (100)
+			create declaration.make (0)
+			from
+				n := system.type_count
+			until n = 0 loop
+				shift := shift + 1
+				n := n |>> 1
 			end
-			create extra_typedefs.make (10)
+			if header_name /= Void then
+				c_file.put_string ("#include %"")
+				c_file.put_string (header_name)
+				c_file.put_string (".h%"%N")
+			else
+			end
+			if needs_typedefs then 
+				h_file.put_string ("#include <inttypes.h>%N")
+				h_file.put_string ("#include <math.h>%N")
+				h_file.put_string ("typedef struct {int id;} T0;%N")
+			end
+			create typedefs.make (n)
 			reset
 			c_name := top_name
 		ensure
@@ -90,63 +123,76 @@ feature {PC_BASE} -- Initialization
 		do
 			Precursor
 			in_chars := False
-			in_array := False
-			if attached typedefs as td then
-				td.wipe_out
-			end
+			typedefs.wipe_out
 			extra_typedefs.wipe_out
 			last_string := ""
-			declaration := ""
+			declaration.keep_head (0)
 		end
 
 feature {PC_DRIVER} -- Termination 
 
-	finish (top: PC_TYPED_IDENT [NATURAL])
+	finish (top: NATURAL; type: IS_TYPE)
 		do
 			if c_name /= Void then
 				tmp_str.wipe_out
 				tmp_str.append ("T0 *")
 				tmp_str.append (c_name)
 				if h_file /= Void then
-					h_file.put_string ("extern ")
+					h_file.put_string (extern)
 					h_file.put_string (tmp_str)
 					h_file.put_string ("; /* Root object */%N")
 				end
 				c_file.put_string (tmp_str)
 				c_file.put_string ("=(T0*)&")
 				c_file.put_string (name_prefix)
-				c_file.put_natural_32 (top.ident)
+				c_file.put_natural_32 (top)
 				c_file.put_character (';')
 				c_file.put_new_line
 			end
+			c_file.flush
 		end
 
-feature -- Access 
+feature -- Access
 
+	must_expand_strings: BOOLEAN
+	
 	has_capacities: BOOLEAN = False
 	
 	inline_specials: BOOLEAN = False
 
-	must_expand_strings: BOOLEAN = True
-
 feature {PC_DRIVER} -- Pre and post handling of data 
 
 	pre_object (t: IS_TYPE; id: NATURAL)
+		local
+			delayed: BOOLEAN
 		do
-			Precursor (t, id)
-			if not t.is_agent then
-				declare (t, 0, id)
-				if not t.is_subobject then
-					c_file.put_string (declaration)
-					c_file.put_character ('=')
-					length := length + declaration.count + 1
+			if t.is_agent and then attached {IS_AGENT_TYPE} t as at
+				and then at.declared_type /= Void
+			 then
+			else
+				if to_expand then
+					delayed := not in_chars and then (t.is_string or else t.is_unicode)
 				end
-				c_file.put_character ('{')
-				length := length + 2
-				if (t.flags & Missing_id_flag) = 0 then
-					c_file.put_integer (t.ident)
-					c_file.put_character (',')
-					length := length + 5
+				if delayed then
+					delayed_type := t
+					delayed_ident := id
+					delayed_declaration.copy (declaration.twin)
+				else
+					if id /= void_ident then
+						flush_declaration (id)
+						declarations.remove (id)
+						cached_id := 0
+						c_file.put_string (declaration)
+						c_file.put_character ('=')
+						length := length + declaration.count + 1
+					end
+					c_file.put_character ('{')
+					length := length + 2
+					if (t.flags & Missing_id_flag) = 0 then
+						c_file.put_integer (t.ident)
+						c_file.put_character (',')
+						length := length + 5
+					end
 				end
 			end
 		end
@@ -155,34 +201,46 @@ feature {PC_DRIVER} -- Pre and post handling of data
 		do
 			c_file.put_character ('}')
 			if t.is_special then
-			elseif t.is_subobject then
+			elseif id = void_ident then
 				c_file.put_character (',')
 			else
 				c_file.put_character (';')
 				c_file.put_new_line
-				c_file.flush
 				length := 0
 			end
-			Precursor (t, id)
+			c_file.flush
 		end
 
-	pre_special (t: IS_SPECIAL_TYPE; cap: NATURAL; id: NATURAL)
+	pre_special (st: IS_SPECIAL_TYPE; cap: NATURAL; id: NATURAL)
+		local
+			k: NATURAL_64
 		do
-			Precursor (t, cap, id)
-			adapted_cap := cap
-			declare (t, adapted_cap, id)
+			flush_declaration (id)
+			declarations.remove (id)
+			cached_id := 0
+			k := extra_key(st, cap)
+			if extra_typedefs.has (k) then
+				declaration.copy (extra_typedefs[k])
+				declaration.append_character (' ')
+				declaration.append (name_prefix)
+				declaration.append_natural_32 (id)
+			end
+			if to_expand and in_chars then
+				declaration.extend ('_')
+			end
 			c_file.put_string (declaration)
 			length := length + declaration.count + 1
 			tmp_str.wipe_out
-			tmp_str.extend ('=')
-			tmp_str.extend ('{')
-			tmp_str.append_integer (t.ident)
-			tmp_str.extend (',')
-			tmp_str.append_natural_32 (adapted_cap)
-			tmp_str.extend (',')
-			in_chars := t.item_type.is_character
+			tmp_str.append_character ('=')
+			tmp_str.append_character ('{')
+			tmp_str.append_integer (st.ident)
+			tmp_str.append_character (',')
+			tmp_str.append_natural_32 (cap)
+			tmp_str.append_character (',')
+			in_chars := st.item_type.is_character
 			if in_chars then
 				c_file.put_string (tmp_str)
+				adapted_cap := cap + 1
 				length := length + adapted_cap.to_integer_32 + tmp_str.count
 				break
 				c_file.put_character ('"')
@@ -196,7 +254,7 @@ feature {PC_DRIVER} -- Pre and post handling of data
 			end
 		end
 
-	post_special (t: IS_SPECIAL_TYPE; id: NATURAL)
+	post_special (st: IS_SPECIAL_TYPE; id: NATURAL)
 		do
 			if in_chars then
 				c_file.put_character ('"')
@@ -209,89 +267,61 @@ feature {PC_DRIVER} -- Pre and post handling of data
 			c_file.put_new_line
 			c_file.flush
 			length := 0
-			Precursor (t, id)
-			if in_array then
-				item_count := 0
-				in_array := False
-			end
+			Precursor (st, id)
+			c_file.flush
 		end
 
-	pre_agent (a: IS_AGENT_TYPE; id: NATURAL)
+	pre_agent (at: IS_AGENT_TYPE; id: NATURAL)
 		do
-			if attached a.closed_operands_tuple as cop then
-				next_ident
+			if attached at.closed_operands_tuple as cop then
+				put_new_object (cop)
 				closed_tuple_ident := last_ident
 				pre_object (cop, closed_tuple_ident)
 			end
 		end
 
-	post_agent (a: IS_AGENT_TYPE; id: NATURAL)
+	post_agent (at: IS_AGENT_TYPE; id: NATURAL)
 		do
-			if attached a.closed_operands_tuple as cop then
+			if attached at.closed_operands_tuple as cop then
 				post_object (cop, closed_tuple_ident)
-				pre_object (a.declared_type, id)
-				put_known_ident (closed_tuple_ident, a.declared_type)
-				if a.base_is_closed then
+				pre_object (at.declared_type, id)
+				put_known_ident (at, closed_tuple_ident)
+				if at.base_is_closed then
 					c_file.put_character ('1')
 				else
 					c_file.put_character ('0')
 				end
 				c_file.put_character (',')
+				c_file.flush
 			end
 		end
 
 feature {PC_DRIVER} -- Put elementary data 
 
 	put_new_object (t: IS_TYPE)
-		local
-			id: NATURAL
+		note
+			action:
+			"[
+			 Update `last_ident' and prepare `declaration'
+			 but do not yet print it.
+			 ]"
 		do
 			next_ident
-			id := last_ident
-			c_file.put_string (extern)
-			declare (t, 0, last_ident)
-			c_file.put_string (declaration)
-			c_file.put_character (';')
-			c_file.put_new_line
-			last_ident := id
+			flush_declaration (last_ident)
+			declare (t, last_ident)
 		end
-	
+
 	put_new_special (st: IS_SPECIAL_TYPE; n, cap: NATURAL)
-		local
-			id: NATURAL
+		note
+			action:
+			"[
+			 Update `last_ident' and prepare `declaration'
+			 but do not yet print it.
+			 ]"
 		do
 			next_ident
-			id := last_ident
-			c_file.put_string (extern)
-			declare (st, 0, id)
-			c_file.put_string (declaration)
-			c_file.put_character (';')
-			c_file.put_new_line
-			last_ident := id
-		end
-	
-	pre_new_object (t: IS_TYPE)
-		local
-			id: NATURAL
-		do
-			next_ident
-			c_file.put_string (static)
-			length := length + 7
-			id := last_ident
-			pre_object (t, id)
-			last_ident := id
-		end
-	
-	pre_new_special (st: IS_SPECIAL_TYPE; n, cap: NATURAL)
-		local
-			id: NATURAL
-		do
-			next_ident
-			id := last_ident
-			c_file.put_string (static)
-			length := length + 7
-			pre_special (st, n, id)
-			last_ident := id
+			flush_declaration (last_ident)
+			declare_special (st, n, last_ident)
 		end
 	
 feature {PC_DRIVER} -- Handling of elementary data 
@@ -308,6 +338,8 @@ feature {PC_DRIVER} -- Handling of elementary data
 			length := length + 2
 		end
 
+	adapted_cap: NATURAL
+	
 	put_character (c: CHARACTER)
 		local
 			need_quote: BOOLEAN
@@ -319,7 +351,7 @@ feature {PC_DRIVER} -- Handling of elementary data
 			end
 			if index >= adapted_cap.to_integer_32 then
 			else
-				if  c= '%U' then
+				if  c = '%U' then
 					adapted_cap := index.to_natural_32
 				elseif c < ' ' or else c > '~' then
 					put_non_printable (c)
@@ -360,7 +392,7 @@ feature {PC_DRIVER} -- Handling of elementary data
 			if i = i.Min_value then
 				tmp_str.append_string (once "(int32_t)0x")
 				tmp_str.append_string (i.to_hex_string)
-				tmp_str.extend ('U')
+				tmp_str.append_character ('U')
 			else
 				tmp_str.append_integer (i)
 			end
@@ -386,13 +418,13 @@ feature {PC_DRIVER} -- Handling of elementary data
 			if i = i.Min_value then
 				tmp_str.append_string (once "(int64_t)0x")
 				tmp_str.append_string (i.to_hex_string)
-				tmp_str.extend ('U')
+				tmp_str.append_character ('U')
 			else
 				tmp_str.append_integer_64 (i)
 			end
 			if i <= {INTEGER}.min_value or else {INTEGER}.max_value < i then
-				tmp_str.extend ('L')
-				tmp_str.extend ('L')
+				tmp_str.append_character ('L')
+				tmp_str.append_character ('L')
 			end
 			length := length + tmp_str.count + 1
 			break
@@ -405,9 +437,9 @@ feature {PC_DRIVER} -- Handling of elementary data
 			tmp_str.wipe_out
 			tmp_str.append_natural_64 (n)
 			if {NATURAL}.max_value <= n then
-				tmp_str.extend ('U')
-				tmp_str.extend ('L')
-				tmp_str.extend ('L')
+				tmp_str.append_character ('U')
+				tmp_str.append_character ('L')
+				tmp_str.append_character ('L')
 			end
 			length := length + tmp_str.count + 1
 			break
@@ -417,7 +449,15 @@ feature {PC_DRIVER} -- Handling of elementary data
 
 	put_real (r: REAL_32)
 		do
-			tmp_str.copy (r.out)
+			if r.is_nan then
+				tmp_str.copy (once "NAN")
+			elseif r.is_negative_infinity then
+				tmp_str.copy (once "-INFINITY")
+			elseif r.is_positive_infinity then
+				tmp_str.copy (once "INFINITY")
+			else
+				tmp_str.copy (r.out)
+			end
 			length := length + tmp_str.count + 1
 			break
 			c_file.put_string (tmp_str)
@@ -426,7 +466,15 @@ feature {PC_DRIVER} -- Handling of elementary data
 
 	put_double (d: REAL_64)
 		do
-			tmp_str.copy (d.out)
+			if d.is_nan then
+				tmp_str.copy (once "NAN")
+			elseif d.is_negative_infinity then
+				tmp_str.copy (once "-INFINITY")
+			elseif d.is_positive_infinity then
+				tmp_str.copy (once "INFINITY")
+			else
+				tmp_str.copy (d.out)
+			end
 			length := length + tmp_str.count + 1
 			break
 			c_file.put_string (tmp_str)
@@ -441,33 +489,47 @@ feature {PC_DRIVER} -- Handling of elementary data
 			length := length + 2
 		end
 
-	put_known_ident (id: NATURAL; t: IS_TYPE)
-		local
-			skip: BOOLEAN
-		do
-			if in_array then
-				item_count := item_count + 1
-				skip := item_count > adapted_cap
-			end
-			if not skip then
-				tmp_str.wipe_out
-				if id = void_ident then
-					tmp_str.extend ('0')
-				else
-					tmp_str.append (once "(T0*)&")
-					tmp_str.append (name_prefix)
-					tmp_str.append_natural_32 (id)
-				end
-				tmp_str.extend (',')
-				length := length + tmp_str.count
-				break
-				c_file.put_string (tmp_str)
-			end
-		end
-
 	put_string (s: STRING)
+		local
+			t: IS_TYPE
+			f: IS_FIELD
+			id: NATURAL
+			cap: NATURAL
+			i, k, n: INTEGER
 		do
+			t := delayed_type
+			id := delayed_ident
 			last_string := s
+			if to_expand then
+				in_chars := True
+				n := s.count
+				cap := (n+1).to_natural_32
+				declare_special (chars_type, cap, id)
+				pre_special (chars_type, cap, id)
+				from
+				until i = n loop
+					i := i + 1
+					put_character (s[i])
+				end
+				post_special (chars_type, delayed_ident)
+				in_chars := True
+				declaration.copy (delayed_declaration)
+				pre_object (t, id)
+				-- TODO: fields of object
+				from
+					i := 0
+					k := t.field_count
+				until i = k loop
+					f := t.field_at (i)
+					if f.type.is_basic then
+						put_integer (n)
+					else
+						put_known_ident (t, id)
+					end
+					i := i + 1
+				end
+				in_chars := False
+			end
 		end
 	
 	put_unicode (u: STRING_32)
@@ -475,6 +537,25 @@ feature {PC_DRIVER} -- Handling of elementary data
 			last_string := u.out
 		end
 	
+	put_known_ident (t: IS_TYPE; id: NATURAL)
+		do
+			tmp_str.wipe_out
+			if id = void_ident then
+				tmp_str.append_character ('0')
+			else
+				tmp_str.append (once "(T0*)&")
+				tmp_str.append (name_prefix)
+				tmp_str.append_natural_32 (id)
+				if in_chars then
+					tmp_str.append_character ('_')
+				end
+			end
+			tmp_str.append_character (',')
+			length := length + tmp_str.count
+			break
+			c_file.put_string (tmp_str)
+		end
+
 	put_void_ident (stat: detachable IS_TYPE)
 		do
 			length := length + 2
@@ -482,7 +563,7 @@ feature {PC_DRIVER} -- Handling of elementary data
 			c_file.put_character ('0')
 			c_file.put_character (',')
 		end
-	
+
 feature {NONE} -- Implementation 
 
 	c_file: PLAIN_TEXT_FILE
@@ -497,10 +578,20 @@ feature {NONE} -- Implementation
 
 	needs_typedefs: BOOLEAN
 
-	in_chars, in_array: BOOLEAN
+	to_expand: BOOLEAN
+	
+	in_chars: BOOLEAN
 
 	last_string: STRING
+
+	delayed_ident: NATURAL
 	
+	delayed_type: IS_TYPE
+
+	delayed_declaration: STRING
+	
+	chars_type, chars32_type: IS_SPECIAL_TYPE
+
 	line_length: INTEGER = 76
 
 	length: INTEGER
@@ -551,179 +642,255 @@ feature {NONE} -- Implementation
 
 	declaration: STRING -- = "                                                  "
 
-	typedefs: detachable HASH_TABLE [IS_TYPE, IS_TYPE]
+	typedefs: HASH_TABLE [IS_TYPE, IS_TYPE]
 
-	extra_typedefs: HASH_TABLE [IS_TYPE, NATURAL]
+	extra_typedefs: HASH_TABLE [like declaration, NATURAL_64]
 
+	extra_key (st: IS_SPECIAL_TYPE; n: NATURAL): NATURAL_64
+		local
+			g: IS_TYPE
+			gid, n1: NATURAL_64
+		do
+			g := st.item_type
+			if g.is_subobject then
+				gid := g.ident.to_natural_64
+			end
+			n1 := n.max (1)
+			Result := (n1 |<< shift) | gid
+		end
+
+	shift: INTEGER
+	
 	declaration_type: detachable IS_TYPE
 
-	adapted_cap, item_count: NATURAL
-
-	declare_type (td: IS_TYPE)
+	declare_type (t: IS_TYPE)
 		require
 			needs_typedefs: needs_typedefs
 		local
 			f: IS_FIELD
 			ft: IS_TYPE
-			h: like h_file
 			i, n: INTEGER
 		do
-			if td.is_alive and then not typedefs.has (td) then
-				if h_file /=Void then
-					h := h_file
-				else
-					h := c_file
-				end
-				typedefs.force (td, td)
-				if td.is_basic then
-					h.put_string (once "typedef ")
-					inspect td.ident
+			if (t.is_alive or else t.is_basic) and then not typedefs.has (t) then
+				typedefs.force (t, t)
+				if t.is_basic then
+					h_file.put_string (once "typedef ")
+					inspect t.ident
 					when Boolean_ident THEN
-						h.put_string ("char")
+						h_file.put_string ("char")
 					when Char8_ident THEN
-						h.put_string ("unsigned char")
+						h_file.put_string ("unsigned char")
 					when Char32_ident THEN
-						h.put_string ("uint32_t")
+						h_file.put_string ("uint32_t")
 					when Int8_ident THEN
-						h.put_string ("int8_t")
+						h_file.put_string ("int8_t")
 					when Int16_ident THEN
-						h.put_string ("int16_t")
+						h_file.put_string ("int16_t")
 					when Int32_ident THEN
-						h.put_string ("int32_t")
+						h_file.put_string ("int32_t")
 					when Int64_ident THEN
-						h.put_string ("int64_t")
+						h_file.put_string ("int64_t")
 					when Nat8_ident THEN
-						h.put_string ("uint8_t")
+						h_file.put_string ("uint8_t")
 					when Nat16_ident THEN
-						h.put_string ("uint16_t")
+						h_file.put_string ("uint16_t")
 					when Nat32_ident THEN
-						h.put_string ("uint32_t")
+						h_file.put_string ("uint32_t")
 					when Nat64_ident THEN
-						h.put_string ("uint64_t")
+						h_file.put_string ("uint64_t")
 					when Real32_ident THEN
-						h.put_string ("float")
+						h_file.put_string ("float")
 					when Real64_ident THEN
-						h.put_string ("double")
+						h_file.put_string ("double")
 					when Pointer_ident THEN
-						h.put_string ("void*")
+						h_file.put_string ("void*")
 					else
 					end
 				else
 					from
-						n := td.field_count
+						n := t.field_count
 					until i = n loop
-						f := td.field_at (i)
+						f := t.field_at (i)
 						declare_type (f.type)
 						i := i + 1
 					end
-					h.put_string (once "typedef struct {")
-					if td.flags & td.Missing_id_flag = 0 then
-						h.put_new_line
-						h.put_string (once "  int id;")
+					h_file.put_string (once "typedef struct {")
+					if t.flags & t.Missing_id_flag = 0 then
+						h_file.put_new_line
+						h_file.put_string (once "  int id;")
 					end
 					from
 						i := 0
 					until i = n loop
-						f := td.field_at (i)
+						f := t.field_at (i)
 						ft := f.type
-						h.put_new_line
-						h.put_character (' ')
-						h.put_character (' ')
+						h_file.put_new_line
+						h_file.put_character (' ')
+						h_file.put_character (' ')
 						if not ft.is_subobject then
-							h.put_character ('T')
-							h.put_character ('0')
-							h.put_character ('*')
+							h_file.put_character ('T')
+							h_file.put_character ('0')
+							h_file.put_character ('*')
 						else
-							h.put_string (type_name_prefix)
-							h.put_integer (ft.ident)
+							h_file.put_string (type_name_prefix)
+							h_file.put_integer (ft.ident)
 						end
-						h.put_character (' ')
-						h.put_string (f.name)
-						h.put_character (';')
+						h_file.put_character (' ')
+						h_file.put_string (f.name)
+						h_file.put_character (';')
 						i := i + 1
 					end
-					h.put_new_line
-					h.put_character ('}')
+					h_file.put_new_line
+					h_file.put_character ('}')
 				end
-				h.put_character (' ')
-				h.put_string (type_name_prefix)
-				h.put_integer (td.ident)
-				h.put_character (';')
-				if not td.is_basic then
-					h.put_string (once " /* ")
-					h.put_string (td.name)
-					h.put_string (once " */")
+				h_file.put_character (' ')
+				h_file.put_string (type_name_prefix)
+				h_file.put_integer (t.ident)
+				h_file.put_character (';')
+				if not t.is_basic then
+					h_file.put_string (once " /* ")
+					h_file.put_string (t.name)
+					h_file.put_string (once " */")
 				end
-				h.put_new_line
-				h.flush
+				h_file.put_new_line
+				h_file.flush
 			end
 		ensure
-			type_definded: td.is_alive implies typedefs.has (td)
+			type_definded: t.is_alive implies typedefs.has (t)
 		end
 
 	static: STRING = "static "
 
 	extern: STRING = "extern "
-	
-	declare (t: IS_TYPE; cap: NATURAL; id: NATURAL)
+
+	typedef: STRING = "typedef ";
+
+	special_struct: STRING = "struct {int id; int count; "
+
+	data: STRING = " data"
+
+	end_data: STRING= "];} "
+
+	declare_special (st: IS_SPECIAL_TYPE; cap: NATURAL; id: NATURAL)
 		require
-			not_expanded: not t.is_subobject
+			valid_id: id /= void_ident
 		local
 			g: IS_TYPE
+			s: STRING
+			gid: INTEGER
+			n1: NATURAL
+			k: NATURAL_64
+		do
+			n1 := cap.max (1)
+			g := st.item_type
+			if g.is_alive or else g.is_basic then
+				gid := g.ident
+			end
+			k := extra_key (st, n1)
+			if not extra_typedefs.has (k) then
+				if needs_typedefs then
+					declare_type (g)
+				end
+				s := type_name_prefix.twin
+				s.append_integer (gid)
+				s.extend('_')
+				s.append_natural_32 (n1)
+				extra_typedefs[k] := s
+				tmp_str.copy(typedef)
+				tmp_str.append(special_struct)
+				tmp_str.append (type_name_prefix)
+				if g.is_subobject then
+					tmp_str.append_integer (gid)
+				else
+					tmp_str.append_character ('0')
+					tmp_str.append_character ('*')
+				end
+				tmp_str.append (data)
+				tmp_str.append_character ('[')
+				tmp_str.append_natural_32 (n1)
+				tmp_str.append (end_data)
+				tmp_str.append (s)
+				tmp_str.append_character (';')
+				c_file.put_string (tmp_str)
+				c_file.put_new_line
+			end
+			s := extra_typedefs[k].twin
+			s.append_character (' ')
+			s.append (name_prefix)
+			s.append_natural_32 (id)
+			declaration := s
+			declarations.put (s, id)
+			cached_id := id
+		ensure
+			cached_id: cached_id = id declarations [id] = declaration
+			cached_decl: declarations [id] = declaration
+		end
+	
+	declare (t: IS_TYPE; id: NATURAL)
+		require
+			valid_id: id /= void_ident
+			not_expanded: not t.is_subobject
+			not_special: not t.is_special
+		local
+			s: STRING
 			tid: INTEGER
 		do
-			if needs_typedefs then
-				declare_type (t)
-			end
 			declaration_type := t
-			declaration.wipe_out
-			if t.is_special then
-				if extra_typedefs.has (id) then
-					declaration.append (name_prefix)
-					declaration.append_natural_32 (id)
-					declaration.extend ('_')
-					declaration.extend (' ')
-					declaration.append (name_prefix)
-				else
-					declaration.append (once "struct {int id; int32_t")
-					declaration.append (once " count; ")
-					g := t.generic_at (0)
-					if g.is_subobject then
-						declaration.append (type_name_prefix)
-						declaration.append_integer (g.ident)
-					else
-						declaration.append (once "T0*")
-					end
-					declaration.append (once " data[")
-					if g.is_character then
-						in_chars := True
-						adapted_cap := cap
-					else
-						adapted_cap := cap.max (1)
-					end
-					declaration.append_natural_32 (adapted_cap)
-					declaration.extend (']')
-					declaration.append (once ";} ")
-					declaration.append (name_prefix)
-				end
+			if t.is_agent and then attached {IS_AGENT_TYPE} t as at
+				and then attached at.declared_type as dt 
+			 then
+				tid := dt.ident
+				declaration_type := at.declared_type
+				declare_type (declaration_type)
 			else
-				if t.is_agent and then attached {IS_AGENT_TYPE} t as at
-					and then attached at.declared_type as dt 
-				 then
-					tid := dt.ident
-					declaration_type := at.declared_type
-					declare_type (declaration_type)
-				else
-					tid := t.ident
-				end
-				declaration.append (type_name_prefix)
-				declaration.append_integer (tid)
-				declaration.extend (' ')
-				declaration.append (name_prefix)
+				tid := t.ident
 			end
-			declaration.append_natural_32 (id)
+			if needs_typedefs then
+				declare_type (declaration_type)
+			end
+			s := ""
+			s.append (type_name_prefix)
+			s.append_integer (tid)
+			s.append_character (' ')
+			s.append (name_prefix)
+			s.append_natural_32 (id)
+			declaration := s
+			declarations.put (s, id)
+			cached_id := id
 		ensure
+			cached_id: cached_id = id declarations [id] = declaration
+			cached_decl: declarations [id] = declaration
 			declaration_type_set: declaration_type = t
+		end
+
+	declarations: PC_INTEGER_TABLE [like declaration]
+
+	cached_id: NATURAL
+	
+	flush_declaration (now: NATURAL)
+		require
+			valid_id: now /= void_ident
+			not_yet_done: declarations.has (now)
+		do
+			if cached_id = now then
+				check declaration = declarations [now] end
+				c_file.put_string (static)
+				length := length + 7
+			elseif declarations.has (cached_id) then
+				c_file.put_string (extern)
+				declaration := declarations [cached_id]
+				c_file.put_string (declaration)
+				c_file.put_character (';')
+				c_file.put_new_line
+				length := 0
+				declaration := declarations [now]
+			elseif declarations.has (now) then
+				declaration := declarations [now]
+			end
+		ensure
+			updated: declaration = old declarations.twin [now]
+			done: not declarations.has (old chashed_id)
+			invalid_id: cached_id = void_ident
 		end
 
 invariant

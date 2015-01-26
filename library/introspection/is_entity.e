@@ -118,8 +118,8 @@ feature -- Output
 
 	append_name (s: STRING)
 		do
-			if attached alias_name as anm then
-				s.append (anm)
+			if alias_name /= Void and then not alias_name.is_empty then
+				s.append (alias_name)
 			else
 				s.append (fast_name)
 			end

@@ -4,7 +4,7 @@ note
 	library: "Gedb Eiffel Tools Library"
 
 class DG_EXTENSION
-
+	
 inherit
 	
 	ET_TABLE_EXTENSION
@@ -106,6 +106,7 @@ feature -- Basic operation
 			create c0_file.make (l_filename.out)
 			c0_file.open_write
 			c_generator.c_filenames.force_last (".c", l_name + "0")
+			c0_file.put_string (preamble)
 			c0_file.put_string ("#include %"")
 			c0_file.put_string (l_name)
 			c0_file.put_string (".h%"%N%N")
@@ -773,11 +774,20 @@ feature {NONE} -- Print C structs
 			c0_file.put_character ('*')
 			c0_file.put_character (')')
 		end
-			
-feature {NONE} -- Implemantation
+
+feature {NONE} -- Implementation
 
 	c0_file: KL_TEXT_OUTPUT_FILE
 
+	preamble: STRING =
+	"[
+	/*
+	  This file has been generated automaticlly, do not modify!
+	*/
+	
+	
+	 ]"
+	 
 invariant
 
 	when_pma: c_generator.pma_only implies not c_generator.supports_marking 

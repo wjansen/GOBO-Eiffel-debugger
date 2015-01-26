@@ -24,7 +24,7 @@ feature {NONE} -- Initialization
 	
 	default_create
 		do
-			options := -1
+			options := Fifo_flag | Accept_actionable_flag
 		end
 		
 feature -- Access 
@@ -161,17 +161,17 @@ feature -- Basic operation
 		local
 			src: PC_MEMORY_SOURCE
 			driver: PC_RANDOM_ACCESS_DRIVER [detachable ANY, ANY]
-			table: PC_ANY_TABLE [detachable ANY]
+			oo: PC_ANY_TABLE [PC_TYPED_IDENT [detachable ANY]]
 			tgt: PC_MEMORY_TARGET
 		do
-			create src.make (runtime_system, Fifo_flag)
+			create src.make (runtime_system)
 			src.set_actionable (False)
-			src.set_top_object (obj)
-			create table.make (100, obj)
-			create driver.make (table)
+			src.set_ident (obj)
+			create oo.make (100)
 			create tgt.make (runtime_system, False)
-			driver.traverse (tgt, src, 0)
-			copied_object := tgt.top_object
+			create driver.make (tgt, src, Deep_flag, 0, oo)
+			driver.traverse (obj)
+			copied_object := driver.target_root_ident
 			byte_count := 0
 		end
 
@@ -255,8 +255,9 @@ feature {NONE} -- Implementation
 			create {PC_MEMORY_SOURCE} src.make (runtime_system)
 			src.set_actionable (opts & Accept_actionable_flag /= 0)
 			if attached {PC_BASIC_TARGET} target as bin then
-				create h
-				h.put (bin, runtime_system, comment, ord, opts)
+				create h.make_for_target (src.system.root_type.name, src.system,
+																	comment, ord, opts)
+				h.put (bin)
 				bin.write_header (src.system)
 			end
 			if ord & Forward_flag = Forward_flag then

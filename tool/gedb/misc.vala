@@ -6,6 +6,7 @@ public enum ItemFlag {
 	FIELD,
 	ADDR,  
 	INDEX,
+	FIRST,
 	MODE,
 	NAME,
 	VALUE, 
@@ -604,9 +605,13 @@ public class DataItem {
 				   ItemFlag.TYPE_ID, out tid, -1);  
 		if (mode==DataMode.FIELD) {
 			TreeIter piter;
+			uint pid = 0;
 			if (model.iter_parent(out piter, iter)) {
-				model.@get(piter, ItemFlag.ADDR, out home, -1);
+				model.@get(piter, 
+						   ItemFlag.ADDR, out home, 
+						   ItemFlag.TYPE_ID, out pid,  -1);
 			}
+			if (field==null && idx>=0) tid = pid;
 		}
 	}
 

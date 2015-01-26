@@ -136,12 +136,18 @@ feature -- Initialization
 					bc.define (s)
 				end
 				from
+					if generics /= Void then
+						generics.compress
+					end
 					i := generic_count
 				until i = 0 loop
 					i := i - 1
 					generic_at (i).define (s)
 				end
 				from
+					if fields /= Void then
+						fields.compress
+					end
 					i := field_count
 				until i = 0 loop
 					i := i - 1
@@ -150,6 +156,9 @@ feature -- Initialization
 					end
 				end
 				from
+					if constants /= Void then
+						constants.compress
+					end
 					i := constant_count
 				until i = 0 loop
 					i := i - 1
@@ -158,6 +167,9 @@ feature -- Initialization
 					end
 				end
 				from
+					if routines /= Void then
+						routines.compress
+					end
 					i := routine_count
 				until i = 0 loop
 					i := i - 1
@@ -174,6 +186,7 @@ feature -- Initialization
 						-- Eiffel ROUTINE types may have already got ET_IS_AGENT_TYPE 
 						-- effectors, merge them with the effectors aka Gobo:
 						from
+							ee.compress
 							i := ee.count
 						until i = 0 loop
 							i := i - 1
@@ -457,6 +470,7 @@ feature {ET_IS_TYPE} -- Additional construction
 									if not attached r then
 										if (needed or else onces_only) and then
 											not (is_basic and then attached static.alias_name)
+											-- operators of basic types will be treated separately
 										 then
 											if static.is_once then
 												s.force_once (dynamic, Current)
@@ -486,17 +500,13 @@ feature {ET_IS_TYPE} -- Additional construction
 							if attached procedures.item (i) as dyn then 
 								dynamic := dyn
 							end
+							i := i - 1
 							if not s.origin_table.has (dynamic) then
-								static := dynamic.static_feature
-								i := i - 1
 								r := Void
 								if not (dynamic.is_inlined or else dynamic.is_builtin)
 									and then dynamic.is_built
 								 then
-									if not attached r then
-										create r.declare (dynamic, target (dynamic, s), s)
-									end
-									check attached r end
+									create r.declare (dynamic, target (dynamic, s), s)
 									buffer.push (r)
 									s.origin_table.force (r, dynamic)
 								end

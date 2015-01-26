@@ -145,11 +145,6 @@ feature -- Routine flags
 			create Result.make_from_tables
 		end
 
-	actual_time_as_integer: INTEGER_64
-		do
-			Result := c_time			
-		end
-	
 feature {NONE} -- POINTER conversion 
 
 	to_any (p: POINTER): ANY
@@ -181,11 +176,11 @@ feature {NONE} -- POINTER conversion
 			"$a ? (void*)$a : 0"
 		end
 
-	c_time: INTEGER_64
+	c_time: NATURAL_64
 		external
 			"C inline use <time.h>"
 		alias
-			"((EIF_INTEGER_64)time(0))*1000 "
+			"((EIF_NATURAL_64)1000*time(0)) "
 		end
 
 note

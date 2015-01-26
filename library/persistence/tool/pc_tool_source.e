@@ -3,7 +3,7 @@ note
 	description:
 		"[ 
 		 Scanning the persistence closure from a file 
-		 monitoring the object positions. 
+		 monitoring the object and type positions. 
 		 ]"
 
 class PC_TOOL_SOURCE
@@ -17,15 +17,16 @@ inherit
 			file,
 			default_create,
 			reset,
-			read_once,
+			read_next_ident,
+			read_description,
 			pre_object,
 			post_object,
 			pre_special,
 			post_special,
 			set_field,
 			set_index,
-			new_class,
 			new_type,
+			new_class,
 			class_at
 		end
 
@@ -38,13 +39,13 @@ feature {NONE} -- Initialization
 	default_create
 		do
 			Precursor
+			create class_positions.make_filled (0, 0, 100)
+			create type_positions.make_filled (0, 0, 100)
 			create data_positions.make (1000)
 			create announce_positions.make (1000)
-			create type_positions.make (100)
-			create class_positions.make (100)
 			create object_types.make (1000)
+			create counts.make (1000)
 			create capacities.make (1000)
-			create onces.make (1000)
 			create parents.make (1000)
 			create fields.make (1000)
 			create depths.make (1000)
@@ -57,11 +58,11 @@ feature -- Initialization
 			Precursor
 			data_positions.clear
 			announce_positions.clear
-			type_positions.clear
-			class_positions.clear
 			object_types.clear
+			class_positions.wipe_out
+			type_positions.wipe_out
+			counts.clear
 			capacities.clear
-			onces.clear
 			parents.clear
 			fields.clear
 			actual_ident := void_ident
@@ -77,63 +78,74 @@ feature -- Access
 	
 	file: FILE
 
-	class_positions: PC_LINEAR_TABLE [INTEGER]
-
-	type_positions: PC_LINEAR_TABLE [INTEGER]
-
 	data_positions: PC_LINEAR_TABLE [INTEGER]
 
 	announce_positions: PC_LINEAR_TABLE [INTEGER]
 
 	object_types: PC_LINEAR_TABLE [like last_type]
 
+	counts: PC_LINEAR_TABLE [NATURAL]
+
 	capacities: PC_LINEAR_TABLE [NATURAL]
 
-	onces: PC_LINEAR_TABLE [like last_once]
+	class_positions: ARRAY [INTEGER]
+
+	type_positions: ARRAY [INTEGER]
 
 	fields: PC_LINEAR_TABLE [like field]
 
 	parents: PC_LINEAR_TABLE [NATURAL]
 
-feature {PC_DRIVER} -- Reading structure definitions 
+feature -- Status setting
 
-	read_context (id: NATURAL)
+	set_compilation_time (ct: like compilation_time)
 		do
-			if not announce_positions.has (id) then
-				announce_positions.add (position, id)
-			end
-			Precursor (id)
-			object_types.add (last_type, id)
-			parents.add (actual_ident, id)
-			fields.add (field, id)
-			if attached {IS_SPECIAL_TYPE} last_type then
-				capacities.add (last_capacity, id)
-			else
-				capacities.add (index, id)
+			compilation_time := ct
+		ensure
+			compilation_time_set: compilation_time = ct
+		end
+	
+feature {PC_DRIVER} -- Reading structure definitions
+
+	read_next_ident
+		local
+			pos: INTEGER
+		do
+			pos := position
+			Precursor
+			if last_ident /= void_ident
+				and then not announce_positions.has (last_ident)
+			 then
+				announce_positions.put (position, last_ident)
 			end
 		end
 
-	 read_once (id: NATURAL)
+	read_description
+		local
+			id: NATURAL
+			p: INTEGER
 		do
-			Precursor (id)
-			onces.put (last_once, id)
+			id := last_ident
+			p := position
+			Precursor
+			object_types[id] := last_dynamic_type
+			counts[id] := last_count
+			capacities[id] := last_capacity
+			announce_positions [id] := p
 		end
 	
 feature {PC_DRIVER} -- Reading object definitions 
 
 	pre_object (t: IS_TYPE; id: attached like void_ident)
 		do
-			if id /= void_ident then
-				data_positions.put (position, id)
-			end
 			if top_ident = 0 then
 				top_ident := id
 			end
+			data_positions[id] := position
 			if depths.has (id) and then depths.item (id) > depth then
 				depths.put (depth, id)
 				parents.put (actual_ident, id)
 				fields.put (field, id)
-				capacities.put (index, id)
 			end
 			actual_ident := id
 			depth := depth + 1
@@ -142,12 +154,11 @@ feature {PC_DRIVER} -- Reading object definitions
 
 	pre_special (st: IS_SPECIAL_TYPE; cap: NATURAL; id: attached like void_ident)
 		do
-			data_positions.put (position, id)
+			data_positions[id] := position
 			if depths.has (id) and then depths.item (id) > depth then
 				depths.put (depth, id)
 				parents.put (actual_ident, id)
 				fields.put (field, id)
-				capacities.put (index, cap)
 			end
 			actual_ident := id
 			depth := depth + 1
@@ -182,33 +193,20 @@ feature {PC_DRIVER} -- Object location
 	
 feature -- Factory
 
-	new_class (id, fl: INTEGER)
-		local
-			n: NATURAL
+	new_class (cid, fl: INTEGER)
 		do
-			n := id.to_natural_32
-			if class_positions [n] = 0 then
-				class_positions.put (position, n)
+			if class_positions.upper < cid or else class_positions [cid] = 0 then
+				class_positions.force (position, cid)
 			end
-			Precursor (id, fl)
+			Precursor (cid, fl)
 		end
-
-	new_type (id: INTEGER; attac: BOOLEAN)
-		local
-			n: NATURAL
-			i: INTEGER
+	
+	new_type (tid: INTEGER; attac: BOOLEAN)
 		do
-			n := id.to_natural_32
-			if type_positions [n] = 0 then
-				type_positions.put (position, n)
+			if type_positions.upper < tid or else type_positions [tid] = 0 then
+				type_positions.force (position, tid)
 			end
-			Precursor (id, attac)
-			from
-				i := last_type.field_count
-			until i = 0 loop
-				i := i - 1
-				last_type.field_at (i).set_offset (i)
-			end
+			Precursor (tid, attac)
 		end
 
 feature {NONE} -- Implementation

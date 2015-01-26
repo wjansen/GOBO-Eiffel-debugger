@@ -3,7 +3,7 @@ note
  
 	description: 
  
-		"Scanner for PC_TOOL parser % 
+		"Scanner for P_TOOL parser % 
                 %Extract from class ET_EIFFEL_SCANNER:% 
 		%multi line strings and most keywords have been dropped." 
  
@@ -41,7 +41,6 @@ CHAR_CODE (0*([0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5]))
  
 %x IS_STR 
 %x PARAM 
-%x SELECTS
 %x RENAMES
  
 %option nodefault line outfile="pc_tool_scanner.e" 
@@ -57,63 +56,16 @@ CHAR_CODE (0*([0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5]))
 					command_code := last_key.code 
 					last_token := command_code 
 				end
-				inspect command_code
-					when SELECT_CODE then
-					set_start_condition(SELECTS)
-				else
-					set_start_condition(PARAM)
-				end
+				set_start_condition(PARAM)
 			} 
 } -- INITIAL 
  
-----------/** Operators and numbers **/--------------------------------------
- 
-<SELECTS> {
-
-[Aa][[Ll][Ll]			last_token := E_ALL
-[Ff][Rr][Oo][Mm]		last_token := E_FROM
-[Oo][Rr]			last_token := E_OR
-[Xx][Oo][Rr]			last_token := E_XOR
-[Aa][Nn][Dd]			last_token := E_AND
-[Ii][Mm][Pp][Ll][Ii][Ee][Ss]	last_token := E_IMPLIES
-[Nn][Oo][Tt]			last_token := E_NOT
-[Aa][Ss]			last_token := E_AS
-[Ww][Hh][Ee][Rr][Ee]		last_token := PC_WHERE
-[Ss][Oo][Rr][Tt]		last_token := PC_SORT
-
-"/="				last_token := E_NE
-"<="				last_token := E_LE
-">="				last_token := E_GE
-"//"				last_token := E_DIV
-"\\\\"				last_token := E_MOD
-
-[-+*/^=<>.,:?]			last_token := text_item (1).code
-
-[0-9]+\.$                               |
-[0-9]+\./[^.0-9]                        |
-[0-9]+\.[0-9]*[eE][+-]?[0-9]+           |
-[0-9]*\.[0-9]+([eE][+-]?[0-9]+)?        {
-                                                last_token := E_REAL
-                                                last_real_64_value := text.to_double
-                                        }
-} -- <SELECTS>
-
 ----------/** Parameters **/------------------------------------------------- 
  
-<PARAM,SELECTS> { 
+<PARAM> { 
  
 [a-zA-Z][a-zA-Z0-9_]*	{
 				last_token := E_IDENTIFIER
-				last_string_value := text
-                        }
-
-"_"[1-9][0-9_]*		{
-				last_token := PC_REFERENCE
-				last_string_value := text
-                        }
-
-"_"[A-Za-z][A-Za-z0-9_]*		{
-				last_token := PC_ALIAS
 				last_string_value := text
                         }
 
@@ -125,7 +77,7 @@ CHAR_CODE (0*([0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5]))
 [ \t\r]+			-- Ignore separators 
  
  
-} -- <PARAM,SELECTS> 
+} -- <PARAM> 
   
 <PARAM> {
 
@@ -151,7 +103,7 @@ CHAR_CODE (0*([0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5]))
 
 ----------------------------------------------------------------------------- 
  
-<INITIAL,PARAM,SELECTS,RENAMES> {
+<INITIAL,PARAM,RENAMES> {
 
 \n			terminate 
 .			default_action
@@ -191,20 +143,19 @@ feature -- Access
 	commands: ARRAYED_LIST[TUPLE[ INTEGER, STRING, detachable STRING, detachable STRING]] 
 		once 
 			create Result.make(50) 
-			Result.force([Load_CODE, "load", "fn", "Load store file with name %"fn%"."]) 
+			Result.force([Load_CODE, "load", "f", "Load store file with name %"f%"."]) 
 			Result.force([Actual_CODE, "info", "", "Show header info of actually loaded store file."]) 
 			Result.force([Size_Code, "size", "", "Print statistics of the store file."]) 
-			Result.force([Print_CODE, "data", "", "Print the data to standard output."]) 
 			Result.force([Types_CODE, "types", "", "Print the list of types to standard output."]) 
 			Result.force([Fields_CODE, "fields", "tid", "Print field names of type %"tid%"."]) 
 			Result.force([Objects_CODE, "objects", "tid", "Print object idents having type %"tid%"."]) 
 			Result.force([Qualifier_CODE, "name", "id", "Print the qualified name of object %"id%"."]) 
 			Result.force([Long_CODE, "verbose", "id", "Like %"name id%" including type name at each level."]) 
 			Result.force([Rename_CODE, "rename", "f", "Rename classes and attributes from dictonary in file %"f%"."]) 
-			Result.force([Select_code, "select", "from T", "select closure idents of type %"T%" having specific properties"]) 
-			Result.force([Extract_CODE, "extract", "id fn", "Store persistence closure of object %"id%" to file %"fn%"."]) 
-			Result.force([CC_CODE, "cc", "fn", "Write data in C code format to file %"fn%"."]) 
-			Result.force([Xml_CODE, "xml", "fn", "Write data in XML format to file %"fn%"."]) 
+			Result.force([Extract_CODE, "extract", "id f", "Store persistence closure of object %"id%" to file %"f%"."]) 
+			Result.force([Print_CODE, "data", "[f]", "Print the data to file %"f%" or to standard output."]) 
+			Result.force([Xml_CODE, "xml", "f", "Write data in XML format to file %"f%"."]) 
+			Result.force([CC_CODE, "cc", "f", "Write data as C code to file %"f%"."]) 
 			Result.force([Help_CODE, "help", "", "Print this help text."]) 
 			Result.force([Quit_CODE, "quit", "", "Quit the tool."]) 
 		end 

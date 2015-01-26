@@ -77,19 +77,21 @@ feature -- Initialization
 				if attached features as ff then
 					ff.default_sort
 					from
+						features.compress
 						i := feature_count
 					until i = 0 loop
 						i := i - 1
 						ff [i].define (s)
 					end
 				end
-				if attached parents as ps then
-					ps.default_sort
+				if attached parents as pp then
+					pp.default_sort
 					from
-						i := ps.count
+						pp.compress
+						i := pp.count
 					until i = 0 loop
 						i := i - 1
-						p_i := ps [i]
+						p_i := pp [i]
 						p_i.define (s)
 						from 
 							j := p_i.feature_count

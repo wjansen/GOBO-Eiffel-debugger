@@ -38,6 +38,7 @@ feature {NONE} -- Initialization
 		do
 			with_types := full
 			create types.make (100, Void)
+			set_arch64 (pointer_bytes=8)
 		end
 
 feature {PC_DRIVER} -- Initialization 
@@ -50,6 +51,7 @@ feature {PC_DRIVER} -- Initialization
 			memory_size := 0
 			object_count := 0
 			special_count := 0
+			agent_count := 0
 			once_count := 0
 			types.clear
 		end
@@ -61,6 +63,9 @@ feature -- Access
 	with_types: BOOLEAN
 			-- Register object types in `types'. 
 
+	arch_64: BOOLEAN
+			-- Have POINTERs 64 bits?
+	
 	memory_size: INTEGER
 			-- 
 
@@ -95,6 +100,20 @@ feature -- Access
 	types: IS_SPARSE_ARRAY [detachable IS_TYPE]
 			-- 
 
+feature -- Status setting
+
+	set_arch64 (bit_64: BOOLEAN)
+		do
+			arch_64 := bit_64
+			if bit_64 then
+				ptr_bytes := 8
+			else
+				ptr_bytes := 4
+			end
+		ensure
+			fot_bit_64_set: arch_64 = bit_64
+		end
+	
 feature -- Output 
 
 	out: attached STRING
@@ -155,7 +174,7 @@ feature {PC_DRIVER} -- Push and pop data
 	pre_agent (a: IS_AGENT_TYPE; id: NATURAL)
 		do
 			agent_count := agent_count + 1
-			memory_size := memory_size + integer_32_bytes + 2*pointer_bytes
+			memory_size := memory_size + integer_32_bytes + 2*ptr_bytes
 		end
 
 	pre_special (s: IS_SPECIAL_TYPE; cap: NATURAL; id: NATURAL)
@@ -248,7 +267,7 @@ feature {PC_DRIVER} -- Writing elementary data
 
 	put_pointer (p: POINTER)
 		do
-			memory_size := memory_size + pointer_bytes
+			memory_size := memory_size + ptr_bytes
 		end
 
 	put_string (s: STRING)
@@ -256,7 +275,7 @@ feature {PC_DRIVER} -- Writing elementary data
 			if not must_expand_strings then
 				special_count := special_count + 1
 			end
-			memory_size := memory_size + s.count + 5 * integer_32_bytes + pointer_bytes
+			memory_size := memory_size + s.count + 5 * integer_32_bytes + ptr_bytes
 		end
 
 	put_unicode (u: STRING_32)
@@ -264,21 +283,23 @@ feature {PC_DRIVER} -- Writing elementary data
 			if not must_expand_strings then
 				special_count := special_count + 1
 			end
-			memory_size := memory_size + u.count * 4 + 5 * integer_32_bytes + 2 * pointer_bytes
+			memory_size := memory_size + u.count * 4 + 5 * integer_32_bytes + 2 * ptr_bytes
 		end
 
-	put_known_ident (id: NATURAL; t: IS_TYPE)
+	put_known_ident (t: IS_TYPE; id: NATURAL)
 		do
-			memory_size := memory_size + pointer_bytes
+			memory_size := memory_size + ptr_bytes
 		end
 
 	put_void_ident (stat: detachable IS_TYPE)
 		do
-			memory_size := memory_size + pointer_bytes
+			memory_size := memory_size + ptr_bytes
 		end
 
 feature {NONE} -- Implementation 
 
+	ptr_bytes: INTEGER
+	
 	append_formatted_integer (i: INTEGER; l: INTEGER; to: STRING)
 		local
 			k0, k1: INTEGER

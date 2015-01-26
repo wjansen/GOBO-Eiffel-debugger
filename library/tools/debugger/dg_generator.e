@@ -23,6 +23,7 @@ inherit
 			print_check_instruction,
 			print_creation_instruction,
 			print_debug_instruction,
+			print_compound,
 			print_if_instruction,
 			print_inspect_instruction,
 			print_loop_instruction,
@@ -47,6 +48,14 @@ inherit
 		end
 
 	PC_BASE
+		undefine
+			default_create,
+			copy,
+			is_equal,
+			out
+		end
+	
+	STORABLE
 		undefine
 			default_create,
 			copy,
@@ -106,6 +115,8 @@ feature {NONE} -- Initialization
 			l_types: DS_ARRAYED_LIST [ET_DYNAMIC_TYPE]
 			l_type: IS_TYPE
 			n: INTEGER
+			fn: STRING
+			f: RAW_FILE
 		do
 			c0 := c_clock
 			supports_marking := not as_pmd
@@ -162,7 +173,7 @@ feature {NONE} -- Initialization
 				field_declaration.append (l_type.c_name)
 				field_declaration.append ("* e = 0;%N")
 				c1 := c_clock
---		io.-rror.put_string("Compile time: ")
+--		io.error.put_string("Compile time: ")
 --		io.error.put_double((c1-c0)/c_factor)
 --		io.error.put_new_line
 			end
@@ -375,6 +386,17 @@ feature {NONE} -- Feature generation
 			print_position_handling (an_instruction, Debug_break)
 			Precursor (an_instruction)
 			leave_scope (an_instruction.end_keyword)
+		end
+
+	print_compound (an_instruction: ET_COMPOUND)
+		local
+			l_keyword: ET_KEYWORD
+		do
+			l_keyword := an_instruction.keyword
+			if l_keyword.is_then or else l_keyword.is_loop then
+				print_position_handling (l_keyword, Instruction_break)
+			end
+			Precursor (an_instruction)
 		end
 
 	print_if_instruction (an_instruction: ET_IF_INSTRUCTION)
@@ -910,7 +932,7 @@ feature {NONE} -- Debugging code
 			n, l, c: INTEGER
 			pure_pos, no_pos, for_instruction, jump, info: BOOLEAN
 		do
-			if attached delayed_enter then
+			if delayed_enter /= Void then
 				flush_delayed
 			end
 			pos := position (a_node).as_natural_32

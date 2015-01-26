@@ -131,7 +131,7 @@ feature {IS_FACTORY} -- Initialization
 				if field_count > n then
 					co := field_at (n)
 					if not attached co.fast_name as conm or else conm.is_empty then
-						co.set_name (f.operand_name (ident, i, j))
+						co.set_name (f.operand_name (ident, -1, -1))
 					end
 				end
 			end

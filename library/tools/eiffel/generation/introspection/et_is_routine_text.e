@@ -89,6 +89,7 @@ feature -- Initialization
 				Precursor (s)
 				if attached vars as vv then
 					from
+						vv.compress
 						i := vv.count
 					until i = 0 loop
 						i := i - 1

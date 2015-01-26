@@ -18,7 +18,8 @@ inherit
 			make as make_random_access
 		redefine
 			valid_flags,
-			process_announcement
+			process_announcement,
+			process_data
 		end
 
 create
@@ -49,164 +50,176 @@ feature -- Access
 feature {NONE}
 
 	process_announcement (si: SI_)
-		note
-			action:
-				"[
-				 Announce object of and put it as key into `known_objects',
-				 its value is obtained from `target'.
-				 ]"
-			si: "source ident"
-		require else
-			no_ti: known_objects.has (si)
-						 and then known_objects [si].ident = target.void_ident
 		local	
-			tid: PC_TYPED_IDENT [TI_]		
+			tid: PC_TYPED_IDENT [TI_]
+			ti: TI_
 			t: IS_TYPE
-			count, cap: NATURAL
+			cap: NATURAL
 		do
-			source.adjust_to (si)
-			t := source.last_dynamic_type
-			count := source.last_count
-			tid.make (target.void_ident, t, count)
+			source.read_description
+			tid.make (target.void_ident, source.last_dynamic_type,
+										 source.last_count)
+			t := tid.type
 			known_objects [si] := tid
-			if t.is_special and then attached {IS_SPECIAL_TYPE} t as s then
-				cap := source.last_capacity
-				forward_special (s, count, si)
-			elseif t.is_agent and then attached {IS_AGENT_TYPE} t as a then
-				forward_agent (a, si)
-			elseif expand_strings or else not (t.is_string or else t.is_unicode) then
+			if t.is_special and then attached {IS_SPECIAL_TYPE} t as st then
+				cap := tid.count
+				forward_special (st, tid.count, cap, si)
+			elseif t.is_agent and then attached {IS_AGENT_TYPE} t as at then
+				forward_agent (at, si)
+			else
 				forward_fields (t, si)
 			end
-			tid := known_objects [si]
-			if tid.ident = target_void_ident then
-				forward_data (t, count, cap, si)
-			else
-				process_data (si)
-			end
+			add_todo (si)
 		end
 
 feature {NONE} -- Implementation 
 
-	forward_data(t: IS_TYPE; count, cap: NATURAL; si: SI_)
+	process_data (si: SI_; tid: PC_TYPED_IDENT [TI_])
+		require else
+			maybe_unknown: not known_objects.has (si)
 		local
-			tid: PC_TYPED_IDENT [TI_]
-			ti: TI_
+			t: IS_TYPE
+			count, cap: NATURAL
 		do
-			if t.is_special and then attached {IS_SPECIAL_TYPE} t as st then
-				source.pre_special (st, count, si)
-				target.pre_new_special (st, count, cap)
-				ti := target.last_ident
-				tid.make (ti, st, count)
-				known_objects [si] := tid
-				process_special (st, count, si, ti, True)
-				source.post_special (st, si)
-				target.post_special (st, ti)
-			elseif t.is_agent and then attached {IS_AGENT_TYPE} t as at then
-				source.pre_object (at, si)
-				target.pre_new_object (at)
-				ti := target.last_ident
-				tid.make (ti, at, count)
-				known_objects [si] := tid
-				process_agent (at, si, ti, True)
-				source.post_object (t, si)
-				target.post_object (t, ti)				
-			else
-				source.pre_object (t, si)
-				target.pre_new_object (t)
-				ti := target.last_ident
-				tid.make (ti, t, 0)
-				known_objects [si] := tid
-				process_normal_or_tuple (t, si, ti, True)
-				source.post_object (t, si)
-				target.post_object (t, ti)
+			remove_todo (si)
+			t := tid.type
+			if not known_objects.has (si) then
+				if t.is_special and then attached {IS_SPECIAL_TYPE} t as st then
+					count := source.last_count
+					cap := source.last_capacity
+					tid.make (target_void_ident, st, count)	
+					known_objects [si] := tid
+					forward_special (st, count, cap, si)
+				elseif t.is_agent and then attached {IS_AGENT_TYPE} t as at then
+					tid.make (target_void_ident, at, 0)
+					known_objects [si] := tid
+					forward_agent (at, si)
+				else
+					tid.make (target_void_ident, t, 0)
+					known_objects [si] := tid
+					forward_fields (t, si)
+				end
 			end
 		end
 	
 	forward_fields (t: IS_TYPE; si: SI_)
 		require
-			si_not_null: attached si and then si /= source_void_ident
+			si_not_null: si /= source_void_ident
 		local
+			tid: PC_TYPED_IDENT [TI_]			
+			ti: TI_
 			f: IS_FIELD
 			ft: IS_TYPE
 			k, n: INTEGER
 		do
 			n := t.field_count
+			if not expand_strings then
+				if t.is_string or else t.is_unicode then
+					n := 0
+				end
+			end
 			if n > 0 then
 				source.pre_object (t, si)
 				from
 				until k = n loop
 					f := t.field_at (k)
 					ft := f.type
-					if not ft.is_basic then
-						source.set_field (f, si)
-						forward_entity (ft)
-					end
+					source.set_field (f, si)
+					forward_entity (ft)
 					k := k + 1
 				end
 				source.post_object (t, si)
 			end
+			if si /= source_void_ident then
+				ti := known_objects [si].ident
+				if ti = target_void_ident then
+					target.put_new_object (t)
+					ti := target.last_ident
+					tid.make (ti, t, 0)
+					known_objects [si] := tid
+				end
+				process_normal_or_tuple (t, si, ti)
+			end
 		end
 
-	forward_agent (a: IS_AGENT_TYPE; si: SI_)
+	forward_agent (at: IS_AGENT_TYPE; si: SI_)
 		require
 			si_not_null: si /= source_void_ident
 		local
+			tid: PC_TYPED_IDENT [TI_]			
+			ti: TI_
 			f: IS_FIELD
 			ft: IS_TYPE
 			k, n: INTEGER
 		do
-			n := a.closed_operand_count
-			if n > 0 or else attached a.last_result then
-				source.pre_object (a, si)
+			n := at.closed_operand_count
+			if n > 0 or else attached at.last_result then
+				source.pre_object (at, si)
 				if n > 0 then
-					source.pre_agent (a, si)
+					source.pre_agent (at, si)
 					from
 					until k = n loop
-						f := a.field_at (k)
+						f := at.field_at (k)
 						ft := f.type
-						if not ft.is_basic then
-							source.set_field (f, si)
-							forward_entity (ft)
-						end
-						k := k + 1
-					end
-					source.post_agent (a, si)
-				end
-				if attached a.last_result as r then
-					f := r
-					ft := f.type
-					if not ft.is_basic then
 						source.set_field (f, si)
 						forward_entity (ft)
+						k := k + 1
 					end
+					source.post_agent (at, si)
 				end
-				source.post_object (a, si)
+				if attached at.last_result as r then
+					f := r
+					ft := f.type
+					source.set_field (f, si)
+					forward_entity (ft)
+				end
+				source.post_object (at, si)
 			end
+			ti := known_objects [si].ident
+			if ti = target_void_ident then
+				target.put_new_object (at)
+				ti := target.last_ident
+				tid.make (ti, at, 0)
+				known_objects [si] := tid
+			end
+			process_agent (at, si, ti)
 		end
 
-	forward_special (s: IS_SPECIAL_TYPE; n: NATURAL; si: SI_)
+	forward_special (st: IS_SPECIAL_TYPE; n, cap: NATURAL; si: SI_)
 		note
-			action: "Process `SPECIAL' of generic type `s'."
-			n: "capacity"
+			action: "Process `SPECIAL' of generic type `st'."
+			n: "count"
+			cap: "capacity"
 			si: "source ident"
 		require
 			n_poitive: n > 0
 			si_not_null: si /= source_void_ident
 		local
+			tid: PC_TYPED_IDENT [TI_]			
+			ti: TI_
 			it: IS_TYPE
 			k: NATURAL
 		do
-			it := s.item_type
-			if not it.is_basic then
-				source.pre_special (s, n, si)
+			it := st.item_type
+			if it.is_basic then
+			else
+				source.pre_special (st, n, si)
 				from
 				until k = n loop
-					source.set_index (s, k, si)
+					source.set_index (st, k, si)
 					forward_entity (it)
 					k := k + 1
 				end
-				source.post_special (s, si)
+				source.post_special (st, si)
 			end
+			ti := known_objects [si].ident
+			if ti = target_void_ident then
+				target.put_new_special (st, n, cap)
+				ti := target.last_ident
+				tid.make (ti, st, n)
+				known_objects [si] := tid
+			end
+			process_special (st, n, si, ti)
 		end
 
 	forward_entity (static: IS_TYPE)
@@ -215,21 +228,24 @@ feature {NONE} -- Implementation
 		local
 			tid: PC_TYPED_IDENT [TI_]
 			ti: TI_
+			si: SI_
 			t: IS_TYPE
 			count: NATURAL
 		do
-			source.read_field_ident
-			if attached source.last_ident as si then 
-				if static.is_subobject then
-					forward_fields (static, si)
-				else
-					if si /= source_void_ident then
-						if not known_objects.has (si) then
-							process_announcement (si)
-						elseif known_objects [si].ident = target_void_ident then
-							t := source.last_dynamic_type
+			if static.is_basic then
+				forward_basic_field (static)
+			elseif static.is_subobject then
+				forward_fields (static, source_void_ident)
+			else
+				source.read_field_ident
+				si := source.last_ident
+				if si /= source_void_ident then
+					if known_objects.has (si) then
+						tid := known_objects [si]
+						if tid.ident = target_void_ident then
+							t := tid.type
 							if t.is_special and then attached {IS_SPECIAL_TYPE} t as s then
-								count := source.last_count
+								count := tid.count
 								target.put_new_special (s, count, source.last_capacity)
 							else
 								target.put_new_object (t)
@@ -238,8 +254,51 @@ feature {NONE} -- Implementation
 							tid.make (ti, t, count)
 							known_objects [si] := tid
 						end
+					else
+						source.read_description
+						tid.make (target_void_ident, source.last_dynamic_type,
+											source.last_count)
+						add_todo (si)
+						process_data (si, tid)
 					end
 				end
+			end
+		end
+
+	forward_basic_field (t: IS_TYPE)
+		require
+			is_expanded: t.is_basic
+		do
+			inspect t.ident
+			when Boolean_ident then
+				source.read_boolean
+			when Character_ident then
+				source.read_character
+			when Char32_ident then
+				source.read_character_32
+			when Int8_ident then
+				source.read_integer_8
+			when Int16_ident then
+				source.read_integer_16
+			when Int32_ident then
+				source.read_integer
+			when Int64_ident then
+				source.read_integer_64
+			when Nat8_ident then
+				source.read_natural_8
+			when Nat16_ident then
+				source.read_natural_16
+			when Nat32_ident then
+				source.read_natural
+			when Nat64_ident then
+				source.read_natural_64
+			when Real32_ident then
+				source.read_real
+			when Real64_ident then
+				source.read_double
+			when Pointer_ident then
+				source.read_pointer
+			else
 			end
 		end
 

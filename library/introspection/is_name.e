@@ -61,11 +61,15 @@ feature -- Status
 	has_name (s: READABLE_STRING_8): BOOLEAN
 		note
 			return: "Is `out' equal to `s' when ignoring letter case?"
+		local
+			nm: STRING
 		do
-			if attached fast_name as fn then
-					-- may be `Void' during startup 
-				Result := fn.count = s.count and then name_has_prefix (s)
+			if fast_name /= Void then
+				nm := fast_name
+			else
+				nm := name
 			end
+			Result := nm.count = s.count and then name_has_prefix (s)
 		end
 
 	name_has_prefix (s: READABLE_STRING_8): BOOLEAN

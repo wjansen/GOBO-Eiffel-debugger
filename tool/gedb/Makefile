@@ -1,8 +1,11 @@
+CG ?= -g
+VG ?= -g
+
 GLIB = `pkg-config --libs --cflags gtk+-3.0 gtksourceview-3.0 gee-0.8 gmodule-2.0`
 CC = gcc
-CFLAGS ?= $(CG) -w -fPIC -Ihome -Ieval -Isrc -w $(GLIB) 
-LIBFLAGS ?= $(CG) -shared -fPIC -Wl,-rpath,$(GOBO)/bin 
-LDFLAGS ?= $(CG) -fPIC -Wl,-rpath,$(GOBO)/bin 
+CFLAGS = $(CG) -w -fPIC -Ihome -Ieval -Isrc -w $(GLIB) 
+LIBFLAGS = $(CG) -shared -fPIC -Wl,-rpath,$(GOBO)/bin 
+LDFLAGS = $(CG) -fPIC -Wl,-rpath,$(GOBO)/bin 
 VFLAGS = $(VG) --save-temps --disable-warnings -X -I. -X -Ihome -X -Ieval -X -Isrc -X -w -X -fPIC 
 PKG = --pkg=gtk+-3.0 --pkg=gee-0.8 --pkg=gtksourceview-3.0 --target-glib=2.32 
 # Define extensions

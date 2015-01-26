@@ -80,7 +80,13 @@ feature {PC_DRIVER} -- Pre and post handling of data
 				else
 					append_name
 				end
-				field_to_xml (type_tag, type_name (t))
+				if t.is_agent and then attached {IS_AGENT_TYPE} t as at then
+					field_to_xml (base_tag, type_name (at.base))					
+					field_to_xml (routine_tag, at.routine_name)
+					field_to_xml (ocp_tag, at.open_closed_pattern)
+				else
+					field_to_xml (type_tag, type_name (t))
+				end
 				finish_open_tag
 				tags.force (tg)
 			else
@@ -123,13 +129,13 @@ feature {PC_DRIVER} -- Pre and post handling of data
 			file.flush
 		end
 
-	finish (top: PC_TYPED_IDENT [NATURAL])
+	finish (top: NATURAL; type: IS_TYPE)
 		do
-			top_ident := top.ident
-			if top_ident /= void_ident then
+			Precursor (top, type)
+			if top /= void_ident then
 				open_tag (reference_tag)
 				field_to_xml (name_tag, top_name)
-				field_to_xml (ident_tag, top_ident.out)
+				field_to_xml (ident_tag, top.out)
 				finish_empty_tag
 				close_tag (closure_tag)
 			end
@@ -207,7 +213,7 @@ feature {PC_DRIVER} -- Put elementary data
 			finish_empty_tag
 		end
 
-	put_known_ident (id: NATURAL; t: IS_TYPE)
+	put_known_ident (t: IS_TYPE; id: NATURAL)
 		do
 			if id /= void_ident then
 				open_tag (reference_tag)
@@ -232,6 +238,12 @@ feature {NONE} -- Implementation
 	agent_tag: STRING = "agent"
 
 	type_tag: STRING = "type"
+
+	base_tag: STRING = "base"
+
+	routine_tag: STRING = "routine"
+
+	ocp_tag: STRING = "openclosed"
 
 	name_tag: STRING = "name"
 
@@ -419,11 +431,13 @@ feature {NONE} -- Implementation
 	<!ELEMENT subobject (ref | basic | subobject)* >
 	<!ATTLIST subobject
 		name CDATA #REQUIRED
-		type CDATA #REQUIRED >
+		count CDATA #REQUIRED >
 	<!ELEMENT agent (ref | basic | subobject)* >
-	<ATTLIST agent
+	<!ATTLIST agent
 		id ID #REQUIRED
-		type CDATA #REQUIRED >
+		base CDATA #REQUIRED
+		routine CDATA #REQUIRED 
+		openclosed CDATA #REQUIRED >
 	<!ELEMENT ref EMPTY>
 	<!ATTLIST ref
 		name IDREF #REQUIRED 

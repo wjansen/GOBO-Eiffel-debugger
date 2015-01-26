@@ -81,14 +81,21 @@ public class WatchInfo  : GLib.Object {
 			}
 		}
 		if (!ok) depth = f!=null ? f.depth : 0;
-		entity = data.field;
 		_type = s.type_at(data.tid);
+		SpecialType* st = _type.is_special()? (SpecialType*)_type : null;
+		int off = 0;
+		if (st!=null) {
+			_type = st.item_type();
+			entity = (Entity*)st.item_0();
+			off = st.item_offset(data.idx);
+		} else {
+			entity = data.field;
+			off = (entity.is_local() ?
+			   ((Local*)entity).offset : ((Field*)entity).offset);
+		}
 		uint size = _type.field_bytes();
-		int off = entity.is_local() ?
-			((Local*)entity).offset : ((Field*)entity).offset;
 		address = data.home!=null ? data.home : (uint8*)f;
 		address += off;
-		if (data.idx>=0)  address += data.idx*size;
 		value = new uint8[size];
 		copy_value(value, address, size);
 	}
@@ -161,6 +168,7 @@ public class Breakpoint : GLib.Object {
 			// short_names[IseCode.External_event] = "external event";
 			short_names[IseCode.Eiffel_runtime_panic] = "eiffel";
 			short_names[IseCode.Io_exception] = "io";
+			short_names[IseCode.Operating_system_exception] = "os";
 			short_names[IseCode.Developer_exception] = "raise";
 			// short_names[IseCode.Eiffel_runtime_fatal_error] = "fatal";
 			short_names[IseCode.number_of_codes] = "all";
@@ -179,13 +187,14 @@ public class Breakpoint : GLib.Object {
 			codes.@set("signal", IseCode.Signal_exception);
 			// codes.@set("serial", IseCode.SERIAL);
 			codes.@set("io", IseCode.Io_exception);
+			codes.@set("os", IseCode.Operating_system_exception);
 			codes.@set("raise", IseCode.Developer_exception);
 			codes.@set("all", IseCode.number_of_codes);
 
 			for (i=0; i<n; ++i) code_map[i] = i;
 			code_map[15] = IseCode.No_more_memory;
-			code_map[22] = IseCode.Signal_exception;
-			code_map[18] = IseCode.Io_exception;
+			code_map[22] = IseCode.Operating_system_exception;
+			code_map[18] = IseCode.Operating_system_exception;
 			code_map[21] = IseCode.Io_exception;
 			code_map[27] = IseCode.Io_exception;
 			code_map[25] = IseCode.Eiffel_runtime_panic;

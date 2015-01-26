@@ -34,6 +34,20 @@ inherit
 			put_unicode,
 			put_new_object,
 			put_new_special,
+			put_booleans,
+			put_characters,
+			put_characters_32,
+			put_integers_8,
+			put_integers_16,
+			put_integers,
+			put_integers_64,
+			put_naturals_8,
+			put_naturals_16,
+			put_naturals,
+			put_naturals_64,
+			put_reals,
+			put_doubles,
+			put_pointers,
 			field,
 			field_type,
 			set_field,
@@ -140,6 +154,7 @@ feature {PC_DRIVER} -- Push and pop data
 		do
 			valid_stack.force (valid)
 			if attached associated (t) as dt then
+				valid := true
 				Precursor (dt, id)
 			else
 				valid := false
@@ -161,7 +176,7 @@ feature {PC_DRIVER} -- Push and pop data
 	pre_agent (a: IS_AGENT_TYPE; id: detachable ANY)
 		do
 			valid_stack.force (valid)
-			if attached id and then attached {IS_AGENT_TYPE} associated (a) as da then
+			if id /= Void and then attached {IS_AGENT_TYPE} associated (a) as da then
 				valid := true
 				Precursor (da, id)
 			else
@@ -172,7 +187,7 @@ feature {PC_DRIVER} -- Push and pop data
 
 	post_agent (a: IS_AGENT_TYPE; id: detachable ANY)
 		do
-			if attached id and then attached {IS_AGENT_TYPE} associated (a) as da then
+			if id /= Void and then attached {IS_AGENT_TYPE} associated (a) as da then
 				Precursor (a, id)
 			else
 				pop_offset
@@ -184,7 +199,7 @@ feature {PC_DRIVER} -- Push and pop data
 	pre_special (s: IS_SPECIAL_TYPE; n: NATURAL; id: detachable ANY)
 		do
 			valid_stack.force (valid)
-			if attached id and then attached {IS_SPECIAL_TYPE} associated (s) as ds then
+			if id /= Void and then attached {IS_SPECIAL_TYPE} associated (s) as ds then
 				valid := true
 				Precursor (ds, n, id)
 			else
@@ -195,7 +210,7 @@ feature {PC_DRIVER} -- Push and pop data
 	
 	post_special (s: IS_SPECIAL_TYPE; id: detachable ANY)
 		do
-			if attached id and then attached {IS_SPECIAL_TYPE} associated (s) as ds then
+			if id /= Void and then attached {IS_SPECIAL_TYPE} associated (s) as ds then
 				Precursor (s, id)
 			else
 				pop_offset
@@ -364,24 +379,20 @@ feature {PC_DRIVER} -- Writing elementary data
 	put_string (s: STRING)
 		do
 			if valid then
-				if attached {STRING} object as o then
-					o.copy (s)
-				end
+				Precursor (s)
 			end
 		end
-
+	
 	put_unicode (u: STRING_32)
 		do
 			if valid then
-				if attached {STRING_32} object as o then
-					o.copy (u)
-				end
+				Precursor (u)
 			end
 		end
 
 	put_new_object (t: IS_TYPE)
 		do
-			if valid and then attached associated (t) as dt
+			if attached associated (t) as dt
 				and then dt.allocate /= default_pointer
 			 then
 				Precursor (dt)
@@ -401,7 +412,7 @@ feature {PC_DRIVER} -- Writing elementary data
 
 	put_new_special (s: IS_SPECIAL_TYPE; n, cap: NATURAL)
 		do
-			if valid and then attached {IS_SPECIAL_TYPE} associated (s) as ds then
+			if attached {IS_SPECIAL_TYPE} associated (s) as ds then
 				Precursor (ds, n, cap)
 			else
 				last_ident := void_ident
@@ -417,6 +428,106 @@ feature {PC_DRIVER} -- Writing elementary data
 			end
 		end
 
+feature {PC_DRIVER} -- Writing array data
+
+	put_booleans (bb: SPECIAL [BOOLEAN]; n: INTEGER)
+		do
+			if valid then
+				Precursor (bb, n)
+			end
+		end
+
+	put_characters (cc: SPECIAL [CHARACTER]; n: INTEGER)
+		do
+			if valid then
+				Precursor (cc, n)
+			end
+		end
+			
+	put_characters_32 (cc: SPECIAL [CHARACTER_32]; n: INTEGER)
+		do
+			if valid then
+				Precursor (cc, n)
+			end
+		end
+			
+	put_integers_8 (ii: SPECIAL [INTEGER_8]; n: INTEGER)
+		do
+			if valid then
+				Precursor (ii, n)
+			end
+		end
+			
+	put_integers_16 (ii: SPECIAL [INTEGER_16]; n: INTEGER)
+		do
+			if valid then
+				Precursor (ii, n)
+			end
+		end
+			
+	put_integers (ii: SPECIAL [INTEGER_32]; n: INTEGER)
+		do
+			if valid then
+				Precursor (ii, n)
+			end
+		end
+			
+	put_integers_64 (ii: SPECIAL [INTEGER_64]; n: INTEGER)
+		do
+			if valid then
+				Precursor (ii, n)
+			end
+		end
+			
+	put_naturals_8 (nn: SPECIAL [NATURAL_8]; n: INTEGER)
+		do
+			if valid then
+				Precursor (nn, n)
+			end
+		end
+			
+	put_naturals_16 (nn: SPECIAL [NATURAL_16]; n: INTEGER)
+		do
+			if valid then
+				Precursor (nn, n)
+			end
+		end
+			
+	put_naturals (nn: SPECIAL [NATURAL_32]; n: INTEGER)
+		do
+			if valid then
+				Precursor (nn, n)
+			end
+		end
+			
+	put_naturals_64 (nn: SPECIAL [NATURAL_64]; n: INTEGER)
+		do
+			if valid then
+				Precursor (nn, n)
+			end
+		end
+			
+	put_reals (rr: SPECIAL [REAL_32]; n: INTEGER)
+		do
+			if valid then
+				Precursor (rr, n)
+			end
+		end
+			
+	put_doubles (dd: SPECIAL [REAL_64]; n: INTEGER)
+		do
+			if valid then
+				Precursor (dd, n)
+			end
+		end
+			
+	put_pointers (pp: SPECIAL [POINTER]; n: INTEGER)
+		do
+			if valid then
+				Precursor (pp, n)
+			end
+		end
+			
 feature {PC_DRIVER} -- Object location 
 
 	set_field (f: IS_FIELD; in: detachable ANY)
@@ -578,7 +689,7 @@ feature {NONE} -- Implementation
 	
 	valid_field (f: IS_FIELD): BOOLEAN
 		do
-			Result := attached object and then f.offset >= 0
+			Result := object /= Void and then f.offset >= 0
 		end
 	
 	valid_stack: ARRAYED_STACK [BOOLEAN]

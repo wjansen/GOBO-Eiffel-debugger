@@ -95,10 +95,6 @@ feature {NONE} -- Scanning structures
 			todo_objects.extend (si)
 		end
 
-feature {NONE} -- Implementation 
-
-	todo_objects: detachable DISPENSER [SI_]
-	
 invariant
 	
 note

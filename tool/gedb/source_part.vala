@@ -46,9 +46,8 @@ public class SourcePart : Box, AbstractPart, ClassPosition, Searcher {
 			WrapMode mode = _wrap_mode ? 
 				WrapMode.WORD_CHAR : WrapMode.NONE;
 			var src = act_source();
-			src.text_view.wrap_mode = mode;
-			if (feature_view!=null) 
-				feature_view.wrap_mode = mode;
+			if (src!=null) src.text_view.wrap_mode = mode;
+			if (feature_view!=null) feature_view.wrap_mode = mode;
 		}
 	}
 

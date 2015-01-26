@@ -44,7 +44,8 @@ feature -- Basic operation
 				id := at.ident
 				put_global_integer (id, c_names.c_any_name, False)
 			end
-			put_global_integer (compilee.compilation_time, c_names.c_time_name, True)
+			put_global_integer (compilee.compilation_time.to_integer_64,
+													c_names.c_time_name, True)
 			put_global_string (compilee.name, c_names.c_system_name)
 			c_generator.flush_to_c_file
 		end

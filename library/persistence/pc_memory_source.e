@@ -10,10 +10,13 @@ class PC_MEMORY_SOURCE
 
 inherit
 
-	PC_RANDOM_ACCESS_SOURCE [attached ANY]
+	PC_SOURCE [attached ANY]
 		undefine
 			set_field
 		redefine
+			must_expand_strings,
+			must_be_random_access,
+			must_be_serial,
 			field, 
 			reset,
 			pre_object,
@@ -87,9 +90,6 @@ feature {NONE} -- Initialization
 			object := reals
 			object := doubles
 			object := pointers
-			object := strings
-			object := unicodes
-			object := references
 			object := Void
 		end
 
@@ -119,9 +119,17 @@ feature -- Access
 
 	has_position_indices: BOOLEAN = False
 
+	has_consecutive_indices: BOOLEAN = False
+
 	can_expand_strings: BOOLEAN = True
 
 	must_expand_strings: BOOLEAN = False
+
+	must_be_random_access: BOOLEAN = True
+
+	must_be_serial: BOOLEAN = False
+
+	is_serial: BOOLEAN = False
 
 	has_capacities: BOOLEAN = True
 
@@ -197,6 +205,11 @@ feature {PC_DRIVER} -- Reading elementary data
 
 feature {PC_DRIVER} -- Reading structure definitions 
 
+	read_next_ident
+		do
+			-- not applicable since not `is_serial
+		end
+	
 	read_field_ident
 		do
 			process_ident (actual_object)
@@ -215,9 +228,9 @@ feature {PC_DRIVER} -- Reading structure definitions
 
 feature {PC_DRIVER} -- Reading object definitions 
 
-	adjust_to (id: like last_ident)
+	read_description
 		do
-			process_ident (id)
+			process_ident (last_ident)
 		end
 	
 	pre_object (t: IS_TYPE; id: attached ANY)
@@ -333,6 +346,7 @@ feature {NONE} -- Implementation
 			last_ident := void_ident
 			last_dynamic_type := Void
 			last_count := 0
+			last_capacity := 0
 			if id /= void_ident then
 				last_ident := id
 				if field /= Void and then field.type.is_subobject then
@@ -341,6 +355,7 @@ feature {NONE} -- Implementation
 					last_dynamic_type := t
 					if t.is_special and then attached {IS_SPECIAL_TYPE} t as s then
 						last_count := system.special_count (id, s)
+						last_capacity := system.special_capacity (id, s)
 					end
 					if t.is_string then
 						if attached {STRING} id as s then

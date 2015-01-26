@@ -79,6 +79,9 @@ feature -- Access
 	top_ident: detachable O_
 			-- Ident of top object. 
 
+	top_type: detachable IS_TYPE
+			-- Type of top object. 
+
 feature {PC_DRIVER} -- Pre and post handling of data 
 
 	pre_object (t: IS_TYPE; id: detachable O_)
@@ -170,16 +173,17 @@ feature {PC_DRIVER} -- Pre and post handling of data
 		do
 		end
 
-	finish (top: PC_TYPED_IDENT [O_])
+	finish (top: O_; type: IS_TYPE)
 		note
 			action:
 				"[
 				 Finish action on the persistence closure.
 				 Default action: set `top_ident'.
 				 ]"
-			top: "top_object"
+			top: "ident of top object"
 		do
-			top_ident := top.ident
+			top_ident := top
+			top_type := type
 		ensure
 			top_ident_set: top_ident = top.ident
 		end
@@ -258,11 +262,10 @@ feature {PC_DRIVER} -- Writing elementary data
 		deferred
 		end
 
-	put_known_ident (id: O_; t: IS_TYPE)
+	put_known_ident (t: IS_TYPE; id: O_)
 		note 
-			action: "Perform a certain action on an already completed object."
+			action: "Perform a certain action on an already announced object."
 			id: "object ident"
-			t: "dynamic type of `id'"
 		require
 			not_void: id /= void_ident
 		deferred
@@ -306,46 +309,6 @@ feature {PC_DRIVER} -- Writing elementary data
 		deferred
 		end
 	
-	pre_new_object (t: IS_TYPE)
-		note
-			action:
-			"[
-			 Set `last_ident' for a new object and begin treatment of the object.
-			 Default action: call `put_new_object' and 'pre_object'.
-			 ]"
-			t: "dynamic object type"
-		require
-			not_special: not t.is_special
-			not_agent: not t.is_agent
-		local
-			id: O_
-		do
-			put_new_object (t)
-			id := last_ident
-			pre_object (t, id)
-			last_ident := id
-		end
-
-	pre_new_special (st: IS_SPECIAL_TYPE; n, cap: NATURAL)
-		note
-			action:
-			"[
-			 Set `last_ident' for a new special object and begin treatment
-			 of the object.
-			 Default action: call `put_new_special' and 'pre_special'.
-			 ]"
-			 st: "dynamic object type"
-			 n: "count"
-			 cap: "capacity"
-		local
-			id: O_
-		do
-			put_new_special (st, n, cap)
-			id := last_ident
-			pre_special (st, n, id)
-			last_ident := id
-		end
-
 feature {PC_DRIVER} -- Writing array data
 	
 	put_booleans (bb: SPECIAL [BOOLEAN]; n: INTEGER)
@@ -460,30 +423,6 @@ feature {PC_DRIVER} -- Writing array data
 		deferred
 		end
 	
-	put_strings (ss: SPECIAL [detachable STRING_8]; n: INTEGER)
-		note
-			action: "Treat array `ss'."
-		require
-			large_enough: ss.capacity >= n
-		deferred
-		end
-	
-	put_unicodes (uu: SPECIAL [detachable STRING_32]; n: INTEGER)
-		note
-			action: "Treat array `uu'."
-		require
-			large_enough: uu.capacity >= n
-		deferred
-		end
-	
-	put_references (rr: SPECIAL [detachable O_]; n: INTEGER)
-		note
-			action: "Treat array `rr'."
-		require
-			large_enough: rr.capacity >= n
-		deferred
-		end
-	
 feature {PC_DRIVER, PC_TARGET} -- 
 
 	put_once (cls: detachable IS_CLASS_TEXT; nm: STRING; id: O_)
@@ -532,7 +471,7 @@ feature {PC_DRIVER} -- Object location
 
 feature -- Object finalization 
 
-	finalize: detachable PROCEDURE [ANY, TUPLE [id: PC_TYPED_IDENT [O_]]]
+	finalize: detachable PROCEDURE [ANY, TUPLE [PC_TYPED_IDENT [O_]]]
 			-- Procedure to be applied to all objects after 
 			-- end of traversal (may be `Void'). 
 

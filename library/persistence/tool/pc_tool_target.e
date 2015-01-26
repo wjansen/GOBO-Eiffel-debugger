@@ -109,10 +109,10 @@ feature {PC_DRIVER} -- Push and pop data
 
 feature {PC_DRIVER} -- Writing elementary data
 	
-	put_known_ident (id: NATURAL; t: IS_TYPE)
+	put_known_ident (t: IS_TYPE; id: NATURAL)
 		do
-			Precursor {PC_STATISTICS_TARGET} (id, t)
-			Precursor {PC_QUALIFIER_TARGET} (id, t)
+			Precursor {PC_STATISTICS_TARGET} (t, id)
+			Precursor {PC_QUALIFIER_TARGET} (t, id)
 		end
 
 	put_new_object (t: IS_TYPE)

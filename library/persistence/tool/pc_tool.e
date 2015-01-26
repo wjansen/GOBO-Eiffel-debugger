@@ -11,6 +11,8 @@ inherit
 			source as make_source
 		undefine
 			raise
+		redefine
+			reset
 		end
 
 	PC_TOOL_PARSER
@@ -43,10 +45,12 @@ feature {NONE} -- Initialization
 		local
 			lv, rv: PC_TOOL_VALUE
 		do
-			default_create
+			create objects.make (0)
+			create types.make (0)
 			create attr
 			create file.make ("no_name")
 			create source.make (Deep_flag)
+			default_create
 			if argument_count = 1 then
 				load (argument (1))
 			elseif argument_count > 1 then
@@ -56,6 +60,13 @@ feature {NONE} -- Initialization
 			process_commands
 		end
 
+	reset
+		do
+			Precursor
+			objects.clear
+			types.clear
+		end
+	
 feature -- Access 
 
 	file: RAW_FILE
@@ -68,14 +79,14 @@ feature -- Basic operation
 			f_in: detachable RAW_FILE
 			tf, cf: PLAIN_TEXT_FILE
 			tt: PC_TEXT_TARGET
-			cc: PC_C_TARGET
 			dr: PC_SERIAL_DRIVER [NATURAL]
+			fn, hn: STRING
 			code: INTEGER
 		do
 			from
 			until code = Quit_code loop
-				io.error.put_string (command_prompt)
-				io.error.flush
+				io.output.put_string (command_prompt)
+				io.output.flush
 				io.input.read_line
 				cmd := io.last_string
 				cmd.left_adjust
@@ -98,7 +109,7 @@ feature -- Basic operation
 						end
 					elseif store_order = Deep_flag then
 						inspect code
-						when qualifier_code, long_code, select_code, xml_code, cc_code, extract_code then
+						when qualifier_code, long_code, xml_code, cc_code, extract_code then
 							raise ("Command not available for deep store mode.")
 						else
 						end
@@ -109,14 +120,13 @@ feature -- Basic operation
 					when actual_code then
 						print_header
 					when size_code then
-						io.error.put_string ("Statistics:%N")
-						io.error.put_string (tool_target.out)
+						io.output.put_string ("Statistics:%N")
+						io.output.put_string (tool_target.out)
 					else
 					end
 					inspect code
 					when print_code then
 						if not is_basic then
-							reset
 							file.open_read 
 							create source.make (Deep_flag)
 							source.set_file (file)
@@ -125,13 +135,19 @@ feature -- Basic operation
 							source.read_header
 							create tt.make (io.output, source)
 							tt.set_flat ((header.order & Deep_flag) = 0)
+							tt.set_prefix("$")
 							if filename.is_empty then
 								tf := Void
 							else
-								create tf.make_open_write(filename)
+								if need_extension then
+									fn := filename + ".txt"
+								else
+									fn := filename
+								end
+								create tf.make_open_write(fn)
 								tt.set_file (tf)
 							end
-							dr := integer_driver (tt, source, header.options)
+							dr := integer_driver (tt, source, header.order, header.options)
 							dr.traverse
 							file.close
 						end
@@ -155,22 +171,34 @@ feature -- Basic operation
 					when rename_code then
 						new_names (filename)
 					when extract_code then
-						extract (f_in, ident.to_natural_32, filename)
-					when load_code then
-						load (filename)
-					when xml_code then
-						to_xml (f_in, filename)
-					when cc_code then
-						if store_order & Lifo_flag = 0 then
-							raise (once "Store order is not LIFO.")
+						if need_extension then
+							fn := filename + ".gs"
+						else
+							fn := filename
 						end
-						create cf.make_open_write (filename)
-						create cc.make (cf, Void, "T", "x", "x0", True)
-						reset
-						deserialize (cc)
-						cf.close
-					when select_code then
-						print_selection (selection, io.output)
+						extract (f_in, ident.to_natural_32, fn)
+					when load_code then
+						if need_extension then
+							fn := filename + ".gs"
+						else
+							fn := filename
+						end
+						load (fn)
+					when xml_code then
+						if need_extension then
+							fn := filename + ".xml"
+						else
+							fn := filename
+						end
+						to_xml (f_in, fn)
+					when cc_code then
+						if need_extension then
+							fn := filename + ".c"
+							hn := filename
+						else
+							fn := filename
+						end
+						to_c (f_in, fn, hn)
 					when help_code then
 						print_help
 					when quit_code then
@@ -179,30 +207,30 @@ feature -- Basic operation
 				end
 			end
 		rescue
-			io.error.put_string (error_prompt)
-			io.error.put_string (original_msg)
-			io.error.put_new_line
+			io.output.put_string (error_prompt)
+			io.output.put_string (original_msg)
+			io.output.put_new_line
 			original_msg.wipe_out
 			retry
 		end
 	
-	deserialize (tgt: PC_ABSTRACT_TARGET)
+	deserialize (tgt: PC_ABSTRACT_TARGET; forward: BOOLEAN)
 		local
 			dr: PC_SERIAL_DRIVER [NATURAL]
 		do
-			reset
 			file.open_read 
 			create source.make (Deep_flag)
 			source.set_file (file)
 			create header.make_from_source (source)
-			is_basic := header.is_basic
-			if not is_basic then
-				source.read_header
-				top_object := Void
-				create dr.make (tgt, source, header.options)
-				dr.traverse
+			source.read_header
+			top_object := Void
+			create dr.make (tgt, source, header.order, header.options)
+			dr.traverse
+			if attached {like objects} dr.known_objects as ko then
+					objects := ko
 			end
 			file.close
+			types := source.object_types
 		ensure
 			not_open: not f.is_open
 		end
@@ -217,7 +245,7 @@ feature {NONE} -- Command implementation
 			end
 			reset
 			create tool_target.make (file)
-			deserialize (tool_target)
+			deserialize (tool_target, False)
 			is_basic := header.is_basic
 			store_order := header.order
 			print_header
@@ -231,48 +259,49 @@ feature {NONE} -- Command implementation
 		local
 			dt: DT_DATE_TIME
 		do
-			io.error.put_string (once "File:%T%T")
-			io.error.put_string (file.name)
-			io.error.put_new_line
-			io.error.put_string (once "System:%T%T")
-			io.error.put_string (header.root_name)
-			io.error.put_new_line
+			io.output.put_string (once "File:%T%T")
+			io.output.put_string (file.name)
+			io.output.put_new_line
+			io.output.put_string (once "System:%T%T")
+			io.output.put_string (header.root_name)
+			io.output.put_new_line
 			compilation_time := header.compilation_time
 			create dt.make_from_epoch ((compilation_time // 1000).to_integer_32)
 			dt.set_millisecond ((compilation_time \\ 1000).to_integer_32)
-			io.error.put_string (once "Compiled at:%T")
-			io.error.put_string (dt.out)
-			io.error.put_new_line
-			io.error.put_string (once "Store mode:%T")
+			source.set_compilation_time (compilation_time)
+			io.output.put_string (once "Compiled at:%T")
+			io.output.put_string (dt.out)
+			io.output.put_new_line
+			io.output.put_string (once "Store mode:%T")
 			if is_basic then
-				io.error.put_string (once "basic")
+				io.output.put_string (once "basic")
 			else
-				io.error.put_string (once "general")
+				io.output.put_string (once "general")
 			end
-			io.error.put_character (',')
-			io.error.put_character (' ')
+			io.output.put_character (',')
+			io.output.put_character (' ')
 			inspect store_order
 			when Fifo_flag then
-				io.error.put_string (once "fifo")
+				io.output.put_string (once "fifo")
 			when Lifo_flag, Forward_flag then
-				io.error.put_string (once "lifo")
+				io.output.put_string (once "lifo")
 			when Deep_flag then
-				io.error.put_string (once "deep")
+				io.output.put_string (once "deep")
 			else
 			end
 			if with_onces then
-				io.error.put_string (once ", with once value identification")
+				io.output.put_string (once ", with once value identification")
 			end
-			io.error.put_new_line
+			io.output.put_new_line
 			if attached comment as c and then c.count > 0 then
-				io.error.put_string (once "Description:")
+				io.output.put_string (once "Description:")
 				if c.count > 60 then
-					io.error.put_new_line
+					io.output.put_new_line
 				else
-					io.error.put_character ('%T')
+					io.output.put_character ('%T')
 				end
-				io.error.put_string (c)
-				io.error.put_new_line
+				io.output.put_string (c)
+				io.output.put_new_line
 			end
 			if header.minor < 6 then
 				raise ("Store file too old.%N")
@@ -306,42 +335,40 @@ feature {NONE} -- Command implementation
 				pad (tmp_str, l, True)
 				tmp_str.extend (' ')
 				ti.append_name (tmp_str)
-				io.error.put_string (tmp_str)
-				io.error.put_new_line
+				io.output.put_string (tmp_str)
+				io.output.put_new_line
 				i := i + 1
 			end
 		end
 
 	print_objects (id: INTEGER)
 		local
-			types: PC_LINEAR_TABLE [detachable IS_TYPE]
 			i, n: NATURAL
 			l: INTEGER
 			comma: BOOLEAN
 		do
-			types := source.object_types
 			from
 				n := types.count.to_natural_32
 			until i = n loop
 				if attached {IS_TYPE} types [i] as t and then t.ident = id then
 					tmp_str.wipe_out
 					if l + tmp_str.count > 64 then
-						io.error.put_new_line
+						io.output.put_new_line
 						l := 0
 					end
 					if comma then
 						tmp_str.extend (',')
 						tmp_str.extend (' ')
 					end
-					tmp_str.extend ('_')
+					tmp_str.append (pre_fix)
 					tmp_str.append_natural_32 (i)
-					io.error.put_string (tmp_str)
+					io.output.put_string (tmp_str)
 					l := l + tmp_str.count
 					comma := True
 				end
 				i := i + 1
 			end
-			io.error.put_new_line
+			io.output.put_new_line
 		end
 
 	print_fields (t: IS_TYPE)
@@ -352,8 +379,8 @@ feature {NONE} -- Command implementation
 			tmp_str.copy ("Fields of type ")
 			t.append_name (tmp_str)
 			tmp_str.extend (':')
-			io.error.put_string (tmp_str)
-			io.error.put_new_line
+			io.output.put_string (tmp_str)
+			io.output.put_new_line
 			attr.clear
 			from
 				m := t.field_count
@@ -371,8 +398,8 @@ feature {NONE} -- Command implementation
 				tmp_str.extend (':')
 				tmp_str.extend (' ')
 				a.type.append_name (tmp_str)
-				io.error.put_string (tmp_str)
-				io.error.put_new_line
+				io.output.put_string (tmp_str)
+				io.output.put_new_line
 				j := j + 1
 			end
 		end
@@ -383,8 +410,8 @@ feature {NONE} -- Command implementation
 		do
 			create str.make (1001)
 			tool_target.append_qualified_name (id, str, typed, True)
-			io.error.put_string (str)
-			io.error.put_new_line
+			io.output.put_string (str)
+			io.output.put_new_line
 		end
 
 	print_help
@@ -393,8 +420,8 @@ feature {NONE} -- Command implementation
 			name: STRING
 			i, l, l0, n: INTEGER
 		do
-			io.error.put_string (once "%FOverview of commands%N")
-			io.error.put_new_line
+			io.output.put_string (once "Overview of commands%N")
+			io.output.put_new_line
 			from
 				n := commands.count
 			until i = n loop
@@ -423,8 +450,8 @@ feature {NONE} -- Command implementation
 					end
 					pad (tmp_str, l, False)
 					tmp_str.append (hl)
-					io.error.put_string (tmp_str)
-					io.error.put_new_line
+					io.output.put_string (tmp_str)
+					io.output.put_new_line
 				end
 			end
 		end
@@ -496,27 +523,26 @@ feature {NONE} -- Command implementation
 		local
 			ps: PC_POSITIONED_STREAM_SOURCE
 			st: PC_STREAM_TARGET
-			dr: PC_SERIAL_DRIVER [NATURAL]
+			dr: PC_RANDOM_ACCESS_DRIVER [NATURAL, NATURAL]
 			h: PC_HEADER
 			f: RAW_FILE
 			opts: INTEGER
 		do
-			reset
 			f_in.open_read
 			create header.make_from_source (source)
 			is_basic := header.is_basic
 			store_order := header.order
 			opts := header.options & Once_observation_flag
-			create ps.make (source, opts > 0)
-			ps.set_top (id)
+			create ps.make (source)
 			create st.make (source)
-			create f.make_open_write (filename)
+			create dr.make (st, ps, header.order, header.options, objects)
+			create f.make_open_write (fn)
 			st.set_file (f)
-			create h
-			h.put (st, source.system, Void, store_order, header.options)
+			create h.make_for_target (header.root_name, source.system,
+																Void, header.order, header.options)
+			h.put (st)
 			st.write_header (source.system)
-			create dr.make (st, ps, header.options)
-			dr.traverse
+			dr.traverse (id)
 			f_in.close
 			f.close
 		end
@@ -525,25 +551,47 @@ feature {NONE} -- Command implementation
 		require
 			not_basic: not is_basic
 		local
-			f: RAW_FILE
---			table: PC_LINEAR_TABLE [NATURAL]
---			forward: PC_FORWARD_DRIVER [NATURAL, NATURAL]
---			ps: PC_POSITIONED_STREAM_SOURCE
+			ps: PC_POSITIONED_STREAM_SOURCE
+			fd: PC_FORWARD_DRIVER [NATURAL, NATURAL]
+			oo: PC_INTEGER_TABLE [PC_TYPED_IDENT [NATURAL]]
 			xml: PC_XML_TARGET
 			xf: PLAIN_TEXT_FILE
 		do
---			f_in.open_read 
---			create table.make (1000, 0)
---			create forward.make (table)
---			create ps.make (source, header.options & Once_observation_flag)
---			ps.set_order (Forward_flag)
---			ps.read_header
 			create xf.make_open_write (fn)
+			f_in.open_read 
 			create xml.make (xf, comment, "_no_name", source)
---			forward.traverse (xml, ps, 0)
-			deserialize (xml)
+			create oo.make (objects.count)
+			create ps.make (source)
+			create fd.make (xml, ps, oo)
+			fd.traverse (tool_target.top_ident)
+			f_in.close
 			xf.close
---			f_in.close
+		end
+	
+	to_c (f_in: FILE; fn: STRING; hn: detachable STRING)
+		local
+			cf: PLAIN_TEXT_FILE
+			hf: detachable PLAIN_TEXT_FILE
+			tt: PC_LINEAR_TABLE [PC_TYPED_IDENT [NATURAL]]
+			ps: PC_POSITIONED_STREAM_SOURCE
+			fd: PC_FORWARD_DRIVER [NATURAL, NATURAL]
+			ct: PC_C_TARGET
+		do
+			f_in.open_read
+			create cf.make_open_write (fn)
+			if hn /= Void then
+				create hf.make_open_write (hn + ".h")
+			end
+			create ps.make (source)
+			create ct.make (cf, hf, hn, "T", "x", "x0", source.system, True, False)
+			create tt.make (objects.count*2)
+			create fd.make (ct, ps, tt)
+			fd.traverse (source.top_ident)
+			cf.close
+			if hf /= Void then
+				hf.close
+			end
+			f_in.close
 		end
 	
 feature {NONE} -- Error handling 
@@ -569,8 +617,12 @@ feature {NONE} -- Implementation
 	source: PC_TOOL_SOURCE
 
 	tool_target: PC_TOOL_TARGET
+
+	objects: PC_LINEAR_TABLE [PC_TYPED_IDENT [NATURAL]]
+
+	types: PC_LINEAR_TABLE [detachable IS_TYPE]
 	
-	header: PC_HEADER
+	positions: PC_LINEAR_TABLE [INTEGER]
 	
 	attr: IS_SEQUENCE [IS_FIELD]
 
@@ -625,7 +677,6 @@ feature {NONE} -- Implementation
 			ff := source.fields
 			pp := source.parents
 			tt := source.object_types
-			cc := source.capacities
 			path.wipe_out
 			top_name := "all"
 			from
@@ -635,77 +686,6 @@ feature {NONE} -- Implementation
 				i := pp[i]
 			end
 			append_qualified_name (id, to, typed)
-		end
-
-	print_selection (sel: like selection; f: FILE)
-		local
-			ps: PC_POSITIONED_STREAM_SOURCE
-			dr: PC_SELECT_DRIVER
-			row: ARRAY [STRING]
-			w: ARRAY [INTEGER]
-			head: PC_TOOL_VALUE
-			str: STRING
-			i, j, m, n, opts: INTEGER
-		do
-			file.open_read
-			opts := header.options & Once_observation_flag
-			create ps.make (source, opts > 0)
-			create dr.make (ps, sel)
-			dr.do_all (agent select_item (?, ?, dr))
-			dr.finish
-			file.close
-			n := dr.columns.count
-			if n > 0 then
-				w := dr.column_widths
-				m := w.count
-				from
-					j := 0
-				until j = m loop
-					if j > 0 then
-						f.put_character (' ')
-						f.put_character ('|')
-						f.put_character (' ')
-					end
-					head := dr.heads [j+1]
-					str := head.head_name
-					print_chars (f, ' ', w[j] - str.count)
-					f.put_string (str)
-					j := j + 1 
-				end
-				f.put_new_line
-				from
-					j := 0
-				until j = m loop
-					print_chars (f, '-', w[j])
-					if j > 0 then
-						f.put_character ('-')
-						f.put_character ('-')
-						f.put_character ('-')
-					end
-					j := j + 1
-				end
-				f.put_new_line
-				from
-					i := 1
-				until i > n loop
-					row := dr.columns.item (i). row
-					from
-						j := 0
-					until j = m loop
-						if j > 0 then
-							f.put_character (' ')
-							f.put_character ('|')
-							f.put_character (' ')
-						end
-						str := row [j]
-						print_chars (f, ' ', w[j] - str.count)
-						f.put_string (str)
-						j := j + 1
-					end
-					f.put_new_line
-					i := i + 1
-				end
-			end
 		end
 
 	print_chars (f: FILE; c: CHARACTER; n: INTEGER)
@@ -721,11 +701,8 @@ feature {NONE} -- Implementation
 				i := i - 1
 			end
 		end
-	
-	select_item (tid: PC_TYPED_IDENT[NATURAL]; obj: NATURAL; dr: PC_SELECT_DRIVER)
-		do
-			dr.item (tid.ident, obj)
-		end
+
+	pre_fix: STRING = "$"
 	
 	tmp_str: STRING = "                                          "
 

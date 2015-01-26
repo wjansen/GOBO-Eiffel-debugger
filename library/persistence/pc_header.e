@@ -27,8 +27,8 @@ inherit
 	
 create
 
-	default_create,
-	make_from_source
+	make_from_source,
+	make_for_target
 
 feature {NONE} -- Initialization
 
@@ -38,7 +38,7 @@ feature {NONE} -- Initialization
 			create last_word.make (8)
 		end
 	
-	make_from_source (src: PC_MEDIUM_SOURCE)
+	make_from_source (src: PC_BASIC_SOURCE)
 		require
 			is_open: src.medium.is_open_read
 		local
@@ -54,6 +54,7 @@ feature {NONE} -- Initialization
 			end
 			read_word (m)
 			failed := last_word.substring_index ("2.", 1) /= 1
+			major := 2
 			if not failed then
 				last_word.keep_tail (last_word.count - 2)
 				if last_word.is_integer then
@@ -84,6 +85,8 @@ feature {NONE} -- Initialization
 		end
 	
 feature -- Access
+
+	system: IS_SYSTEM
 	
 	creation_time: INTEGER_64
 	
@@ -91,6 +94,8 @@ feature -- Access
 
 	store_time: INTEGER_64
 	
+	major: INTEGER
+
 	minor: INTEGER
 
 	root_name: STRING
@@ -125,7 +130,6 @@ feature -- Basic operation
 				end
 			end
 			options := opts
-			options := options & Order_flag.bit_not
 			order := ord
 			write_word (tgt.medium, Manifest)
 			write_word (tgt.medium, Version)
@@ -143,16 +147,23 @@ feature -- Basic operation
 			file_open: tgt.medium.is_open_write
 		end
 
-	put (tgt: PC_BASIC_TARGET; s: IS_SYSTEM; c: like comment; ord, opts: INTEGER)
+	put (tgt: PC_BASIC_TARGET)
 		do
-			if attached s.root_type as root then
-				root_name := root.name
-			else
-				root_name := s.name.as_upper
-			end
-			put_explicitly (tgt, root_name, c, ord, opts,
-											s.compilation_time, s.creation_time,
-											s.actual_time_as_integer)
+			put_explicitly (tgt, root_name, comment, order, options,
+											compilation_time, creation_time,
+											system.actual_time_as_integer)
+		end
+
+	make_for_target (root: STRING; s: IS_SYSTEM;
+		c: like comment; ord, opts: INTEGER)
+		do
+			system := s
+			root_name := root
+			comment := c
+			order := ord
+			options := opts
+			compilation_time := s.compilation_time
+			creation_time := s.creation_time
 		end
 
 feature {NONE} -- Implementation

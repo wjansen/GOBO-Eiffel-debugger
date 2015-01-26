@@ -27,8 +27,11 @@ feature -- Access
 
 	name: STRING
 		do
-			Result := ""
-			append_name (Result)
+			if fast_name = Void then
+				fast_name := ""
+				append_name (fast_name)
+			end
+			Result := fast_name
 		end
 	
 	ident: INTEGER

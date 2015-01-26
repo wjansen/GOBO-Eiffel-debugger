@@ -128,12 +128,12 @@ namespace Eval {
 		}
 		
 		public override void on_syntax_error() {
-			string msg = "Syntax: at %d after matching `%s'".
-				printf(n_chars_read, last_token.name);
 			if (error==null) {
 				error = new ParseError.OTHER ("Syntax error");
 				last_token = token_gobject as Token;
 			}
+			string msg = "Syntax: at %d after matching `%s'".
+			printf(n_chars_read, last_token.name);
 			is_match = false;
 			// stderr.printf("%s\n",msg);
 		}
@@ -156,7 +156,7 @@ namespace Eval {
 		private Nonterm? _result;
 		public Nonterm? result { 
 			get { return is_match ? _result : null; }
-			set { _result = value; } 
+			set { _result = value; last_token = token; } 
 		}
 		
 		public Alias? al;
@@ -1240,7 +1240,7 @@ namespace Eval {
 							h.error = new ParseError.NOT_INIT 
 								("Once function not yet initalized");
 					}
-				} else {
+				} else if (ct!=null) {
 					ft = ct.query_by_name(out n, name, u.args==null,
 										  h.act_text);
 					if (n==0)

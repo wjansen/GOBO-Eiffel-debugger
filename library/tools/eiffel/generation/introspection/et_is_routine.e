@@ -147,6 +147,7 @@ feature -- Initialization
 				target.define (s)
 				in_class.define (s)
 				from
+					vars.compress
 					i := variable_count
 				until i = 0 loop
 					i := i - 1
@@ -238,7 +239,8 @@ feature -- ET_IS_ORIGIN
 			done: BOOLEAN
 		do
 			if attached origin as o then
-				if is_precursor or else is_inlined or else not o.is_generated then
+				if-- is_precursor or else
+					is_inlined or else not o.is_generated then
 				elseif o.is_creation then
 					g.print_creation_procedure_name (o, target.origin, file)
 					done := True
