@@ -1,0 +1,38 @@
+This directory three examples of usage of the classes PC_SERIALIZER 
+and PC_DESERIALISER, each may be best compiled by command "geant compile".
+The source code of any non-standard classes used belongs the examples' 
+homing subdirectory. 
+
+- Subdirectory "demo"
+A simple demonstration program. The object graph to be stored/retrieved 
+is built according to the famous Almaviva/Figaro/Susanna example 
+of B.Meyer's book OOSC to demonstrate the correctess of the algorithm 
+in case of cyclic dependencies.
+
+- Subdirectories "old_classes", "new_classes"
+Program "store" in "old_classes" stores an object of type MIX 
+and puts the generated file into subdirectory "data". 
+Program "retrieve" in "new_classes" retrieves the stored object 
+from this file (so example "store" has to be run before example "retrieve"). 
+The crucial point is that the classes contributing to the stored object 
+are slightly different in both subdirectories. The purpose of the examples 
+is to show the impact of the differences on the retrieved object. 
+
+A) Class MIX has INTEGER_32, INTEGER_64, REAL_32, REAL_64 attributes 
+where the *_32 types are replaced by *_64 types and vice versa from 
+"old_classes" to "new_classes". Moreover, in "old_classes" there are 
+two values of the *_64 types, one that fits also in the *_32 type 
+and one that does not. The output of "retrieve" shows how the values 
+are preserved or modified (the retrieval tries to do its very best). 
+
+B) Class MIX has an attribute of type PERSONA taken from example "demo". 
+"old_classes" relies on the original version while "new_classes" 
+contains a modified version: one attribute has been removed and one 
+attribute has been added (precisely, an attribute has been renamed). 
+The values of the removed attribute are ignored during retrieval, 
+the added attribute gets the default value in the retrieved object. 
+
+C) Classes SOME_CLASS, ANOTHER_CLASS exchange their expansion state 
+(one expanded, one not expanded) from "old_classes" to "new_classes".
+This has no observable effect on the retrieved object (of course, 
+internal representation and behaviour are different).

@@ -822,7 +822,7 @@ public class SqlPart : Window {
 				store.@get(iter, n, out od, n-1, out obj, -1);
 				if (obj==null) return true;
 				name = @"_$od";
-				t = dg.rts.type_of_any(obj);
+				t = dg.rts.type_of_any(obj, null);
 			}
 			menu = new FeatureMenu(name, 0, t, data, dg.rts);
 			menu.popup(null, null, null, e.button, e.time);
@@ -1117,6 +1117,7 @@ public class TargetsData : DataCore {
 	public void fill(DeepInfo info) {
 		TreeIter iter;
 		Entity* e;
+		DeepInfo? pinfo = null;
 		uint8* addr;
 		string name;
 		int idx, off;
@@ -1124,16 +1125,18 @@ public class TargetsData : DataCore {
 		object = info.addr;
 		reset_ident();
 		main.id_to_expr(main.known_objects[object]);
-		for (; info!=null; info=info.parent) {
+		for (; info!=null; info=pinfo) {
+			pinfo = info.parent;
 			e = info.field;
 			idx = info.index;
-			SpecialType* st = idx>=0 ? (SpecialType*)info.parent.tp : null;
-			addr = info.parent.addr;
+			SpecialType* st = idx>=0 ? (SpecialType*)pinfo.tp : null;
+			addr = pinfo!=null ? pinfo.addr : null;
 			off = e!=null ? ((Field*)e).offset : 0;
 			name = e!=null ? ((Name*)e).fast_name : @"[$idx]";
 			store.prepend(out iter, null);
 			addr = info.addr;
 			set_value(iter, addr, false, e, st, idx, ' ', name, info.expr);
+			do_expand(iter);
 		}
 	}
 

@@ -22,6 +22,7 @@
 			Install the Gobo Eiffel debugger.
 		</description>
 		<exec executable="make -s"/>
+		<exec executable="chmod u+x vle/vala-lemon-extractor"/ unless="${is_windows}"/>
 	</target>
 
 	<target name="clean">

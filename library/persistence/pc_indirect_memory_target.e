@@ -48,6 +48,7 @@ inherit
 			put_reals,
 			put_doubles,
 			put_pointers,
+			finish,
 			field,
 			field_type,
 			set_field,
@@ -72,6 +73,7 @@ feature {NONE} -- Initialization
 			create violated_invariants.make (100)
 			create associated_classes.make (2*s.class_count + 1)
 			create associated_types.make (2*s.type_count + 1)
+			create boxed_idents.make (101)
 			create valid_stack.make (20)
 			Precursor (s, act)
 			-- Guru section: add some types to the type set of `object':
@@ -88,6 +90,7 @@ feature {PC_BASE} -- Initialization
 			Precursor
 			associated_classes.clear
 			associated_types.clear
+			boxed_idents.wipe_out
 			valid_stack.wipe_out
 			missing_types.wipe_out
 			missing_fields.wipe_out
@@ -151,11 +154,19 @@ feature -- Error codes
 feature {PC_DRIVER} -- Push and pop data 
 	
 	pre_object (t: IS_TYPE; id: detachable ANY)
+		local
+			ident: like last_ident
 		do
 			valid_stack.force (valid)
 			if attached associated (t) as dt then
+				if t.is_subobject and then not dt.is_subobject then
+					put_new_object (dt)
+					ident := last_ident
+				else
+					ident := id
+				end
 				valid := true
-				Precursor (dt, id)
+				Precursor (dt, ident)
 			else
 				valid := false
 				push_offset (system.any_type, void_ident)
@@ -219,6 +230,27 @@ feature {PC_DRIVER} -- Push and pop data
 			valid_stack.remove
 		end
 	
+	finish (top: ANY; type: IS_TYPE)
+		local
+			t: IS_TYPE
+			a: ANY
+			p, pa: POINTER
+		do
+			Precursor (top, type)
+			from
+				boxed_idents.start
+			until boxed_idents.after loop
+				p := boxed_idents.key_for_iteration
+				a := boxed_idents.item_for_iteration
+				t := system.type_of_any (a, Void)
+				if attached {IS_EXPANDED_TYPE} t as et then
+					pa := $a + et.boxed_offset
+					put_mem (p, 0, pa, et.instance_bytes.to_integer_32)
+				end
+					boxed_idents.forth
+			end
+		end
+	
 feature {PC_DRIVER} -- Writing elementary data 
 
 	put_boolean (b: BOOLEAN)
@@ -244,77 +276,83 @@ feature {PC_DRIVER} -- Writing elementary data
 
 	put_integer (i: INTEGER_32)
 		do
-			if valid then
-				inspect field_type.ident
+			if valid and then attached type_set as ts then
+				inspect ts [0].ident
 				when Int8_ident then
-					Precursor (i)
+					put_integer_8 (i.to_integer_8)
 					if (i < {INTEGER_8}.Min_value) or else (i > {INTEGER_8}.Max_value) then
 						large_integer := True
 					end
 				when Int16_ident then
-					Precursor (i)
+					put_integer_16 (i.to_integer_16)
 					if (i < {INTEGER_16}.Min_value) or else (i > {INTEGER_16}.Max_value) then
 						large_integer := True
 					end
+				when Int32_ident then
+					Precursor (i)
 				when Int64_ident then
 					put_integer_64 (i)
 				else
-					Precursor (i)
+					-- invalid type, do nothing
 				end
 			end
 		end
 
 	put_natural (n: NATURAL_32)
 		do
-			if valid then
-				inspect field_type.ident
+			if valid and then attached type_set as ts then
+				inspect ts [0].ident
 				when Nat8_ident then
-					Precursor (n)
+					put_natural_8 (n.to_natural_8)
 					if n > {NATURAL_8}.Max_value then
 						large_integer := True
 					end
 				when Nat16_ident then
-					Precursor (n)
+					put_natural_16 (n.to_natural_16)
 					if n > {NATURAL_16}.Max_value then
 						large_integer := True
 					end
+				when Nat32_ident then
+					Precursor (n)
 				when Nat64_ident then
 					put_natural_64 (n)
 				else
-					Precursor (n)
+					-- invalid type, do nothing
 				end
 			end
 		end
 
 	put_integer_64 (i: INTEGER_64)
 		do
-			if valid then
-				inspect field_type.ident
+			if valid and then attached type_set as ts then
+				inspect ts [0].ident
 				when Int8_ident then
-					put_integer (i.to_integer_32)
+					put_integer_8 (i.to_integer_8)
 					if (i < {INTEGER_8}.Min_value) or else (i > {INTEGER_8}.Max_value) then
 						large_integer := True
 					end
 				when Int16_ident then
-					put_integer (i.to_integer_32)
+					put_integer_16 (i.to_integer_16)
 					if (i < {INTEGER_16}.Min_value) or else (i > {INTEGER_16}.Max_value) then
 						large_integer := True
 					end
 				when Int32_ident then
-					put_integer (i.to_integer_32)
+					put_integer_32 (i.to_integer_32)
 					if (i < {INTEGER_32}.Min_value) or else (i > {INTEGER_32}.Max_value) then
 						large_integer := True
 					end
-				else
+				when Int64_ident then 
 					Precursor (i)
+				else
+					-- invalid type, do nothing
 				end
 			end
 		end
 
 	put_natural_64 (n: NATURAL_64)
 		do
-			if valid then
-				inspect field_type.ident
+			if valid and then attached type_set as ts then
+				inspect ts [0].ident
 				when Nat8_ident then
 					put_natural (n.to_natural_32)
 					if n > {NATURAL_8}.Max_value then
@@ -330,16 +368,18 @@ feature {PC_DRIVER} -- Writing elementary data
 					if n > {NATURAL_32}.Max_value then
 						large_integer := True
 					end
-				else
+				when Nat64_ident then 
 					Precursor (n)
+				else
+					-- invalid type, do nothing
 				end
 			end
 		end
 
 	put_real (r: REAL_32)
 		do
-			if valid then
-				if attached type_set as ts and then ts [0].is_double then
+			if valid and then attached type_set as ts then
+				if ts [0].is_double then
 					put_double (r)
 				else
 					Precursor (r)
@@ -351,12 +391,13 @@ feature {PC_DRIVER} -- Writing elementary data
 		local
 			r: REAL_32
 		do
-			if valid then
-				if attached type_set as ts and then ts [0].is_real then
+			if valid and then attached type_set as ts then
+				if ts [0].is_real then
 					if d.abs > {REAL_32}.Max_value then
-						r := {REAL_32}.Max_value
 						if d < 0 then
-							r := - r
+							r := {REAL_32}.negative_infinity
+						else
+							r := {REAL_32}.positive_infinity
 						end
 					else
 						r := d.truncated_to_real
@@ -392,10 +433,17 @@ feature {PC_DRIVER} -- Writing elementary data
 
 	put_new_object (t: IS_TYPE)
 		do
-			if attached associated (t) as dt
-				and then dt.allocate /= default_pointer
-			 then
-				Precursor (dt)
+			if attached associated (t) as dt then
+				if not t.is_subobject and then dt.is_subobject
+					and then attached {IS_EXPANDED_TYPE} dt as et 
+				 then
+					last_ident := system.new_boxed_instance (et)
+					boxed_idents.put (last_ident, address+offset)
+				elseif dt.allocate /= default_pointer then
+					Precursor (dt)
+				else
+					-- TODO
+				end
 			else
 				last_ident := void_ident
 				valid := False
@@ -575,12 +623,15 @@ feature {NONE} -- Implementation
 
 	associated_types: PC_ANY_TABLE [detachable IS_TYPE]
 
+	boxed_idents: DS_HASH_TABLE [ANY, POINTER]
+	
 	associated (t: IS_TYPE): detachable IS_TYPE
 		local
 			bc: IS_CLASS_TEXT
 			fr: IS_FIELD
 			ft: detachable IS_FIELD
 			ocp, nm: STRING
+			box_offset: INTEGER
 			i, m, n: INTEGER
 			attac, failed, needs_fields: BOOLEAN
 		do
@@ -635,11 +686,10 @@ feature {NONE} -- Implementation
 					system.pop_types (i)
 				end
 				if attached Result as r then
-					nm := Result.out	-- for test only
 					associated_types.put (r, t)
-					t.set_bytes (r.instance_bytes)
-					t.set_allocate (r.allocate)
-					t.adapt_flags (r)
+					if r.is_subobject and then attached {IS_EXPANDED_TYPE} r as et then
+						box_offset := et.boxed_offset
+					end
 					from
 						n := r.field_count
 						m := n.min (t.field_count)
@@ -654,9 +704,9 @@ feature {NONE} -- Implementation
 							ft := Void
 							default_fields.force (t, fr)
 						end
-						if attached ft as a then
-							a.set_offset (fr.offset)
-							a.set_type_set (fr.type_set)
+						if ft /= Void then
+							ft.set_offset (fr.offset+box_offset)
+							ft.set_type_set (fr.type_set)
 						end
 						i := i + 1
 					end

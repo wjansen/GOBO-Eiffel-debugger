@@ -42,7 +42,11 @@ public class DataCore : Box, AbstractPart {
 			addr += off;
 			addr = t.dereference(addr);
 		}
-		if (!t.is_subobject()) t = dg.rts.type_of_any(addr, t);
+		if (!t.is_subobject()) {
+			var old_t = t;
+			t = dg.rts.type_of_any(addr, old_t);
+			addr = dg.rts.unboxed(addr, old_t);
+		}
 		string value, type;
 		uint tid;
 		if (t==null) {
@@ -137,6 +141,7 @@ public class DataCore : Box, AbstractPart {
 			else return;
 			if (t==null || !t.is_subobject()) t = dg.rts.type_of_any(addr, t);
 		}
+		addr = dg.rts.unboxed(addr, e.type);
 		tid = t!=null ? t.ident : 0;
 		value = format_value(addr, 0, false, t, style, known_objects);
 		type = format_type(addr, 0, false, t, e!=null ? e.text : null);
@@ -182,6 +187,7 @@ public class DataCore : Box, AbstractPart {
 			for (i=0; i<n; ++i) {
 				f = t.fields[i];
 				heap = f._entity.type.dereference(addr+f.offset);
+				heap = dg.rts.unboxed(heap, f._entity.type);
 				if (store.iter_nth_child(out child, iter, i)) 
 					update_subtree(child, heap);
 			}
@@ -609,18 +615,20 @@ public class DataCore : Box, AbstractPart {
 		return true;
 	}
 
+	uint move_timeout;
+
 	private void do_move_items() {
-/*
-		stderr.printf("[%d,%d] in [%d, %d]\n", (int)items.value, 
-					  (int)(items.value+items.page_size),
-					  (int)items.lower, (int)items.upper);
-*/
 		if (!items_bar.sensitive) return;
-		TreeModel m;
-		TreeIter iter;
-		var sel = view.get_selection();
-		if (sel.get_selected(out m, out iter)) 
-			move_items(iter, (int)items.value, false);
+		if (move_timeout==0) 
+			move_timeout = GLib.Timeout.@add(40, () => {
+					TreeModel m;
+					TreeIter iter;
+					var sel = view.get_selection();
+					if (sel.get_selected(out m, out iter)) 
+						move_items(iter, (int)items.value, false);
+					move_timeout = 0;
+					return false;
+				});
 	}
 
 	private Gtk.Menu typeset_menu;
@@ -828,7 +836,7 @@ public class DataCore : Box, AbstractPart {
 		items_bar = new Scrollbar(Orientation.VERTICAL, items);
 		items_bar.sensitive = false;
 		box.pack_start(items_bar, false,false, 3);
-		items.value_changed.connect((i) => do_move_items());
+		items.value_changed.connect((i) =>  do_move_items());
 
 		ScrolledWindow scroll = new ScrolledWindow(null, null);
 		box.pack_start(scroll, true, true, 0);
@@ -1382,6 +1390,7 @@ public class FixedPart : DataCore {
 				addr = (uint8*)o.value_address;
 				t = e.type;
 				addr = t.dereference(addr);
+				addr = dg.rts.unboxed(addr, t);
 				if (!t.is_subobject()) t = dg.rts.type_of_any(addr, t);
 				value = format_value(addr, 0, false, t, 
 									 style, main.known_objects);
@@ -1688,6 +1697,8 @@ public class FixedPart : DataCore {
 		view.enable_search = true;
 		view.search_column = ItemFlag.NAME;
 		view.set_search_equal_func((m,c,s,i) => { return do_search(s); });
+		var scroll = view.parent as ScrolledWindow;
+		if (scroll!=null) scroll.min_content_width = 480;
 
 		info_list.@add(Item.CLS);
 

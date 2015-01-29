@@ -15,7 +15,7 @@ inherit
 			default_create
 		end
 	
-	PC_BASE
+	PC_SERIAL_BASE
 		redefine
 			default_create
 		end
@@ -250,6 +250,7 @@ feature {NONE} -- Implementation
 			src: PC_MEMORY_SOURCE
 			driver: PC_RANDOM_ACCESS_DRIVER [NATURAL, ANY]
 			h: PC_HEADER
+			a: ANY
 		do
 			create oo.make (997)
 			create {PC_MEMORY_SOURCE} src.make (runtime_system)
@@ -273,6 +274,8 @@ feature {NONE} -- Implementation
 			else
 				byte_count := 0
 			end
+			-- Add typeset of `obj' stored object to `common' for retrival:
+			a := common (obj)
 		end
 
 note

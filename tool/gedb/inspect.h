@@ -540,6 +540,7 @@ gchar* gedb_system_append_name (GedbSystem *self, const gchar* to);
 gchar* gedb_system_append_alphabetically (GedbSystem *self, const gchar* to);
 GedbType* gedb_system_type_by_subname (GedbSystem *self, gchar** nm, gboolean attac);
 GedbType* gedb_system_type_of_any (GedbSystem *self, void* a, GedbType* stat);
+guint8* gedb_system_unboxed (GedbSystem *self, guint8* a, GedbType* stat);
 GedbAgentType* gedb_system_as_agent (GedbSystem *self, guint8* a);
 gboolean gedb_entity_is_less (GedbEntity *self, GedbEntity* other);
 gboolean gedb_entity_has_name (GedbEntity *self, const gchar* name);
@@ -700,7 +701,7 @@ GedbRoutine* gedb_type_routine_by_name (GedbType *self, const gchar* nm, gboolea
 GedbEntity* gedb_type_query_by_name (GedbType *self, guint* n, const gchar* name, gboolean as_prefix, GedbRoutine* within);
 gchar* gedb_type_append_name (GedbType *self, const gchar* to);
 void* gedb_type_new_instance (GedbType *self, gboolean use_default_creation);
-guint8* gedb_type_dereference (GedbType *self, void* addr);
+guint8* gedb_type_dereference (GedbType *self, guint8* addr);
 GType gedb_expanded_type_get_type (void) G_GNUC_CONST;
 GedbExpandedType* gedb_expanded_type_dup (const GedbExpandedType* self);
 void gedb_expanded_type_free (GedbExpandedType* self);

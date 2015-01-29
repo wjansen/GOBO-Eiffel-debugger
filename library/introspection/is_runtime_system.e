@@ -142,9 +142,10 @@ feature -- Object creation
 			end
 		end
 	
-	new_boxed_instance (t: IS_TYPE): ANY
+	new_boxed_instance (et: IS_EXPANDED_TYPE): ANY
 		do
-			Result := c_new_boxed_object (t.allocate)
+			Result := c_new_boxed_object (et.allocate)
+			c_clear_box(Result, et.boxed_offset, et.instance_bytes)
 		end
 
 	new_array (s: IS_SPECIAL_TYPE; n: NATURAL): ANY
@@ -811,9 +812,16 @@ feature {NONE} -- External implementation
 		external
 			"C inline"
 		alias
-			"((EIF_REFERENCE (*)(EIF_BOOLEAN))($call))(EIF_TRUE)"
+			"((EIF_REFERENCE (*)())($call))()"
 		end
 	
+	c_clear_box (a: ANY; off: INTEGER; size: NATURAL)
+		external
+			"C inline use <string.h>"
+		alias
+			"memset(((char*)$a)+$off,0,$size)"
+		end
+
 	c_new_array (call: POINTER; n: NATURAL): ANY
 		external
 			"C inline"

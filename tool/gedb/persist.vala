@@ -709,7 +709,7 @@ namespace Gedb {
 		public MemorySource(StackFrame* f, System* s) { 
 			frame = f;
 			system = s;
-			any = s.type_at(TypeIdent.ANY);
+			any_type = s.type_at(TypeIdent.ANY);
 			offsets = new OffsetStack();
 			contexts = new Context<void*>();
 		}
@@ -859,13 +859,14 @@ namespace Gedb {
 			last_scope_var = ot.in_scope(frame.line(), frame.column());
 		}
 
-		public override void process_ident(void* id) {
+		public override void process_ident(uint8* id) {
 			last_ident = void_ident;
 			last_dynamic_type = null;
 			last_cap = 0;
 			if (id==null) return;
-			Gedb.Type* t = system.type_of_any(id, any);
+			Gedb.Type* t = system.type_of_any(id, any_type);
 			if (t==null) return;
+			id = system.unboxed(id, any_type);
 			last_ident = id;
 			last_dynamic_type = t;
 			if (t.is_special()) 
@@ -876,7 +877,7 @@ namespace Gedb {
 		protected OffsetStack offsets;
 		protected void* top;
 		protected uint field_increment;
-		protected Gedb.Type* any;
+		protected Gedb.Type* any_type;
 
 	} /* class MemorySource */
 

@@ -1,0 +1,29 @@
+-- Flat persistence closure:
+all = _1 
+_1 : PERSONA
+  name = _2 
+  lord = _3 
+  loves = _4 
+_2 = "Susanna"
+_3 : PERSONA
+  name = _5 
+  lord = Void
+  loves = _1 
+_4 : PERSONA
+  name = _6 
+  lord = _3 
+  loves = _1 
+_5 = "Almaviva"
+_6 = "Figaro"
+
+-- Deep persistence closure:
+all _1 : PERSONA
+  name _2 = "Susanna"
+  lord _3 : PERSONA
+    name _4 = "Almaviva"
+    lord = Void
+    loves = _1 
+  loves _5 : PERSONA
+    name _6 = "Figaro"
+    lord = _3 
+    loves = _1 

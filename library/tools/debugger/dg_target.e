@@ -185,7 +185,7 @@ feature {PC_DRIVER} -- Pre and post handling of data
 			cached_id := 0
 			k := extra_key(st, n)
 			if extra_typedefs.has (k) then
-				declaration.copy(extra_typedefs[k])
+				declaration := STRING_.cloned_string (extra_typedefs[k])
 				declaration.append_character (' ')
 				declaration.append (name_prefix)
 				declaration.append_natural_32 (id)
@@ -396,7 +396,7 @@ feature  {NONE} -- Implementation
 				c_file.put_new_line
 			end
 			create declaration.make (0)
-			declaration.copy (extra_typedefs[k])
+			declaration := STRING_.cloned_string (extra_typedefs[k])
 			declaration.append_character (' ')
 			declaration.append (name_prefix)
 			declaration.append_natural_32 (id)

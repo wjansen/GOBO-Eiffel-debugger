@@ -111,10 +111,10 @@ feature {PC_DRIVER} -- Reading object definitions
 
 	pre_object (t: IS_TYPE; id: detachable ANY)
 		do
-			if id /= Void_ident then
-				push_offset (t, id)
-			else
+			if id = void_ident then
 				push_expanded_offset
+			else
+				push_offset (t, id)
 			end
 		end
 
@@ -162,7 +162,12 @@ feature {PC_DRIVER} -- Push and pop data
 	put_new_object (t: IS_TYPE)
 		do
 			if t.flags & t.Missing_id_flag /= 0 then
-				last_ident := system.new_boxed_instance (t)
+				if attached {IS_EXPANDED_TYPE} t as et then
+					last_ident := system.new_boxed_instance (et)
+				else
+					-- this should not happen
+					last_ident := void_ident
+				end
 			else
 				last_ident := system.new_instance (t, use_default_creation)
 			end

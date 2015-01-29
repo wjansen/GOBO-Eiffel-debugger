@@ -12,7 +12,7 @@ inherit
 			out
 		end
 
-	PC_BASE
+	PC_SERIAL_BASE
 		redefine
 			default_create,
 			out
@@ -36,6 +36,8 @@ feature {NONE} -- Initialization
 		do
 			use_default_creation := True
 			reset
+			-- Add typeset of any stored object to `top_object':
+			top_object := common (Void).top 
 		ensure then
 			use_default_creation_set: use_default_creation = True
 		end
@@ -97,7 +99,7 @@ feature -- Error messages
 				and (missing_fields = Void or else missing_fields.is_empty)
 				and (inconsistent_fields = Void or else inconsistent_fields.is_empty)
 				and (violated_invariants = Void or else violated_invariants.is_empty)
-				and has_large_integers
+				and not has_large_integers
 		end
 	
 	missing_types: detachable HASH_TABLE [IS_TYPE, IS_TYPE]
@@ -425,7 +427,7 @@ feature -- Output
 				end
 			end
 			if attached inconsistent_fields as mf and then mf.count > 0 then
-				Result.append (once "Error - non-conforming attributes (set to default value):%N")
+				Result.append (once "Error - missing or non-conforming attributes (set to default value):%N")
 				from
 					mf.start
 				until mf.after loop
@@ -452,7 +454,7 @@ feature -- Output
 				Result.append (once "Error - too large integers or naturals%N")
 			end
 			if has_truncated_real then
-				Result.append (once "Warning - real number precision lost%N")
+				Result.append (once "Warning - real number precision reduced%N")
 			end
 		end
 

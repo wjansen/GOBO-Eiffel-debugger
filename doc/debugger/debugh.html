@@ -186,9 +186,9 @@ for the graphical user interface (GUI for short).
 are written in <span style="font-style:oblique">C</span> and are intended to be used from <span style="font-style:oblique">C</span> programs. 
 This is a hard job for an <span style="font-style:oblique">Eiffel</span> programmer. 
 But there is the OO programming language <span style="font-style:oblique">Vala</span> 
-that is a shell for <span style="font-style:oblique">GLib</span> and <span style="font-style:oblique">GTK+</span> 
+that is a shell for <span style="font-style:oblique">GLib</span> and <span style="font-style:oblique">GTK+</span>, 
 so the debugger has been written in <span style="font-style:oblique">Vala</span>. 
-The result is a library (a shared object under <span style="font-style:oblique">POSIX</span> compliant 
+The result is a library (a shared object under <span style="font-style:oblique">UNIX</span> like 
 operation systems, a <span style="font-style:oblique">DLL</span> under <span style="font-style:oblique">Windows</span>) that is to be linked 
 to the <span style="font-style:oblique">Gec</span> generated program. 
 </p><p>So far it has been described what the debugger is and what it does. 
@@ -214,7 +214,8 @@ the debugging session may fail if the debuggee uses
 as does the debugger. The calls of both programs to this library 
 may interfere in an uncontrolled way causing a crash. 
 Several other debugger errors are caught by exception handling: 
-execution of the actual command is cancelled and an error message is issued. </p><p>It may happen that even this emergency break does not work and 
+execution of the actual command is cancelled and an error message is issued. 
+It may happen that even this emergency break does not work and 
 the debugger crashes during command execution. 
 In such a case, please send a bug report to <br>
 </p><div class="center"><span style="font-family:monospace">mailto:wo.jansen@kabelmail.de</span></div>
@@ -372,9 +373,9 @@ when the debugger&#X2019;s main window has the keyboard focus.
 </p><blockquote class="figure"><div class="center"><hr style="width:80%;height:2"></div>
 <div class="center"><img src="debugh001.png"></div>
 <div class="caption"><table style="border-spacing:6px;border-collapse:separate;" class="cellpading0"><tr><td style="vertical-align:top;text-align:left;" >Figure 1:  Overview of the main window 
-(here, overlaid by artificial background colors). 
-The <span style="font-style:oblique">Eiffel</span> system shown in the screenshots has root class <span style="font-family:monospace">XREGEXP</span> 
-from cluster <span style="font-family:monospace">test/regexp/TESTGEN</span> of the <span style="font-style:oblique">GOBO</span> distribution. </td></tr>
+(here, overlaid by artificial background colors to separate the parts). 
+The <span style="font-style:oblique">Eiffel</span> system shown in the screenshots has root class <span style="font-family:monospace">XPARSE</span> 
+from cluster <span style="font-family:monospace">test/example/parse/TESTGEN</span> of the <span style="font-style:oblique">GOBO</span> distribution. </td></tr>
 </table></div> 
 <a id="F:allGui"></a>
 <div class="center"><hr style="width:80%;height:2"></div></blockquote><p>
@@ -398,7 +399,7 @@ Parts <span style="font-family:sans-serif">Breakpoints</span>, <span style="font
 contain fields to enter a class or type name. 
 This is done via special text entries: a regular expression 
 for the class or type name is to be entered, 
-a combobox opens showing the classes or types 
+a combobox opens showing the class or type names 
 that contain the entered regular expression, 
 one can select from the combobox when this becomes convenient. 
 This input method ensures that only valid class or type names will be entered, 
@@ -408,7 +409,7 @@ to restrict essentially the set of matching names.
 </p><blockquote class="quote"><div class="center">Hint</div>
 While class names never include generic parameters 
 a type name may contain actual generic parameters, 
-in this case the opening bracket have to be escaped during input 
+in this case the opening brackets have to be escaped during input 
 by a backslash since the bracket is a special symbol of regular expressions 
 (this meaning has precedence during input).
 </blockquote>
@@ -541,15 +542,15 @@ by means of the buttons on the top of the part.
 In particular they have the following effect 
 (where <span style="font-style:italic">n</span> is the value of <span style="font-family:monospace">repeat</span>):
 <br>
-</p><div class="center"><table border=1  style="border-spacing:0;" class="cellpadding1"><tr><td style="text-align:left;border:solid 1px;white-space:nowrap" > Button</td><td style="text-align:left;border:solid 1px;white-space:nowrap" >Key</td><td style="text-align:left;border:solid 1px;white-space:nowrap" >Meaning </td></tr>
-<tr><td style="text-align:left;border:solid 1px;white-space:nowrap" ><span style="font-family:sans-serif">Cont</span></td><td style="text-align:left;border:solid 1px;white-space:nowrap" ><span style="font-family:monospace">F3</span></td><td style="text-align:left;border:solid 1px;white-space:nowrap" >continue to <span style="font-style:italic">n</span>-th occurrence of a breakpoint </td></tr>
-<tr><td style="text-align:left;border:solid 1px;white-space:nowrap" ><span style="font-family:sans-serif">End</span></td><td style="text-align:left;border:solid 1px;white-space:nowrap" ><span style="font-family:monospace">F4</span></td><td style="text-align:left;border:solid 1px;white-space:nowrap" >continue to the end of the <span style="font-style:italic">n</span>-th nested compound </td></tr>
-<tr><td style="text-align:left;border:solid 1px;white-space:nowrap" >&nbsp;</td><td style="text-align:left;border:solid 1px;white-space:nowrap" >&nbsp;</td><td style="text-align:left;border:solid 1px;white-space:nowrap" >instruction, in particular leave <span style="font-family:monospace">loop</span> clauses </td></tr>
-<tr><td style="text-align:left;border:solid 1px;white-space:nowrap" ><span style="font-family:sans-serif">Next</span></td><td style="text-align:left;border:solid 1px;white-space:nowrap" ><span style="font-family:monospace">F5</span></td><td style="text-align:left;border:solid 1px;white-space:nowrap" >continue to the <span style="font-style:italic">n</span>-th instruction </td></tr>
-<tr><td style="text-align:left;border:solid 1px;white-space:nowrap" >	</td><td style="text-align:left;border:solid 1px;white-space:nowrap" >&nbsp;</td><td style="text-align:left;border:solid 1px;white-space:nowrap" >without stepping into called routines </td></tr>
-<tr><td style="text-align:left;border:solid 1px;white-space:nowrap" ><span style="font-family:sans-serif">Step</span></td><td style="text-align:left;border:solid 1px;white-space:nowrap" ><span style="font-family:monospace">F6</span></td><td style="text-align:left;border:solid 1px;white-space:nowrap" >do <span style="font-style:italic">n</span> steps, step also into called routines </td></tr>
-<tr><td style="text-align:left;border:solid 1px;white-space:nowrap" ><span style="font-family:sans-serif">Back</span></td><td style="text-align:left;border:solid 1px;white-space:nowrap" ><span style="font-family:monospace">F7</span></td><td style="text-align:left;border:solid 1px;white-space:nowrap" >continue to the selected stack level </td></tr>
-<tr><td style="text-align:left;border:solid 1px;white-space:nowrap" ><span style="font-family:sans-serif">Stop</span></td><td style="text-align:left;border:solid 1px;white-space:nowrap" ><span style="font-family:monospace">Pause</span></td><td style="text-align:left;border:solid 1px;white-space:nowrap" >interrupt the debuggee 
+</p><div class="center"><table border=1  style="border-spacing:0;" class="cellpadding1"><tr><td style="vertical-align:top;text-align:left;border:solid 1px;white-space:nowrap" > Button</td><td style="vertical-align:top;text-align:left;border:solid 1px;white-space:nowrap" >Key</td><td style="vertical-align:top;text-align:left;border:solid 1px;" >Meaning </td></tr>
+<tr><td style="vertical-align:top;text-align:left;border:solid 1px;white-space:nowrap" ><span style="font-family:sans-serif">Cont</span></td><td style="vertical-align:top;text-align:left;border:solid 1px;white-space:nowrap" ><span style="font-family:monospace">F3</span></td><td style="vertical-align:top;text-align:left;border:solid 1px;" >continue to <span style="font-style:italic">n</span>-th occurrence of a breakpoint </td></tr>
+<tr><td style="vertical-align:top;text-align:left;border:solid 1px;white-space:nowrap" ><span style="font-family:sans-serif">End</span></td><td style="vertical-align:top;text-align:left;border:solid 1px;white-space:nowrap" ><span style="font-family:monospace">F4</span></td><td style="vertical-align:top;text-align:left;border:solid 1px;" >continue to the end of the <span style="font-style:italic">n</span>-th nested compound 
+instruction, in particular leave <span style="font-family:monospace">loop</span> clauses </td></tr>
+<tr><td style="vertical-align:top;text-align:left;border:solid 1px;white-space:nowrap" ><span style="font-family:sans-serif">Next</span></td><td style="vertical-align:top;text-align:left;border:solid 1px;white-space:nowrap" ><span style="font-family:monospace">F5</span></td><td style="vertical-align:top;text-align:left;border:solid 1px;" >continue to the <span style="font-style:italic">n</span>-th instruction 
+without stepping into called routines </td></tr>
+<tr><td style="vertical-align:top;text-align:left;border:solid 1px;white-space:nowrap" ><span style="font-family:sans-serif">Step</span></td><td style="vertical-align:top;text-align:left;border:solid 1px;white-space:nowrap" ><span style="font-family:monospace">F6</span></td><td style="vertical-align:top;text-align:left;border:solid 1px;" >do <span style="font-style:italic">n</span> steps, step also into called routines </td></tr>
+<tr><td style="vertical-align:top;text-align:left;border:solid 1px;white-space:nowrap" ><span style="font-family:sans-serif">Back</span></td><td style="vertical-align:top;text-align:left;border:solid 1px;white-space:nowrap" ><span style="font-family:monospace">F7</span></td><td style="vertical-align:top;text-align:left;border:solid 1px;" >continue to the selected stack level </td></tr>
+<tr><td style="vertical-align:top;text-align:left;border:solid 1px;white-space:nowrap" ><span style="font-family:sans-serif">Stop</span></td><td style="vertical-align:top;text-align:left;border:solid 1px;white-space:nowrap" ><span style="font-family:monospace">Pause</span></td><td style="vertical-align:top;text-align:left;border:solid 1px;" >interrupt the debuggee 
 </td></tr>
 </table></div><p>
 The counter <span style="font-style:italic">n</span> is determined by the spin button <span style="font-family:sans-serif">repeat</span>. 
@@ -579,7 +580,11 @@ In particular, it stops at the keywords and special symbols
 <span style="font-family:monospace">create</span> (if an instruction), <span style="font-family:monospace">retry</span>, 
 <span style="font-family:monospace">:=</span>, and <span style="font-family:monospace">?=</span>, 
 as well as before a procedure call (qualified or not). 
-These program points are also those where a breakpoint can be set. 
+Additionally, in case of <span style="font-family:monospace">if</span> and <span style="font-family:monospace">inspect</span> statements
+command <span style="font-family:sans-serif">Next</span> stops at keywords <span style="font-family:monospace">then</span> and <span style="font-family:monospace">else</span> 
+(or <span style="font-family:monospace">end</span> if there is no <span style="font-family:monospace">else</span> branch) 
+if the associated compound statement is empty to make the chosen branch visible.
+All these program points are also those where a breakpoint can be set. 
 </p><p>The stop of command <span style="font-family:sans-serif">Step</span> is more involved. 
 If stopped just before an instruction (e.g. as the result of a <span style="font-family:sans-serif">Next</span> command) 
 then the program continues to the next routine call or instruction; 
@@ -961,7 +966,7 @@ in the <span style="font-family:sans-serif">Source</span> part (no detour throug
 If the feature name under the mouse pointer is highlighted light pink 
 then the feature (in any case a query) is inserted 
 in the <span style="font-family:sans-serif">Evaluation</span> part&#X2019;s <span style="font-family:sans-serif">Expr</span> field at its insertion cursor 
-where it can be manipulated further. 
+where it can be manipulated further (and finally will be evaluated). 
 </dd><dt class="dt-description"><span style="font-weight:bold"><span style="font-family:monospace">triple right click</span></span><span style="font-weight:bold"> </span>or<span style="font-weight:bold"> </span><span style="font-weight:bold"><span style="font-family:monospace">Control-E</span></span></dt><dd class="dd-description"> 
 If the feature name under the mouse pointer is highlighted light pink 
 then the <span style="font-family:sans-serif">Evaluation</span> part&#X2019;s <span style="font-family:sans-serif">Expr</span> field is cleared, 
@@ -1037,8 +1042,11 @@ The <span style="font-family:sans-serif">Call stack</span> part simply contains 
 leading to the actual stop point. 
 </p><blockquote class="figure"><div class="center"><hr style="width:80%;height:2"></div>
 <div class="center"><img src="debugh005.png"></div>
-<div class="caption"><table style="border-spacing:6px;border-collapse:separate;" class="cellpading0"><tr><td style="vertical-align:top;text-align:left;" >Figure 5: The <span style="font-family:sans-serif">Call stack</span> part.</td></tr>
-</table></div><a id="F:stack"></a>
+<div class="caption"><table style="border-spacing:6px;border-collapse:separate;" class="cellpading0"><tr><td style="vertical-align:top;text-align:left;" >Figure 5: The <span style="font-family:sans-serif">Call stack</span> part. 
+The stack level of highlighted row is the one used to select 
+the class in <span style="font-family:sans-serif">Source</span> part and the data in the <span style="font-family:sans-serif">Data</span> part.</td></tr>
+</table></div>
+<a id="F:stack"></a>
 <div class="center"><hr style="width:80%;height:2"></div></blockquote><p>The table has the following columns:
 </p><dl class="description"><dt class="dt-description">(no name)</dt><dd class="dd-description"> empty or an indicator 
 that the routine has a rescue clause; 
@@ -1065,8 +1073,8 @@ a tree displaying objects and their fields and a row of buttons.
 </p><blockquote class="figure"><div class="center"><hr style="width:80%;height:2"></div>
 <div class="center"><img src="debugh006.png"></div>
 <div class="caption"><table style="border-spacing:6px;border-collapse:separate;" class="cellpading0"><tr><td style="vertical-align:top;text-align:left;" >Figure 6: The <span style="font-family:sans-serif">Data</span> part.
-The <span style="font-family:monospace">*</span> in the second column denotes the <span style="font-family:monospace">Current</span> object 
-and <span style="font-family:monospace">A</span> denotes a routine argument, 
+The <span style="font-family:sans-serif">*</span> in the second column denotes the <span style="font-family:sans-serif">Current</span> object 
+and <span style="font-family:sans-serif">A</span> and <span style="font-family:sans-serif">L</span> denote a routine argument or local variable, resp., 
 the other contents should be clear.</td></tr>
 </table></div><a id="F:data"></a>
 <div class="center"><hr style="width:80%;height:2"></div></blockquote>
@@ -1106,13 +1114,13 @@ to distinguish it from common integer numbers
 hexadecimal representations and values of any reference type 
 by their address. 
 </dd></dl><p>The fields of a value of a <span style="font-family:monospace">SPECIAL</span> type get a <span style="font-style:oblique">C</span> inspired name: 
-the field index enclosed in brackets. Also the type name is <span style="font-style:oblique">C</span> inspired:
-the field type name and the value&#X2019;s count enclosed in brackets. 
-For practical reasons the arrangement of both parts has been reversed, 
-first the count then the item type name. The reason is that the count at the 
-end would often not be visible in case of a long type name, 
-so it would not be clear that the value is of a <span style="font-family:monospace">SPECIAL</span> type. 
-</p><p>The fields of a value of a <span style="font-family:monospace">TUPLE</span> type get the name of their label 
+the field index enclosed in brackets. 
+The type name 
+of a <span style="font-family:monospace">SPECIAL[</span><span style="font-style:italic">ITEM_TYPE</span><span style="font-family:monospace">]</span> object
+having <span style="font-style:italic">count</span> items is written like 
+</p><pre>
+  <span style="font-style:italic">count</span> of <span style="font-style:italic">ITEM_TYPE</span>
+</pre><p>The fields of a value of a <span style="font-family:monospace">TUPLE</span> type get the name of their label 
 if the object itself has been declared as <span style="font-family:monospace">TUPLE</span> type 
 with labels, otherwise the names are <span style="font-family:monospace">item_1</span> etc.
 </p><p>Values of <span style="font-family:monospace">agent</span> objects are more peculiar. 
@@ -1160,7 +1168,15 @@ A single row in the data tree (provided its category is an attribute
 or a local variable) can be selected by left clicking. 
 The associated value may then become the source 
 of a breakpoint&#X2019;s <span style="font-family:sans-serif">Watch</span> condition or the target of an assignment 
-from the <span style="font-family:sans-serif">Evaluation</span> part.
+from the <span style="font-family:sans-serif">Evaluation</span> part. 
+</p><p>Left clicking on a row showing an object of <span style="font-family:monospace">SPECIAL</span> type 
+has a second effect. The scrollbar at the left edge of the <span style="font-family:sans-serif">Data</span> part
+becomes sensitive and the possible very many array items can be scrolled 
+within the tree of objects. 
+The number of array items shown can be set 
+by menu item <span style="font-family:sans-serif">Preferences</span> &#X2192; <span style="font-family:sans-serif">Appearence</span>. 
+(The scrollbar at the right edge has the usual effect of scrolling 
+the whole tree). 
 </p><p>A right click on a row (columns <span style="font-family:sans-serif">Name</span> &#X2026;<span style="font-family:sans-serif">Value</span>) 
 opens a pop-up menu showing first an empty line for the value itself 
 then all queries of its dynamic type. 
@@ -1222,14 +1238,14 @@ with this string will be highlighted. </p>
 <h3 id="sec32" class="subsection">3.10&#XA0;&#XA0;SQL part</h3><!--SEC END --><p><a id="S:sql"></a>
 </p><blockquote class="figure"><div class="center"><hr style="width:80%;height:2"></div>
 <div class="center"><img src="debugh007.png"></div>
-<div class="caption"><table style="border-spacing:6px;border-collapse:separate;" class="cellpading0"><tr><td style="vertical-align:top;text-align:left;" >Figure 7: An <span style="font-family:sans-serif">SQL select</span> part. 
-<span style="font-family:monospace">_1</span>, &#X2026;, <span style="font-family:monospace">_35</span> are object idents 
-while <span style="font-family:monospace">4</span> and <span style="font-family:monospace">0</span> in the last column are the values themselves.</td></tr>
+<div class="caption"><table style="border-spacing:6px;border-collapse:separate;" class="cellpading0"><tr><td style="vertical-align:top;text-align:left;" >Figure 7: An <span style="font-family:sans-serif">SQL table</span> part. 
+<span style="font-family:sans-serif">_80</span>, &#X2026;, <span style="font-family:sans-serif">_63</span> are object idents 
+while <span style="font-family:sans-serif">125</span> &#X2026;<span style="font-family:sans-serif">127</span> in the last column are the values themselves.</td></tr>
 </table></div>
 <a id="F:sql"></a>
 <div class="center"><hr style="width:80%;height:2"></div></blockquote><p>
 Another data window can be opened 
-from menu <span style="font-family:sans-serif">Window </span>&#X2192;<span style="font-family:sans-serif"> SQL select</span>. 
+from menu <span style="font-family:sans-serif">Window </span>&#X2192;<span style="font-family:sans-serif"> SQL table</span>
 Its purpose is to simulate the <span style="font-family:monospace">SELECT</span> command of <span style="font-style:oblique">SQL</span>.
 The debugger maintains for each reference type an <span style="font-style:oblique">SQL</span> table 
 (conceptually, not really). The table columns are the type&#X2019;s attributes, 
@@ -1341,7 +1357,7 @@ into the <span style="font-family:sans-serif">Expr</span> field have been correc
 <h4 id="sec34" class="subsubsection">3.11.1&#XA0;&#XA0;Evaluation</h4><!--SEC END --><p><a id="S:compute"></a>
 The <span style="font-family:sans-serif">Evaluation</span> part consists of two text fields: <span style="font-family:sans-serif">Expr</span> and <span style="font-family:sans-serif">Value</span>. 
 Field <span style="font-family:sans-serif">Expr</span> may be filled 
-</p><ul class="itemize"><li class="li-itemize">manually with an expression list;
+</p><ul class="itemize"><li class="li-itemize">manually with an expression list (see Sec.&#XA0;<a href="#S%3Aexpression">4</a>);
 </li><li class="li-itemize">by right click on a tree node in the various data parts: 
 a pop-up menu is opened whose entries 
 are the query names of the node, and selecting a query inserts this 
@@ -1363,8 +1379,10 @@ Then the cursor moves rightward to the next bullet, if any,
 or to the string end. 
 This way the natural left-to-right writing of expressions is supported 
 and cursor positioning on bullets to be replaced is rather automatic. 
-The insertion cursor is not visible if the text field has not the input focus. 
-To make the target position of a clicked query visible, 
+Unfortunately, the insertion cursor is not visible 
+if the text field has not the input focus, particularly when the mouse pointer 
+is used to select an expression from another part. 
+To make the target position of a clicked query detectable, 
 the bullet right to the insertion cursor is larger than the others. </p><p>The expression is computed when <span style="font-family:monospace">Enter</span> is pressed 
 (except for the triple click just mentioned). 
 The value is shown in the non-editable field <span style="font-family:sans-serif">Value</span>. 
@@ -1379,7 +1397,7 @@ but the rule applies to the other expression details.
 </p><p>Clicking the left icon in the <span style="font-family:sans-serif">Expr</span> field copies the values 
 of the items of the expression list to the tree of the <span style="font-family:sans-serif">Data</span> part 
 thereby expanding expression ranges and and their details. 
-There the expressions will indicated by an <span style="font-family:monospace">X</span>. </p>
+There the expressions will indicated by an <span style="font-family:sans-serif">X</span>. </p>
 <!--TOC subsubsection id="sec35" Assignment-->
 <h4 id="sec35" class="subsubsection">3.11.2&#XA0;&#XA0;Assignment</h4><!--SEC END --><p><a id="S:assign"></a>
 Clicking the left icon in the <span style="font-family:sans-serif">Value</span> field 

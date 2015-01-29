@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+
+<project name="persist" default="help">
+
+	<description>
+		system: "Persistence closure example"
+		copyright: "Copyright (c) 2015, Wolfgang Jansen and others"
+		license: "MIT License"
+		date: "$Date$"
+		revision: "$Revision$"
+	</description>
+
+	<inherit>
+		<parent location="${GOBO}/misc/eiffel.eant">
+			<redefine target="init_system"/>
+		</parent>
+	</inherit>
+
+
+<!-- Implementation -->
+
+	<target name="init_system">
+		<set name="system" value="store"/>
+		<set name="library" value="persistence"/>
+		<set name="system_dir" value="${GOBO}/example/${library}/old_classes"/>
+	</target>
+
+</project>

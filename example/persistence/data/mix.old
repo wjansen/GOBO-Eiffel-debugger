@@ -1,0 +1,16 @@
+i1:	INTEGER_32 = 2147483647
+i2:	INTEGER_64 = 2147483647
+i3:	INTEGER_64 = 2147483649
+r1:	REAL_32 = 3.40282e+38
+r2:	REAL_64 = 3.4028234663852886e+38
+r3:	REAL_64 = 6.8056469327705772e+38
+p:	PERSONA = 
+  name  = Susanna
+  lord  = Almaviva
+  loves = Figaro
+so:	SOME_CLASS = 
+  i = 123
+  s = abc
+ao:	ANOTHER_CLASS = 
+  n = -99
+  t = zyx

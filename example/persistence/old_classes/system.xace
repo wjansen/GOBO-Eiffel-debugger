@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+
+<system name="store">
+	<description>
+		system: "Persistence closure example"
+		copyright: "Copyright (c) 2015, Wolfgang Jansen and others"
+		license: "MIT License"
+		date: "$Date$"
+		revision: "$Revision$"
+	</description>
+
+	<root class="PC_STORE" creation="make"/>
+	<option name="console_application" value="true"/>
+	<option unless="${DEBUG}">
+		<option name="assertion" value="none"/>
+		<option name="garbage_collector" value="none"/>
+		<option name="debugger" value="true"/>
+	</option>
+	<option if="${DEBUG}">
+		<option name="assertion" value="all"/>
+		<option name="garbage_collector" value="none"/>
+		<option name="finalize" value="false"/>
+	</option>
+
+	<cluster name="persist_store" location="${GOBO}/example/persistence/old_classes"/>
+	<cluster name="persist_demo" location="${GOBO}/example/persistence/demo"/>
+	<mount location="${GOBO}/library/library.xace"/>
+	<mount location="${GOBO}/library/kernel.xace"/>
+</system>

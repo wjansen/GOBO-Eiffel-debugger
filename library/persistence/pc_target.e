@@ -185,7 +185,7 @@ feature {PC_DRIVER} -- Pre and post handling of data
 			top_ident := top
 			top_type := type
 		ensure
-			top_ident_set: top_ident = top.ident
+			top_ident_set: top_ident = top
 		end
 
 feature {PC_DRIVER} -- Writing elementary data 

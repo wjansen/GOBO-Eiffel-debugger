@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+
+<system name="retrieve">
+	<description>
+		system: "Persistence closure example"
+		copyright: "Copyright (c) 2015, Wolfgang Jansen and others"
+		license: "MIT License"
+		date: "$Date$"
+		revision: "$Revision$"
+	</description>
+
+	<root class="PC_RETRIEVE" creation="make"/>
+	<option name="console_application" value="true"/>
+	<option unless="${DEBUG}">
+		<option name="assertion" value="none"/>
+		<option name="garbage_collector" value="none"/>
+		<option name="debugger" value="true"/>
+	</option>
+	<option if="${DEBUG}">
+		<option name="assertion" value="all"/>
+		<option name="garbage_collector" value="none"/>
+		<option name="finalize" value="false"/>
+	</option>
+
+	<cluster name="persist_retrieve" location="${GOBO}/example/persistence/new_classes"/>
+	<mount location="${GOBO}/library/library.xace"/>
+	<mount location="${GOBO}/library/kernel.xace"/>
+</system>

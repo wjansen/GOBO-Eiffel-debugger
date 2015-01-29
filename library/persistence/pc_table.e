@@ -82,7 +82,7 @@ feature -- Removal
 	remove (key: K_)
 		deferred
 		ensure
-			removed: not has (k)
+			removed: not has (key)
 		end
 	
 	clear

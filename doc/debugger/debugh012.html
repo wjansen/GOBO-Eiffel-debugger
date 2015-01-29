@@ -18,8 +18,8 @@ a tree displaying objects and their fields and a row of buttons.
 </p><blockquote class="figure"><div class="center"><hr style="width:80%;height:2"></div>
 <div class="center"><img src="debugh006.png"></div>
 <div class="caption"><table style="border-spacing:6px;border-collapse:separate;" class="cellpading0"><tr><td style="vertical-align:top;text-align:left;" >Figure 6: The <span style="font-family:sans-serif">Data</span> part.
-The <span style="font-family:monospace">*</span> in the second column denotes the <span style="font-family:monospace">Current</span> object 
-and <span style="font-family:monospace">A</span> denotes a routine argument, 
+The <span style="font-family:sans-serif">*</span> in the second column denotes the <span style="font-family:sans-serif">Current</span> object 
+and <span style="font-family:sans-serif">A</span> and <span style="font-family:sans-serif">L</span> denote a routine argument or local variable, resp., 
 the other contents should be clear.</td></tr>
 </table></div><a id="F:data"></a>
 <div class="center"><hr style="width:80%;height:2"></div></blockquote>
@@ -59,13 +59,13 @@ to distinguish it from common integer numbers
 hexadecimal representations and values of any reference type 
 by their address. 
 </dd></dl><p>The fields of a value of a <span style="font-family:monospace">SPECIAL</span> type get a <span style="font-style:oblique">C</span> inspired name: 
-the field index enclosed in brackets. Also the type name is <span style="font-style:oblique">C</span> inspired:
-the field type name and the value&#X2019;s count enclosed in brackets. 
-For practical reasons the arrangement of both parts has been reversed, 
-first the count then the item type name. The reason is that the count at the 
-end would often not be visible in case of a long type name, 
-so it would not be clear that the value is of a <span style="font-family:monospace">SPECIAL</span> type. 
-</p><p>The fields of a value of a <span style="font-family:monospace">TUPLE</span> type get the name of their label 
+the field index enclosed in brackets. 
+The type name 
+of a <span style="font-family:monospace">SPECIAL[</span><span style="font-style:italic">ITEM_TYPE</span><span style="font-family:monospace">]</span> object
+having <span style="font-style:italic">count</span> items is written like 
+</p><pre>
+  <span style="font-style:italic">count</span> of <span style="font-style:italic">ITEM_TYPE</span>
+</pre><p>The fields of a value of a <span style="font-family:monospace">TUPLE</span> type get the name of their label 
 if the object itself has been declared as <span style="font-family:monospace">TUPLE</span> type 
 with labels, otherwise the names are <span style="font-family:monospace">item_1</span> etc.
 </p><p>Values of <span style="font-family:monospace">agent</span> objects are more peculiar. 
@@ -113,7 +113,15 @@ A single row in the data tree (provided its category is an attribute
 or a local variable) can be selected by left clicking. 
 The associated value may then become the source 
 of a breakpoint&#X2019;s <span style="font-family:sans-serif">Watch</span> condition or the target of an assignment 
-from the <span style="font-family:sans-serif">Evaluation</span> part.
+from the <span style="font-family:sans-serif">Evaluation</span> part. 
+</p><p>Left clicking on a row showing an object of <span style="font-family:monospace">SPECIAL</span> type 
+has a second effect. The scrollbar at the left edge of the <span style="font-family:sans-serif">Data</span> part
+becomes sensitive and the possible very many array items can be scrolled 
+within the tree of objects. 
+The number of array items shown can be set 
+by menu item <span style="font-family:sans-serif">Preferences</span> &#X2192; <span style="font-family:sans-serif">Appearence</span>. 
+(The scrollbar at the right edge has the usual effect of scrolling 
+the whole tree). 
 </p><p>A right click on a row (columns <span style="font-family:sans-serif">Name</span> &#X2026;<span style="font-family:sans-serif">Value</span>) 
 opens a pop-up menu showing first an empty line for the value itself 
 then all queries of its dynamic type. 

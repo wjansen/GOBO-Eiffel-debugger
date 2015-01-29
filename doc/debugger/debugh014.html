@@ -28,7 +28,7 @@ into the <span style="font-family:sans-serif">Expr</span> field have been correc
 <p><a id="S:compute"></a>
 The <span style="font-family:sans-serif">Evaluation</span> part consists of two text fields: <span style="font-family:sans-serif">Expr</span> and <span style="font-family:sans-serif">Value</span>. 
 Field <span style="font-family:sans-serif">Expr</span> may be filled 
-</p><ul class="itemize"><li class="li-itemize">manually with an expression list;
+</p><ul class="itemize"><li class="li-itemize">manually with an expression list (see Sec.&#XA0;<a href="index.html#S%3Aexpression">4</a>);
 </li><li class="li-itemize">by right click on a tree node in the various data parts: 
 a pop-up menu is opened whose entries 
 are the query names of the node, and selecting a query inserts this 
@@ -50,8 +50,10 @@ Then the cursor moves rightward to the next bullet, if any,
 or to the string end. 
 This way the natural left-to-right writing of expressions is supported 
 and cursor positioning on bullets to be replaced is rather automatic. 
-The insertion cursor is not visible if the text field has not the input focus. 
-To make the target position of a clicked query visible, 
+Unfortunately, the insertion cursor is not visible 
+if the text field has not the input focus, particularly when the mouse pointer 
+is used to select an expression from another part. 
+To make the target position of a clicked query detectable, 
 the bullet right to the insertion cursor is larger than the others. </p><p>The expression is computed when <span style="font-family:monospace">Enter</span> is pressed 
 (except for the triple click just mentioned). 
 The value is shown in the non-editable field <span style="font-family:sans-serif">Value</span>. 
@@ -66,7 +68,7 @@ but the rule applies to the other expression details.
 </p><p>Clicking the left icon in the <span style="font-family:sans-serif">Expr</span> field copies the values 
 of the items of the expression list to the tree of the <span style="font-family:sans-serif">Data</span> part 
 thereby expanding expression ranges and and their details. 
-There the expressions will indicated by an <span style="font-family:monospace">X</span>. </p>
+There the expressions will indicated by an <span style="font-family:sans-serif">X</span>. </p>
 <h4 id="sec35" class="subsubsection">3.11.2&#XA0;&#XA0;Assignment</h4>
 <p><a id="S:assign"></a>
 Clicking the left icon in the <span style="font-family:sans-serif">Value</span> field 
