@@ -270,11 +270,15 @@ feature {NONE} -- Implementation
 	null: POINTER
 	
 	push_offset (t: IS_TYPE; obj: detachable ANY)
-		require
-			not_expanded: not t.is_subobject
 		do
 			offset_stack.force (offset_sum)
 			offset_sum := 0
+			if obj /= Void and then
+				t.is_subobject and then attached {IS_EXPANDED_TYPE} t as et
+			 then
+				-- object is boxed
+				offset_sum := et.boxed_offset
+			end
 			address_stack.force (address)
 			if attached obj then
 				object := obj

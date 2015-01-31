@@ -1661,25 +1661,23 @@ public abstract class Expression : Object {
 				t = f.target_type();
 			} else if (env!=null) {
 				addr = env;
-				t = s.type_of_any(env);
+				t = s.type_of_any(env, null);
 			}
 		} else {
-			if (!t.is_subobject()) t = s.type_of_any(object);
+			if (!t.is_subobject()) t = s.type_of_any(object, t);
 		}
 		bool ok = aex!=null;
 		if (!ok && is_down()) t = parent.dynamic_type;
 		ok = set_dyn_type(t, f);
 		if (!ok && env!=null && f!=null) {	// try again in fallback mode
 			addr = env;
-			t = s.type_of_any(env);
+			t = s.type_of_any(env, null);
 			ok = set_dyn_type(t, f);
 		}
 		if (!ok) throw new ExpressionError.UNKNOWN 
 			("Unknown feature `"+name()+"'");
 		compute(addr, f, s);
-		addr = address();
 		if (addr!=null) {
-			dynamic_type = s.type_of_any(addr, dynamic_type);
 			if (down!=null) {
 				if (addr!=null || dynamic_type.is_subobject()) {
 					if (t.is_agent()) {
@@ -1857,11 +1855,11 @@ public abstract class Expression : Object {
 		} else {
 			addr = obj;
 			if (is_down() && parent.dynamic_type.is_agent()) {
-				var t = parent.dynamic_type;
-				var at = (AgentType*)t;
+				var pt = parent.dynamic_type;
+				var at = (AgentType*)pt;
 				var dt = (Gedb.Type*)at.declared_type;
 				var cot = (Gedb.Type*)at.closed_operands_tuple;
-				if (e!=(Entity*)t.fields[t.field_count()-1]) {
+				if (e!=(Entity*)pt.fields[pt.field_count()-1]) {
 					off = dt.fields[0].offset;
 					addr = cot.dereference(addr+off);
 				}
@@ -1870,6 +1868,8 @@ public abstract class Expression : Object {
 		}
 		addr += off;
 		addr = e.type.dereference(addr);
+		dynamic_type = s.type_of_any(addr, e.type);
+		addr = s.unboxed(addr, e.type);
 		*(void**)result = addr;
 	}
 
@@ -1903,7 +1903,7 @@ public abstract class Expression : Object {
 
 	public TextExpression.computed(Entity* e, void* obj, System *s) 
 	requires (e!=null && !e.type.is_subobject() 
-			  && s.type_of_any(obj).conforms_to(e.type)) {
+			  && s.type_of_any(obj, e.type).conforms_to(e.type)) {
 		this.typed(e);
 		*(void**)result = obj;
 	}
@@ -2009,7 +2009,8 @@ public abstract class Expression : Object {
 
 	protected void check_args(bool typed) 
 	throws ExpressionError 
-		requires (entity!=null && entity.is_routine()) {
+		requires (entity!=null) {
+		if (!entity.is_routine()) return;
 		Routine* r = (Routine*)entity;
 		Entity* e;
 		Expression a, ab;
@@ -2044,7 +2045,8 @@ public abstract class Expression : Object {
 
 	protected override void compute(uint8* obj, StackFrame* f, System* s)
 	throws ExpressionError {
-		if (entity.is_field()) {	// function redefined as attribute
+		if (entity.is_field() || entity.is_constant()) {	
+// function redefined as attribute or constant:
 			base.compute(obj, f, s);
 		} else {
 			Expression? ex;
@@ -2089,7 +2091,8 @@ public abstract class Expression : Object {
 
 	public override uint8* address() {
 		if (entity.is_field()) return base.address();
-		return (uint8*)dynamic_type.dereference((uint8*)result);
+	    uint8* addr = dynamic_type.dereference((uint8*)result);
+		return addr;
 	}
 
 	public override string append_single_name(string? to, uint fmt=0) {
@@ -2537,6 +2540,11 @@ public abstract class Expression : Object {
 	protected override void compute(uint8* obj, StackFrame* f, System* s)
 	throws ExpressionError {
 		if (implicit) index = arg.bottom().as_int();
+		uint8* addr = address();
+		if (addr!=null) {
+			dynamic_type = s.type_of_any(addr, entity.type);
+			addr = s.unboxed(addr, entity.type);
+		}
 	}
 
 	protected ItemExpression.fixed(Expression array) 

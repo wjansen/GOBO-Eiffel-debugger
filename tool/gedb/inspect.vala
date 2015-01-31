@@ -837,15 +837,24 @@ namespace Gedb {
 			return result;
 		}
 
-		public Type* type_of_any (void* a, Type* stat=null) {
+		public Type* type_of_any (void* a, Type* stat) {
 			if (stat!=null && stat.is_subobject()) return stat;
 			if (a==null) return all_types[TypeIdent.NONE];
 			Type* t = type_at(c_ident(a));
-			if (t!=null && (t.flags & TypeFlag.AGENT_EXPRESSION) > 0) {
+			if (t==null) return null;
+			if ((t.flags & TypeFlag.AGENT_EXPRESSION) > 0) {
 				var at = (Type*)as_agent(a);
 				if (at!=null) return at;
 			} 
 			return t;
+		}
+
+		public uint8* unboxed(uint8* a, Type* stat) {
+			if (stat==null || stat.is_subobject()) return a;
+			Type* t = type_of_any (a, stat);
+			if (t.is_subobject()) 
+				a += ((ExpandedType*)t).boxed_offset;
+			return a;
 		}
 
 /**
@@ -2176,7 +2185,7 @@ other value means `other' is a parent class.
 		
 		public void* allocate;
 		
-		public uint8* dereference(void* addr) {
+		public uint8* dereference(uint8* addr) {
 			return (addr!=null && !is_subobject()) ? 
 				*(void**)addr : addr;
 		}

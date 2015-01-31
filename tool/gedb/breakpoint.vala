@@ -103,9 +103,7 @@ public class WatchInfo  : GLib.Object {
 	public void refresh(System* s) {
 		if (_address==null) return;
 		var size = _type.field_bytes();
-		if (!_type.is_subobject()) {
-			_type = s.type_of_any(_type.dereference(_address), _type);
-		}
+		if (!_type.is_subobject()) _address = _type.dereference(_address);
 		previous = value;
 		value = new uint8[size];
 		copy_value(value, _address, size);

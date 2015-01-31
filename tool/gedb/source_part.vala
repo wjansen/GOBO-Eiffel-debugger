@@ -37,6 +37,7 @@ public class SourcePart : Box, AbstractPart, ClassPosition, Searcher {
 	internal Entry go_to;
 	internal Entry plus;
 	internal bool active; 
+	internal double rel_line = 0.25;
 
 	private bool _wrap_mode;
 	public bool wrap_mode { 
@@ -484,7 +485,7 @@ public class SourcePart : Box, AbstractPart, ClassPosition, Searcher {
 			text.apply_tag_by_name("found", first, last);
 			text.move_mark(insert, first);
 			text.place_cursor(forward ? first : last);
-			view.scroll_to_mark(insert, 0.05, false, 0.0, 0.0);
+			view.scroll_to_mark(insert, rel_line, false, 0.0, 0.0);
 		} else {
 			search.override_color(StateFlags.NORMAL, not_found_bg);
 		}
@@ -550,7 +551,7 @@ public class SourcePart : Box, AbstractPart, ClassPosition, Searcher {
 				text.place_cursor(end);
 				text.move_mark(insert, end);
 			}
-			view.scroll_to_mark(insert, 0.05, false, 0.0, 0.0);	
+			view.scroll_to_mark(insert, rel_line, false, 0.0, 0.0);	
 		} else {
 			search.override_color(StateFlags.NORMAL, not_found_bg);
 		}
@@ -800,8 +801,8 @@ public static void gedb_init_stdin() { the_source.init_input(); }
 
 public class SingleSource : Box {
 	
-	protected SourcePart source;
 	internal SourceView text_view;
+	protected SourcePart source;
 	protected Gee.HashMap<int,int> parenths;
 
 	private void do_scanned(Gedb.Scanner scanner, string match, 
@@ -954,7 +955,7 @@ public class FullSource : SingleSource {
 		text.get_iter_at_line(out at, ln);
 		text.place_cursor(at);
 		var mark = text.get_insert();
-		text_view.scroll_to_mark(mark, 0.05, false, 0.0, 0.0);
+		text_view.scroll_to_mark(mark, source.rel_line, false, 0.0, 0.0);
 		text_view.forward_display_line(at);
 		return false;
 	}
@@ -1131,7 +1132,7 @@ public class FullSource : SingleSource {
 		now = start.get_line();
 		frac = now<n ? 0.2 : 0.8;
 		start.set_line(n);
-		text_view.scroll_to_iter(start, 0.05, false, 0.0, frac);
+		text_view.scroll_to_iter(start, source.rel_line, false, 0.0, frac);
 		source.go_to.set_text("");
 		show_line(n);
 		text_view.set_highlight_current_line(true);
@@ -1352,7 +1353,7 @@ public class FullSource : SingleSource {
 					text.get_iter_at_offset(out iter, other_paren);
 					var mark = text.get_insert();
 					text.place_cursor(iter);
-					text_view.scroll_to_mark(mark, 0.05, false, 0.0, 0.0);
+					text_view.scroll_to_mark(mark, source.rel_line, false, 0.0, 0.0);
 				}
 				break;
 			case 'b': 

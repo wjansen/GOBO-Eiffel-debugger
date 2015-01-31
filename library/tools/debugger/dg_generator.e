@@ -392,25 +392,39 @@ feature {NONE} -- Feature generation
 		local
 			l_keyword: ET_KEYWORD
 		do
-			l_keyword := an_instruction.keyword
-			if l_keyword.is_then or else l_keyword.is_loop then
-				print_position_handling (l_keyword, Instruction_break)
+			if not an_instruction.has_non_null_instruction then
+				l_keyword := an_instruction.keyword
+				if l_keyword.is_then or else l_keyword.is_else then
+					print_position_handling (l_keyword, Instruction_break)
+				end
 			end
 			Precursor (an_instruction)
 		end
 
 	print_if_instruction (an_instruction: ET_IF_INSTRUCTION)
+		local
+			l_keyword: ET_KEYWORD
 		do
 			enter_scope (an_instruction)
 			Precursor (an_instruction)
-			leave_scope (an_instruction.end_keyword)
+			l_keyword := an_instruction.end_keyword
+			if an_instruction.else_compound = Void then
+				print_position_handling (l_keyword, Instruction_break)
+			end
+			leave_scope (l_keyword)
 		end
 
 	print_inspect_instruction (an_instruction: ET_INSPECT_INSTRUCTION)
+		local
+			l_keyword: ET_KEYWORD
 		do
 			enter_scope (an_instruction)
 			Precursor (an_instruction)
-			leave_scope (an_instruction.end_keyword)
+			l_keyword := an_instruction.end_keyword
+			if an_instruction.else_compound = Void then
+				print_position_handling (l_keyword, Instruction_break)
+			end
+			leave_scope (l_keyword)
 		end
 
 	print_loop_instruction (an_instruction: ET_LOOP_INSTRUCTION)
@@ -956,6 +970,7 @@ feature {NONE} -- Debugging code
 					After_mark_break,
 					After_reset_break
 				 then
+					pos := position (a_node).as_natural_32
 					for_instruction := False
 					info := True;
 				else

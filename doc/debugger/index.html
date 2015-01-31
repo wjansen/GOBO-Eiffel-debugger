@@ -140,9 +140,9 @@ for the graphical user interface (GUI for short).
 are written in <span style="font-style:oblique">C</span> and are intended to be used from <span style="font-style:oblique">C</span> programs. 
 This is a hard job for an <span style="font-style:oblique">Eiffel</span> programmer. 
 But there is the OO programming language <span style="font-style:oblique">Vala</span> 
-that is a shell for <span style="font-style:oblique">GLib</span> and <span style="font-style:oblique">GTK+</span> 
+that is a shell for <span style="font-style:oblique">GLib</span> and <span style="font-style:oblique">GTK+</span>, 
 so the debugger has been written in <span style="font-style:oblique">Vala</span>. 
-The result is a library (a shared object under <span style="font-style:oblique">POSIX</span> compliant 
+The result is a library (a shared object under <span style="font-style:oblique">UNIX</span> like 
 operation systems, a <span style="font-style:oblique">DLL</span> under <span style="font-style:oblique">Windows</span>) that is to be linked 
 to the <span style="font-style:oblique">Gec</span> generated program. 
 </p><p>So far it has been described what the debugger is and what it does. 
@@ -168,7 +168,8 @@ the debugging session may fail if the debuggee uses
 as does the debugger. The calls of both programs to this library 
 may interfere in an uncontrolled way causing a crash. 
 Several other debugger errors are caught by exception handling: 
-execution of the actual command is cancelled and an error message is issued. </p><p>It may happen that even this emergency break does not work and 
+execution of the actual command is cancelled and an error message is issued. 
+It may happen that even this emergency break does not work and 
 the debugger crashes during command execution. 
 In such a case, please send a bug report to <br>
 </p><div class="center"><span style="font-family:monospace">mailto:wo.jansen@kabelmail.de</span></div>

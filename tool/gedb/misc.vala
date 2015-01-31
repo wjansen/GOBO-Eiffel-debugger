@@ -23,6 +23,7 @@ public enum DataMode {
 	SCOPE_VAR = 'S',
 	CONSTANT = 'C',
 	ONCE = 'O',
+	QUALIFIED = 'Q',
 	EXTERN = 'X',
 	DUMMY = '?'
 }
@@ -526,7 +527,7 @@ public string format_type(uint8* addr, int off, bool is_home_addr,
 			var st = (SpecialType*)t;
 			n = st.special_count(addr);
 			str = ((Gedb.Name*)st.item_type()).fast_name;
-			str = "[%d] %s".printf((int)n, str);
+			str = "%d of %s".printf((int)n, str);
 		} else if (t.is_tuple() && ft!=null) {
 			var tl = ft.tuple_labels;
 			n = t.generics.length;

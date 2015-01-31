@@ -130,6 +130,8 @@
 		<geant file="build.eant" target="clean" dir="parse" if="${do_clean}=true"/>
 		<geant file="build.eant" target="${target}" dir="pattern"/>
 		<geant file="build.eant" target="clean" dir="pattern" if="${do_clean}=true"/>
+		<geant file="build.eant" target="${target}" dir="persist"/>
+		<geant file="build.eant" target="clean" dir="persist" if="${do_clean}=true"/>
 		<geant file="build.eant" target="${target}" dir="regexp"/>
 		<geant file="build.eant" target="clean" dir="regexp" if="${do_clean}=true"/>
 		<geant file="build.eant" target="${target}" dir="test"/>

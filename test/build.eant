@@ -134,6 +134,8 @@
 		<geant file="build.eant" target="clean" dir="math" if="${do_clean}=true"/>
 		<geant file="build.eant" target="${target}" dir="pattern"/>
 		<geant file="build.eant" target="clean" dir="pattern" if="${do_clean}=true"/>
+		<geant file="build.eant" target="${target}" dir="persistence"/>
+		<geant file="build.eant" target="clean" dir="persistence" if="${do_clean}=true"/>
 		<geant file="build.eant" target="${target}" dir="regexp"/>
 		<geant file="build.eant" target="clean" dir="regexp" if="${do_clean}=true"/>
 		<geant file="build.eant" target="${target}" dir="string"/>

@@ -824,7 +824,7 @@ feature {NONE} -- External implementation
 
 invariant
 
-	when_not_serial: not serial implies file /= Void
+	when_not_serial: not is_serial implies file /= Void
 	
 note
 

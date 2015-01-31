@@ -31,8 +31,6 @@ feature {NONE} -- Initialization
 			opts: "ORing of non-traversal options"
 			oo: "auxiliary storage"
 		require
-			valid_target: target_valid (t)
-			valid_source: source_valid (s)
 			valid_flags: valid_flags (opts)
 			when_target_expands_strings: t.must_expand_strings implies s.can_expand_strings
 			when_source_expands_strings: s.must_expand_strings implies t.can_expand_strings
