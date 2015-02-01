@@ -184,6 +184,11 @@ feature -- Initialization
 					i := i - 1
 					if attached all_types [i] as ti then
 						ti.define (Current)
+						if attached ti.origin as to and then attached to.meta_type as mt
+							and then attached type_at (mt.id) as tm 
+						 then
+							tm.to_meta_type (ti)
+						end
 					end
 				end
 				from

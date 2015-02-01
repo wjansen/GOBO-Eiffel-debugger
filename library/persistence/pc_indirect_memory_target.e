@@ -275,9 +275,16 @@ feature {PC_DRIVER} -- Writing elementary data
 		end
 
 	put_integer (i: INTEGER_32)
+		local
+			id: INTEGER
 		do
-			if valid and then attached type_set as ts then
-				inspect ts [0].ident
+			if valid then
+				if attached type_set as ts then
+					id := ts [0].ident
+				else
+					id := Int32_ident
+				end
+				inspect id
 				when Int8_ident then
 					put_integer_8 (i.to_integer_8)
 					if (i < {INTEGER_8}.Min_value) or else (i > {INTEGER_8}.Max_value) then
@@ -299,9 +306,16 @@ feature {PC_DRIVER} -- Writing elementary data
 		end
 
 	put_natural (n: NATURAL_32)
+		local
+			id: INTEGER
 		do
-			if valid and then attached type_set as ts then
-				inspect ts [0].ident
+			if valid then
+				if attached type_set as ts then
+					id := ts [0].ident
+				else
+					id := Nat32_ident
+				end
+				inspect id
 				when Nat8_ident then
 					put_natural_8 (n.to_natural_8)
 					if n > {NATURAL_8}.Max_value then
@@ -323,9 +337,16 @@ feature {PC_DRIVER} -- Writing elementary data
 		end
 
 	put_integer_64 (i: INTEGER_64)
+		local
+			id: INTEGER
 		do
-			if valid and then attached type_set as ts then
-				inspect ts [0].ident
+			if valid then
+				if attached type_set as ts then
+					id := ts [0].ident
+				else
+					id := Int64_ident
+				end
+				inspect id
 				when Int8_ident then
 					put_integer_8 (i.to_integer_8)
 					if (i < {INTEGER_8}.Min_value) or else (i > {INTEGER_8}.Max_value) then
@@ -350,9 +371,16 @@ feature {PC_DRIVER} -- Writing elementary data
 		end
 
 	put_natural_64 (n: NATURAL_64)
+		local
+			id: INTEGER
 		do
-			if valid and then attached type_set as ts then
-				inspect ts [0].ident
+			if valid then
+				if attached type_set as ts then
+					id := ts [0].ident
+				else
+					id := Nat64_ident
+				end
+				inspect id
 				when Nat8_ident then
 					put_natural (n.to_natural_32)
 					if n > {NATURAL_8}.Max_value then
@@ -377,9 +405,17 @@ feature {PC_DRIVER} -- Writing elementary data
 		end
 
 	put_real (r: REAL_32)
+		local
+			id: INTEGER
 		do
-			if valid and then attached type_set as ts then
-				if ts [0].is_double then
+			if valid then
+				if attached type_set as ts then
+					id := ts [0].ident
+				else
+					id := Real32_ident
+				end
+				inspect id
+				when Real64_ident then
 					put_double (r)
 				else
 					Precursor (r)
@@ -390,9 +426,16 @@ feature {PC_DRIVER} -- Writing elementary data
 	put_double (d: REAL_64)
 		local
 			r: REAL_32
+			id: INTEGER
 		do
-			if valid and then attached type_set as ts then
-				if ts [0].is_real then
+			if valid then
+				if attached type_set as ts then
+					id := ts [0].ident
+				else
+					id := Real64_ident
+				end
+				inspect id
+				when Real32_ident then
 					if d.abs > {REAL_32}.Max_value then
 						if d < 0 then
 							r := {REAL_32}.negative_infinity

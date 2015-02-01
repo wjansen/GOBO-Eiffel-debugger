@@ -361,6 +361,12 @@ feature -- Status setting
 			flag_added: flags = old flags | fl
 		end
 
+	to_meta_type (t: ET_IS_TYPE)
+		do
+			flags := flags | Meta_type_flag
+			fields := Void	-- workaround
+		end
+	
 feature -- Comparison
 	
 	is_equal (other: attached like Current): BOOLEAN

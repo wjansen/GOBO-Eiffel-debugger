@@ -546,12 +546,14 @@ feature {NONE} -- Building runtime descriptors
 				tmp_str.extend ('{')
 				tmp_str.append (void_address)
 				c_file.put_string (tmp_str)
-				tmp_str.wipe_out				
+				tmp_str.wipe_out
 				c_generator.print_default_name (l_type.origin, c_file)
  				c_file.put_character ('.')
 				if l_type.is_normal then
 					c_generator.print_attribute_name (l_field.origin, l_field.type.origin, c_file)
-				elseif l_type.is_special and then attached {ET_IS_SPECIAL_TYPE} l_type as l_special then
+				elseif l_type.is_special and then
+					attached {ET_IS_SPECIAL_TYPE} l_type as l_special
+				 then
 					inspect i
 					when 0 then
 						c_generator.print_attribute_special_count_name (l_special.origin, c_file)
