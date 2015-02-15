@@ -1594,7 +1594,20 @@ public abstract class Expression : Object {
 				}
 			}
 		}
-		if (!(this is EqualityExpression)) {
+		if (this is ManifestExpression) {
+			var me = this as ManifestExpression;
+			switch (me.name()) {
+			case "False":
+			case "True":
+			case "Void":
+				return true;
+			case "Current":
+				return f!=null && f.routine!=null;
+			case "Result":
+				return f!=null && f.routine!=null && f.routine.is_function();
+			}
+			return false;
+		} else if (!(this is EqualityExpression)) {
 			ct.query_by_name(out n, name(), arg==null, rt);
 			if (n!=1) return false;
 		}
@@ -1644,7 +1657,7 @@ public abstract class Expression : Object {
 		ExpressionError? error = null;
 		if (arg!=null) 
 			try {
-				arg.compute_in_object(null, t, s, f, env);
+				arg.compute_in_object(null, null, s, f, env);
 			} catch (ExpressionError e) {
 				stderr.printf("%s\n", e.message);
 				if (is_down()) parent.down = null;
@@ -1677,6 +1690,7 @@ public abstract class Expression : Object {
 		if (!ok) throw new ExpressionError.UNKNOWN 
 			("Unknown feature `"+name()+"'");
 		compute(addr, f, s);
+		addr = address();
 		if (addr!=null) {
 			if (down!=null) {
 				if (addr!=null || dynamic_type.is_subobject()) {

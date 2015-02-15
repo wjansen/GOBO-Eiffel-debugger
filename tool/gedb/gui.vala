@@ -104,6 +104,167 @@ of <b>Source/Console</b>) </span>"""
 
 }
 
+private void gedb_set_default_bool_tooltip(Widget w, bool def) {
+	w.tooltip_text = @"Default: $def";
+	w.has_tooltip = true;
+}
+
+private void gedb_set_default_int_tooltip(Widget w, int def) {
+	w.tooltip_text = @"Default: $def";
+	w.has_tooltip = true;
+}
+
+internal class DataSettings : Dialog {
+
+	private struct Settings {
+		int float_prec;
+		int double_prec;
+		int item_count;
+		bool dense;
+	}
+
+	private SpinButton float_prec;
+	private SpinButton double_prec;
+	private SpinButton item_count;
+	private CheckButton dense;
+
+	private GUI gui;
+	private Settings defaults;
+	private Settings before;
+	private Settings now;
+
+	private void set_buttons() {
+		float_prec.value = now.float_prec;
+		double_prec.value = now.double_prec;
+		item_count.value = now.item_count;
+		dense.active = now.dense;
+	}
+
+	private void do_data(int response) {
+		switch (response) {
+		case PreferenceType.DEFAULT:
+			now = defaults;
+			set_buttons();
+			break;
+		case PreferenceType.CANCEL:
+			hide();
+			now = before;
+			set_buttons();
+			break;
+		case PreferenceType.CLOSE:
+			hide();
+			before = now;
+			break;
+		}
+	}
+
+	private void do_toggle(ToggleButton check) {
+		if (check==dense) {
+			now.dense = dense.active;
+			gui.data.dense = now.dense;
+		}
+	}
+
+	private void do_spin(SpinButton spin) {
+		if (spin==float_prec) {
+			now.float_prec = (int)spin.value;
+			float_precision = now.float_prec;
+			gui.data.float_prec = now.float_prec;
+		} else if (spin==double_prec) {
+			now.double_prec = (int)spin.value;
+			double_precision = now.double_prec;
+			gui.data.double_prec = now.double_prec;
+		} else if (spin==item_count) {
+			now.item_count = (int)spin.value;
+			gui.data.max_items = now.item_count;
+		}
+	}
+
+	internal DataSettings(GUI gui) {
+		this.gui = gui;
+
+		defaults.float_prec = float_precision;
+		defaults.double_prec = double_precision;
+		defaults.item_count = 10;
+		defaults.dense = false;
+		before = defaults;
+		now = before;
+
+		title = compose_title("Data settings", null);
+		add_button("Default", PreferenceType.DEFAULT);
+		add_button("Cancel", PreferenceType.CANCEL);
+		add_button("Close", PreferenceType.CLOSE);
+		transient_for = gui;
+
+		var content = get_content_area () as Box;
+		var grid = new Grid();
+		content.@add(grid);
+		grid.margin= 5;
+
+		Label label, prev, headline;
+		Separator sep;
+		headline = new Label("");
+		headline.use_markup = true;
+		headline.set_markup("<span><b>Number precision</b></span>");
+		headline.justify = Justification.LEFT;
+		grid.attach(headline, 0, 0, 2, 1);
+
+		label = new Label("REAL_32 digits to show ");
+		grid.attach_next_to(label, headline, PositionType.BOTTOM, 1, 1);
+		label.halign = Align.START;
+		float_prec = new SpinButton.with_range(1, 7, 1);
+		float_prec.numeric = true;
+		float_prec.value = before.float_prec;
+		float_prec.value_changed.connect(do_spin);
+		gedb_set_default_int_tooltip(float_prec, defaults.float_prec);
+		grid.attach_next_to(float_prec, label, PositionType.RIGHT, 1, 1);
+		prev = label;
+
+		label = new Label("REAL_64 digits to show ");
+		grid.attach_next_to(label, prev, PositionType.BOTTOM, 1, 1);
+		label.halign = Align.START;
+		double_prec = new SpinButton.with_range(1, 17, 1);
+		double_prec.numeric = true;
+		double_prec.value = before.double_prec;
+		double_prec.value_changed.connect(do_spin);
+		gedb_set_default_int_tooltip(double_prec, defaults.double_prec);
+		grid.attach_next_to(double_prec, label, PositionType.RIGHT, 1, 1);
+		prev = label;
+
+		headline = new Label("");
+		headline.use_markup = true;
+		headline.set_markup("<span><b>SPECIAL items</b></span>");
+		headline.justify = Justification.LEFT;
+		grid.attach_next_to(headline, prev, PositionType.BOTTOM, 2, 1);
+
+		label = new Label("Maximum of shown items ");
+		grid.attach_next_to(label, headline, PositionType.BOTTOM, 1, 1);
+		label.halign = Align.START;
+		item_count = new SpinButton.with_range(1, int.MAX, 1);
+		item_count.value = before.item_count;
+		item_count.value_changed.connect(do_spin);
+		gedb_set_default_int_tooltip(item_count, defaults.item_count);
+		grid.attach_next_to(item_count, label, PositionType.RIGHT, 1, 1); 
+		prev = label;
+
+		label = new Label("Show only non-default values ");
+		grid.attach_next_to(label, prev, PositionType.BOTTOM, 1, 1);
+		label.halign = Align.START;
+		dense = new CheckButton();
+		dense.toggled.connect(do_toggle);
+		gedb_set_default_bool_tooltip(dense, defaults.dense);
+		grid.attach_next_to(dense, label, PositionType.RIGHT, 1, 1);
+		prev = label;
+
+		sep = new Separator(Orientation.HORIZONTAL);
+		content.pack_start(sep, false, false, 5);
+
+		set_buttons();
+
+		response.connect(do_data);
+	}
+}
+
 internal class Appearance : Dialog {
 
 	private struct Settings {
@@ -117,7 +278,6 @@ internal class Appearance : Dialog {
 	}
 
 	private weak GUI gui;
-
 	private Settings defaults;
 	private Settings before;
 	private Settings now;
@@ -126,8 +286,6 @@ internal class Appearance : Dialog {
 	private CheckButton wrap;
 	private CheckButton val;
 	private CheckButton tree;
-	private CheckButton non_defs;
-	private SpinButton item_count;
 	private CheckButton tips;
 
 	private void set_buttons() {
@@ -135,8 +293,6 @@ internal class Appearance : Dialog {
 		wrap.active = now.wrap_mode;
 		// val.active = now.value_mode;
 		tree.active = now.tree_lines;
-		non_defs.active = now.non_defs_mode;
-		item_count.value = now.max_items;
 		tips.active = now.tooltips;
 	}
 
@@ -168,9 +324,6 @@ internal class Appearance : Dialog {
 		} else if (check==tree) {
 			now.tree_lines = tree.active;
 			gui.data.tree_lines = now.tree_lines;
-		} else if (check==non_defs) {
-			now.non_defs_mode = non_defs.active;
-			gui.data.non_defaults = now.non_defs_mode;
 		} else if (check==tips) {
 			now.tooltips = tips.active;
 			gui.set_tooltip(now.tooltips);
@@ -181,9 +334,6 @@ internal class Appearance : Dialog {
 		if (spin==tabs) {
 			now.tab_width = (int)spin.value;
 			gui.source.tab_width = now.tab_width;
-		} else if (spin==item_count) { 
-			now.max_items = (int)spin.value;
-			gui.data.max_items = now.max_items;
 		}
 	}
 
@@ -194,7 +344,6 @@ internal class Appearance : Dialog {
 		defaults.wrap_mode = gui.source.wrap_mode;
 		// defaults.value_mode = gui.source.value_as_tooltip;
 		defaults.tree_lines = gui.data.tree_lines;
-		defaults.non_defs_mode = gui.data.non_defaults;
 		defaults.max_items = gui.data.max_items;
 		defaults.tooltips = true;
 		before = defaults;
@@ -225,6 +374,7 @@ internal class Appearance : Dialog {
 		tabs.numeric = true;
 		tabs.value = before.tab_width;
 		tabs.value_changed.connect(do_spin);
+		gedb_set_default_int_tooltip(tabs, defaults.tab_width);
 		grid.attach_next_to(tabs, label, PositionType.RIGHT, 1, 1);
 		prev = label;
 		label = new Label("Wrap long lines ");
@@ -232,8 +382,9 @@ internal class Appearance : Dialog {
 		grid.attach_next_to(label, prev, PositionType.BOTTOM, 1, 1);
 		wrap = new CheckButton();
 		wrap.toggled.connect(do_toggle);
-		
+		gedb_set_default_bool_tooltip(wrap, defaults.wrap_mode);
 		grid.attach_next_to(wrap, label, PositionType.RIGHT, 1, 1);
+		
 		sep = new Separator(Orientation.HORIZONTAL);
 		grid.attach_next_to(sep, label, PositionType.BOTTOM, 2, 1);
 /* 
@@ -246,29 +397,16 @@ internal class Appearance : Dialog {
 		headline.set_markup("<span><b>Data part</b></span>");
 		headline.justify = Justification.LEFT;
 		grid.attach_next_to(headline, sep, PositionType.BOTTOM, 2, 1);
-		prev = label;
 
 		label = new Label("Show tree lines ");
 		grid.attach_next_to(label, headline, PositionType.BOTTOM, 1, 1);
 		label.halign = Align.START;
 		tree = new CheckButton();
 		tree.toggled.connect(do_toggle);
+		gedb_set_default_bool_tooltip(tree, defaults.tree_lines);
 		grid.attach_next_to(tree, label, PositionType.RIGHT, 1, 1);
 		prev = label;
-		label = new Label("Show only non-default SPECIAL items ");
-		label.halign = Align.START;
-		grid.attach_next_to(label, prev, PositionType.BOTTOM, 1, 1);
-		non_defs = new CheckButton();
-		non_defs.toggled.connect(do_toggle);
-		grid.attach_next_to(non_defs, label, PositionType.RIGHT, 1, 1);		
-		prev = label;
-		label = new Label("Maximum of SPECIAL items ");
-		label.halign = Align.START;
-		grid.attach_next_to(label, prev, PositionType.BOTTOM, 1, 1);
-		item_count = new SpinButton.with_range(1, int.MAX, 10);
-		item_count.value = before.max_items;
-		item_count.value_changed.connect(do_spin);
-		grid.attach_next_to(item_count, label, PositionType.RIGHT, 1, 1);		
+
 		sep = new Separator(Orientation.HORIZONTAL);
 		grid.attach_next_to(sep, label, PositionType.BOTTOM, 2, 1);
 
@@ -282,6 +420,7 @@ internal class Appearance : Dialog {
 		grid.attach_next_to(label, headline, PositionType.BOTTOM, 1, 1);
 		tips = new CheckButton();
 		tips.toggled.connect(do_toggle);
+		gedb_set_default_bool_tooltip(tips, defaults.tooltips);
 		grid.attach_next_to(tips, label, PositionType.RIGHT, 1, 1);
 		
 		sep = new Separator(Orientation.HORIZONTAL);
@@ -432,6 +571,12 @@ internal class Menus : GLib.Object {
 	private void do_sql(Gtk.Action a) { gui.show_sql(); }
 	private void do_alias(Gtk.Action a) { gui.show_alias(); }
 
+	private void do_data(Gtk.Action a) {
+		var data = gui.data_settings;
+		data.show_all();
+		data.run();
+	}
+
 	private void do_history(Gtk.Action a) {
 		var hist = gui.history;
 		hist.show_all();
@@ -488,6 +633,7 @@ internal class Menus : GLib.Object {
 		
 		{"PreferenceMenu", null, "_Preferences" },   
 		{"Appearance", null, "_Appearance", null, null, do_appearance},
+		{"DataSettings", null, "_Data settings", null, null, do_data},
 		{"History", null, "_History sizes", null, null, do_history},
 
 		{"HelpMenu", null, "_Help" },   
@@ -530,6 +676,7 @@ internal class Menus : GLib.Object {
     </menu>
     <menu action='PreferenceMenu'>
       <menuitem action='Appearance'/>
+      <menuitem action='DataSettings'/>
       <menuitem action='History'/>
     </menu>
     <menu action='HelpMenu'>
@@ -950,6 +1097,7 @@ public class GUI : Window {
 		}
 		source = new SourcePart(brk, run, data, console, stack, status);
 		history = new History(this);
+		data_settings = new DataSettings(this);
 		appearance = new Appearance(this);
 		// Set part members which could not be set during construction
 		// because of cyclic dependencies:
@@ -1019,6 +1167,7 @@ public class GUI : Window {
 	public Gee.HashMap<string,Expression> alias_list;
 
 	internal Appearance appearance { get; private set; }
+	internal DataSettings data_settings { get; private set; }
 	internal History history { get; private set; }
 
 	internal bool interrupt;
@@ -1064,6 +1213,8 @@ public class GUI : Window {
 		set_deep_tooltip(this, yes);
 		if (sql!=null) set_deep_tooltip(sql, yes);
 		if (alias_def!=null) set_deep_tooltip(alias_def, yes);
+		if (appearance!=null) set_deep_tooltip(appearance, yes);
+		if (data_settings!=null) set_deep_tooltip(data_settings, yes);
 	}
 
 	public GUI.pma(Debuggee dg) {

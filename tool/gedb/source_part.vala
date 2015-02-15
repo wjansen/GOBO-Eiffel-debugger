@@ -669,9 +669,13 @@ and close feature window.""");
 		if (font==null) 
 			font = Pango.FontDescription.from_string("Inconsolata 11");
 		if (font==null) 
+			font = Pango.FontDescription.from_string("Ubuntu Mono 11");
+		if (font==null) 
 			font = Pango.FontDescription.from_string("Andale Mono 10");
 		if (font==null)
 			font = Pango.FontDescription.from_string("FreeMono 11");
+		if (font==null) 
+			font = Pango.FontDescription.from_string("Latin Modern Mono Light 11");
 		if (font==null) 
 			font = Pango.FontDescription.from_string("Monospace 10");
 		mono_width = font!=null ? 7 : 9;

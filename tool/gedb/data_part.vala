@@ -16,8 +16,10 @@ public class DataCore : Box, AbstractPart {
 	protected CellRendererText cell;
 	protected Gee.List<uint> info_list;
 	public bool tree_lines { get; set; }
-	public bool non_defaults { get; set; }
+	public bool dense { get; set; }
 	public int max_items { get; set; }
+	public int float_prec { get; set; }
+	public int double_prec { get; set; }
 
 	public StackFrame* frame { get; protected set; }
 	protected Routine* routine;
@@ -101,7 +103,7 @@ public class DataCore : Box, AbstractPart {
 		}
 	}
 	
-	internal void update_subtree(TreeIter iter, uint8* addr) {
+	internal void update_subtree(TreeIter iter, uint8* addr, bool prec_only) {
 		if (dg==null) return;
 		Gedb.Type* t;
 		Gedb.Type* ft;
@@ -131,6 +133,8 @@ public class DataCore : Box, AbstractPart {
 				   ItemFlag.TYPE_ID, out tid_old, 
 				   -1);
 		mode = (char)i;
+		if (addr==null) 
+			addr = old_addr;
 		if (ex!=null) {
 			t = ex.dynamic_type;
 			addr = ex.address();
@@ -150,7 +154,8 @@ public class DataCore : Box, AbstractPart {
 			store.@set(iter, ItemFlag.ADDR, addr, ItemFlag.VALUE, value, 
 					   ItemFlag.TYPE_ID, tid, ItemFlag.TYPE, type, -1);
 		}
-		store.@set(iter, ItemFlag.CHANGED, changed, -1);
+		if (!prec_only) 
+			store.@set(iter, ItemFlag.CHANGED, changed, -1);
 		m_old = store.iter_n_children(iter);
 		if (t.is_special()) {
 			SpecialType* st = (SpecialType*)t;				
@@ -169,12 +174,11 @@ public class DataCore : Box, AbstractPart {
 		}
 		mode = DataMode.FIELD;
 		if (t.is_special()) {
-			move_items(iter, first, true);
 			if (n==0) {	// remove the dummy ident
 				while (store.iter_nth_child(out child, iter, (int)n))
 					store.@remove(ref child);
 			}
-			move_items(iter, first, true);
+			move_items(iter, first, !prec_only);
 		} else if (!t.is_string()) {
 			if (t.is_agent()) {
 				AgentType* ag = (AgentType*)t;
@@ -189,13 +193,13 @@ public class DataCore : Box, AbstractPart {
 				heap = f._entity.type.dereference(addr+f.offset);
 				heap = dg.rts.unboxed(heap, f._entity.type);
 				if (store.iter_nth_child(out child, iter, i)) 
-					update_subtree(child, heap);
+					update_subtree(child, heap, prec_only);
 			}
 			if (t.is_agent() && n<t.field_count()) {
 				f = t.field_at(n);
 				heap = f._entity.type.dereference(old_addr+f.offset);
 				if (store.iter_nth_child(out child, iter, i)) 
-					update_subtree(child, heap);				
+					update_subtree(child, heap, prec_only);
 			}
 		}
 	}
@@ -204,6 +208,12 @@ public class DataCore : Box, AbstractPart {
 		int mode;
 		store.@get(iter, ItemFlag.MODE, out mode, -1);
 		ct.text = "%c".printf((char)mode);
+	}
+
+	protected void do_precision(bool as_double) {
+		TreeIter iter;
+		store.get_iter_first(out iter);
+		update_subtree(iter, null, true);
 	}
 
 	protected virtual void do_refresh(StackFrame* f, uint class_id, uint pos) {
@@ -258,7 +268,7 @@ public class DataCore : Box, AbstractPart {
 		ok = r==routine;
 		routine = r;
 		if (ok) {
-			update_subtree(iter, target);
+			update_subtree(iter, target, false);
 		} else {
 			clear_subtree(null);
 			value = format_value(addr, off, true, lt, style, known_objects);
@@ -310,7 +320,7 @@ public class DataCore : Box, AbstractPart {
 			}
 			lt = dg.rts.type_of_any(laddr, loc._entity.type);
 			if (ok && loc==e) {
-				update_subtree(iter, laddr);
+				update_subtree(iter, laddr, false);
 			} else {
 				store.insert(out iter, null, j);
 				set_value(iter, laddr, false, (Entity*)loc, null, -1, ch, null);
@@ -503,7 +513,7 @@ public class DataCore : Box, AbstractPart {
 
 	private static int compare_routines(Routine* u, Routine* v) {
 		if (u==v) return 0;
-		return  ((Entity*)u).is_less((Entity*)v) ? -1 : 1;
+		return ((Entity*)u).is_less((Entity*)v) ? -1 : 1;
 	}
 
 	protected virtual bool valid_feature(TreeIter iter) { return true; }
@@ -532,7 +542,7 @@ public class DataCore : Box, AbstractPart {
 		store.iter_nth_child(out child, iter, 0);
 		for (i=first, j=0; j<m && i<n; ++i, faddr+=step) {
 			heap = e.type.dereference(faddr);
-			if (non_defaults && (heap==null || is_zero_value(heap,step)))
+			if (dense && (heap==null || is_zero_value(heap,step)))
 				continue;
 			idx = -1;	// meaningless, just make the compiler happy
 			val = null;
@@ -556,15 +566,16 @@ public class DataCore : Box, AbstractPart {
 					ok = val==str;
 				}
 				if (!ok) {
-					update_subtree(child, heap);
 					store.@set(child, ItemFlag.CHANGED, as_changed, -1);
 				}
+				if (view.is_row_expanded(store.get_path(iter)))
+					update_subtree(child, heap, !as_changed);
 			} else {
 				store.insert(out child, iter, j);
 				set_value(child, heap, false, e, st, i, 
 						  DataMode.FIELD, @"[$i]");
 				if (as_changed) 
-					store.@set(child, ItemFlag.CHANGED, true, -1);
+					store.@set(child, ItemFlag.CHANGED, as_changed, -1);
 				ft = dg.rts.type_of_any(heap, e.type);
 				add_dummy_item(child, ft, false);
 				++l;
@@ -725,7 +736,7 @@ public class DataCore : Box, AbstractPart {
 
 	protected void do_items() {
 		if (main!=null) {
-			non_defaults = main.non_defaults;
+			dense = main.dense;
 			max_items = main.max_items;
 		}
 		StackFrame* f = stack.frame();
@@ -1055,12 +1066,13 @@ public class DataPart : DataCore {
 			(s,f,i,p) => { do_refresh(f,i,p); });
 		
 		tree_lines = false;
-		non_defaults = false;
+		dense = false;
 		max_items = 10;
 		notify["tree-lines"].connect((d,p) => { do_tree_lines(); });
-		notify["non-defaults"].connect((d,p) => { do_items(); });
 		notify["max-items"].connect((d,p) => { do_items(); });
-
+		notify["dense"].connect((d,p) => { do_items(); });
+		notify["float-prec"].connect((d,p) => { do_precision(false); });
+		notify["double-prec"].connect((d,p) => { do_precision(true); });
 	}
 
 	public DataItem? selected_item() {
@@ -1204,7 +1216,7 @@ public class DataPart : DataCore {
 				   ItemFlag.TYPE, type, 
 				   ItemFlag.TYPE_ID, t.ident,
 				   -1);
-		update_subtree(lhs.iter, left);
+		update_subtree(lhs.iter, left, false);
 	}
 
 	internal void add_expression(Expression expr, TreeIter? at=null,
@@ -1298,7 +1310,7 @@ public class ExtraData : DataCore {
 		updated = true;
 		own.level_selected.connect((s,f,i,p) => { do_refresh(f,i,p); });
 		tree_lines = main.tree_lines;
-		non_defaults = main.non_defaults;
+		dense = main.dense;
 		max_items = main.max_items;
 		main.notify["tree-lines"].connect((d,p) => { do_tree_lines(); });
 		main.notify["non-defaults"].connect((d,p) => { do_items(); });
@@ -1463,7 +1475,7 @@ public class FixedPart : DataCore {
 				store.@get(child, Item.FRESH, out fresh,
 						   ItemFlag.EXPR, out ex, ItemFlag.NAME, out name, -1);
 				if (fresh || ex==null) continue;
-				update_subtree(child, ex.address());
+				update_subtree(child, ex.address(), false);
 			} while (store.iter_next(ref child));
 		}
 	}
@@ -1704,7 +1716,7 @@ public class FixedPart : DataCore {
 
 		main.reformatted.connect(do_reformat);
 		tree_lines = main.tree_lines;
-		non_defaults = main.non_defaults;
+		dense = main.dense;
 		max_items = main.max_items;
 		main.notify["tree-lines"].connect((d,p) => { do_tree_lines(); });
 		main.notify["non-defaults"].connect((d,p) => { do_items(); });

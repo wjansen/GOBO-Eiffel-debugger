@@ -501,7 +501,7 @@ namespace Eval {
 		*/
 		[Flex(pattern="\\/=")]
 		public void ne(string value, int len) {
-		token = new Token(token_code, value, n_chars_read, len);
+			token = new Token(token_code, value, n_chars_read, len);
 		}
 		
 		[Flex(pattern="~=")]

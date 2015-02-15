@@ -730,6 +730,8 @@ feature {NONE} -- Implementation
 				end
 				if attached Result as r then
 					associated_types.put (r, t)
+					t.set_bytes (r.instance_bytes)
+					t. set_allocate (t.allocate)
 					from
 						n := r.field_count
 						m := n.min (t.field_count)

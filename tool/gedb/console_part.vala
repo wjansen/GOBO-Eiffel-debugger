@@ -45,14 +45,16 @@ public class ConsolePart : ScrolledWindow {
 
 	private void flush_out(IOStatus status) {
 		TextIter end;
-		buffer.get_iter_at_mark(out end, end_mark);
-		if (status==IOStatus.NORMAL) 
-			buffer.insert(ref end, out_line.str, -1); 
-		else 
-			buffer.insert_with_tags_by_name(end, out_line.str, -1, "error", null);
-		out_line.erase();
-		buffer.get_iter_at_mark(out end, end_mark);
-		buffer.move_mark(input_mark, end);
+		lock (buffer) {
+			buffer.get_iter_at_mark(out end, end_mark);
+			if (status==IOStatus.NORMAL) 
+				buffer.insert(ref end, out_line.str, -1); 
+			else 
+				buffer.insert_with_tags_by_name(end, out_line.str, -1, "error", null);
+			out_line.erase();
+			buffer.get_iter_at_mark(out end, end_mark);
+			buffer.move_mark(input_mark, end);
+		}
 		view.scroll_mark_onscreen(end_mark);
 	}
 
@@ -125,8 +127,8 @@ public class ConsolePart : ScrolledWindow {
 					buffer.insert_with_tags_by_name(right, line, 1, "input", null);
 				}
 			}
-			return true;
 		}
+		return true;
 	}
 
 	private bool do_output(IOChannel ch, IOCondition cond) {
@@ -262,14 +264,12 @@ public class ConsolePart : ScrolledWindow {
 			buffer.insert_with_tags(at, info, -1, tag, null);
 			buffer.get_end_iter(out at);
 			buffer.move_mark(end_mark, at);
-			view.scroll_mark_onscreen(end_mark);
 		}
+		view.scroll_mark_onscreen(end_mark);
 	}
 
 	public void clear() {
-		lock (buffer) {
-			buffer.set_text("");
-		}		
+		lock (buffer) { buffer.set_text(""); }		
 	}
 
 	public TextView view;

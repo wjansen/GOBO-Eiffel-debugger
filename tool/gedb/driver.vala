@@ -14,6 +14,7 @@ internal LongjmpFunc longjmp_func;
 internal void** eif_markers;
 
 internal class QueueMember : Object {
+
 	internal int code;
 	internal bool cont;
 	internal string name;

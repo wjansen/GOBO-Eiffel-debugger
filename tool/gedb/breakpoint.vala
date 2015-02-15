@@ -82,18 +82,11 @@ public class WatchInfo  : GLib.Object {
 		}
 		if (!ok) depth = f!=null ? f.depth : 0;
 		_type = s.type_at(data.tid);
-		SpecialType* st = _type.is_special()? (SpecialType*)_type : null;
-		int off = 0;
-		if (st!=null) {
-			_type = st.item_type();
-			entity = (Entity*)st.item_0();
-			off = st.item_offset(data.idx);
-		} else {
-			entity = data.field;
-			off = (entity.is_local() ?
+		entity = data.field;
+		uint off = (entity.is_local() ?
 			   ((Local*)entity).offset : ((Field*)entity).offset);
-		}
 		uint size = _type.field_bytes();
+		if (data.idx>0) off += data.idx*size;
 		address = data.home!=null ? data.home : (uint8*)f;
 		address += off;
 		value = new uint8[size];

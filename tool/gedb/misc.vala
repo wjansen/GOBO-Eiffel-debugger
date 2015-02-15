@@ -367,6 +367,9 @@ private static void append_char(StringBuilder sb, void* addr, bool wide) {
 	}
 }
 
+public int float_precision = 6;
+public int double_precision = 16;
+
 public static string format_value(uint8* addr, int off, bool is_home_addr, 
 								  Gedb.Type* t, FormatStyle fmt,
 								  Gee.HashMap<void*,uint>? idents=null) {
@@ -466,10 +469,10 @@ public static string format_value(uint8* addr, int off, bool is_home_addr,
 			str = "%ld".printf(*(long*)addr);
 			break;
 		case 12:
-			str = "%.7g".printf(*(float*)addr);
+			str = "%.*g".printf(float_precision, *(float*)addr);
 			break;
 		case 13:
-			str = "%.16g".printf(*(double*)addr);
+			str = "%.*g".printf(double_precision, *(double*)addr);
 			break;
 		case 14:
 			if (addr!=null && *(void**)addr!=null)
