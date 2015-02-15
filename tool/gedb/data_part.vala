@@ -26,13 +26,13 @@ public class DataCore : Box, AbstractPart {
 	
 	protected void set_value(TreeIter iter, uint8* addr, bool is_home,
 							 Entity* e, SpecialType* st, int idx,
-							 char mode, string? name=null, 
-							 Expression? ex=null) 
+							 char mode, string? name=null,
+							 Expression? ex=null)
 	requires (e!=null || st!=null || ex!=null || dg==null) {
-		Gedb.Type* t = st!=null 
+		Gedb.Type* t = st!=null
 			? st.item_type()
 			: (e!=null ? e.type : ex.dynamic_type);
-		string nm = name!=null ? name : ((Name*)e).fast_name; 
+		string nm = name!=null ? name : ((Name*)e).fast_name;
 		int off = 0;
 		if (is_home) {
 			if (idx<0) {
@@ -60,17 +60,17 @@ public class DataCore : Box, AbstractPart {
 			type = format_type(addr, 0, false, t, e!=null ? e.text : null);
 			tid = dg.rts.object_type_id(addr, false, t);
 		}
-		store.@set(iter, 
+		store.@set(iter,
 				   ItemFlag.EXPR, ex,
 				   ItemFlag.FIELD, e,
 				   ItemFlag.ADDR, addr,
 				   ItemFlag.INDEX, st!=null ? idx : -1,
 				   ItemFlag.FIRST, 0,
 				   ItemFlag.MODE, (int)mode,
-				   ItemFlag.NAME, nm, 
-				   ItemFlag.VALUE, value, 
-				   ItemFlag.TYPE, type, 
-				   ItemFlag.TYPE_ID, tid, 
+				   ItemFlag.NAME, nm,
+				   ItemFlag.VALUE, value,
+				   ItemFlag.TYPE, type,
+				   ItemFlag.TYPE_ID, tid,
 				   -1);
 	}
 
@@ -84,7 +84,7 @@ public class DataCore : Box, AbstractPart {
 		int i, n;
 		char c;
 		if (dg==null) return;
-		store.@get(iter, ItemFlag.ADDR, out addr, 
+		store.@get(iter, ItemFlag.ADDR, out addr,
 				   ItemFlag.TYPE_ID, out tid, -1);
 		t = dg.rts.type_at(tid);
 		var value = format_value(addr, 0, false, t, style, known_objects);
@@ -93,7 +93,7 @@ public class DataCore : Box, AbstractPart {
 		for (i=0; i<n; ++i) {
 			store.iter_nth_child(out child, iter, i);
 			reformat_tree(child);
-		} 
+		}
 	}
 
 	private void clear_subtree(TreeIter? iter) {
@@ -120,7 +120,7 @@ public class DataCore : Box, AbstractPart {
 		int i, j, m, off, idx, first;
 		char mode;
 		bool ok=true, changed;
-		store.@get(iter, 
+		store.@get(iter,
 				   ItemFlag.MODE, out i,
 				   ItemFlag.EXPR, out ex,
 				   ItemFlag.FIELD, out e,
@@ -128,12 +128,12 @@ public class DataCore : Box, AbstractPart {
 				   ItemFlag.FIRST, out first,
 				   ItemFlag.ADDR, out old_addr,
 				   ItemFlag.NAME, out str,
-				   ItemFlag.VALUE, out old_val, 
-				   ItemFlag.TYPE, out old_type, 				   
-				   ItemFlag.TYPE_ID, out tid_old, 
+				   ItemFlag.VALUE, out old_val,
+				   ItemFlag.TYPE, out old_type, 				
+				   ItemFlag.TYPE_ID, out tid_old,
 				   -1);
 		mode = (char)i;
-		if (addr==null) 
+		if (addr==null)
 			addr = old_addr;
 		if (ex!=null) {
 			t = ex.dynamic_type;
@@ -151,10 +151,10 @@ public class DataCore : Box, AbstractPart {
 		type = format_type(addr, 0, false, t, e!=null ? e.text : null);
 		changed = value!=old_val || type!=old_type;
 		if (changed) {
-			store.@set(iter, ItemFlag.ADDR, addr, ItemFlag.VALUE, value, 
+			store.@set(iter, ItemFlag.ADDR, addr, ItemFlag.VALUE, value,
 					   ItemFlag.TYPE_ID, tid, ItemFlag.TYPE, type, -1);
 		}
-		if (!prec_only) 
+		if (!prec_only)
 			store.@set(iter, ItemFlag.CHANGED, changed, -1);
 		m_old = store.iter_n_children(iter);
 		if (t.is_special()) {
@@ -192,13 +192,13 @@ public class DataCore : Box, AbstractPart {
 				f = t.fields[i];
 				heap = f._entity.type.dereference(addr+f.offset);
 				heap = dg.rts.unboxed(heap, f._entity.type);
-				if (store.iter_nth_child(out child, iter, i)) 
+				if (store.iter_nth_child(out child, iter, i))
 					update_subtree(child, heap, prec_only);
 			}
 			if (t.is_agent() && n<t.field_count()) {
 				f = t.field_at(n);
 				heap = f._entity.type.dereference(old_addr+f.offset);
-				if (store.iter_nth_child(out child, iter, i)) 
+				if (store.iter_nth_child(out child, iter, i))
 					update_subtree(child, heap, prec_only);
 			}
 		}
@@ -219,7 +219,7 @@ public class DataCore : Box, AbstractPart {
 	protected virtual void do_refresh(StackFrame* f, uint class_id, uint pos) {
 		if (dg==null) return;
 		Gedb.Type* lt;
-		AgentType* ag; 
+		AgentType* ag;
 		Routine* r;
 		Local* loc, e;
 		TreePath path;
@@ -273,10 +273,10 @@ public class DataCore : Box, AbstractPart {
 			clear_subtree(null);
 			value = format_value(addr, off, true, lt, style, known_objects);
 			store.append(out iter, null);
-			set_value(iter, target, false, (Entity*)loc, null, -1, 
+			set_value(iter, target, false, (Entity*)loc, null, -1,
 					  DataMode.CURRENT, null);
 			store.@set(iter, ItemFlag.CHANGED, true, -1);
-			add_dummy_item(iter, lt, true); 
+			add_dummy_item(iter, lt, true);
 			path = store.get_path(iter);
 			view.expand_row(path, false);
 		}
@@ -300,7 +300,7 @@ public class DataCore : Box, AbstractPart {
 			if (i<ac) {
 				ch = DataMode.ARGUMENT;
 				if (ag!=null && ag.is_closed_operand(i)) {
-					for (j=0,k=0; j<i; ++j) 
+					for (j=0,k=0; j<i; ++j)
 						if (ag.is_closed_operand(j)) ++k;
 					Local* l0 = r.vars[0];
 					addr = loc._entity.type.dereference(addr+l0.offset);
@@ -325,7 +325,7 @@ public class DataCore : Box, AbstractPart {
 				store.insert(out iter, null, j);
 				set_value(iter, laddr, false, (Entity*)loc, null, -1, ch, null);
 				store.@set(iter, ItemFlag.CHANGED, true, -1);
-				add_dummy_item(iter, lt, true); 
+				add_dummy_item(iter, lt, true);
 			}
 			++j;
 		}
@@ -378,10 +378,10 @@ public class DataCore : Box, AbstractPart {
 			}
 		}
 		more = n==0;	// `n>0' means that the dummy item is to be replaced
-		store.@get(iter, 
+		store.@get(iter,
 				   ItemFlag.ADDR, out addr,
 				   ItemFlag.FIRST, out first,
-				   ItemFlag.TYPE_ID, out tid, 
+				   ItemFlag.TYPE_ID, out tid,
 				   ItemFlag.EXPR, out ex,
 				   -1);
 		if (addr==null && ex!=null) addr = ex.address();
@@ -431,7 +431,7 @@ public class DataCore : Box, AbstractPart {
 	protected void do_reformat() {
 		if (dg==null) return;
 		switch (style) {
-		case FormatStyle.IDENT: 
+		case FormatStyle.IDENT:
 			refill_known_objects(dg.rts);
 			break;
 		default:
@@ -440,7 +440,7 @@ public class DataCore : Box, AbstractPart {
 		}
 		TreeIter iter;
 		if (store.get_iter_first(out iter)) {
-			do { 
+			do {
 				reformat_tree(iter);
 			} while (store.iter_next(ref iter));	
 		}
@@ -467,7 +467,7 @@ public class DataCore : Box, AbstractPart {
 		int off = e.is_local() ? ((Local*)e).offset : ((Field*)e).offset;
 		var ft = dg.rts.type_of_any(addr, e.type);
 		string str;
-		if (replace>=0) 
+		if (replace>=0)
 			store.iter_nth_child(out child, iter, replace);
 		else
 			store.append(out child, iter);
@@ -480,7 +480,7 @@ public class DataCore : Box, AbstractPart {
 		if (tuple_idx>=0) {
 			Entity* pe;
 			store.@get(iter, ItemFlag.FIELD, out pe, -1);
-			if (pe.text!=null && pe.text.tuple_labels!=null) 
+			if (pe.text!=null && pe.text.tuple_labels!=null)
 				str = pe.text.tuple_labels[tuple_idx]._name.fast_name;
 		}
 		set_value(child, addr, false, e, null, -1, DataMode.FIELD, str);
@@ -501,7 +501,7 @@ public class DataCore : Box, AbstractPart {
 		}
 		t = dg.rts.type_at(tid);
 		if (t!=null && t.field_count()>0) {
-			add_dummy_item(iter, dg.rts.type_at(tid), false); 
+			add_dummy_item(iter, dg.rts.type_at(tid), false);
 		}
 	}
 
@@ -525,9 +525,9 @@ public class DataCore : Box, AbstractPart {
 		string val, str;
 		uint tid;
 		int mode, idx, i, j, l, m, n;
-		store.@get(iter, 
-				   ItemFlag.ADDR, out addr, 
-				   ItemFlag.TYPE_ID, out tid, 
+		store.@get(iter,
+				   ItemFlag.ADDR, out addr,
+				   ItemFlag.TYPE_ID, out tid,
 				   -1);
 	    t = dg.rts.type_at(tid);
 		if (t==null || !t.is_special()) return;
@@ -549,11 +549,11 @@ public class DataCore : Box, AbstractPart {
 			old = null;
 			for (; j<l;) {
 				store.iter_nth_child(out child, iter, j);
-				store.@get(child, 
-						   ItemFlag.MODE, out mode, 
-						   ItemFlag.INDEX, out idx, 
-						   ItemFlag.ADDR, out old, 
-						   ItemFlag.VALUE, out val, 
+				store.@get(child,
+						   ItemFlag.MODE, out mode,
+						   ItemFlag.INDEX, out idx,
+						   ItemFlag.ADDR, out old,
+						   ItemFlag.VALUE, out val,
 						   -1);
 				if (idx>=i) break;
 				store.@remove(ref child);
@@ -572,9 +572,9 @@ public class DataCore : Box, AbstractPart {
 					update_subtree(child, heap, !as_changed);
 			} else {
 				store.insert(out child, iter, j);
-				set_value(child, heap, false, e, st, i, 
+				set_value(child, heap, false, e, st, i,
 						  DataMode.FIELD, @"[$i]");
-				if (as_changed) 
+				if (as_changed)
 					store.@set(child, ItemFlag.CHANGED, as_changed, -1);
 				ft = dg.rts.type_of_any(heap, e.type);
 				add_dummy_item(child, ft, false);
@@ -585,17 +585,17 @@ public class DataCore : Box, AbstractPart {
 		n = store.iter_n_children(iter);
 		i = j;
 		for (; j<n; ++j) {
-			if (store.iter_nth_child(out child, iter, i)) 
+			if (store.iter_nth_child(out child, iter, i))
 				store.@remove(ref child);
 		}
 		store.@set(iter, ItemFlag.FIRST, first, -1);
 		if (n>0) {
 			var path = store.get_path(iter);
-			view.expand_row(path, false); 
+			view.expand_row(path, false);
 		}
 	}
 
-	protected virtual bool do_select(TreeSelection s, 
+	protected virtual bool do_select(TreeSelection s,
 									 TreeModel m, TreePath p, bool yes) {
 		Gedb.Type* t;
 		TreeIter iter, child;
@@ -630,12 +630,12 @@ public class DataCore : Box, AbstractPart {
 
 	private void do_move_items() {
 		if (!items_bar.sensitive) return;
-		if (move_timeout==0) 
+		if (move_timeout==0)
 			move_timeout = GLib.Timeout.@add(40, () => {
 					TreeModel m;
 					TreeIter iter;
 					var sel = view.get_selection();
-					if (sel.get_selected(out m, out iter)) 
+					if (sel.get_selected(out m, out iter))
 						move_items(iter, (int)items.value, false);
 					move_timeout = 0;
 					return false;
@@ -654,7 +654,7 @@ public class DataCore : Box, AbstractPart {
 		store.@get(iter,
 				   ItemFlag.FIELD, out e,
 				   ItemFlag.INDEX, out idx,
-				   ItemFlag.TYPE_ID, out tid, 
+				   ItemFlag.TYPE_ID, out tid,
 				   ItemFlag.MODE, out mode,
 				   -1);
 		switch (mode) {
@@ -705,24 +705,24 @@ public class DataCore : Box, AbstractPart {
 		bool ok;
 		if (!valid_feature(iter)) return false;
 		for (ok=true; ok; ok=store.iter_parent(out iter, iter)) {
-			store.@get(iter, 
+			store.@get(iter,
 					   ItemFlag.MODE, out mode,
 					   ItemFlag.EXPR, out ex,
 					   ItemFlag.ADDR, out addr,
 					   ItemFlag.FIELD, out e,
-					   ItemFlag.INDEX, out i, 
+					   ItemFlag.INDEX, out i,
 					   ItemFlag.TYPE_ID, out tid,
-					   ItemFlag.NAME, out name, 
+					   ItemFlag.NAME, out name,
 					   -1);
 			if (name==null || name=="") break;
-			pinfo = ex!=null && ex.bottom().address()!=null 
-				? new DeepInfo.from_expression(ex) 
+			pinfo = ex!=null && ex.bottom().address()!=null
+				? new DeepInfo.from_expression(ex)
 				: new DeepInfo(null, e, i, addr, dg.rts.type_at(tid));
 			if (info==null) last = pinfo;
 			else  info.parent = pinfo;
 			info = pinfo;
 		}
-		uint up = (main!=null && frame!=null) ? 
+		uint up = (main!=null && frame!=null) ?
 			main.frame.depth-frame.depth : 0;
 		menu = new FeatureMenu(dotted_name(last), up, last.tp, this, dg.rts);
 		menu.popup(null, null, null, ev.button, ev.time);
@@ -740,7 +740,7 @@ public class DataCore : Box, AbstractPart {
 			max_items = main.max_items;
 		}
 		StackFrame* f = stack.frame();
-		if (f!=null) do_refresh(f, f.class_id, f.pos); 
+		if (f!=null) do_refresh(f, f.class_id, f.pos);
 	}
 	
 	protected virtual void do_set_sensitive(bool is_running) {
@@ -780,7 +780,7 @@ public class DataCore : Box, AbstractPart {
 		status = state;
 		orientation = Orientation.VERTICAL;
 
-		store = new TreeStore(ItemFlag.NUM_COLS, 
+		store = new TreeStore(ItemFlag.NUM_COLS,
 							  typeof(Expression?),	// expr
 							  typeof(Entity*),		// field
 							  typeof(uint8*),		// addr
@@ -817,7 +817,7 @@ public class DataCore : Box, AbstractPart {
 		mode.set_data<uint>("column", ItemFlag.MODE);
 		mode.add_attribute(cell, "background-set", ItemFlag.CHANGED);
 		mode.min_width = 10;
-		mode.set_cell_data_func(cell, 
+		mode.set_cell_data_func(cell,
 			(l,r,m,i) => { do_display_mode(cell,i); });
 		mode.resizable = false;
 		view.append_column(mode);
@@ -868,7 +868,7 @@ public class DataCore : Box, AbstractPart {
 			{ return status.remove_long_string(); });
 
 		if (ff==null || ff.length==0) return;
-		ButtonBox buttons = new ButtonBox(Orientation.HORIZONTAL); 
+		ButtonBox buttons = new ButtonBox(Orientation.HORIZONTAL);
 		buttons.set_layout(ButtonBoxStyle.START);
 		buttons.@add(new Label("Format:"));
 		pack_start(buttons, false, false, 3);
@@ -877,18 +877,18 @@ public class DataCore : Box, AbstractPart {
 		foreach (var f in ff) {
 			switch (f) {
 			case FormatStyle.ADDRESS:
-				rb = add_format(buttons, rb!=null ? rb.get_group() : null, 
-								f, "natural", 
+				rb = add_format(buttons, rb!=null ? rb.get_group() : null,
+								f, "natural",
 								"Show address\nof reference objects.");
 				break;
 			case FormatStyle.IDENT:
-				rb = add_format(buttons, rb!=null ? rb.get_group() : null, 
-								f, "ident", 
+				rb = add_format(buttons, rb!=null ? rb.get_group() : null,
+								f, "ident",
 								"Show internal ident\nof reference objects.");
 				break;
 			case FormatStyle.HEX:
-				rb = add_format(buttons, rb!=null ? rb.get_group() : null, 
-								f, "hex", 
+				rb = add_format(buttons, rb!=null ? rb.get_group() : null,
+								f, "hex",
 								"Show hexadecimal form\nof all values.");
 				break;
 			}
@@ -908,16 +908,16 @@ public class DataCore : Box, AbstractPart {
 		bb.@add(rb);
 		rb.set_tooltip_text(tt);
 		rb.has_tooltip = true;
-		rb.toggled.connect((b) => { 
+		rb.toggled.connect((b) => {
 				if (style==f) return;
-				style=f; 
+				style=f;
 				do_reformat();
 			});
 		return rb;
 	}
 
 	private EvalPart _eval;
-	public EvalPart eval { 
+	public EvalPart eval {
 		get { return main!=null ? main.eval : _eval; }
 		set { _eval = value; }
 	}
@@ -925,14 +925,14 @@ public class DataCore : Box, AbstractPart {
 	public Gee.HashMap<void*,uint> known_objects;
 
 	private DeepInfo[] _deep_info;
-	public DeepInfo[] deep_info { 
+	public DeepInfo[] deep_info {
 		get { return main!=null ? main.deep_info : _deep_info; }
 		private set { _deep_info = value; }
 	}
 
 	private MemorySource deep_source;
 
-	private void add_deep_info(uint od, void* id, Gedb.Type* t, 
+	private void add_deep_info(uint od, void* id, Gedb.Type* t,
 							   void* w, Entity* e, int i) {
 		if (_deep_info.length<=od) _deep_info.resize((int)(2*od+1));
 		var p = deep_info[known_objects[w]];
@@ -942,11 +942,11 @@ public class DataCore : Box, AbstractPart {
 	private void improve_deep_info(uint od, void *w, Entity* e, int i) {
 		var old = _deep_info[od];
 		if (old.parent==null) return; // cannot be improved;
-		if (w==null) { // is root 
+		if (w==null) { // is root
 			old.reparent(null, e, i);
 		} else {
 			var now = _deep_info[known_objects[w]];
-			if (old.parent.depth > now.depth) old.reparent(now, e, i); 
+			if (old.parent.depth > now.depth) old.reparent(now, e, i);
 		}
 	}
 
@@ -982,12 +982,12 @@ public class DataCore : Box, AbstractPart {
 		deep_info = new DeepInfo[99];
 		var d = new Persistence<uint,void*>();
 		known_objects = d.known_objects;
-		d.when_new.connect((od,id,t,n,p,e,i) => 
+		d.when_new.connect((od,id,t,n,p,e,i) =>
 			{ add_deep_info(od,id,t,p,e,i); });
 		d.when_known.connect((od,id,t,n,p,e,i) =>
 			{ improve_deep_info(od,p,e,i); });
 		deep_source = new MemorySource(frame, s);
-		d.traverse_stack(new NullTarget(), deep_source, frame, s, true); 
+		d.traverse_stack(new NullTarget(), deep_source, frame, s, true);
 	}
 
 	private TextExpression? id2expr(DeepInfo info) {
@@ -995,9 +995,9 @@ public class DataCore : Box, AbstractPart {
 		var f = info.field;
 		Expression? pex = p!=null ? id2expr(p) : null;
 		TextExpression tex = null;
-		if (info.index>=0) 
+		if (info.index>=0)
 			tex = new ItemExpression.computed(pex, info.index, dg.rts);
-		 else if (f.text!=null) 
+		 else if (f.text!=null)
 			tex = new TextExpression.computed(f, info.addr, dg.rts);
 		info.expr = tex;
 		if (pex!=null) pex.set_child(pex.Child.DOWN, tex);
@@ -1012,8 +1012,8 @@ public class DataCore : Box, AbstractPart {
 		return id2expr(info);
 	}
 
-	public void set_debuggee(Debuggee? dg) { 
-		this.dg = dg; 
+	public void set_debuggee(Debuggee? dg) {
+		this.dg = dg;
 		eval.set_debuggee(dg);
 		var dp = this as DataPart;
 		if (dp!=null) dp.more_data.clear();
@@ -1033,7 +1033,7 @@ public class DataPart : DataCore {
 	internal Gee.List<MoreDataPart> more_data;
 	internal Gee.Map<string,Expression> aliases;
 
-	protected override bool do_select(TreeSelection s, 
+	protected override bool do_select(TreeSelection s,
 									  TreeModel m, TreePath p, bool yes) {
 		bool ok = base.do_select(s, m, p, yes);
 		TreeIter iter;
@@ -1054,13 +1054,13 @@ public class DataPart : DataCore {
 		sel.mode = SelectionMode.SINGLE;
 		sel.set_select_function(do_select);
 
-		sel.changed.connect((s) => { 
+		sel.changed.connect((s) => {
 				TreeModel model;
 				TreeIter iter;
 				bool ok = s.get_selected(out model, out iter);
 				if (!ok) return;
 				var item = new DataItem(model, iter);
-				item_selected(item); 
+				item_selected(item);
 			});
 		stack.level_selected.connect(
 			(s,f,i,p) => { do_refresh(f,i,p); });
@@ -1079,12 +1079,12 @@ public class DataPart : DataCore {
 		TreeSelection sel = view.get_selection();
 		TreeIter iter;
 		TreeModel model;
-		return sel.get_selected(out model, out iter) ? 
+		return sel.get_selected(out model, out iter) ?
 			new DataItem(store, iter) : null;
 	}
 	
 	public void assign(Expression rhs) requires (rhs.dynamic_type!=null) {
-		var lhs = selected_item(); 
+		var lhs = selected_item();
 		if (lhs==null) return;
 		var linfo = new WatchInfo.from_data(lhs, frame, dg.rts);
 		Entity* e = lhs.field;
@@ -1203,7 +1203,7 @@ public class DataPart : DataCore {
 			break;
 		default:
 			if (t.is_subobject())
-				copy_value(left, right, t.field_bytes());  
+				copy_value(left, right, t.field_bytes());
 			else
 				left = right;
 			break;
@@ -1211,9 +1211,9 @@ public class DataPart : DataCore {
 		string value = format_value(right, 0, false, t, style,
 									known_objects);
 		string type = format_type(right, 0, false, t);
-		store.@set(lhs.iter, 
-				   ItemFlag.VALUE, value, 
-				   ItemFlag.TYPE, type, 
+		store.@set(lhs.iter,
+				   ItemFlag.VALUE, value,
+				   ItemFlag.TYPE, type,
 				   ItemFlag.TYPE_ID, t.ident,
 				   -1);
 		update_subtree(lhs.iter, left, false);
@@ -1242,14 +1242,14 @@ public class DataPart : DataCore {
 			exa = exb as AliasExpression;
 			if (exa!=null) exb = exa.alias;
 			t = exb.dynamic_type;
-			addr = exb.address(); 
+			addr = exb.address();
 			name = ex.append_qualified_name(null, null, style);
 			store.append(out iter, at);
 			ext = exb as TextExpression;
 			exi = exb as ItemExpression;
 			exu = exb as TupleExpression;
-			e = exi!=null 
-				? (Entity*)exi.special_type.item_0() 
+			e = exi!=null
+				? (Entity*)exi.special_type.item_0()
 				: (ext!=null ? ext.entity : null);
 			set_value(iter, addr, false, e, null, -1, c, name, exb);
 			exr = exb.range;
@@ -1259,7 +1259,7 @@ public class DataPart : DataCore {
 					if (at!=null) iter = at;
 					view.expand_row(store.get_path(iter), false);
 					exr.traverse_range(
-						(r) => { add_expression(r, iter, true); }, 
+						(r) => { add_expression(r, iter, true); },
 						frame, dg.rts, null, true);
 				} catch (Error e) {
 					stderr.printf("Error !!\n");
@@ -1267,8 +1267,8 @@ public class DataPart : DataCore {
 			} else if (exd!=null) {
 				add_expression(exd, iter, true);
 			} else if (exu!=null && exu.arg!=null) {
-				add_expression(exu.arg, iter); 
-			} else { 
+				add_expression(exu.arg, iter);
+			} else {
 				add_dummy_item(iter, t, true);
 			}
 		}
@@ -1323,7 +1323,7 @@ public class ExtraData : DataCore {
 
 public class MoreDataPart : Window {
 
-	private bool do_close_data() { 
+	private bool do_close_data() {
 // Delay closing until all events haven been served:
 		GLib.Idle.@add(() => { destroy();  return false; });
 		return true;
@@ -1373,7 +1373,7 @@ when the program state changes?""");
 		d.add_more(this);
 	}
 
-} 
+}
 
 public class FixedPart : DataCore {
 
@@ -1389,7 +1389,7 @@ public class FixedPart : DataCore {
 
 	private bool do_close() { w.destroy(); return true; }
 
-	private void set_once_value(TreeIter at, Gedb.Once* o, FormatStyle style) 
+	private void set_once_value(TreeIter at, Gedb.Once* o, FormatStyle style)
 	requires (o!=null) {
 		Gedb.Type* t = null;
 		Entity* e = (Entity*)o;
@@ -1404,7 +1404,7 @@ public class FixedPart : DataCore {
 				addr = t.dereference(addr);
 				addr = dg.rts.unboxed(addr, t);
 				if (!t.is_subobject()) t = dg.rts.type_of_any(addr, t);
-				value = format_value(addr, 0, false, t, 
+				value = format_value(addr, 0, false, t,
 									 style, main.known_objects);
 				type = t._name.fast_name;
 			} else {
@@ -1412,18 +1412,18 @@ public class FixedPart : DataCore {
 				type = t._name.fast_name;
 			}
 		}
-		store.@set(at, ItemFlag.FIELD, o, ItemFlag.INDEX, -1, 
-				   ItemFlag.ADDR, addr, 
-				   ItemFlag.VALUE, value, ItemFlag.TYPE, type, 
+		store.@set(at, ItemFlag.FIELD, o, ItemFlag.INDEX, -1,
+				   ItemFlag.ADDR, addr,
+				   ItemFlag.VALUE, value, ItemFlag.TYPE, type,
 				   Item.FRESH, fresh, -1);
 		if (!fresh) add_dummy_item(at, t, true);
 	}
 
-	protected override bool valid_feature(TreeIter iter) { 
+	protected override bool valid_feature(TreeIter iter) {
 		Entity* e;
 		bool fresh;
 		store.@get(iter, Item.FRESH, out fresh, ItemFlag.FIELD, out e, -1);
-		return !fresh && e!=null; 
+		return !fresh && e!=null;
 	}
 
 	protected override void do_refresh(StackFrame* f, uint cid, uint pos) {
@@ -1437,14 +1437,14 @@ public class FixedPart : DataCore {
 		bool ok = store.get_iter_first(out iter);
 		n = store.iter_n_children(iter);
 		if (store.get_iter_first(out iter)) {
-			do { 
+			do {
 				n = store.iter_n_children(iter);
 				for (k=0; k<n; ++k) {
 					store.iter_nth_child(out child, iter, k);
-					store.@get(child, 
-							   ItemFlag.FIELD, out e, 
+					store.@get(child,
+							   ItemFlag.FIELD, out e,
 							   Item.FRESH, out fresh,
-							   ItemFlag.MODE, out m, 
+							   ItemFlag.MODE, out m,
 							   -1);
 					if (m!=DataMode.ONCE) continue;
 					o = (Gedb.Once*)e;
@@ -1457,8 +1457,8 @@ public class FixedPart : DataCore {
 						store.@set(child, ItemFlag.CHANGED, false, -1);
 					}
 					if (!fresh) add_dummy_item(child, e.type, true);
-				} 
-			} while (store.iter_next(ref iter)); 
+				}
+			} while (store.iter_next(ref iter));
 		}
 	}
 
@@ -1494,21 +1494,21 @@ public class FixedPart : DataCore {
 		bool ok = store.get_iter_first(out iter);
 		known_objects = style==FormatStyle.IDENT ? main.known_objects : null;
 		if (store.get_iter_first(out iter)) {
-			do { 
+			do {
 				n = store.iter_n_children(iter);
 				for (k=0; k<n; ++k) {
 					store.iter_nth_child(out child, iter, k);
-					store.@get(child, ItemFlag.FIELD, out e, 
-							   Item.FRESH, out fresh, 
-							   ItemFlag.MODE, out m, 
+					store.@get(child, ItemFlag.FIELD, out e,
+							   Item.FRESH, out fresh,
+							   ItemFlag.MODE, out m,
 							   -1);
 					if (fresh) continue;
-					if (m==DataMode.CONSTANT) { // to be improved 
+					if (m==DataMode.CONSTANT) { // to be improved
 					} else {
 						set_once_value(child, (Gedb.Once*)e, style);
 					}
 				}
-			} while (store.iter_next(ref iter)); 
+			} while (store.iter_next(ref iter));
 		}
 	}
 
@@ -1518,9 +1518,9 @@ public class FixedPart : DataCore {
 		var found = new Gee.ArrayList<TreePath>();
 		string name;
 		if (store.get_iter_first(out iter)) {
-			do { 
+			do {
 				if (store.iter_children(out child, iter)) {
-					do { 
+					do {
 						store.@get(child, ItemFlag.NAME, out name, -1);
 						if (name.has_prefix(key)) {
 							found.@add(store.get_path(child));
@@ -1548,7 +1548,7 @@ public class FixedPart : DataCore {
 		return true;
 	}
 
-	public FixedPart(Debuggee dg, StackPart stack, DataPart data, 
+	public FixedPart(Debuggee dg, StackPart stack, DataPart data,
 					 Status status) {
 		base(stack, status, {FormatStyle.ADDRESS,FormatStyle.HEX});
 		main = data;
@@ -1569,7 +1569,7 @@ public class FixedPart : DataCore {
 		TreePath path;
 		TreeRowReference row;
 		TreeIter iter, child;
-		store = new TreeStore(Item.NUM_COLS, 
+		store = new TreeStore(Item.NUM_COLS,
 							  typeof(Expression?),	// expr
 							  typeof(Entity*),		// field
 							  typeof(uint8*),		// addr
@@ -1632,9 +1632,9 @@ public class FixedPart : DataCore {
 			if (is_const) {
 				m = DataMode.CONSTANT;
 				name = e._name.fast_name;
-				if (t.is_basic()) 
+				if (t.is_basic())
 					addr = (uint8*)(&c.basic);
-				else 
+				else
 					addr = *(void**)c.ms;
 				value = format_value(addr, 0, false, t, 0);
 				type = t._name.fast_name;
@@ -1656,12 +1656,12 @@ public class FixedPart : DataCore {
 			cid = ct.ident;
 			if (rows[cid]==null) {
 				store.append(out iter, null);
-				store.@set(iter, 
-						   Item.CLS, ct._name.fast_name, 
-						   Item.CID, cid, 
+				store.@set(iter,
+						   Item.CLS, ct._name.fast_name,
+						   Item.CID, cid,
 						   ItemFlag.NAME, "",
 						   ItemFlag.VALUE, "",
-						   ItemFlag.TYPE, "", 
+						   ItemFlag.TYPE, "",
 						   Item.FRESH, false,
 						   -1);
 				path = store.get_path(iter);
@@ -1671,14 +1671,14 @@ public class FixedPart : DataCore {
 				store.get_iter(out iter, path);
 			}
 			store.append(out child, iter);
-			store.@set(child, ItemFlag.FIELD, e, 
+			store.@set(child, ItemFlag.FIELD, e,
 					   ItemFlag.INDEX, -1,
-					   ItemFlag.ADDR, addr, 
+					   ItemFlag.ADDR, addr,
 					   ItemFlag.NAME, name,
-					   ItemFlag.VALUE, value, 
+					   ItemFlag.VALUE, value,
 					   ItemFlag.TYPE, type,
 					   ItemFlag.TYPE_ID, tid,
-					   ItemFlag.MODE, (int)m, 
+					   ItemFlag.MODE, (int)m,
 					   Item.FRESH, fresh,
 					   -1);
 			if (is_const) {
@@ -1695,7 +1695,7 @@ public class FixedPart : DataCore {
 		}	
 
 		TreeViewColumn cls, name_col;
-		cls = new TreeViewColumn.with_attributes("In Class", cell, 
+		cls = new TreeViewColumn.with_attributes("In Class", cell,
 												 "text", Item.CLS, null);
 		cls.set_data<uint>("column", Item.CLS);
 		cls.min_width = 80;
@@ -1727,7 +1727,7 @@ public class FixedPart : DataCore {
 
 } /* FixedPart */
 
-public class DeepInfo { 
+public class DeepInfo {
 
 	public DeepInfo(DeepInfo? p, Entity* e, int i=-1, uint8* obj, Gedb.Type* t)
 	//	requires (p==null || ((i>=0) == p.tp.is_special()))
@@ -1737,7 +1737,7 @@ public class DeepInfo {
 		reparent(p, e, i);
 	}
 
-	public DeepInfo.from_expression(Expression ex) 
+	public DeepInfo.from_expression(Expression ex)
 	requires (ex.bottom().address()!=null) {
 		var tex = ex.bottom() as TextExpression;
 		var f = tex!=null ? tex.entity : null;
@@ -1750,10 +1750,10 @@ public class DeepInfo {
 	}
 
 /**
-   Parent of object, `null' for root objects 
+   Parent of object, `null' for root objects
    (local variables of actual routine, once function values)
  **/
-	public DeepInfo? parent { get; set; } 
+	public DeepInfo? parent { get; set; }
 
 /**
    Associated Expression.
@@ -1763,27 +1763,27 @@ public class DeepInfo {
 /**
    Entity of object if `parent' is not of SPECIAL type
  **/
-	public Entity* field { get; private set; } 
+	public Entity* field { get; private set; }
 
 /**
    Index of object if `parent' is of SPECIAL type
  **/
-	public int index { get; private set; } 
+	public int index { get; private set; }
 
 /**
-   Traversal depth of object 
+   Traversal depth of object
  **/
-	public int depth { get; private set; } 
+	public int depth { get; private set; }
 
 /**
    Dynamic type of object
  **/
-	public Gedb.Type* tp { get; private set; } 
+	public Gedb.Type* tp { get; private set; }
 
 /**
    Object address
  **/
-	public uint8* addr { get; private set; } 
+	public uint8* addr { get; private set; }
 
 	public void reparent(DeepInfo? p, Entity* e, int i) {
 		parent = p;
@@ -1791,7 +1791,7 @@ public class DeepInfo {
 		index = i;
 		depth = p!=null ? p.depth+1 : 0;
 	}
-} 
+}
 
 public class FeatureMenu : Gtk.Menu {
 
@@ -1801,7 +1801,7 @@ public class FeatureMenu : Gtk.Menu {
 	private string prefix;
 	private uint up;
 
-	private void do_feature(Gtk.MenuItem item) { 
+	private void do_feature(Gtk.MenuItem item) {
 		bool is_prefix = false;
 		string name = names[item];
 		string all = prefix;
@@ -1831,7 +1831,7 @@ public class FeatureMenu : Gtk.Menu {
 			break;
 		}
 		if (is_prefix) all = name + " " + all;
-		eval.insert(all); 
+		eval.insert(all);
 	}
 
 	private string add_short_type(string name, Entity* e) requires (e!=null) {
@@ -1860,7 +1860,7 @@ public class FeatureMenu : Gtk.Menu {
 		this.data = data;
 		this.prefix = prefix!="Current" ? prefix : "";
 		this.up = up;
-		eval = data.main!=null ? 
+		eval = data.main!=null ?
 			data.main.eval : (data as DataPart).eval;
 		names = new Gee.HashMap<Gtk.MenuItem,string>();
 
@@ -1897,7 +1897,7 @@ public class FeatureMenu : Gtk.Menu {
 		}
 
 		n = t.routine_count();
-		if (!t.is_basic()) 
+		if (!t.is_basic())
 			if (!t.base_class.is_debug_enabled()) n = 0;
 		var flist = new Gee.ArrayList<Routine*>();
 		for (i=n; i-->0;) {
@@ -1928,7 +1928,7 @@ public class FeatureMenu : Gtk.Menu {
 			item.show();
 			m = r.argument_count;
 			if (x.alias_name=="[]") {
-				name = "["; 
+				name = "[";
 			} else if (x.alias_name!=null) {
 				name = x.alias_name;
 			} else {
@@ -2007,7 +2007,7 @@ enum Query {
 	NAME = 0,
 	ARGS,
 	ENTITY,
-	KIND, 
+	KIND,
 	NUM_COLS
 }
 	
@@ -2037,24 +2037,24 @@ public class EvalPart : Grid, AbstractPart, Cancellable {
 			var ex = checker.expression_at(pos, false);
 			if (ex!=null) {
 				int style = -1;
-				if (!expanding) 
+				if (!expanding)
 					style -= ex.Format.EXPAND_ALIAS + ex.Format.EXPAND_PH;
 				text = ex.format_one_value(style);
 				do_data_selected(data.selected_item());
-			} 
+			}
 		}
-		result.set_text(text); 
+		result.set_text(text);
 	}
 	
 	private void do_check_expression() {
 		data.dg.call_delayed(this);
 	}
 	
-	private void do_moved(Object obj) { 
+	private void do_moved(Object obj) {
 		int pos = edit.cursor_position;
 		if (changed) return;
 		var ex = checker.expression_at(pos, false);
-		set_result(ex); 
+		set_result(ex);
 	}
 	
 	private void do_edit_icon(EntryIconPosition pos) {
@@ -2069,10 +2069,10 @@ public class EvalPart : Grid, AbstractPart, Cancellable {
 	}
 	
 	private void do_data_selected(DataItem? sel) {
-		result.primary_icon_sensitive = 
+		result.primary_icon_sensitive =
 			sel!=null && result_expr!=null
-			&& sel.mode!=DataMode.CURRENT 
-			&& sel.mode!=DataMode.EXTERN 
+			&& sel.mode!=DataMode.CURRENT
+			&& sel.mode!=DataMode.EXTERN
 			&& sel.field.is_assignable_from(result_expr.bottom().dynamic_type);
 	}
 
@@ -2107,7 +2107,7 @@ public class EvalPart : Grid, AbstractPart, Cancellable {
 				text = text.splice(lb, lb+bbullet.length, bullet);
 			}
 			if (l>=0) {
-				text = text.splice(l, l+bullet.length, bbullet); 
+				text = text.splice(l, l+bullet.length, bbullet);
 			}
 			edit.text = text;
 			edit.move_cursor(MovementStep.LOGICAL_POSITIONS, p, false);	
@@ -2138,7 +2138,7 @@ public class EvalPart : Grid, AbstractPart, Cancellable {
 		result.primary_icon_tooltip_text =
 			"Assign value to selected item\nin data list.";
 		result.set_icon_from_stock(EntryIconPosition.SECONDARY, Stock.ZOOM_OUT);
-		result.secondary_icon_tooltip_text = 
+		result.secondary_icon_tooltip_text =
 			"Toggle placeholder representation.";
 		expanding = true;
 		result.icon_release.connect((p,ev) => { do_result_icon(p); });
@@ -2162,7 +2162,7 @@ public class EvalPart : Grid, AbstractPart, Cancellable {
 		edit.activate.connect((e) => { do_check_expression(); });
 		edit.notify["cursor-position"].connect_after(
 			(e,p) => { do_moved(e); });
-		sig_id = edit.notify["cursor-position"].connect((e,p) => 
+		sig_id = edit.notify["cursor-position"].connect((e,p) =>
 			{ do_pretty_print(); });
 		attach(checker, 1, 3, 3, 1);
 
@@ -2171,7 +2171,7 @@ public class EvalPart : Grid, AbstractPart, Cancellable {
 	
 	public HistoryBox history { get; private set; }
 
-	public void insert(string str) { 
+	public void insert(string str) {
 		var model = edit.buffer;
 		string text = edit.text;
 		int q, p = edit.cursor_position;
@@ -2199,11 +2199,11 @@ public class EvalPart : Grid, AbstractPart, Cancellable {
 	public void compute(string str, bool move_cursor_at_end=false) {
 		edit.text = str;
 		edit.activate();
-		if (move_cursor_at_end) 
+		if (move_cursor_at_end)
 			edit.move_cursor(MovementStep.VISUAL_POSITIONS, str.length, false);
 	}
 	
-	public void set_debuggee(Debuggee? dg) { 
+	public void set_debuggee(Debuggee? dg) {
 		if (dg!=null) {
 			dg.notify["is-running"].connect(
 				(g,p) => { do_set_sensitive(dg.is_running); });
@@ -2214,8 +2214,8 @@ public class EvalPart : Grid, AbstractPart, Cancellable {
 	public void action() {
 		checker.reset();
 		string str = edit.get_text();
-		if (str.strip().length==0 || data.dg==null) return; 
-		checker.check_dynamic(str, null, data.frame, data.dg.rts, 
+		if (str.strip().length==0 || data.dg==null) return;
+		checker.check_dynamic(str, null, data.frame, data.dg.rts,
 							  true, aliases, null, id_to_expr, data);
 	}
 
