@@ -2520,12 +2520,12 @@ other value means `other' is a parent class.
 
 		public uint8* closed_operands(uint8* id) {
 			Field* cot = declared_type._type.fields[0];
-			return (uint8*)id + cot.offset;
+			uint8* addr = (uint8*)id + cot.offset;
+			return *(void**)addr;
 		}
 
 		public uint8* closed_operand(uint8* id, uint i) {
 			uint8* addr = closed_operands(id);
-			addr = *(uint8**)addr;
 			return addr + closed_operands_tuple._type.fields[i].offset;
 		}
 

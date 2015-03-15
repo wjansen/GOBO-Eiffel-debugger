@@ -442,7 +442,7 @@ the heavy way of opening a dialogue window is avoided. </p>
 The menu bar contains the entries <span style="font-family:sans-serif"><U>F</U></span><span style="font-family:sans-serif">ile</span>, 
 <span style="font-family:sans-serif"><U>W</U></span><span style="font-family:sans-serif">indow</span>, <span style="font-family:sans-serif"><U>P</U></span><span style="font-family:sans-serif">references</span>, 
 and <span style="font-family:sans-serif"><U>H</U></span><span style="font-family:sans-serif">elp</span>. 
-Menu <span style="font-family:sans-serif">File</span> has the following items:
+</p><p>Menu <span style="font-family:sans-serif">File</span> has the following items:
 </p><dl class="description"><dt class="dt-description"><span style="font-family:sans-serif">Co</span><span style="font-family:sans-serif"><U>n</U></span><span style="font-family:sans-serif">tinue</span></dt><dd class="dd-description">
 the item exists only in the post mortem analyser, it enables to continue 
 the debuggee if it had been interrupted from the keyboard;
@@ -459,8 +459,7 @@ of existing alias names while breakpoints get added to the breakpoint list
 <span style="font-style:italic">debuggee</span><span style="font-family:monospace">.edg</span> in the debuggee&#X2019;s directory 
 are restored after loading, so a particular menu item is not necessary); 
 </dd><dt class="dt-description"><span style="font-family:sans-serif"><U>Q</U></span><span style="font-family:sans-serif">uit</span></dt><dd class="dd-description"> quits the debugger session. 
-</dd></dl><p>
-Menu <span style="font-family:sans-serif">Window</span> has the following items to open a new window: 
+</dd></dl><p>Menu <span style="font-family:sans-serif">Window</span> has the following items to open a new window: 
 </p><dl class="description"><dt class="dt-description"><span style="font-family:sans-serif">New </span><span style="font-family:sans-serif"><U>d</U></span><span style="font-family:sans-serif">ata</span></dt><dd class="dd-description"> opens a new window for displaying data; 
 </dd><dt class="dt-description"><span style="font-family:sans-serif"><U>G</U></span><span style="font-family:sans-serif">lobal data</span></dt><dd class="dd-description"> opens a window showing global data 
 (constant attributes, values of once functions);
@@ -468,8 +467,7 @@ Menu <span style="font-family:sans-serif">Window</span> has the following items 
 and displaying data analogously to the <span style="font-style:oblique">SQL</span> command <span style="font-family:monospace">SELECT</span>; 
 </dd><dt class="dt-description"><span style="font-family:sans-serif"><U>A</U></span><span style="font-family:sans-serif">lias definition</span></dt><dd class="dd-description"> opens a window showing 
 a table of alias definitions, the table entries are editable. 
-</dd></dl><p> 
-Menu <span style="font-family:sans-serif">Preferences</span> has the following items:
+</dd></dl><p>Menu <span style="font-family:sans-serif">Preferences</span> has the following items:
 </p><dl class="description"><dt class="dt-description"><span style="font-family:sans-serif"><U>A</U></span><span style="font-family:sans-serif">ppearance</span></dt><dd class="dd-description">
 opens a window to modify certain properties 
 of the debugger&#X2019;s graphical outlay; 
@@ -480,7 +478,12 @@ and the maximum number of <span style="font-family:monospace">SPECIAL</span> ite
 opens a window to modify the storage sizes of previously entered 
 expressions etc., the storages are associated to various text fields. 
 </dd></dl><p>
-Menu <span style="font-family:sans-serif">Help</span> has the following items:
+The preference settings will be stored at end of the debugging session 
+to file <span style="font-family:monospace">gedb/preferences.cfg</span> in the directory given by environment variable 
+<span style="font-family:monospace">XDG_CONFIG_HOME</span> (<span style="font-style:oblique">Unix</span>) 
+or <span style="font-family:monospace">CSIDL_LOCAL_APPDATA</span> (<span style="font-style:oblique">Windows</span>). 
+The preferences are restored from this file at the next debugger start. 
+</p><p>Menu <span style="font-family:sans-serif">Help</span> has the following items:
 </p><dl class="description"><dt class="dt-description"><span style="font-family:sans-serif"><U>M</U></span><span style="font-family:sans-serif">anual</span></dt><dd class="dd-description">
 shows this manual by means of a graphics tool 
 (the choice of the tool depends on the platform running <span style="font-style:oblique">Gedb</span>); 
@@ -1338,7 +1341,8 @@ to the selected object;
 the value in the field under the mouse pointer is inserted 
 into the <span style="font-family:sans-serif">Expr</span> field of the <span style="font-family:sans-serif">Evaluation</span> part (similarly to the <span style="font-family:sans-serif">Data</span> part).
 </dd></dl><p>A final remark. 
-It was not intended to implement a full database, 
+It was not intended to implement all features of <span style="font-style:oblique">SQL</span> command 
+<span style="font-family:monospace">SELECT</span> or even a full database, 
 so the debugger&#X2019;s <span style="font-family:monospace">SELECT</span> query is rather poor: 
 only one table is supported at one time (no <span style="font-family:monospace">JOIN</span>), 
 no grouping (no <span style="font-family:monospace">GROUP BY</span>, <span style="font-family:monospace">HAVING</span>), 
@@ -1401,7 +1405,10 @@ but the rule applies to the other expression details.
 </p><p>Clicking the left icon in the <span style="font-family:sans-serif">Expr</span> field copies the values 
 of the items of the expression list to the tree of the <span style="font-family:sans-serif">Data</span> part 
 thereby expanding expression ranges and and their details. 
-There the expressions will indicated by an <span style="font-family:sans-serif">X</span>. </p>
+There the expressions will indicated by an <span style="font-family:sans-serif">X</span>. 
+If an expression has a detail then this is shown 
+(instead of the usual object attributes) when the expression&#X2019;s row 
+in the <span style="font-family:sans-serif">Data</span> part will be expanded by GUI manipulation. </p>
 <!--TOC subsubsection id="sec35" Assignment-->
 <h4 id="sec35" class="subsubsection">3.11.2&#XA0;&#XA0;Assignment</h4><!--SEC END --><p><a id="S:assign"></a>
 Clicking the left icon in the <span style="font-family:sans-serif">Value</span> field 
@@ -1444,7 +1451,12 @@ if this class is not the actual class.
 Moreover if the feature can be computed (highlighted light pink) 
 and if the evaluation does not involve function calls 
 then the value is shown additionally. 
-</p><p>If the status bar is not occupied by the information just mentioned 
+</p><blockquote class="quote">
+<div class="center"><span style="font-weight:bold">Hint</span></div>
+Instead of showing a query&#X2019;s value in the status bar it is possible 
+to show it as tooltip in the <span style="font-family:sans-serif">Source</span> part. This behaviour may bo switch on 
+by menu item <span style="font-family:sans-serif">Preferences</span> &#X2192; <span style="font-family:sans-serif">Appearance</span> &#X2192; <span style="font-family:sans-serif">Tooltips</span>. 
+</blockquote><p>If the status bar is not occupied by the information just mentioned 
 (this happens always when the mouse pointer is in the <span style="font-family:sans-serif">Run</span> part)
 then it displays the status of the debuggee: 
 <span style="font-family:monospace">Running</span> if the debuggee is running or else the actual stop reason. </p>

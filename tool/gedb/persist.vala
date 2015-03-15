@@ -770,7 +770,7 @@ namespace Gedb {
 		}
 
 		public override void pre_agent(AgentType* at, void* id) {
-			void* obj = *(void**)at.closed_operands((uint8*)id);
+			void* obj = at.closed_operands((uint8*)id);
 			offsets.push_offset(obj);
 		}
 
@@ -904,7 +904,7 @@ namespace Gedb {
 			size_t n = (sizeof(void*))*(object_index+1);
 			unowned void*[] oo = (void*[])realloc_func(*objects, n);
 			*objects = oo;
-			var obj = *(void**)at.closed_operands((uint8*)id);
+			var obj = at.closed_operands((uint8*)id);
 			oo[object_index] = obj;
 		}
 
@@ -1245,7 +1245,7 @@ namespace Gedb {
 		}
 
 		public override void pre_agent(AgentType* at, void* id) {
-			void* obj = *(void**)at.closed_operands((uint8*)id);
+			void* obj = at.closed_operands((uint8*)id);
 			offsets.push_offset(obj);
 			put_new_object((Gedb.Type*)at.closed_operands_tuple);
 		}

@@ -16,7 +16,7 @@ Gedb &#X2013; The Gec debugger<h3 id="sec12" class="subsection">3.3&#XA0;&#XA0;M
 The menu bar contains the entries <span style="font-family:sans-serif"><U>F</U></span><span style="font-family:sans-serif">ile</span>, 
 <span style="font-family:sans-serif"><U>W</U></span><span style="font-family:sans-serif">indow</span>, <span style="font-family:sans-serif"><U>P</U></span><span style="font-family:sans-serif">references</span>, 
 and <span style="font-family:sans-serif"><U>H</U></span><span style="font-family:sans-serif">elp</span>. 
-Menu <span style="font-family:sans-serif">File</span> has the following items:
+</p><p>Menu <span style="font-family:sans-serif">File</span> has the following items:
 </p><dl class="description"><dt class="dt-description"><span style="font-family:sans-serif">Co</span><span style="font-family:sans-serif"><U>n</U></span><span style="font-family:sans-serif">tinue</span></dt><dd class="dd-description">
 the item exists only in the post mortem analyser, it enables to continue 
 the debuggee if it had been interrupted from the keyboard;
@@ -33,8 +33,7 @@ of existing alias names while breakpoints get added to the breakpoint list
 <span style="font-style:italic">debuggee</span><span style="font-family:monospace">.edg</span> in the debuggee&#X2019;s directory 
 are restored after loading, so a particular menu item is not necessary); 
 </dd><dt class="dt-description"><span style="font-family:sans-serif"><U>Q</U></span><span style="font-family:sans-serif">uit</span></dt><dd class="dd-description"> quits the debugger session. 
-</dd></dl><p>
-Menu <span style="font-family:sans-serif">Window</span> has the following items to open a new window: 
+</dd></dl><p>Menu <span style="font-family:sans-serif">Window</span> has the following items to open a new window: 
 </p><dl class="description"><dt class="dt-description"><span style="font-family:sans-serif">New </span><span style="font-family:sans-serif"><U>d</U></span><span style="font-family:sans-serif">ata</span></dt><dd class="dd-description"> opens a new window for displaying data; 
 </dd><dt class="dt-description"><span style="font-family:sans-serif"><U>G</U></span><span style="font-family:sans-serif">lobal data</span></dt><dd class="dd-description"> opens a window showing global data 
 (constant attributes, values of once functions);
@@ -42,8 +41,7 @@ Menu <span style="font-family:sans-serif">Window</span> has the following items 
 and displaying data analogously to the <span style="font-style:oblique">SQL</span> command <span style="font-family:monospace">SELECT</span>; 
 </dd><dt class="dt-description"><span style="font-family:sans-serif"><U>A</U></span><span style="font-family:sans-serif">lias definition</span></dt><dd class="dd-description"> opens a window showing 
 a table of alias definitions, the table entries are editable. 
-</dd></dl><p> 
-Menu <span style="font-family:sans-serif">Preferences</span> has the following items:
+</dd></dl><p>Menu <span style="font-family:sans-serif">Preferences</span> has the following items:
 </p><dl class="description"><dt class="dt-description"><span style="font-family:sans-serif"><U>A</U></span><span style="font-family:sans-serif">ppearance</span></dt><dd class="dd-description">
 opens a window to modify certain properties 
 of the debugger&#X2019;s graphical outlay; 
@@ -54,7 +52,12 @@ and the maximum number of <span style="font-family:monospace">SPECIAL</span> ite
 opens a window to modify the storage sizes of previously entered 
 expressions etc., the storages are associated to various text fields. 
 </dd></dl><p>
-Menu <span style="font-family:sans-serif">Help</span> has the following items:
+The preference settings will be stored at end of the debugging session 
+to file <span style="font-family:monospace">gedb/preferences.cfg</span> in the directory given by environment variable 
+<span style="font-family:monospace">XDG_CONFIG_HOME</span> (<span style="font-style:oblique">Unix</span>) 
+or <span style="font-family:monospace">CSIDL_LOCAL_APPDATA</span> (<span style="font-style:oblique">Windows</span>). 
+The preferences are restored from this file at the next debugger start. 
+</p><p>Menu <span style="font-family:sans-serif">Help</span> has the following items:
 </p><dl class="description"><dt class="dt-description"><span style="font-family:sans-serif"><U>M</U></span><span style="font-family:sans-serif">anual</span></dt><dd class="dd-description">
 shows this manual by means of a graphics tool 
 (the choice of the tool depends on the platform running <span style="font-style:oblique">Gedb</span>); 

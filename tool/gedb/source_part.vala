@@ -34,6 +34,7 @@ public class SourcePart : Box, AbstractPart, ClassPosition, Searcher {
 	internal TextTagTable tags;
 	internal Pango.FontDescription? font;
 	internal int mono_width;
+	internal int mono_height;
 	internal Entry go_to;
 	internal Entry plus;
 	internal bool active; 
@@ -52,7 +53,15 @@ public class SourcePart : Box, AbstractPart, ClassPosition, Searcher {
 		}
 	}
 
-	public bool value_as_tooltip { get; set; }
+	private bool _value_as_tooltip;
+	public bool value_as_tooltip { 
+		get { return _value_as_tooltip; }
+		set { 
+			_value_as_tooltip = value; 
+			var src = act_source();
+			if (src!=null) src.text_view.has_tooltip = value;
+		}
+	}
 
 	private int _tab_width = 3;
 	public int tab_width {
@@ -665,20 +674,39 @@ and close feature window.""");
 		hot_needle = "";
 		strong_needle = "";
 
+		int fs = Gdk.Screen.get_default().height()<800 ? 9 : 10;
 		orientation = Orientation.VERTICAL;
-		if (font==null) 
-			font = Pango.FontDescription.from_string("Inconsolata 11");
-		if (font==null) 
-			font = Pango.FontDescription.from_string("Ubuntu Mono 11");
-		if (font==null) 
-			font = Pango.FontDescription.from_string("Andale Mono 10");
-		if (font==null)
-			font = Pango.FontDescription.from_string("FreeMono 11");
-		if (font==null) 
-			font = Pango.FontDescription.from_string("Latin Modern Mono Light 11");
-		if (font==null) 
-			font = Pango.FontDescription.from_string("Monospace 10");
-		mono_width = font!=null ? 7 : 9;
+		if (font==null) {
+			font = Pango.FontDescription.from_string(@"Inconsolata $(fs+1)");
+			mono_width = fs-3;
+			mono_height = fs+6;
+		}
+		if (font==null) {
+			font = Pango.FontDescription.from_string(@"Ubuntu Mono $(fs+1)");
+			mono_width = fs-3;
+			mono_height = fs+6;
+		}
+		if (font==null) {
+			font = Pango.FontDescription.from_string(@"Andale Mono $fs");
+			mono_width = fs-2;
+			mono_height = fs+6;
+		}
+		if (font==null) {
+			font = Pango.FontDescription.from_string(@"FreeMono $(fs+1)");
+			mono_width = fs-1;
+			mono_height = fs+6;
+		}
+		if (font==null) {
+			font = Pango.FontDescription.from_string
+				(@"Latin Modern Mono Light $fs");
+			mono_width = fs-3;
+			mono_height = 2*fs-1;
+		}
+		if (font==null) {
+			font = Pango.FontDescription.from_string(@"Monospace $fs");
+			mono_width = fs-2;
+			mono_height = fs+7;
+		}
 		fill_tag_table();
 
 		ButtonBox buttons;
@@ -806,6 +834,7 @@ public static void gedb_init_stdin() { the_source.init_input(); }
 public class SingleSource : Box {
 	
 	internal SourceView text_view;
+	protected string tip;
 	protected SourcePart source;
 	protected Gee.HashMap<int,int> parenths;
 
@@ -871,6 +900,12 @@ public class SingleSource : Box {
 		scanner.add_stream(fs);
 	}
 	
+	private bool do_tooltip(int x, int y, bool kb, Tooltip tooltip) {
+		if (tip==null || tip.length==0) return false;
+		tooltip.set_text(tip);
+		return true;
+	}
+
 	public uint cid { get; protected set; }
 
 	public SingleSource(SourcePart s) {
@@ -899,13 +934,15 @@ public class SingleSource : Box {
 		color = new Gdk.RGBA();
 		color.parse("white");
 		text_view.override_background_color(StateFlags.NORMAL, color);
+		text_view.query_tooltip.connect(do_tooltip);
+		text_view.has_tooltip = source.value_as_tooltip;
 
 		ScrolledWindow tbox = new ScrolledWindow(null, null);
 		tbox.@add(text_view);
 		tbox.set_min_content_width(86*s.mono_width);
 #if HIDDEN_BP
 #else
-		tbox.set_min_content_height(320);
+		tbox.set_min_content_height(20*s.mono_height);
 #endif
 		tbox.shadow_type = ShadowType.OUT;
 		pack_start(tbox);
@@ -1171,6 +1208,7 @@ public class FullSource : SingleSource {
 		text_view.get_iter_at_location(out loc, x, y);
 		other_paren = -1;
 		if (loc.has_tag(id_op)) {
+			tip = "";
 			start.assign(loc);
 			if (!start.begins_tag(id_op)) start.backward_to_tag_toggle(id_op);
 			int line = start.get_line()+1;
@@ -1197,15 +1235,20 @@ public class FullSource : SingleSource {
 					if (ex!=null) {
 						try {
 							ex.compute_in_stack(frame, source.dg.rts);
-							if (name.length>0) name += "  ;  ";
-							name += ex.bottom().format_one_value
+							string val = ex.bottom().format_one_value
 								(ex.Format.WITH_NAME | ex.Format.WITH_TYPE);
+							if (source.value_as_tooltip) {
+								val = val.replace(" = ", "\n= ");
+								tip = val.replace(" : ", "\n: ");
+							} else {
+								if (name.length>0) name += "  ;  ";
+								name += val;
+							}
 						} catch (GLib.Error e) {
 						}
 					}
 				}
 			} 
-//			if (source.value_as_tooltip && ex!=null) ; 	else 
 			status.push(id, name);
 		} else if (loc.has_tag(pm)) {
 			int off;
@@ -1556,6 +1599,7 @@ public class FullSource : SingleSource {
 		}
 		text.get_start_iter(out iter);
 		text.place_cursor(iter);
+		text_view.has_tooltip = source.value_as_tooltip;
 		if (brk!=null) {
 			Gee.List<Breakpoint> list = brk.breakpoints(false);
 			highlight_all_breakpoints(list);

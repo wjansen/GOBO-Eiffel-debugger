@@ -9,51 +9,96 @@ internal enum PreferenceType {
 
 internal class History : Dialog {
 
+	private struct Settings {
+		int expr_size;
+		int pattern_size;
+		int arg_size;
+	}
+
 	private weak GUI gui;
+	private Settings defaults;
+	private Settings before;
+	private Settings now;
 
 	private SpinButton expr;
-	private int expr_size = 10;
 	private SpinButton pattern;
-	private int pattern_size = 10;
 	private SpinButton arg;
-	private int arg_size = 5;
 
 	private void set_sizes() {
-		gui.source.pattern_history.max_size = pattern_size;
-		gui.eval.history.max_size = expr_size;
+		expr.value = now.expr_size;
+		pattern.value = now.pattern_size;
+		arg.value = now.arg_size;
+		gui.source.pattern_history.max_size = now.pattern_size;
+		gui.eval.history.max_size = now.expr_size;
 		if (gui.sql!=null) {
-			gui.sql.select_history.max_size = expr_size;
-			gui.sql.where_history.max_size = expr_size;
+			gui.sql.select_history.max_size = now.expr_size;
+			gui.sql.where_history.max_size = now.expr_size;
 		}
 		if (gui.run!=null) {
-			gui.run.print_history.max_size = expr_size;
-			gui.run.arg_history.max_size = arg_size;
+			gui.run.print_history.max_size = now.expr_size;
+			gui.run.arg_history.max_size = now.arg_size;
+		}
+	}
+
+	private void do_spin(SpinButton spin) {
+		if (spin==expr) {
+			now.expr_size = (int)spin.value;
+		} else if (spin==pattern) {
+			now.pattern_size = (int)spin.value;
+		} else if (spin==arg) {
+			now.arg_size = (int)spin.value;
 		}
 	}
 
 	private void do_history(Dialog d, int response) {
 		switch (response) {
-		case ResponseType.CANCEL:
-			expr.value = expr_size;
-			pattern.value = pattern_size;
-			arg.value = arg_size;
-			break;
-		case ResponseType.CLOSE:
-			expr_size = (int)expr.value;
-			pattern_size = (int)pattern.value;
-			arg_size = (int)arg.value;
+		case PreferenceType.DEFAULT:
+			now = defaults;
 			set_sizes();
 			break;
+		case PreferenceType.CANCEL:
+			hide();
+			now = before;
+			set_sizes();
+			break;
+		case PreferenceType.CLOSE:
+			hide();
+			before = now;
+			break;
 		}
-		hide();
+	}
+
+	private void do_config(Gee.HashMap<string,string> map, bool fill) {
+		if (fill) {
+			map.@set("ExpressionSize", now.expr_size.to_string());
+			map.@set("PatternSize", now.pattern_size.to_string());
+			map.@set("ArgumentSize", now.arg_size.to_string());
+		} else {
+			string? value;
+			value = map.@get("ExpressionSize");
+			if (value!=null) now.expr_size = int.parse(value);
+			value = map.@get("PatternSize");
+			if (value!=null) now.pattern_size = int.parse(value);
+			value = map.@get("ArgumentSize");
+			if (value!=null) now.arg_size = int.parse(value);
+			before = now;
+			set_sizes();
+		}
 	}
 
 	internal History(GUI gui) {
 		this.gui = gui;
-		transient_for = gui;
+		defaults.expr_size = 10;
+		defaults.pattern_size = 10;
+		defaults.arg_size = 5;
+		before = defaults;
+		now = before;
+
 		title = compose_title("History sizes", null);
-		add_button(Gtk.Stock.CANCEL, ResponseType.CANCEL);
-		add_button(Gtk.Stock.CLOSE, ResponseType.CLOSE);
+		add_button("Default", PreferenceType.DEFAULT);
+		add_button("Cancel", PreferenceType.CANCEL);
+		add_button("Close", PreferenceType.CLOSE);
+		transient_for = gui;
 
 		var content = get_content_area () as Box;
 		var grid = new Grid();
@@ -66,7 +111,7 @@ internal class History : Dialog {
 
 		label = new Label(
 """Expressions
-(<span><i>Print on stop</i> of <b>Run</b>,
+(<span><i>Print on stop</i> of <b>Run</b>, 
 <i>Expr</i> of <b>Evaluation</b>,
 <i>select</i>, <i>where</i> of <b>SQL</b>)</span>"""
 			);
@@ -74,32 +119,32 @@ internal class History : Dialog {
 		grid.attach(label, 0, 0, 1, 1);
 		label.halign = Align.START;
 		expr = new SpinButton.with_range(1, 100, 1);
+		expr.value_changed.connect(do_spin);
 		grid.attach_next_to(expr, label, PositionType.RIGHT, 1, 1);
-		expr.value = expr_size;
 
 		prev = label;
 		label = new Label(
 """Search patterns
-(<span><i>Regular expression</i>
-of <b>Source/Console</b>) </span>"""
+(<span><i>Regular expression</i> of <b>Source/Console</b>) </span>"""
 			);
 		label.use_markup = true;
 		grid.attach_next_to(label, prev, PositionType.BOTTOM, 1, 1);
 		label.halign = Align.START;
 		pattern = new SpinButton.with_range(1, 100, 1);
+		pattern.value_changed.connect(do_spin);
 		grid.attach_next_to(pattern, label, PositionType.RIGHT, 1, 1);
-		pattern.value = pattern_size;
 
 		prev = label;
 		label = new Label("Command line arguments");
 		grid.attach_next_to(label, prev, PositionType.BOTTOM, 1, 1);
 		label.halign = Align.START;
 		arg = new SpinButton.with_range(1, 100, 1);
+		arg.value_changed.connect(do_spin);
 		grid.attach_next_to(arg, label, PositionType.RIGHT, 1, 1);
-		arg.value = arg_size;
 
 		set_sizes();
 		response.connect(do_history);
+		gui.configure.connect((g,m,f) => { do_config(m,f); });
 	}
 
 }
@@ -177,6 +222,27 @@ internal class DataSettings : Dialog {
 		} else if (spin==item_count) {
 			now.item_count = (int)spin.value;
 			gui.data.max_items = now.item_count;
+		}
+	}
+
+	private void do_config(Gee.HashMap<string,string> map, bool fill) {
+		if (fill) {
+			map.@set("FloatPrecision", now.float_prec.to_string());
+			map.@set("DoublePrecision", now.double_prec.to_string());
+			map.@set("MaxSpecialItems", now.item_count.to_string());
+			map.@set("DenseSpecials", now.dense.to_string());
+		} else {
+			string? value;
+			value = map.@get("FloatPrecision");
+			if (value!=null) now.float_prec = int.parse(value);
+			value = map.@get("DoublePrecision");
+			if (value!=null) now.double_prec = int.parse(value);
+			value = map.@get("MaxSpecialItems");
+			if (value!=null) now.item_count = int.parse(value);
+			value = map.@get("DenseSpecials");
+			if (value!=null) now.dense = value.down()[0]=='t';
+			before = now;
+			set_buttons();
 		}
 	}
 
@@ -262,6 +328,7 @@ internal class DataSettings : Dialog {
 		set_buttons();
 
 		response.connect(do_data);
+		gui.configure.connect((g,m,f) => { do_config(m,f); });
 	}
 }
 
@@ -270,11 +337,11 @@ internal class Appearance : Dialog {
 	private struct Settings {
 		int tab_width;
 		bool wrap_mode;
-		bool value_mode;
 		bool tree_lines;
 		bool non_defs_mode;
 		int max_items;
 		bool tooltips;
+		bool value_tooltips;
 	}
 
 	private weak GUI gui;
@@ -291,9 +358,9 @@ internal class Appearance : Dialog {
 	private void set_buttons() {
 		tabs.value = now.tab_width;
 		wrap.active = now.wrap_mode;
-		// val.active = now.value_mode;
 		tree.active = now.tree_lines;
 		tips.active = now.tooltips;
+		val.active = now.value_tooltips;
 	}
 
 	private void do_appearance(int response) {
@@ -318,15 +385,16 @@ internal class Appearance : Dialog {
 		if (check==wrap) {
 			now.wrap_mode = wrap.active;
 			gui.source.wrap_mode = now.wrap_mode;
-			// } else if (check==val) {
-			// now.value_mode = val.active;
-			// gui.source.value_as_tooltip = now.value_mode;;
 		} else if (check==tree) {
 			now.tree_lines = tree.active;
 			gui.data.tree_lines = now.tree_lines;
 		} else if (check==tips) {
 			now.tooltips = tips.active;
 			gui.set_tooltip(now.tooltips);
+			gui.source.value_as_tooltip = now.value_tooltips;
+		} else if (check==val) {
+			now.value_tooltips = val.active;
+			gui.source.value_as_tooltip = now.value_tooltips;
 		}
 	}
 
@@ -337,15 +405,38 @@ internal class Appearance : Dialog {
 		}
 	}
 
+	private void do_config(Gee.HashMap<string,string> map, bool fill) {
+		if (fill) {
+			map.@set("TabWidth", now.tab_width.to_string());
+			map.@set("WrapMode", now.wrap_mode.to_string());
+			map.@set("TreeLines", now.tree_lines.to_string());
+			map.@set("Tooltips", now.tooltips.to_string());
+			map.@set("ValueTooltips", now.value_tooltips.to_string());
+		} else {
+			string? value;
+			value = map.@get("TabWidth");
+			if (value!=null) now.tab_width = int.parse(value);
+			value = map.@get("WrapMode");
+			if (value!=null) now.wrap_mode = value.down()[0]=='t';
+			value = map.@get("TreeLines");
+			if (value!=null) now.tree_lines = value.down()[0]=='t';
+			value = map.@get("Tooltips");
+			if (value!=null) now.tooltips = value.down()[0]=='t';
+			value = map.@get("ValueTooltips");
+			if (value!=null) now.value_tooltips = value.down()[0]=='t';
+			before = now;
+			set_buttons();
+		}
+	}
+
 	internal Appearance(GUI gui) {
 		this.gui = gui;
 
 		defaults.tab_width = gui.source.tab_width;
 		defaults.wrap_mode = gui.source.wrap_mode;
-		// defaults.value_mode = gui.source.value_as_tooltip;
 		defaults.tree_lines = gui.data.tree_lines;
-		defaults.max_items = gui.data.max_items;
 		defaults.tooltips = true;
+		defaults.value_tooltips = gui.source.value_as_tooltip;
 		before = defaults;
 		now = before;
 
@@ -387,11 +478,6 @@ internal class Appearance : Dialog {
 		
 		sep = new Separator(Orientation.HORIZONTAL);
 		grid.attach_next_to(sep, label, PositionType.BOTTOM, 2, 1);
-/* 
-		val = new CheckButton.with_label("Show values as tips");
-		val.toggled.connect(do_toggle);
-		content.pack_start(val, false, false, 0);
-*/
 		headline = new Label("");
 		headline.use_markup = true;
 		headline.set_markup("<span><b>Data part</b></span>");
@@ -415,13 +501,22 @@ internal class Appearance : Dialog {
 		headline.set_markup("<span><b>Tooltips</b></span>");
 		headline.justify = Justification.LEFT;
 		grid.attach_next_to(headline, sep, PositionType.BOTTOM, 2, 1);
-		label = new Label("Show tooltips ");
+		label = new Label("Usage hints ");
 		label.halign = Align.START;
 		grid.attach_next_to(label, headline, PositionType.BOTTOM, 1, 1);
+		prev = label;
 		tips = new CheckButton();
 		tips.toggled.connect(do_toggle);
 		gedb_set_default_bool_tooltip(tips, defaults.tooltips);
-		grid.attach_next_to(tips, label, PositionType.RIGHT, 1, 1);
+		grid.attach_next_to(tips, prev, PositionType.RIGHT, 1, 1);
+		label = new Label("Values in source part ");
+		label.halign = Align.START;
+		grid.attach_next_to(label, prev, PositionType.BOTTOM, 1, 1);
+		prev = label;
+		val = new CheckButton();
+		val.toggled.connect(do_toggle);
+		gedb_set_default_bool_tooltip(val, defaults.value_tooltips);
+		grid.attach_next_to(val, label, PositionType.RIGHT, 1, 1);
 		
 		sep = new Separator(Orientation.HORIZONTAL);
 		content.pack_start(sep, false, false, 5);
@@ -429,6 +524,7 @@ internal class Appearance : Dialog {
 		set_buttons();
 
 		response.connect(do_appearance);
+		gui.configure.connect((g,m,f) => { do_config(m,f); });
 	}
 
 }
@@ -981,10 +1077,14 @@ public class GUI : Window {
 	private FixedPart fixed;
 	private AliasDef alias_def;
 	private Paned panel;
+	private Paned left_panel;
+	private Paned right_panel;
 
 	private string gedb;
 	private string home;
 	private string pwd;
+	private Gee.HashMap<string,string> config;
+	private string config_name;
 
 	internal string command;
 	internal Debuggee dg;
@@ -1055,8 +1155,39 @@ public class GUI : Window {
 		if (dg!=null) title = compose_title(null, dg.rts);
 	}
 		
-	internal void set_continue(bool b) {
-		menus.set_continue(b);
+	internal void set_continue(bool b) { menus.set_continue(b); }
+
+	private void do_config(Gee.HashMap<string,string> map, 
+						   bool fill, bool rta) {
+		if (fill) {
+			int w, h, pos;
+			get_size(out w, out h);
+			map.@set("WindowWidth", w.to_string());
+			if (rta)
+				map.@set("WindowHeightRTA", h.to_string());
+			else
+				map.@set("WindowHeightPMA", h.to_string());
+			map.@set("LeftWidth", panel.position.to_string());
+			map.@set("LeftTopHeight", left_panel.position.to_string());
+			map.@set("RightTopHeight", right_panel.position.to_string());
+		} else {
+			string value;
+			value = config.@get("WindowWidth");
+			if (value!=null) default_width = int.parse(value); 
+			if (rta) {
+				value = config.@get("WindowHeightRTA");
+				if (value!=null) default_height = int.parse(value); 
+			} else {
+				value = config.@get("WindowHeightPMA");
+				if (value!=null) default_height = int.parse(value); 
+			}
+			value = config.@get("LeftWidth");
+			if (value!=null) panel.position = int.parse(value); 
+			value = config.@get("LeftTopHeight");
+			if (value!=null) left_panel.position = int.parse(value); 
+			value = config.@get("RightTopHeight");
+			if (value!=null) right_panel.position = int.parse(value); 
+		}
 	}
 
 	internal GUI(Debuggee dg, bool as_rta, bool loadable) {
@@ -1110,35 +1241,32 @@ public class GUI : Window {
 		panel = new Paned(Orientation.HORIZONTAL);
 		vbox.pack_start(panel, true, true, 0);
 		Box left = new Box(Orientation.VERTICAL, 5);
-		Paned right = new Paned(Orientation.VERTICAL);
-		panel.add1(left);
-		panel.add2(right);
+		right_panel = new Paned(Orientation.VERTICAL);
+		panel.pack1(left, true, false);
+		panel.pack2(right_panel, true, true);
 		if (run!=null) {
 			frame = new_frame("Run");
 			frame.@add(run);
 			left.pack_start(frame, false, false, 0);
 		}
 		if (brk!=null) {
+			left_panel = new Paned(Orientation.VERTICAL);
+			left.pack_start(left_panel, false, false, 0);
 			frame = new_frame("Breakpoints");
 			frame.@add(brk);
-#if HIDDEB_BP
-			var exp = new Expander("Show breakpoints");
-			exp.@add(frame);
-			exp.resize_toplevel = false;
-			exp.notify["expanded"].connect((e,p) => 
-				{ exp.label = exp.expanded ? "" : "Show breakpoints"; });
-			left.pack_start(exp, false, false, 0);
-#else
-			left.pack_start(frame, false, false, 0);
-#endif
+			left_panel.add1(frame);
 		}
 		var src = console!=null ? "Source/Console" : "Source";
 		frame = new_frame(src);
 		frame.@add(source);
-		left.pack_end(frame, true, true, 0);
+		if (brk!=null) {
+			left_panel.add2(frame);
+		} else {
+			left.pack_end(frame, true, true, 0);
+		}
 		frame = new_frame("Call stack");
 		frame.@add(stack);
-		right.add1(frame);
+		right_panel.add1(frame);
 		var box = new Box(Orientation.VERTICAL, 0);
 		frame = new_frame("Data");
 		frame.@add(data);
@@ -1146,11 +1274,36 @@ public class GUI : Window {
 		frame = new_frame("Evaluation");
 		frame.@add(eval);
 		box.pack_start(frame, false, false, 0);
-		right.add2(box);
+		right_panel.add2(box);
 		has_resize_grip = true;
 //		set_default_size(1024,800);
-		destroy.connect(quit);
+		config = new Gee.HashMap<string,string>();
+		config_name = GLib.Environment.get_user_config_dir();
+		config_name = Path.build_filename(config_name, "gedb");
+		GLib.DirUtils.create_with_parents(config_name, 0700);
+		config_name = Path.build_filename(config_name, "preferences.cfg");
+		var fs = FileStream.open(config_name, "r");
+		if (fs!=null) {
+			string? line;
+			string key, value;
+			int pos;
+			config.clear();
+			while (!fs.eof()) {
+				line = fs.read_line();
+				if (line==null) continue;
+				pos = line.index_of("--");
+				if (pos>=0) line = line.substring(0, pos);
+				pos = line.index_of_char('=');
+				if (pos<0) continue;
+				key = line.substring(0,pos).strip();
+				value = line.substring(pos+1).strip();
+				config.@set(key, value);
+			}
+			configure(config, false);
+			do_config(config, false, as_rta);	// separate call necessary 
+		}
 
+		destroy_event.connect(() => { quit(); return false; });
 		new_exe(dg);
 	}
 	
@@ -1229,6 +1382,11 @@ public class GUI : Window {
 	}
 
 	public void quit() {
+		configure(config, true);
+		do_config(config, true, run!=null);	// separate call necessary 
+		var fs = FileStream.open(config_name, "w");
+		config.@foreach((e) => 
+			{ fs.printf("%s=%s\n", e.key, e.value); return true; }); 
 		destroy();
 		if (the_gui!=null && the_gui.dr!=null) the_gui.dr.stop();
 		Gtk.main_quit(); 
@@ -1236,6 +1394,7 @@ public class GUI : Window {
 	}
 
 	public signal void new_debuggee(string fn);
+	public signal void configure(Gee.HashMap<string,string> map, bool fill);
 }
 
 namespace Gedb {
@@ -1289,8 +1448,7 @@ namespace Gedb {
 			}
 		}
 		try {
-			thread = new Thread<int>("GUI", () => 
-				{ Gtk.main(); return 0; });
+			thread = new Thread<int>("GUI", () => { Gtk.main(); return 0; });
 		} catch (Error e) { 
 			stderr.printf("%s\n", e.message);
 			Posix.exit(1);

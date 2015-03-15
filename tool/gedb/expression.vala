@@ -41,544 +41,544 @@ public bool is_zero_value(uint8* val, uint size) {
 	return true;
 }
 
-	public static void compute_basic_infix(Gedb.Type* lt, uint8* left,
-										  Gedb.Type* rt, uint8* right,
-										  uint op, uint8* result) 
-	requires (lt.is_basic() && rt.is_basic()) {
-		uint lid = lt.ident;
+public static void compute_basic_infix(Gedb.Type* lt, uint8* left,
+									   Gedb.Type* rt, uint8* right,
+									   uint op, uint8* result) 
+requires (lt.is_basic() && rt.is_basic()) {
+	uint lid = lt.ident;
 	
-		uint rid = rt.ident;
-		bool b = *(bool*)left;
-		int64 i = 0;
-		uint64 n = 0;
-		double d = 0;
-		bool rb = *(bool*)right;
-		int64 ri = 0;
-		uint64 rn = 0;
-		double rd = 0;
-		
-		switch (rid) {
-		case TypeIdent.INTEGER_8:
-			ri = *(int8*)right;
-			rn = ri;
-			rd = ri;
-			rid = TypeIdent.INTEGER_64;
-			break;
-		case TypeIdent.INTEGER_16:
-			ri = *(int16*)right;
-			rn = ri;
-			rd = ri;
-			rid = TypeIdent.INTEGER_64;
-			break;
-		case TypeIdent.INTEGER_32:
-			ri = *(int32*)right;
-			rn = ri;
-			rd = ri;
-			rid = TypeIdent.INTEGER_64;
-			break;
-		case TypeIdent.INTEGER_64:
-			ri = *(int64*)right;
-			rn = ri;
-			rd = ri;
-			break;
-		case TypeIdent.NATURAL_8:
-			rn = *(uint8*)right;
-			ri = (int64)rn;
-			rd = ri;
-			rid = TypeIdent.NATURAL_64;
-			break;
-		case TypeIdent.NATURAL_16:
-			rn = *(uint16*)right;
-			ri = (int64)rn;
-			rd = rn;
-			rid = TypeIdent.NATURAL_64;
-			break;
-		case TypeIdent.NATURAL_32:
-			rn = *(uint32*)right;
-			ri = (int64)rn;
-			rd = rn;
-			rid = TypeIdent.NATURAL_64;
-			break;
-		case TypeIdent.NATURAL_64:
-			rn = *(uint64*)right;
-			ri = (int64)rn;
-			rd = rn;
-			break;
-		case TypeIdent.REAL_32:
-			rd = *(float*)right;
-			rid = TypeIdent.REAL_64;
-			break;
-		case TypeIdent.REAL_64:
-			rd = *(double*)right;
-			break;
-		}
-
+	uint rid = rt.ident;
+	bool b = *(bool*)left;
+	int64 i = 0;
+	uint64 n = 0;
+	double d = 0;
+	bool rb = *(bool*)right;
+	int64 ri = 0;
+	uint64 rn = 0;
+	double rd = 0;
+	
+	switch (rid) {
+	case TypeIdent.INTEGER_8:
+		ri = *(int8*)right;
+		rn = ri;
+		rd = ri;
+		rid = TypeIdent.INTEGER_64;
+		break;
+	case TypeIdent.INTEGER_16:
+		ri = *(int16*)right;
+		rn = ri;
+		rd = ri;
+		rid = TypeIdent.INTEGER_64;
+		break;
+	case TypeIdent.INTEGER_32:
+		ri = *(int32*)right;
+		rn = ri;
+		rd = ri;
+		rid = TypeIdent.INTEGER_64;
+		break;
+	case TypeIdent.INTEGER_64:
+		ri = *(int64*)right;
+		rn = ri;
+		rd = ri;
+		break;
+	case TypeIdent.NATURAL_8:
+		rn = *(uint8*)right;
+		ri = (int64)rn;
+		rd = ri;
+		rid = TypeIdent.NATURAL_64;
+		break;
+	case TypeIdent.NATURAL_16:
+		rn = *(uint16*)right;
+		ri = (int64)rn;
+		rd = rn;
+		rid = TypeIdent.NATURAL_64;
+		break;
+	case TypeIdent.NATURAL_32:
+		rn = *(uint32*)right;
+		ri = (int64)rn;
+		rd = rn;
+		rid = TypeIdent.NATURAL_64;
+		break;
+	case TypeIdent.NATURAL_64:
+		rn = *(uint64*)right;
+		ri = (int64)rn;
+		rd = rn;
+		break;
+	case TypeIdent.REAL_32:
+		rd = *(float*)right;
+		rid = TypeIdent.REAL_64;
+		break;
+	case TypeIdent.REAL_64:
+		rd = *(double*)right;
+		break;
+	}
+	
+	switch (lid) {
+	case TypeIdent.INTEGER_8:
+		i = *(int8*)left;
+		n = i;
+		d = i;
+		lid = TypeIdent.INTEGER_64;
+		break;
+	case TypeIdent.INTEGER_16:
+		i = *(int16*)left;
+		n = i;
+		d = i;
+		lid = TypeIdent.INTEGER_64;
+		break;
+	case TypeIdent.INTEGER_32:
+		i = *(int32*)left;
+		n = i;
+		d = i;
+		lid = TypeIdent.INTEGER_64;
+		break;
+	case TypeIdent.INTEGER_64:
+		i = *(int64*)left;
+		n = i;
+		d = i;
+		break;
+	case TypeIdent.NATURAL_8:
+		n = *(uint8*)left;
+		i = (int64)n;
+		d = n;
+		lid = TypeIdent.NATURAL_64;
+		break;
+	case TypeIdent.NATURAL_16:
+		n = *(uint16*)left;
+		i = (int64)n;
+		d = n;
+		lid = TypeIdent.NATURAL_64;
+		break;
+	case TypeIdent.NATURAL_32:
+		n = *(uint32*)left;
+		i = (int64)n;
+		d = n;
+		lid = TypeIdent.NATURAL_64;
+		break;
+	case TypeIdent.NATURAL_64:
+		n = *(uint64*)left;
+		i = (int64)n;
+		d = n;
+		break;
+	case TypeIdent.REAL_32:
+		d = *(float*)left;
+		lid = TypeIdent.REAL_64;
+		break;
+	case TypeIdent.REAL_64:
+		d = *(double*)left;
+		break;
+	}
+	
+	switch(op) {
+	case OpCode.assign:
 		switch (lid) {
 		case TypeIdent.INTEGER_8:
-			i = *(int8*)left;
-			n = i;
-			d = i;
-			lid = TypeIdent.INTEGER_64;
-			break;
 		case TypeIdent.INTEGER_16:
-			i = *(int16*)left;
-			n = i;
-			d = i;
-			lid = TypeIdent.INTEGER_64;
-			break;
 		case TypeIdent.INTEGER_32:
-			i = *(int32*)left;
-			n = i;
-			d = i;
-			lid = TypeIdent.INTEGER_64;
-			break;
 		case TypeIdent.INTEGER_64:
-			i = *(int64*)left;
-			n = i;
-			d = i;
+			i = ri;
 			break;
 		case TypeIdent.NATURAL_8:
-			n = *(uint8*)left;
-			i = (int64)n;
-			d = n;
-			lid = TypeIdent.NATURAL_64;
-			break;
 		case TypeIdent.NATURAL_16:
-			n = *(uint16*)left;
-			i = (int64)n;
-			d = n;
-			lid = TypeIdent.NATURAL_64;
-			break;
 		case TypeIdent.NATURAL_32:
-			n = *(uint32*)left;
-			i = (int64)n;
-			d = n;
-			lid = TypeIdent.NATURAL_64;
-			break;
 		case TypeIdent.NATURAL_64:
-			n = *(uint64*)left;
-			i = (int64)n;
-			d = n;
-			break;
-		case TypeIdent.REAL_32:
-			d = *(float*)left;
-			lid = TypeIdent.REAL_64;
+			n = rn;
 			break;
 		case TypeIdent.REAL_64:
-			d = *(double*)left;
+			d = rd;
 			break;
 		}
-
-		switch(op) {
-		case OpCode.assign:
-			switch (lid) {
-			case TypeIdent.INTEGER_8:
-			case TypeIdent.INTEGER_16:
-			case TypeIdent.INTEGER_32:
-			case TypeIdent.INTEGER_64:
-			   i = ri;
-				break;
-			case TypeIdent.NATURAL_8:
-			case TypeIdent.NATURAL_16:
-			case TypeIdent.NATURAL_32:
-			case TypeIdent.NATURAL_64:
-				n = rn;
-				break;
-			case TypeIdent.REAL_64:
-				d = rd;
-				break;
-			}
+		break;
+	case OpCode.plus:
+		switch (lid) {
+		case TypeIdent.INTEGER_8:
+		case TypeIdent.INTEGER_16:
+		case TypeIdent.INTEGER_32:
+		case TypeIdent.INTEGER_64:
+			i = i + ri;
 			break;
-		case OpCode.plus:
-			switch (lid) {
-			case TypeIdent.INTEGER_8:
-			case TypeIdent.INTEGER_16:
-			case TypeIdent.INTEGER_32:
-			case TypeIdent.INTEGER_64:
-			   i = i + ri;
-				break;
-			case TypeIdent.NATURAL_8:
-			case TypeIdent.NATURAL_16:
-			case TypeIdent.NATURAL_32:
-			case TypeIdent.NATURAL_64:
-				n = n + rn;
-				break;
-			case TypeIdent.REAL_64:
-				d = d + rd;
-				break;
-			}
+		case TypeIdent.NATURAL_8:
+		case TypeIdent.NATURAL_16:
+		case TypeIdent.NATURAL_32:
+		case TypeIdent.NATURAL_64:
+			n = n + rn;
 			break;
-		case OpCode.minus:
-			switch (lid) {
-			case TypeIdent.INTEGER_8:
-			case TypeIdent.INTEGER_16:
-			case TypeIdent.INTEGER_32:
-			case TypeIdent.INTEGER_64:
-				i = i - ri;
-				break;
-			case TypeIdent.NATURAL_8:
-			case TypeIdent.NATURAL_16:
-			case TypeIdent.NATURAL_32:
-			case TypeIdent.NATURAL_64:
-				n = n - rn;
-				break;
-			case TypeIdent.REAL_64:
-				d = d - rd;
-				break;
-			}
+		case TypeIdent.REAL_64:
+			d = d + rd;
 			break;
-		case OpCode.mult:
-			switch (lid) {
-			case TypeIdent.INTEGER_8:
-			case TypeIdent.INTEGER_16:
-			case TypeIdent.INTEGER_32:
-			case TypeIdent.INTEGER_64:
-				i = i * ri;
-				break;
-			case TypeIdent.NATURAL_8:
-			case TypeIdent.NATURAL_16:
-			case TypeIdent.NATURAL_32:
-			case TypeIdent.NATURAL_64:
-				n = n * rn;
-				break;
-			case TypeIdent.REAL_64:
-				d = d * rd;
-				break;
-			}
+		}
+		break;
+	case OpCode.minus:
+		switch (lid) {
+		case TypeIdent.INTEGER_8:
+		case TypeIdent.INTEGER_16:
+		case TypeIdent.INTEGER_32:
+		case TypeIdent.INTEGER_64:
+			i = i - ri;
 			break;
-		case OpCode.div:
-			switch (lid) {
-			case TypeIdent.INTEGER_8:
-			case TypeIdent.INTEGER_16:
-			case TypeIdent.INTEGER_32:
-			case TypeIdent.INTEGER_64:
-			case TypeIdent.NATURAL_8:
-			case TypeIdent.NATURAL_16:
-			case TypeIdent.NATURAL_32:
+		case TypeIdent.NATURAL_8:
+		case TypeIdent.NATURAL_16:
+		case TypeIdent.NATURAL_32:
 			case TypeIdent.NATURAL_64:
-			case TypeIdent.REAL_32:
-			case TypeIdent.REAL_64:
-				d = d / rd;
-				break;
-			}
+			n = n - rn;
 			break;
-		case OpCode.idiv:
-			switch (lid) {
-			case TypeIdent.INTEGER_8:
-			case TypeIdent.INTEGER_16:
-			case TypeIdent.INTEGER_32:
-				i = i / (int32)ri;
-				break;
-			case TypeIdent.INTEGER_64:
-				i = i / ri;
-				break;
+		case TypeIdent.REAL_64:
+			d = d - rd;
+			break;
+		}
+		break;
+	case OpCode.mult:
+		switch (lid) {
+		case TypeIdent.INTEGER_8:
+		case TypeIdent.INTEGER_16:
+		case TypeIdent.INTEGER_32:
+		case TypeIdent.INTEGER_64:
+			i = i * ri;
+			break;
+		case TypeIdent.NATURAL_8:
+		case TypeIdent.NATURAL_16:
+		case TypeIdent.NATURAL_32:
+		case TypeIdent.NATURAL_64:
+			n = n * rn;
+			break;
+		case TypeIdent.REAL_64:
+			d = d * rd;
+			break;
+		}
+		break;
+	case OpCode.div:
+		switch (lid) {
+		case TypeIdent.INTEGER_8:
+		case TypeIdent.INTEGER_16:
+		case TypeIdent.INTEGER_32:
+		case TypeIdent.INTEGER_64:
+		case TypeIdent.NATURAL_8:
+		case TypeIdent.NATURAL_16:
+		case TypeIdent.NATURAL_32:
+		case TypeIdent.NATURAL_64:
+		case TypeIdent.REAL_32:
+		case TypeIdent.REAL_64:
+			d = d / rd;
+			break;
+		}
+		break;
+	case OpCode.idiv:
+		switch (lid) {
+		case TypeIdent.INTEGER_8:
+		case TypeIdent.INTEGER_16:
+		case TypeIdent.INTEGER_32:
+			i = i / (int32)ri;
+			break;
+		case TypeIdent.INTEGER_64:
+			i = i / ri;
+			break;
 			case TypeIdent.NATURAL_8:
-			case TypeIdent.NATURAL_16:
-			case TypeIdent.NATURAL_32:
-				n = n / (int32)rn;
-				break;
-			case TypeIdent.NATURAL_64:
-				n = n / rn;
-				break;
-			}
+		case TypeIdent.NATURAL_16:
+		case TypeIdent.NATURAL_32:
+			n = n / (int32)rn;
 			break;
-		case OpCode.imod:
-			switch (lid) {
-			case TypeIdent.INTEGER_8:
-			case TypeIdent.INTEGER_16:
-			case TypeIdent.INTEGER_32:
-				i = i % (int32)ri;
-				break;
-			case TypeIdent.INTEGER_64:
-				i = i % ri;
-				break;
-			case TypeIdent.NATURAL_8:
-			case TypeIdent.NATURAL_16:
-			case TypeIdent.NATURAL_32:
-				n = n % (uint32)rn;
-				break;
-			case TypeIdent.NATURAL_64:
-				n = n % (uint32)rn;
-				break;
-			}
+		case TypeIdent.NATURAL_64:
+			n = n / rn;
 			break;
-		case OpCode.bit_and:
-			switch (lid) {
-			case TypeIdent.INTEGER_8:
-			case TypeIdent.INTEGER_16:
-			case TypeIdent.INTEGER_32:
-			case TypeIdent.INTEGER_64:
-				i = i & ri;
-				break;
-			case TypeIdent.NATURAL_8:
-			case TypeIdent.NATURAL_16:
-			case TypeIdent.NATURAL_32:
-			case TypeIdent.NATURAL_64:
-				n = n & rn;
-				break;
-			}
+		}
+		break;
+	case OpCode.imod:
+		switch (lid) {
+		case TypeIdent.INTEGER_8:
+		case TypeIdent.INTEGER_16:
+		case TypeIdent.INTEGER_32:
+			i = i % (int32)ri;
 			break;
-		case OpCode.bit_or:
-			switch (lid) {
-			case TypeIdent.INTEGER_8:
-			case TypeIdent.INTEGER_16:
-			case TypeIdent.INTEGER_32:
-			case TypeIdent.INTEGER_64:
-				i = i | ri;
-				break;
-			case TypeIdent.NATURAL_8:
-			case TypeIdent.NATURAL_16:
-			case TypeIdent.NATURAL_32:
-			case TypeIdent.NATURAL_64:
-				n = n | rn;
-				break;
-			}
+		case TypeIdent.INTEGER_64:
+			i = i % ri;
 			break;
-		case OpCode.l_shift:
-			switch (lid) {
-			case TypeIdent.INTEGER_8:
-			case TypeIdent.INTEGER_16:
-			case TypeIdent.INTEGER_32:
-			case TypeIdent.INTEGER_64:
-				i = i << (int8)ri;
-				break;
-			case TypeIdent.NATURAL_8:
-			case TypeIdent.NATURAL_16:
-			case TypeIdent.NATURAL_32:
-			case TypeIdent.NATURAL_64:
-				n = n << (uint8)rn;
-				break;
-			}
+		case TypeIdent.NATURAL_8:
+		case TypeIdent.NATURAL_16:
+		case TypeIdent.NATURAL_32:
+			n = n % (uint32)rn;
 			break;
-		case OpCode.r_shift:
-			switch (lid) {
-			case TypeIdent.INTEGER_8:
-				*(int8*)result = (int8)i >> (int8)ri;
-				break;
-			case TypeIdent.INTEGER_16:
-				*(int16*)result = (int16)i >> (int8)ri;
-				break;
-			case TypeIdent.INTEGER_32:
-				*(int32*)result = (int32)i >> (int8)ri;
-				break;
-			case TypeIdent.INTEGER_64:
-				*(int64*)result = i >> (int8)ri;
-				break;
-			case TypeIdent.NATURAL_8:
-				*(uint8*)result = (uint8)n >> (uint8)rn;
-				break;
-			case TypeIdent.NATURAL_16:
-				*(uint16*)result = (uint16)n >> (uint8)rn;
-				break;
-			case TypeIdent.NATURAL_32:
-				*(uint32*)result = (uint32)n >> (uint8)rn;
-				break;
-			case TypeIdent.NATURAL_64:
-				*(uint64*)result = n >> (uint8)rn;
-				break;
-			}
+		case TypeIdent.NATURAL_64:
+			n = n % (uint32)rn;
 			break;
-		case OpCode.power:
-			d = Math.ldexp(*(double*)left, (int8)rd);
+		}
+		break;
+	case OpCode.bit_and:
+		switch (lid) {
+		case TypeIdent.INTEGER_8:
+		case TypeIdent.INTEGER_16:
+		case TypeIdent.INTEGER_32:
+		case TypeIdent.INTEGER_64:
+			i = i & ri;
 			break;
-		case OpCode.eq:
-			switch (lid) {
-			case TypeIdent.INTEGER_8:
-			case TypeIdent.INTEGER_16:
-			case TypeIdent.INTEGER_32:
-				*(bool*)result = (int32)i == (int32)ri;
-				break;
-			case TypeIdent.INTEGER_64:
-				*(bool*)result = i == ri;
-				break;
-			case TypeIdent.NATURAL_8:
-			case TypeIdent.NATURAL_16:
-			case TypeIdent.NATURAL_32:
-				*(bool*)result = (uint32)n == (uint32)rn;
-				break;
+		case TypeIdent.NATURAL_8:
+		case TypeIdent.NATURAL_16:
+		case TypeIdent.NATURAL_32:
 			case TypeIdent.NATURAL_64:
-				*(bool*)result = n == rn;
-				break;
-			case TypeIdent.REAL_64:
+			n = n & rn;
+			break;
+		}
+		break;
+	case OpCode.bit_or:
+		switch (lid) {
+		case TypeIdent.INTEGER_8:
+		case TypeIdent.INTEGER_16:
+		case TypeIdent.INTEGER_32:
+		case TypeIdent.INTEGER_64:
+			i = i | ri;
+			break;
+		case TypeIdent.NATURAL_8:
+		case TypeIdent.NATURAL_16:
+		case TypeIdent.NATURAL_32:
+		case TypeIdent.NATURAL_64:
+			n = n | rn;
+			break;
+		}
+		break;
+	case OpCode.l_shift:
+		switch (lid) {
+		case TypeIdent.INTEGER_8:
+		case TypeIdent.INTEGER_16:
+		case TypeIdent.INTEGER_32:
+		case TypeIdent.INTEGER_64:
+			i = i << (int8)ri;
+			break;
+		case TypeIdent.NATURAL_8:
+		case TypeIdent.NATURAL_16:
+		case TypeIdent.NATURAL_32:
+		case TypeIdent.NATURAL_64:
+			n = n << (uint8)rn;
+			break;
+		}
+		break;
+	case OpCode.r_shift:
+		switch (lid) {
+		case TypeIdent.INTEGER_8:
+			*(int8*)result = (int8)i >> (int8)ri;
+			break;
+		case TypeIdent.INTEGER_16:
+			*(int16*)result = (int16)i >> (int8)ri;
+			break;
+		case TypeIdent.INTEGER_32:
+			*(int32*)result = (int32)i >> (int8)ri;
+			break;
+		case TypeIdent.INTEGER_64:
+			*(int64*)result = i >> (int8)ri;
+			break;
+		case TypeIdent.NATURAL_8:
+			*(uint8*)result = (uint8)n >> (uint8)rn;
+			break;
+		case TypeIdent.NATURAL_16:
+			*(uint16*)result = (uint16)n >> (uint8)rn;
+			break;
+		case TypeIdent.NATURAL_32:
+			*(uint32*)result = (uint32)n >> (uint8)rn;
+			break;
+		case TypeIdent.NATURAL_64:
+			*(uint64*)result = n >> (uint8)rn;
+			break;
+		}
+		break;
+	case OpCode.power:
+		d = Math.ldexp(*(double*)left, (int8)rd);
+		break;
+	case OpCode.eq:
+		switch (lid) {
+		case TypeIdent.INTEGER_8:
+		case TypeIdent.INTEGER_16:
+		case TypeIdent.INTEGER_32:
+			*(bool*)result = (int32)i == (int32)ri;
+			break;
+		case TypeIdent.INTEGER_64:
+			*(bool*)result = i == ri;
+			break;
+		case TypeIdent.NATURAL_8:
+		case TypeIdent.NATURAL_16:
+		case TypeIdent.NATURAL_32:
+			*(bool*)result = (uint32)n == (uint32)rn;
+			break;
+		case TypeIdent.NATURAL_64:
+			*(bool*)result = n == rn;
+			break;
+		case TypeIdent.REAL_64:
 				*(bool*)result = d == rd;
 				break;
-			}
+		}
+		break;
+	case OpCode.ne:
+		switch (lid) {
+		case TypeIdent.INTEGER_8:
+		case TypeIdent.INTEGER_16:
+		case TypeIdent.INTEGER_32:
+			*(bool*)result = (int32)i != (int32)ri;
 			break;
-		case OpCode.ne:
-			switch (lid) {
-			case TypeIdent.INTEGER_8:
-			case TypeIdent.INTEGER_16:
-			case TypeIdent.INTEGER_32:
-				*(bool*)result = (int32)i != (int32)ri;
-				break;
-			case TypeIdent.INTEGER_64:
-				*(bool*)result = i != ri;
-				break;
+		case TypeIdent.INTEGER_64:
+			*(bool*)result = i != ri;
+			break;
 			case TypeIdent.NATURAL_8:
-			case TypeIdent.NATURAL_16:
-			case TypeIdent.NATURAL_32:
-				*(bool*)result = (uint32)n != (uint32)rn;
-				break;
-			case TypeIdent.NATURAL_64:
-				*(bool*)result = n != rn;
-				break;
-			case TypeIdent.REAL_64:
-				*(bool*)result = d != rd;
-				break;
-			}
+		case TypeIdent.NATURAL_16:
+		case TypeIdent.NATURAL_32:
+			*(bool*)result = (uint32)n != (uint32)rn;
 			break;
-		case OpCode.lt:
-			switch (lid) {
-			case TypeIdent.INTEGER_8:
-			case TypeIdent.INTEGER_16:
-			case TypeIdent.INTEGER_32:
-				*(bool*)result = (int32)i < (int32)ri;
-				break;
-			case TypeIdent.INTEGER_64:
-				*(bool*)result = i < ri;
-				break;
-			case TypeIdent.NATURAL_8:
-			case TypeIdent.NATURAL_16:
-			case TypeIdent.NATURAL_32:
-				*(bool*)result = (uint32)n < (uint32)rn;
-				break;
-			case TypeIdent.NATURAL_64:
-				*(bool*)result = n < rn;
-				break;
-			case TypeIdent.REAL_64:
-				*(bool*)result = d < rd;
-				break;
-			}
+		case TypeIdent.NATURAL_64:
+			*(bool*)result = n != rn;
 			break;
-		case OpCode.le:
-			switch (lid) {
-			case TypeIdent.INTEGER_8:
-			case TypeIdent.INTEGER_16:
-			case TypeIdent.INTEGER_32:
-				*(bool*)result = (int32)i <= (int32)ri;
-				break;
-			case TypeIdent.INTEGER_64:
-				*(bool*)result= i <= ri;
-				break;
-			case TypeIdent.NATURAL_8:
-			case TypeIdent.NATURAL_16:
-			case TypeIdent.NATURAL_32:
-				*(bool*)result= (uint32)n <= (uint32)rn;
-				break;
-			case TypeIdent.NATURAL_64:
-				*(bool*)result = n <= rn;
-				break;
-			case TypeIdent.REAL_64:
-				*(bool*)result = d <= rd;
-				break;
-			}
-			break;
-		case OpCode.gt:
-			switch (lid) {
-			case TypeIdent.INTEGER_8:
-			case TypeIdent.INTEGER_16:
-			case TypeIdent.INTEGER_32:
-				*(bool*)result= (int32)i > (int32)ri;
-				break;
-			case TypeIdent.INTEGER_64:
-				*(bool*)result= i > ri;
-				break;
-			case TypeIdent.NATURAL_8:
-			case TypeIdent.NATURAL_16:
-			case TypeIdent.NATURAL_32:
-				*(bool*)result = (uint32)n > (uint32)rn;
-				break;
-			case TypeIdent.NATURAL_64:
-				*(bool*)result = n > rn;
-				break;
-			case TypeIdent.REAL_64:
-				*(bool*)result = d > rd;
-				break;
-			}
-			break;
-		case OpCode.ge:
-			switch (lid) {
-			case TypeIdent.INTEGER_8:
-			case TypeIdent.INTEGER_16:
-			case TypeIdent.INTEGER_32:
-				*(bool*)result = (int32)i >= (int32)ri;
-				break;
-			case TypeIdent.INTEGER_64:
-			  *(bool*)result = i >= ri;
-			  break;
-			case TypeIdent.NATURAL_8:
-			case TypeIdent.NATURAL_16:
-			case TypeIdent.NATURAL_32:
-				*(bool*)result= (uint32)n >= (uint32)rn;
-				break;
-			case TypeIdent.NATURAL_64:
-				*(bool*)result = n >= rn;
-				break;
-			case TypeIdent.REAL_64:
-				*(bool*)result = d >= rd;
-				break;
-			}
-			break;
-		case OpCode.and:
-			*(bool*)result = b && rb;
-			break;
-		case OpCode.or:
-			*(bool*)result = b || rb;
-			break;
-		case OpCode.xor:
-			*(bool*)result = b != rb;
-			break;
-		case OpCode.implies:
-			*(bool*)result = !b | rb;
+		case TypeIdent.REAL_64:
+			*(bool*)result = d != rd;
 			break;
 		}
-
-		switch (op) {
-		case OpCode.plus:
-		case OpCode.minus:
-		case OpCode.mult:
-		case OpCode.div:
-		case OpCode.idiv:
-		case OpCode.imod:
-		case OpCode.bit_or:
-		case OpCode.bit_and:
-		case OpCode.l_shift:
-		case OpCode.power:
-			switch (lt.ident) {
-			case TypeIdent.INTEGER_8:
-				*(int8*)result = i;
-				return;
-			case TypeIdent.INTEGER_16:
-				*(int16*)result = i;
-				return;
-			case TypeIdent.INTEGER_32:
-				*(int32*)result = i;
-				return;
-			case TypeIdent.INTEGER_64:
-				*(int64*)result = i;
-				return;
+		break;
+	case OpCode.lt:
+		switch (lid) {
+		case TypeIdent.INTEGER_8:
+		case TypeIdent.INTEGER_16:
+		case TypeIdent.INTEGER_32:
+			*(bool*)result = (int32)i < (int32)ri;
+			break;
+		case TypeIdent.INTEGER_64:
+			*(bool*)result = i < ri;
+			break;
 			case TypeIdent.NATURAL_8:
-				*(uint8*)result = n;
-				return;
-			case TypeIdent.NATURAL_16:
-				*(uint16*)result = n;
-				return;
-			case TypeIdent.NATURAL_32:
-				*(uint32*)result = n;
-				return;
-			case TypeIdent.NATURAL_64:
-				*(uint64*)result = n;
-				return;
-			case TypeIdent.REAL_32:
-				*(float*)result = d;
-				return;
-			case TypeIdent.REAL_64:
+		case TypeIdent.NATURAL_16:
+		case TypeIdent.NATURAL_32:
+			*(bool*)result = (uint32)n < (uint32)rn;
+			break;
+		case TypeIdent.NATURAL_64:
+			*(bool*)result = n < rn;
+			break;
+		case TypeIdent.REAL_64:
+			*(bool*)result = d < rd;
+			break;
+		}
+		break;
+	case OpCode.le:
+		switch (lid) {
+		case TypeIdent.INTEGER_8:
+		case TypeIdent.INTEGER_16:
+		case TypeIdent.INTEGER_32:
+			*(bool*)result = (int32)i <= (int32)ri;
+			break;
+		case TypeIdent.INTEGER_64:
+			*(bool*)result= i <= ri;
+			break;
+		case TypeIdent.NATURAL_8:
+		case TypeIdent.NATURAL_16:
+		case TypeIdent.NATURAL_32:
+			*(bool*)result= (uint32)n <= (uint32)rn;
+			break;
+		case TypeIdent.NATURAL_64:
+			*(bool*)result = n <= rn;
+			break;
+		case TypeIdent.REAL_64:
+			*(bool*)result = d <= rd;
+			break;
+		}
+		break;
+	case OpCode.gt:
+		switch (lid) {
+		case TypeIdent.INTEGER_8:
+		case TypeIdent.INTEGER_16:
+		case TypeIdent.INTEGER_32:
+			*(bool*)result= (int32)i > (int32)ri;
+			break;
+		case TypeIdent.INTEGER_64:
+			*(bool*)result= i > ri;
+			break;
+		case TypeIdent.NATURAL_8:
+		case TypeIdent.NATURAL_16:
+		case TypeIdent.NATURAL_32:
+			*(bool*)result = (uint32)n > (uint32)rn;
+			break;
+		case TypeIdent.NATURAL_64:
+			*(bool*)result = n > rn;
+			break;
+		case TypeIdent.REAL_64:
+			*(bool*)result = d > rd;
+			break;
+		}
+		break;
+	case OpCode.ge:
+		switch (lid) {
+		case TypeIdent.INTEGER_8:
+		case TypeIdent.INTEGER_16:
+		case TypeIdent.INTEGER_32:
+			*(bool*)result = (int32)i >= (int32)ri;
+			break;
+		case TypeIdent.INTEGER_64:
+			*(bool*)result = i >= ri;
+			break;
+		case TypeIdent.NATURAL_8:
+		case TypeIdent.NATURAL_16:
+		case TypeIdent.NATURAL_32:
+			*(bool*)result= (uint32)n >= (uint32)rn;
+			break;
+		case TypeIdent.NATURAL_64:
+			*(bool*)result = n >= rn;
+			break;
+		case TypeIdent.REAL_64:
+			*(bool*)result = d >= rd;
+			break;
+		}
+		break;
+	case OpCode.and:
+		*(bool*)result = b && rb;
+		break;
+	case OpCode.or:
+		*(bool*)result = b || rb;
+		break;
+	case OpCode.xor:
+		*(bool*)result = b != rb;
+		break;
+	case OpCode.implies:
+		*(bool*)result = !b | rb;
+		break;
+	}
+	
+	switch (op) {
+	case OpCode.plus:
+	case OpCode.minus:
+	case OpCode.mult:
+	case OpCode.div:
+	case OpCode.idiv:
+	case OpCode.imod:
+	case OpCode.bit_or:
+	case OpCode.bit_and:
+	case OpCode.l_shift:
+	case OpCode.power:
+		switch (lt.ident) {
+		case TypeIdent.INTEGER_8:
+			*(int8*)result = i;
+			return;
+		case TypeIdent.INTEGER_16:
+			*(int16*)result = i;
+			return;
+		case TypeIdent.INTEGER_32:
+			*(int32*)result = i;
+			return;
+		case TypeIdent.INTEGER_64:
+			*(int64*)result = i;
+			return;
+		case TypeIdent.NATURAL_8:
+			*(uint8*)result = n;
+			return;
+		case TypeIdent.NATURAL_16:
+			*(uint16*)result = n;
+			return;
+		case TypeIdent.NATURAL_32:
+			*(uint32*)result = n;
+			return;
+		case TypeIdent.NATURAL_64:
+			*(uint64*)result = n;
+			return;
+		case TypeIdent.REAL_32:
+			*(float*)result = d;
+			return;
+		case TypeIdent.REAL_64:
 				*(double*)result = d;
 				return;
-			}
-			break;
 		}
+		break;
 	}
+}
 
 public errordomain ExpressionError { 
 	UNKNOWN,
@@ -616,7 +616,7 @@ public class EiffelObjects : Object {
 		uint h, i;
 		uint old_size = size;
 		uint old_last_code = last_code;
-		var old_data = data;
+		unowned void*[] old_data = data;
 		var old_counts = counts;
 		data = (void*[])realloc_func(null, n*sizeof(void*));
 		*eif_results = data;
@@ -625,7 +625,7 @@ public class EiffelObjects : Object {
 		for (i=0; i<old_size; ++i) {
 			d = old_data[i];
 			if (d==null) continue;
-			h = (uint)d;
+			h = (uint)d % n;
 			data[h] = d;
 			counts[h] = old_counts[i];
 			if (i==old_last_code) last_code = h;
@@ -662,7 +662,7 @@ public class EiffelObjects : Object {
 /**
    Insert `obj'.
  */
-	internal void add(void* obj) {
+	internal void @add(void* obj) {
 		uint cap = counts.length;
 		bool ok = contains(obj);
 		uint h = last_code;
@@ -670,7 +670,7 @@ public class EiffelObjects : Object {
 			counts[h] = counts[h]+1;
 		} else {
 			if (2*size>cap) {
-				cap = 3*size + 1;
+				cap = 4*size + 1;
 				resize(cap);
 				h = last_code;
 			}
@@ -683,7 +683,7 @@ public class EiffelObjects : Object {
 /**
    Remove `obj'.
  */
-	internal void remove(void* obj) {
+	internal void @remove(void* obj) {
 		if (!contains(obj)) return;
 		uint h0 = last_code;
 		counts[h0] = counts[h0]-1;
@@ -710,7 +710,6 @@ public class EiffelObjects : Object {
 	 */
 	internal void clear(uint n=10) ensures (size==0) {
 		if (n<10) n = 10;
-		n = 2*n+1;
 		data = (void*[])realloc_func(null, n*sizeof(void*));
 		*eif_results = data;
 		counts = new uint[n];
@@ -821,7 +820,7 @@ public abstract class Expression : Object {
 				} else {
 					if (alias=="[]") {
 						if (parent.dynamic_type.is_special()) 
-							ex = new ItemExpression.typed(parent, args);
+							ex = new ItemExpression.typed(parent, args, null);
 						else
 							ex = new RoutineExpression.typed(r, args);
 					} else {
@@ -835,7 +834,9 @@ public abstract class Expression : Object {
 			if (alias!=null && parent==null) 
 				alias = null;
 			if (alias!=null && parent.dynamic_type.is_special()) {
-				ex = new ItemExpression.typed(parent, args);
+				var st = (SpecialType*)parent.dynamic_type;
+				var ic = st.item_type().base_class;
+				ex = new ItemExpression.typed(parent, args, ic);
 			} else if (e.is_once()) {
 				var o = (Gedb.Once*)e;
 				if (!o.is_initialized())
@@ -963,16 +964,15 @@ public abstract class Expression : Object {
    @ph placeholders targets for outside pointing placeholders
    @return newly created `Expression'
  */
-	public Expression clone_resolved(Gee.List<Expression> ph) 
-	ensures (result.parent==null) {
-		return expanded(null, ph);
-	}
+	public Expression clone_resolved(Gee.List<Expression> pl) 
+	ensures (result.parent==null) { return expanded(null, pl); }
 	
 	protected Expression? search(Expression what, Expression where) {
 		Expression? w;
 		Expression? ex;
 		for (ex=this, w=where; ex!=null; ex=ex.parent, w=w.parent) {
 			if (w==what) return ex;
+			if (w==null) return null;
 		}
 		return null;
 	}
@@ -1391,7 +1391,6 @@ public abstract class Expression : Object {
 			Expression? up_to=null, uint fmt=0) {
 		string here;
 		here = append_single_name(to, fmt);
-		var tex = this as TextExpression;
 		if (down!=null && this!=up_to) 
 			here = down.append_qualified_name(here, up_to, fmt);
 		return here;
@@ -1428,14 +1427,15 @@ public abstract class Expression : Object {
 	}
 
 	private string append_next_value(string to, uint indent, uint incr, 
+
 									 uint fmt, StackFrame* f, System* s) {
-		var exb = bottom();
+		var exa = this as AliasExpression;
+		var ex = exa!=null ? exa.alias : this; 
+		ex = ex.bottom();
 		string str = to;
 		str += indent>0 ? string.nfill(indent, ' ') : "";
-		str += exb.format_one_value(fmt);
+		str += ex.format_one_value(fmt);
 		str += "\n";
-		var exa = exb as AliasExpression;
-		var ex = exa!=null ? exa.alias : exb; 
 		if (ex.range!=null) {
 			ex.range.traverse_range((r) => 
 				{ ex.append_item(r, ref str, indent+incr, incr, fmt, f, s); }, 
@@ -1505,7 +1505,7 @@ public abstract class Expression : Object {
 
 	protected static EiffelObjects results;
 
-	internal virtual Expression? resolve_alias() { return this; }
+	public virtual Expression? resolve_alias() { return this; }
 
 	public bool uses_alias(string name) {
 		var ci = this as AliasExpression;
@@ -1522,36 +1522,28 @@ public abstract class Expression : Object {
 
 	internal Expression expanded(Expression? p, Gee.List<Expression> pl) {
 		var ex = resolved(p, pl);
-		if (ex==null) return null;
 		Expression? ci, cx;
 		int n = pl.size;
+		var rng = this as RangeExpression;
+		if (rng!=null) pl.insert(n++,ex);
 		for (uint i=0; i<Child.COUNT; ++i) {
 			ci = children[i];
 			if (ci!=null) {
 				switch (i) {
-				case Child.RANGE:
-					pl.insert(n, ex);
-					break;
 				case Child.DETAIL:
-					if (!is_range()) {
-						pl.insert(n, ex);
-					}
+					if (!is_range()) pl.insert(n, ex);
 					break;
 				}
 				cx = ci.expanded(ex, pl);
 				ex.set_child(i, cx);
 				switch (i) {
-				case Child.RANGE:
-					pl.remove_at(n);
-					break;
 				case Child.DETAIL:
-					if (!is_range()) {
-						pl.remove_at(n);
-					}
+					if (!is_range()) pl.remove_at(n);
 					break;
 				}
 			}
 		}
+		if (rng!=null) pl.remove_at(--n);
 		return ex;
 	}
 
@@ -1561,10 +1553,10 @@ public abstract class Expression : Object {
    Create a clone of `this' (without cloning children) 
    such that `name()' corresponds to an Eiffel entity. 
    The Eiffel entity is searched in the class or type of `p' (if not void) 
-   then in `f' if not found.
+   then in the items of `pl' if not found.
    
    @p already resolved new parent, used to resolve the name 
-   @f `StackFrame' to resolve the name  
+   @pl alternative parents to resolve the name  
    @return new `Expression' if name was resolved, `null' else 
  */
 	protected virtual Expression resolved(Expression? p, 
@@ -1594,8 +1586,9 @@ public abstract class Expression : Object {
 				}
 			}
 		}
-		if (this is ManifestExpression) {
-			var me = this as ManifestExpression;
+		Expression ex = this;
+		if (ex is ManifestExpression) {
+			var me = ex as ManifestExpression;
 			switch (me.name()) {
 			case "False":
 			case "True":
@@ -1607,13 +1600,20 @@ public abstract class Expression : Object {
 				return f!=null && f.routine!=null && f.routine.is_function();
 			}
 			return false;
-		} else if (!(this is EqualityExpression)) {
-			ct.query_by_name(out n, name(), arg==null, rt);
+		} else if (ex is Placeholder) {
+			ex = (ex as Placeholder).place;
+		} else if (ex is AliasExpression) {
+			var aex = (!) ex as AliasExpression;
+			ct.query_by_name(out n, aex.alias.name(), arg==null, rt);
+			if (n!=1) return false;
+			ex = aex;
+		} else if (!(ex is EqualityExpression)) {
+			ct.query_by_name(out n, ex.name(), arg==null, rt);
 			if (n!=1) return false;
 		}
 		Expression? ci;
 		for (uint i=0; i<Child.COUNT; ++i) {
-			ci = children[i] as AliasExpression;
+			ci = ex.children[i] as AliasExpression;
 			if (ci==null) continue;
 			ok = ci.static_check(ct, rt, s, f);
 			if (!ok) return false;
@@ -1659,15 +1659,11 @@ public abstract class Expression : Object {
 			try {
 				arg.compute_in_object(null, null, s, f, env);
 			} catch (ExpressionError e) {
-				stderr.printf("%s\n", e.message);
+//				stderr.printf("%s\n", e.message);
 				if (is_down()) parent.down = null;
- /*
-				else throw e;
- */
 			}
 		uint8* addr = object;
 		Routine* r = f!=null ? f.routine : null;
-		var aex = this as AliasExpression;
 		if (object==null) {
 			if (f!=null) {
 				addr = target(f);
@@ -1679,8 +1675,16 @@ public abstract class Expression : Object {
 		} else {
 			if (!t.is_subobject()) t = s.type_of_any(object, t);
 		}
-		bool ok = aex!=null;
-		if (!ok && is_down()) t = parent.dynamic_type;
+		bool ok = false;
+		var ph = this as Placeholder;
+		var me = this as ManifestExpression;
+		if (ph!=null) {
+			addr = ph.place.address();
+		} else if (me!=null) {
+			ok = true;
+		} else {
+			if (is_down()) t = parent.dynamic_type;
+		}
 		ok = set_dyn_type(t, f);
 		if (!ok && env!=null && f!=null) {	// try again in fallback mode
 			addr = env;
@@ -1692,24 +1696,23 @@ public abstract class Expression : Object {
 		compute(addr, f, s);
 		addr = address();
 		if (addr!=null) {
+			if (!dynamic_type.is_subobject())
+				dynamic_type = s.type_of_any(addr, dynamic_type);
 			if (down!=null) {
-				if (addr!=null || dynamic_type.is_subobject()) {
-					if (t.is_agent()) {
-						var ag = (AgentType*)dynamic_type;
-						addr = ag.closed_operands(addr);
-					}
-					down.compute_in_object(addr, dynamic_type, s, f, env);
+				if (dynamic_type.is_agent()) {
+					var ag = (AgentType*)dynamic_type;
+					addr = ag.closed_operands(addr);
 				}
-			}
-			if (range!=null) {
-				range.compute_in_object(addr, dynamic_type, s, f, env);
+				down.compute_in_object(addr, dynamic_type, s, f, env);
 			}
 			if (detail!=null) {
 				detail.compute_in_object(addr, dynamic_type, s, f, env);
 			}
+		} else if (down!=null && range==null) {
+			throw new ExpressionError.VOID_TARGET ("Call on void target.");
 		}
 		if (next!=null) {
-			next.compute_in_object(null, t, s, f, env);
+			next.compute_in_object(null, null, s, f, env);
 		}
 		if (error!=null) throw error;
 	}
@@ -2059,7 +2062,7 @@ public abstract class Expression : Object {
 
 	protected override void compute(uint8* obj, StackFrame* f, System* s)
 	throws ExpressionError {
-		if (entity.is_field() || entity.is_constant()) {	
+		if (entity.is_field() || entity.is_local() || entity.is_constant()) {	
 // function redefined as attribute or constant:
 			base.compute(obj, f, s);
 		} else {
@@ -2105,8 +2108,7 @@ public abstract class Expression : Object {
 
 	public override uint8* address() {
 		if (entity.is_field()) return base.address();
-	    uint8* addr = dynamic_type.dereference((uint8*)result);
-		return addr;
+	    return dynamic_type.dereference((uint8*)result);
 	}
 
 	public override string append_single_name(string? to, uint fmt=0) {
@@ -2423,6 +2425,7 @@ public abstract class Expression : Object {
 	throws ExpressionError {
 		ok = parent.compare_to(arg, op_code==OpCode.eq || op_code==OpCode.ne);
 		if (op_code==OpCode.ne) ok = !ok;
+		*(bool*)result = ok;
 		return;
 	}
 
@@ -2431,7 +2434,7 @@ public abstract class Expression : Object {
 
 	public EqualityExpression(Expression lhs, string name, Expression rhs, 
 		Gedb.Type* bool_type) { 
-		base(0);
+		base(1);
 		set_operator(name);
 		lhs.set_child(Child.DOWN, this);
 		set_child(Child.ARG, rhs);
@@ -2450,8 +2453,11 @@ public abstract class Expression : Object {
 		return (uint8*)addr;
 	}
 
+	public void set_value(bool b) { ok = b; }
+
 	public override string append_single_name(string? to, uint fmt=0) {
-		return format(to, this, fmt);
+		string here = to!=null ? to : "";
+		return format(here, this, fmt);
 	}
 
  }
@@ -2536,6 +2542,7 @@ public abstract class Expression : Object {
 
 	protected void set_type_and_class() {
 		var old = special_type;
+		if (special==parent) ;
 		special_type = (SpecialType*)special.dynamic_type;
 		if (special_type==old || special_type==null) return;
 		var it = special_type.item_type();
@@ -2553,21 +2560,34 @@ public abstract class Expression : Object {
 
 	protected override void compute(uint8* obj, StackFrame* f, System* s)
 	throws ExpressionError {
-		if (implicit) index = arg.bottom().as_int();
-		uint8* addr = address();
-		if (addr!=null) {
-			dynamic_type = s.type_of_any(addr, entity.type);
-			addr = s.unboxed(addr, entity.type);
+		if (implicit) {
+			var exb = arg.bottom();
+			index = exb !=null ? exb.as_int() : -1;
 		}
+		if (special_type==null) set_type_and_class();
+		uint8* addr = special.address();
+		if (addr==null) special.compute(obj, f, s);
+		if (!valid_index()) {
+			string msg = @"Invalid index: $index.";
+			throw new ExpressionError.INVALID_ITEM(msg);
+		}
+		addr = address();
+		dynamic_type = s.type_of_any(addr, entity.type);
+		addr = s.unboxed(addr, entity.type);
+		if (result==null) result = new uint8[dynamic_type.instance_bytes];
+		*(uint8**)result = addr;
 	}
 
-	protected ItemExpression.fixed(Expression array) 
-	requires (array.base_class()._name.fast_name=="SPECIAL") {
-		uint n;
-		var bc = array.base_class();
-		var item = bc.query_by_name(out n, "item", false, null);
-		if (n!=1) item = null;
-		base(item);
+	protected ItemExpression.fixed(Expression array, FeatureText* ft=null) 
+	{//requires (array.base_class()._name.fast_name=="SPECIAL") {
+		if (ft==null) {
+			uint n = 0;
+			var bc = array.base_class();
+			if (bc!=null) 
+				ft = bc.query_by_name(out n, "item", false, null);
+			if (n!=1) ft = null;
+		} 
+		base(ft);
 		special = array;
 		set_type_and_class();
 	}
@@ -2588,10 +2608,11 @@ public abstract class Expression : Object {
 		implicit = true;
 	}
 
-	public ItemExpression.typed(Expression array, Expression idx) 
+	public ItemExpression.typed(Expression array, Expression idx, ClassText* items) 
 	requires (array.dynamic_type.is_special()) 
 	ensures (arg==idx) {
 		this.fixed(array);
+		cls = items;
 		set_child(Child.ARG, idx);
 		implicit = true;
 	}
@@ -2611,10 +2632,9 @@ public abstract class Expression : Object {
 		if (addr==null) return null;
 		if (special_type==null) set_type_and_class();
 		if (special_type==null) return null;
-		addr = 0<=index && index<size() 
-			? special_type.item_type().dereference
-				(addr+special_type.item_offset(index))
-			: null;
+		if (!valid_index()) return null;
+		addr += special_type.item_offset(index);
+		addr = special_type.item_type().dereference(addr);
 		return addr;
 	}
 
@@ -2630,11 +2650,11 @@ public abstract class Expression : Object {
 		return here;
 	}
 
-	public int index { 
-		get; 
-		protected set; }
+	public int index { get; protected set; }
 
 	public SpecialType* special_type { get; private set; }
+
+	public bool valid_index() { return 0<=index && index<size(); }
 
 	public uint size() {
 		set_type_and_class();
@@ -2667,10 +2687,22 @@ public abstract class Expression : Object {
 		return rex;
 	}
 
+	protected override void compute(uint8* obj, StackFrame* f, System* s)
+	throws ExpressionError {
+		if (valid_index()) {
+			base.compute(obj, f, s);
+		} else if (index==-1) {
+			index = 0;
+			base.compute(obj, f, s);
+			index = -1;
+		}
+	}
+
 	public RangeCode code { get; set; }
 	public uint item_count { get; private set; }
 
-	public RangeExpression.named(Expression array) {
+	public RangeExpression.named(Expression array) 
+		ensures (array.range==this) {
 		base.named(array, null);
 		index = -1;
 		array.range = this;
@@ -2722,17 +2754,67 @@ public abstract class Expression : Object {
 
 	public delegate void RangeFunc(ItemExpression rng);
 
-	public ItemExpression as_item(StackFrame* f) {
-		var item = new ItemExpression.fixed(special);
-		item.index = index;
+	public ItemExpression as_item(int i) {
+		FeatureText* ft = entity!=null ? entity.text : text;
+		var item = new ItemExpression.fixed(special, ft);
+		item.index = i;
 		item.parent = parent;
 		if (detail!=null) 
 			item.set_child(Child.DETAIL, detail.clone_with_parent(item));
+		item.address();
 		return item;
 	}
 
+/**
+   Check whether `i' is a valid index.
+ 
+   Check whether `i' is a valid index. If so then `index' is set to `i'.
+
+   @i index to check
+*/
+	public bool in_range(int i, StackFrame* f, System* s, uint8* env=null) {
+		Gedb.Type* t = parent.dynamic_type;
+		Expression? exif = null;
+		int first = 0, beyond = 0, max = (int)size();
+		switch (code) {
+		case RangeCode.interval:
+			first = arg.bottom().as_int();
+			beyond = arg.next.bottom().as_int() + 1;
+			break;
+		case RangeCode.dollar:
+			first = arg.bottom().as_int();
+			beyond = arg.next.bottom().as_int() + first;
+			break;
+		case RangeCode.all:
+			beyond = max;
+			break;
+		case RangeCode.iff:
+			exif = arg.bottom();
+			beyond = max;
+			break;
+		}
+		if (beyond>max) beyond = max;
+		index = i;
+		if (exif!=null) {
+			try {
+				uint8* addr = parent.address();
+				if (addr==null) return false;
+				arg.compute_in_object(addr, t, s, f, env);
+				if (!exif.dynamic_type.is_boolean()) return false;
+				if (!exif.as_bool()) return false;
+			} catch (Error e) {
+				return false;
+			}
+		}
+		if (first<=i && i<beyond) {
+			index = i;
+			return true;
+		}
+		return false;
+	}
+
 	public void traverse_range(RangeFunc func, StackFrame* f, System* s, 
-							 uint8* env=null, bool new_item=false) 
+							   uint8* env=null, bool new_item=false) 
 	throws ExpressionError {
 		item_count = 0;
 		uint8* addr = parent.address();
@@ -2740,7 +2822,6 @@ public abstract class Expression : Object {
 		Gedb.Type* t = parent.dynamic_type;
 		Expression p = (!) parent;
 		Expression? exif = null;
-		ItemExpression item;
 		int first = 0, beyond = 0, max = (int)size();
 		switch (code) {
 		case RangeCode.interval:
@@ -2763,13 +2844,16 @@ public abstract class Expression : Object {
 		for (int i=first; i<beyond; ++i) {
 			index = i;
 			if (exif!=null) {
-				exif.top().compute_in_object(addr, t, s, f, env);
-				if (exif!=null && !exif.dynamic_type.is_boolean()) continue;
-				if (!exif.as_bool()) continue;
+				try {
+					arg.compute_in_object(addr, t, s, f, env);
+					if (!exif.dynamic_type.is_boolean()) continue;
+					if (!exif.as_bool()) continue;
+				} catch (Error e) {
+					continue;
+				}
 			}
-			item = this; //new_item ? as_item(f) : this;
-			item.compute_in_object(parent.address(), t, s, f, env);
-			func(item);
+			base.compute_in_object(addr, t, s, f, env);
+			func(this);
 			item_count++;
 		}
 	}
@@ -2921,50 +3005,47 @@ public abstract class Expression : Object {
 
  public class AliasExpression : Expression { 
 
-	protected string _name;
-	protected Expression? alias_top { get; private set; }
+	private string _name;
 
 	protected override void copy(Expression ex) {
 		base.copy(ex);
 		var aex = ex as AliasExpression;
 		_name = aex.name();
-		if (alias_top!=null) {
-			alias_top = aex.alias_top.clone();
-			alias = alias_top.bottom();
-		}
+		if (aex.alias!=null) alias = aex.alias.clone();
 	}
 
 	protected override Expression resolved(Expression? p, 
 		Gee.List<Expression> pl) {
 		var aex = base.resolved(p, pl) as AliasExpression;
-		aex.parent = p;
 		aex._name = _name;
 		if (alias==null) return aex;
-		Expression ex;
+		Expression ex, exb = alias.bottom();
 		int i=0, n=0;
-		for (ex=alias_top.bottom(); ex!=alias_top; ex=ex.parent) {
+		for (ex=exb; ex!=alias; ex=ex.parent) {
 			++n;
-			if (i==0 && ex!=alias) ++i;
+			if (i==0 && ex!=exb) ++i;
 		}
-		var top = alias_top.expanded(p, pl);
+		var top = alias.expanded(p, pl);
 		for (ex=top.bottom(); i-->0;) ex = ex.parent;
 		aex.alias = ex;
 		return aex;
 	}
 
 	protected override bool set_dyn_type(Gedb.Type* pt, StackFrame* f) {
-		dynamic_type = alias.dynamic_type;
-		return dynamic_type!=null; 
+		if (alias==null) return false;
+		bool ok = _alias.set_dyn_type(pt, f);
+		dynamic_type = _alias.dynamic_type;
+		return ok; 
 	}
 
 	protected override void compute(uint8* obj, StackFrame* f, System* s) 
 	throws ExpressionError {
 		Expression? p = is_down() ? parent : null;
 		if (p!=null) 
-			alias_top.compute_in_object(p.address(), p.dynamic_type, s, f); 
+			alias.compute_in_object(p.address(), p.dynamic_type, s, f); 
 		else
-			alias_top.compute_in_stack(f, s);
-		dynamic_type = alias.dynamic_type;
+			alias.compute_in_stack(f, s);
+		dynamic_type = alias.bottom().dynamic_type;
 	}
 
 	internal override Expression? resolve_alias() { 
@@ -2983,11 +3064,9 @@ public abstract class Expression : Object {
 		get { return _alias; }
 		protected set {
 			if (value!=null) {
-				_alias_top = value.top();
-				_alias = _alias_top.bottom();
-				dynamic_type = value.dynamic_type;
+				_alias = value;
+				dynamic_type = value.bottom().dynamic_type;
 			} else {
-				_alias_top = null;
 				_alias = null;
 				dynamic_type = null;
 			}
@@ -3004,7 +3083,7 @@ public abstract class Expression : Object {
 			ci = ex.children[i] as AliasExpression;
 			if (ci==null) continue;
 			cnm = ci.name();
-			if (cnm==name || is_cyclic(ci.alias_top, name, cycle)) {
+			if (cnm==name || is_cyclic(ci.alias, name, cycle)) {
 				if (cycle!=null) 
 					cycle.insert(0, cnm[1:cnm.length]);
 				return true;
@@ -3014,14 +3093,20 @@ public abstract class Expression : Object {
 	}
 
 	public override string name() { return _name; }
-	public override ClassText* base_class() { return alias.base_class(); }
-	public override uint8* address() { return alias.address(); }
+
+	public override ClassText* base_class() { 
+		return alias!=null ? alias.bottom().base_class() : null; 
+	}
+
+	public override uint8* address() { 
+		return alias!=null ? alias.bottom().address() : null;
+	}
 
 	public override string append_single_name(string? to, uint fmt=0) {
 		string here = to!=null ? to : "";
 		if (is_down()) here += ".";
 		if ((fmt&Format.EXPAND_ALIAS)!=0) 
-			here += alias_top.append_qualified_name(here, null, fmt);
+			here += alias.append_qualified_name(here, null, fmt);
 		else 
 			here += _name;
 		return here;
@@ -3031,54 +3116,72 @@ public abstract class Expression : Object {
 
  /* -------------------------------------------------------------------- */
 
- public class Placeholder : AliasExpression {
+ public class Placeholder : Expression {
+
+	private string _name;
 
 	protected override void copy(Expression ex) {
+		base.copy(ex);
 		var ph = ex as Placeholder;
 		_name = ph._name;
-		alias = ph.alias!=null ? search(ph.alias, ph) : null;
-// type does not follow `alias' if `is_index()', so set it explicitly:
+		if (ph.place!=null) {
+			place = search(ph.place, ph);
+			if (place==null) place = ph.place;	// `ph' may point outside
+		}
+// type does not follow `place' if `is_index()', so set it explicitly:
 		dynamic_type = ex.dynamic_type;
 	}
-
+	
 	protected override Expression resolved(Expression? p, 
 		Gee.List<Expression> pl) {
+		var ph = base.resolved(p,pl) as Placeholder;
 		int n = pl.size;
 		int l = _name.length;
-		var t = get_type();
-		var ph = @new(t) as Placeholder;
+		assert (n>=l);
+		ph.place = pl[n-l];
 		ph._name = _name;
-		if (l==0) return null;
-		ph.alias = pl[n-l];
 		return ph;
 	}
 	
-	protected override void compute(uint8* obj, StackFrame* f, System* s) 
-	throws ExpressionError {
-		// target is already computed
-		dynamic_type = alias.dynamic_type;
+//	internal override Expression? resolve_alias() { return place; }
+	
+	protected override bool set_dyn_type(Gedb.Type* pt, StackFrame* f) {
+		dynamic_type = place!=null ? place.dynamic_type : null;
+		return dynamic_type!=null; 
 	}
 
+	protected override void compute(uint8* obj, StackFrame* f, System* s) 
+	throws ExpressionError {} // target is already computed
+
 	public Placeholder.named(string name, Gedb.Type* int_type) {
-		base(name, null);
-		if (is_index()) 
-			dynamic_type = int_type;
+		bool as_idx = name[0]=='!';
+		base(as_idx ? int_type.instance_bytes : 0);
+		_name = name;
+		if (is_index()) dynamic_type = int_type;
 	}
 
 	public Placeholder(Expression ex, string name, Gedb.Type* int_type) { 
-		base(name, ex);
-		if (is_index()) 
-			dynamic_type = int_type;
+		this.named(name, int_type);
+		place = ex;
+		if (!is_index()) dynamic_type = ex.dynamic_type;
 	}
 
+	public Expression? place { get; private set; }
 	public uint level() { return _name.length; }
 	public bool is_index() { return _name.@get(0)=='!'; }
 
-	public override bool is_placeholder() { return true; }
+	public override string name() { return _name; }
+	public override ClassText* base_class() { return place.base_class(); }
+	public override uint8* address() { return place.address(); }
 
 	public override string append_single_name(string? to, uint fmt=0) {
-		if ((fmt&Format.EXPAND_PH)!=0) fmt |= Format.EXPAND_ALIAS;
-		return base.append_single_name(to, fmt);
+		string here = to!=null ? to : "";
+		if (is_down()) here += ".";
+		if ((fmt&Format.EXPAND_PH)!=0) 
+			here += place.append_qualified_name(here, null, fmt);
+		else 
+			here += _name;
+		return here;
 	}
 
  }
@@ -3102,9 +3205,29 @@ public class RangePlaceholder : Placeholder {
 		var rp = base.resolved(p, pl) as RangePlaceholder;
 		rp.int_type = int_type;
 		rp.idx = idx;
-		if (is_index()) rp.dynamic_type = (Gedb.Type*)int_type;
+		rp.dynamic_type = dynamic_type;
 		return rp;
 	}
+
+	protected override bool set_dyn_type(Gedb.Type* pt, StackFrame* f) {
+		if (is_index()) {
+			dynamic_type = (Gedb.Type*)int_type;
+		} else {
+			base.set_dyn_type(pt, f);
+		}
+		return dynamic_type!=null; 
+	}
+
+	protected override void compute(uint8* obj, StackFrame* f, System* s) 
+	throws ExpressionError {
+		if (is_index()) {
+			var item = place as ItemExpression;
+			idx = item.index;
+			*(uint**)result = &idx;
+		} else {
+// target is already computed
+		}
+	} 
 
 	public RangePlaceholder(RangeExpression rng, string name, Gedb.Type* it)
 		requires (it.ident=TypeIdent.INTEGER_32) {
@@ -3126,13 +3249,13 @@ public class RangePlaceholder : Placeholder {
 
 	public override string append_single_name(string? to, uint fmt=0) {
 		if ((fmt&Format.EXPAND_PH)!=0) {
-			var rng = alias as RangeExpression;
+			var rng = place as RangeExpression;
 			if (rng!=null)
 				return rng.special.append_single_name(to, fmt);
 		} 
 		return base.append_single_name(to, fmt);
 	}
 
-	public uint index() { return (alias.range as ItemExpression).index; }
+	public uint index() { return (place as ItemExpression).index; }
 
 }

@@ -260,7 +260,7 @@ public class SqlPart : Window {
 			col = view.get_column(i);
 			w += col.max_width;
 		}
-		w = int.min(w, (int)(0.9*get_screen().width()));
+		w = int.min(w, (int)(0.9*screen.width()));
 		scroll.set_min_content_width(w);
 		obsolete = false;
 	}		
@@ -649,7 +649,6 @@ public class SqlPart : Window {
 		if (as_default) {
 			int n = store.iter_n_children(null);
 			count.set_text(@"$n");
-			var screen = get_screen();
 			int h = (int)(0.5*screen.height());
 			scroll.set_min_content_height(int.min(n*24+30,h));
 		}

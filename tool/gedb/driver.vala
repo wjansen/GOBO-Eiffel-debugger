@@ -772,11 +772,15 @@ public class Driver : Debuggee {
 				found.print = bp.print;
 				if (found.print!=null) {
 					found.print.compute_in_stack(top, rts);
-					found.formatted = found.print.bottom().format_values(2,
-						found.print.Format.WITH_NAME |
-						found.print.Format.WITH_TYPE |
-						found.print.Format.INDEX_VALUE ,
-						top, rts);
+					try {
+						found.formatted = found.print.bottom().format_values(2,
+							found.print.Format.WITH_NAME |
+							found.print.Format.WITH_TYPE |
+							found.print.Format.INDEX_VALUE ,
+							top, rts);
+					} catch (ExpressionError e) {
+						stderr.printf("Print action: %s\n", e.message);
+					}
 				} else {
 					found.formatted = null;
 				}

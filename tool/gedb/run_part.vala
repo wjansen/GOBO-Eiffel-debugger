@@ -144,7 +144,7 @@ public class RunPart : Box, AbstractPart, Cancellable  {
 		var e = print_history.get_child() as Entry;
 		string str = e.get_text();
 		if (str.strip().length==0) return; 
-		checker.check_dynamic(str, null, f, dr.rts, false, aliases);
+		checker.check_dynamic(str, null, f, dr.rts, true, aliases);
 		var expr = checker.parsed;
 		if (expr==null) return;
 		str = expr.append_name();

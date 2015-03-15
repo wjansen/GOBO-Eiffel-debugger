@@ -83,10 +83,10 @@ public class WatchInfo  : GLib.Object {
 		if (!ok) depth = f!=null ? f.depth : 0;
 		_type = s.type_at(data.tid);
 		entity = data.field;
-		uint off = (entity.is_local() ?
-			   ((Local*)entity).offset : ((Field*)entity).offset);
+		int off = (entity.is_local() ?
+				   ((Local*)entity).offset : ((Field*)entity).offset);
 		uint size = _type.field_bytes();
-		if (data.idx>0) off += data.idx*size;
+		if (data.idx>0) off += (int)(data.idx*size);
 		address = data.home!=null ? data.home : (uint8*)f;
 		address += off;
 		value = new uint8[size];

@@ -82,12 +82,13 @@ namespace Eval {
 			if (t!=null) {
 				root_type = t;
 				base_class = root_type.base_class;
-			} else {
-				root_type = frame.target_type();
-				base_class = system.class_at(frame.class_id);
+			} else if (f!=null) {
+				root_type = f.target_type();
+				base_class = system.class_at(f.class_id);
 			}
-			act_routine = frame.routine;
-			act_text = (RoutineText*)((Entity*)act_routine).text;
+			act_routine = f!=null ? f.routine : null;
+			act_text = act_routine!=null ?
+				(RoutineText*)((Entity*)act_routine).text : null;
 			syntax_only = false;
 			now = compute_now;
 		}
@@ -124,6 +125,7 @@ namespace Eval {
 		public Parser.as_command(System* s) requires (s!=null) {
 			init_text(null, null, s);
 			as_cmd = true;
+			syntax_only = true;
 			push_state(State.CMD);
 		}
 		
@@ -197,7 +199,10 @@ namespace Eval {
 			if (to_compute && !syntax_only) {
 				if (ex is AliasExpression) {
 					var aex = ex as AliasExpression;
-					if (aex.alias!=null) return;
+					if (aex.alias==null) return;
+				} else if (ex is Placeholder) {
+					var ph = ex as Placeholder;
+					if (ph.place==null) return;
 				}
 				if (now) {
 					try {
@@ -215,7 +220,8 @@ namespace Eval {
 						last_token = v.token;
 						is_match = false;
 					}
-				} else if (!syntax_only) {
+/*
+				} else if (!syntax_only && ex.dynamic_type==null) {
 					var ct = ex.is_down() ?
 						ex.parent.base_class() : base_class;
 					is_match &= ex.static_check(ct, act_text, system, frame);
@@ -223,6 +229,7 @@ namespace Eval {
 						error = new ParseError.UNKNOWN ("Syntax error");
 						last_token = v.token;
 					}
+*/
 				}
 			}
 		}
@@ -231,24 +238,23 @@ namespace Eval {
 
 		internal Gee.List<Expression> places;
 
-		internal void push_place(Expression ex, RangeExpression? range) {
+		internal void push_place(Expression ex) {
 			Expression pl;
-			if (last_range!=null) 
-				pl = last_range;
+			if (last_place!=null) 
+				pl = last_place;
 			else 
 				pl = ex;
 			places.insert(0, pl);
 		}
 		
-		internal void pop_place(bool save_range) 
-		requires (places.size>0) { 
-			last_range = save_range ? places.@get(0) : null; 
+		internal void pop_place(bool save_place) requires (places.size>0) { 
+			last_place = save_place ? places.@get(0) : null;
 			places.remove_at(0);
 		}
 		
 		internal uint places_size() { return places.size + prefix_ph; }
 
-		internal Expression last_range;
+		internal Expression last_place;
 
 		internal Expression get_place(uint i) 
 		requires (places.size+prefix_ph>i) { 
@@ -280,14 +286,12 @@ namespace Eval {
 		
 		[Flex(state="CMD", pattern="alias")]
 		public void alias_cmd(string value, int len) {
-			syntax_only = true;
 			token = new Token(token_code, value, n_chars_read, len);
 			pop_state();
 		}
 		
 		[Flex(state="CMD", pattern="break")]
 		public void break_cmd(string value, int len) {
-			syntax_only = false;
 			token = new Token(token_code, value, n_chars_read, len);
 			pop_state();
 		}
@@ -939,6 +943,7 @@ namespace Eval {
 				if (h.act_text!=null) {
 					var name = h.act_text._feature._name.fast_name;
 				h.act_routine = tp.routine_by_name(name, false);
+				h.syntax_only = false;
 				}
 			}
 		}
@@ -1138,7 +1143,7 @@ namespace Eval {
 								dex = Expression.new_typed(ex, e, args);
 							} catch (ExpressionError err) {
 								if (err is ExpressionError.INVALID_ARGUMENTS) {
-									
+									h.error = new ParseError.BAD_ARG ("");
 								}
 							}
 						}
@@ -1150,7 +1155,8 @@ namespace Eval {
 							ef = tex.text.tuple_labels[li];
 						} else {
 							ct = ex.base_class();
-							ef = ct.query_by_name(out n, name, pref);
+							if (ct!=null) 
+								ef = ct.query_by_name(out n, name, pref);
 							if (n!=1) ef = null;
 						}
 					}
@@ -1161,13 +1167,12 @@ namespace Eval {
 					dex = null;
 					h.not_unique = n>0;
 				}
-				if (dex==null)
-					h.error = new ParseError.UNKNOWN ("");
 			}
 			ex.set_child(ex.Child.DOWN, dex);
 			d.expr = dex;
-			if (dex!=null) h.register(d, true, true);
-			if (dex==null) {
+			if (dex!=null) {
+				h.register(d, true, true);
+			} else {
 				h.last_token = d.token;
 				if (h.error==null) h.error = new ParseError.UNKNOWN ("");
 				h.is_match = false;
@@ -1183,72 +1188,75 @@ namespace Eval {
 			Expression? ex = u!=null ? u.expr : null;
 			FeatureText* ft;
 			Entity* e;
-			var a = u.args!=null ? u.args.expr : null;
-			var aex = u.expr as AliasExpression;
-			if (aex!=null) {
-				ex = aex;
-			} else if (h.syntax_only) {
-				ex = Expression.new_named(null, name, a);
-			} else {
-				var r = h.act_routine;
-				uint nu = up!=null ? up.count : 0;
-				for (uint i=nu; i-->0;) {
-					if (f==null) {
-						h.last_token = up.token;
-						h.error = new ParseError.NO_STACK 
+			if (ex!=null && !ex.name().has_prefix(name)) ex = null;
+			if (ex==null) {
+				var a = u.args!=null ? u.args.expr : null;
+				var aex = u.expr as AliasExpression;
+				if (aex!=null) {
+					ex = aex;
+				} else if (h.syntax_only) {
+					ex = Expression.new_named(null, name, a);
+				} else {
+					var r = h.act_routine;
+					uint nu = up!=null ? up.count : 0;
+					for (uint i=nu; i-->0;) {
+						if (f==null) {
+							h.last_token = up.token;
+							h.error = new ParseError.NO_STACK 
 							("Not actual call stack");
-						h.is_match = false;
-						return;
-					}
-					f = f.caller;
-				}
-				if (up!=null) {
-					r = f.routine;
-					tp = f.target_type();
-					e = tp.query_by_name(out n, name, a==null, r);
-					if (n!=1) e = null;
-					try {
-						if (n==0) {
-							ex = Expression.predef_typed(name, h.act_routine,
-														 h.system);
-						} else if (e!=null) {
-							ex = Expression.new_typed(null, e, a);
+							h.is_match = false;
+							return;
 						}
+						f = f.caller;
+					}
+					if (up!=null) {
+						r = f.routine;
+						tp = f.target_type();
+						e = tp.query_by_name(out n, name, a==null, r);
+						if (n!=1) e = null;
+						try {
+							if (n==0) {
+								ex = Expression.predef_typed(name, h.act_routine,
+															 h.system);
+							} else if (e!=null) {
+								ex = Expression.new_typed(null, e, a);
+							}
 						} catch (ExpressionError err) {
-					}
-				} else if (tp!=null) {
-					e = tp.query_by_name(out n, name, a==null, r);
-					if (n!=1) e = null;
-					var tex = expr as TextExpression;
-					try {
-						if (n==0) {
-							ex = Expression.predef_typed(name, h.act_routine,
-														 h.system);
-						} else if (e!=null && (tex==null || e!=tex.entity)) {
-							ex = Expression.new_typed(null, e, a);
-						} else {
-							ex = expr;
 						}
-						tex = ex as TextExpression;
-						if (tex!=null && tex.entity.is_scope_var()) {
-							var sv = (ScopeVariable*)tex.entity;
-							uint pos = h.frame!=null ? h.frame.pos : 0;
-							if (!sv.in_scope(pos/256, pos%256)) ex = null;
+					} else if (tp!=null) {
+						e = tp.query_by_name(out n, name, a==null, r);
+						if (n!=1) e = null;
+						var tex = expr as TextExpression;
+						try {
+							if (n==0) {
+								ex = Expression.predef_typed(name, h.act_routine,
+															 h.system);
+							} else if (e!=null && (tex==null || e!=tex.entity)) {
+								ex = Expression.new_typed(null, e, a);
+							} else {
+								ex = expr;
+							}
+							tex = ex as TextExpression;
+							if (tex!=null && tex.entity.is_scope_var()) {
+								var sv = (ScopeVariable*)tex.entity;
+								uint pos = h.frame!=null ? h.frame.pos : 0;
+								if (!sv.in_scope(pos/256, pos%256)) ex = null;
+							}
+						} catch (ExpressionError err) {
+							if (err is ExpressionError.NOT_INITIALIZED) 
+								h.error = new ParseError.NOT_INIT 
+							("Once function not yet initalized");
 						}
-					} catch (ExpressionError err) {
-						if (err is ExpressionError.NOT_INITIALIZED) 
-							h.error = new ParseError.NOT_INIT 
-								("Once function not yet initalized");
+					} else if (ct!=null) {
+						ft = ct.query_by_name(out n, name, u.args==null,
+											  h.act_text);
+						if (n==0)
+							ex = Expression.predef(name, h.act_text, h.system);
+						else if (n==1 && ft!=null) 
+							ex = Expression.new_text(null, ft, a);
+						else
+							ex = null;
 					}
-				} else if (ct!=null) {
-					ft = ct.query_by_name(out n, name, u.args==null,
-										  h.act_text);
-					if (n==0)
-						ex = Expression.predef(name, h.act_text, h.system);
-					else if (n==1 && ft!=null) 
-						ex = Expression.new_text(null, ft, a);
-					else
-						ex = null;
 				}
 			}
 			if (ex!=null) {
@@ -1285,7 +1293,7 @@ namespace Eval {
 			token = t;
 			at = t.at;
 			size = t.size;
-			if (end!=null)  end_by(end);
+			if (end!=null) end_by(end);
 			var tp = h.system.type_at(tid);
 			if (tp.is_basic()) 
 				expr = new ManifestExpression(tp, value);
@@ -1307,7 +1315,7 @@ namespace Eval {
 				id = int.parse(t.name.substring(1));
 				ex = h.number_alias(id);
 				if (ex!=null) 
-					aex = new AliasExpression(t.name, ex.bottom());
+					aex = new AliasExpression(t.name, ex);
 			} else if (h.aliases!=null) {
 				string name = t.name[1:t.name.length];
 				ex = h.aliases[name];
@@ -1361,9 +1369,7 @@ namespace Eval {
 		private Detailed(Parser h, Nonterm v) { this.copy(h, v); }
 		
 		[Lemon(pattern="Range(r)")]
-		public Detailed._1(Parser h, Range r) {
-			this.copy(h, r); 
-		}
+		public Detailed._1(Parser h, Range r) { this.copy(h, r); }
 		
 		[Lemon(pattern="OpenDetail(od) Multi(m) RBRACE(r)")]
 		public Detailed._2(Parser h, OpenDetail od, Multi m, Token r) {
@@ -1373,18 +1379,27 @@ namespace Eval {
 			if (ex.range!=null) ex = ex.range;
 			ex.set_child(ex.Child.DETAIL, m.expr);
 			h.pop_place(false);
+			h.now = od.old_now;
 		}
 	}
 
 	public class OpenDetail : Nonterm {
 		
+		internal bool old_now;
+
 		private OpenDetail(Parser h, Nonterm v) { this.copy(h, v); }
 		
 		[Lemon(pattern="Range(r) LBRACE(b)")]
 		public OpenDetail._1(Parser h, Range r, Token b) {
 			this.copy(h, r);
 			end_by(b);
-			h.push_place(r.expr.bottom(), null);
+			var exb = r.expr.bottom();
+			if (exb.range!=null) {
+				exb = exb.range;
+				old_now = h.now;
+				h.now = false;
+			}
+			h.push_place(exb);
 		}
 
 	}
@@ -1411,12 +1426,13 @@ namespace Eval {
 				h.register(oi);
 				rng.code = ii.code;
 				rng.set_child(rng.Child.ARG, ii.expr);
-				h.pop_place(true);
 			} else {
 				h.last_token = oi.token;
 				h.error = new ParseError.NO_RANGE ("Not in a range");
 				h.is_match = false;				
 			}
+			h.pop_place(true);
+			h.now = oi.old_now;
 		}
 	}
 	
@@ -1424,6 +1440,7 @@ namespace Eval {
 
 		internal RangeExpression rng;
 		internal int pos;
+		internal bool old_now;
 
 		private OpenIndices(Parser h, Nonterm v) { this.copy(h, v); }
 
@@ -1438,14 +1455,18 @@ namespace Eval {
 			rng = h.syntax_only
 				? new RangeExpression.named(sb)
 				: (ok ? new RangeExpression(sb) : null);
+//			expr.set_child(rng.Child.RANGE, rng);
 			if (rng!=null) {
-				h.push_place(sb, rng);
-				h.register(this);
+//				expr = rng;
+				h.push_place(sb);
+				h.register(this, true);
 			} else {
 				h.last_token = l;
 				h.error = new ParseError.NO_RANGE ("Not in a range");
 				h.is_match = false;
 			}
+			old_now = h.now;
+			h.now = false;
 		}
 	}
 	
@@ -1629,7 +1650,7 @@ namespace Eval {
 		
 		[Lemon(pattern="HEAPVAR(hv)")]
 		public Left._8(Parser h, Token hv) { 
-			this.from_alias(h, hv); 
+			this.from_alias(h, hv);	// `from_token' ?
 			if (h.is_match) h.register(this, true); 
 		}
 		
@@ -1656,9 +1677,10 @@ namespace Eval {
 				expr = new Placeholder.named(p.name, it);
 			} else {
 				var pl = h.get_place(pn-1);
-				expr = pl.range!=null
-				? new RangePlaceholder(pl.range, p.name, it)
-				: new Placeholder(pl, p.name, it);
+				var rex = pl.range as RangeExpression;
+				expr = rex!=null  
+				? new RangePlaceholder(rex, p.name, it)
+					: new Placeholder(pl, p.name, it);
 			}
 			h.register(this, true);
 		}

@@ -7,8 +7,7 @@ public class BreakPart : Box, AbstractPart {
 		ID = 0,
 		CATCH,
 		AT, CLS, POS,
-		DEPTH,
-		PP,
+		DEPTH, PP,
 		WATCH, WATCH_TEXT,
 		TYPE, TYPE_ID,
 		IF, IF_TEXT,
@@ -234,14 +233,21 @@ public class BreakPart : Box, AbstractPart {
 		uint tid, cid, pos;
 		store.@get(iter, Item.TYPE_ID, out tid, 
 				   Item.CLS, out cid, Item.POS, out pos, -1);
-		if (tid>0 && cid==0) {
+		bool ok = false;
+		if (tid>0) {
 			Gedb.Type* t = dr.rts.type_at(tid);
 			ClassText* ct = t.base_class;
 			cid = ct.ident;
+			ok = checker.check_dynamic(str, t, null, dr.rts, col==Item.IF, aliases);
 		} 
+		if (ok) return;
 		if (cid>0) 
-			checker.check_static(str, cid, pos, dr.rts, col==Item.IF, aliases);
+			ok = checker.check_static(str, cid, pos, dr.rts, col==Item.IF, aliases);
+		if (ok) return;
+		ok = checker.check_syntax(str, dr.rts, aliases);
 	}
+
+// checker.show_message(msg, "", bad, null);
 
 	private void do_pre_edit(CellRenderer cell, CellEditable editor,
 							 string path_string) requires (dr!=null) {

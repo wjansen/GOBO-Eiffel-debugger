@@ -76,8 +76,18 @@ public class ConsolePart : ScrolledWindow {
 		}
 		if (source.search_state!=source.SearchMode.NO_SEARCH) 
 			return source.handle_key(e, view);
-//		end.backward_char();
-//		view.scroll_to_iter(end, 0.0, false, 1.0, 0.0);
+		insert = buffer.get_insert();
+		buffer.get_iter_at_mark(out right, insert);
+		buffer.get_iter_at_mark(out left, end_mark);
+		if (left.get_line()!=right.get_line()) {
+			buffer.get_end_iter(out right);
+			buffer.move_mark(insert, right);
+			view.scroll_to_iter(right, 0.0, false, 1.0, 0.0);
+		} else if (left.get_line_index()>right.get_line_index()) {
+			right = left;
+			right.forward_char();
+			buffer.move_mark(insert, right);
+		}
 		if (code>'~')  {
 			switch (code) {
 			case Gdk.Key.Return:
@@ -246,6 +256,7 @@ public class ConsolePart : ScrolledWindow {
 		TextMark insert;
 		TextIter at;
 		lock (buffer) {
+			flush_out(IOStatus.NORMAL); 
 			var tags = buffer.get_tag_table();
 			switch (type) {
 			case Log.GO:
