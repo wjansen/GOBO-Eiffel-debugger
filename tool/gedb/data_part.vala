@@ -448,6 +448,7 @@ public class DataCore : Box, AbstractPart {
 				}
 			}
 		}
+		view.expand_row(store.get_path(iter), false);
 		adjust_visibility(iter);
 	}
 
@@ -1247,9 +1248,8 @@ public class DataPart : DataCore {
 		Entity* e = null;
 		Expression ex, exb;
 		Expression? exd = null;
-		TextExpression? ext = null;
 		TupleExpression? exu;
-		ItemExpression? exi = null;		
+		RangeExpression? exr = null;
 		AliasExpression? exa = null;
 		uint8* addr;
 		TreePath path;
@@ -1258,22 +1258,20 @@ public class DataPart : DataCore {
 		char c = DataMode.EXTERN;
 		uint fmt = expr.Format.INDEX_VALUE | style ;
 		for (ex=expr; ex!=null; ex=ex.next) {
-			exa = ex as AliasExpression;
-			exb = exa!=null ? exa.alias : ex;
-			exb = exb.bottom();
+//			exa = ex as AliasExpression;
+//			exb = exa!=null ? exa.alias : ex;
+			exb = ex.resolve_alias().bottom();
 			t = exb.dynamic_type;
 			addr = exb.address();
 			name = ex.append_qualified_name(null, null, fmt);
 			store.append(out iter, at);
-			ext = exb as TextExpression;
-			exi = exb as ItemExpression;
 			exu = exb as TupleExpression;
-			e = exi!=null
-				? (Entity*)exi.special_type.item_0()
-				: (ext!=null ? ext.entity : null);
 			set_value(iter, addr, false, e, null, -1, c, name, exb);
+			exr = exb.range;
 			exd = exb.detail;
-			if (exd!=null) {
+			if (exr!=null) {
+				do_expand(iter);
+			} else if (exd!=null) {
 				expand = true;
 				add_expression(exd, iter, true);
 			} else if (exu!=null && exu.arg!=null) {
@@ -1921,7 +1919,7 @@ public class FeatureMenu : Gtk.Menu {
 			if (r.is_once()) continue;
 			e = (Entity*)r;
 			x = e.text;
-			if (x==null) continue;
+			if (x==null || r.is_precursor()) continue;
 			if (!header) {
 				item = new SeparatorMenuItem();
 				append(item);

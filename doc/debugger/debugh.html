@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
-<meta name="generator" content="hevea 2.16">
+<meta name="generator" content="hevea 2.18">
 <style type="text/css">
 .li-itemize{margin:1ex 0ex;}
 .li-enumerate{margin:1ex 0ex;}
@@ -293,23 +293,23 @@ and run <span style="font-family:monospace">make</span> before installing <span 
 </blockquote>
 <!--TOC subsection id="sec6" Usage-->
 <h3 id="sec6" class="subsection">2.3&#XA0;&#XA0;Usage</h3><!--SEC END --><p><a id="S:usage"></a>
-The use of the debugger is controlled by <span style="font-style:oblique">Gec</span> command line options 
-and/or options in the <span style="font-family:monospace">.xace</span> file 
-(corresponding settings in an <span style="font-family:monospace">.ace</span> file are ignored). 
-The system is not prepared for debugging 
-(and a traditional system is generated) if it is compiled 
-in finalized mode (option <span style="font-family:monospace">--finalize</span> on the command line 
-or <span style="font-family:monospace">&lt;option name="finalize" value="true"/&gt;</span> in the<span style="font-family:monospace">.xace</span> file). 
-If not in finalized mode then the presence or absence 
-of command line option <span style="font-family:monospace">--gedb=</span><span style="font-style:italic">choice</span> controls 
-which debugger variant will be added to the system:
-</p><ul class="itemize"><li class="li-itemize">option absent: the post mortem analyser is added; 
-</li><li class="li-itemize">option present without parameter: the runtime analyser is added; 
-</li><li class="li-itemize">option present with parameter: the parameter <span style="font-style:italic">choice</span> must be one of
+The use of the debugger is controlled by <span style="font-style:oblique">Gec</span> command line option 
+<span style="font-family:monospace">--gedb</span>. The option interferes with option <span style="font-family:monospace">--finalize</span>. 
+On the one hand, if <span style="font-family:monospace">--finalize</span> is set then <span style="font-family:monospace">--gedb</span> is ignored. 
+On the other hand, command line option <span style="font-family:monospace">--gedb</span> takes precedence 
+over option <span style="font-family:monospace">finalize</span> in the <span style="font-family:monospace">xace</span> file. 
+If finalization is not requested by the command line then the following happens 
+(&#X201C;<span style="font-family:monospace">finalize</span>&#X201D; means the option in the <span style="font-family:monospace">xace</span> file): 
+</p><ul class="itemize"><li class="li-itemize">option <span style="font-family:monospace">--gedb</span> absent: no debugger is added 
+if <span style="font-family:monospace">finalize</span> is set, otherwise the post mortem analyser is added; 
+</li><li class="li-itemize">option <span style="font-family:monospace">--gedb</span> present without parameter: 
+the runtime analyser is added, <span style="font-family:monospace">finalize</span> is ignored; 
+</li><li class="li-itemize">option <span style="font-family:monospace">--gedb</span> present with parameter: 
+the parameter must be one of
 <dl class="description"><dt class="dt-description">
-<span style="font-weight:bold">none</span></dt><dd class="dd-description"> : no debugger is added
-</dd><dt class="dt-description"><span style="font-weight:bold">pma</span></dt><dd class="dd-description"> : the post mortem analyser is added
-</dd><dt class="dt-description"><span style="font-weight:bold">full</span></dt><dd class="dd-description"> : the runtime analyser is added 
+<span style="font-weight:bold">none</span></dt><dd class="dd-description"> : no debugger is added, <span style="font-family:monospace">finalize</span> is respected
+</dd><dt class="dt-description"><span style="font-weight:bold">pma</span></dt><dd class="dd-description"> : the post mortem analyser is added, <span style="font-family:monospace">finalize</span> is ignored
+</dd><dt class="dt-description"><span style="font-weight:bold">full</span></dt><dd class="dd-description"> : the runtime analyser is added, <span style="font-family:monospace">finalize</span> is ignored
 </dd></dl>
 </li></ul><p>
 (so, no option or the parameterless option will be sufficient in most cases).
@@ -727,7 +727,9 @@ line and column number;
 </dd><dt class="dt-description"><span style="font-family:sans-serif">Depth</span></dt><dd class="dd-description"> minimum depth of call stack to be entered 
 (an empty field is technically not possible, so &#X201C;<span style="font-family:monospace">0</span>&#X201D; means not set); 
 </dd><dt class="dt-description"><span style="font-family:sans-serif">Watch</span></dt><dd class="dd-description"> address of a memory location 
-that is watched for modification of its contents;
+that is watched for modification of its contents, 
+(more precisely, the value of an attribute in its enclosing object
+or the value of a local variable in the call stack is watched);
 </dd><dt class="dt-description"><span style="font-family:sans-serif">Type</span></dt><dd class="dd-description"> type of <span style="font-family:monospace">Current</span>; 
 </dd><dt class="dt-description"><span style="font-family:sans-serif">If</span></dt><dd class="dd-description"> a boolean expression to be satisfied; 
 </dd><dt class="dt-description"><span style="font-family:sans-serif">Print</span></dt><dd class="dd-description"> no condition but an expression list 
@@ -978,9 +980,14 @@ If the feature name under the mouse pointer is highlighted light pink
 then the <span style="font-family:sans-serif">Evaluation</span> part&#X2019;s <span style="font-family:sans-serif">Expr</span> field is cleared, 
 the feature is inserted in the field, and the evaluation is done immediately. 
 </dd></dl><p>
-The various control characters may be read as &#X201C;show actual&#X201D;, &#X201C;Breakpoint&#X201D;, &#X201C;Kill breakpoint&#X201D;, &#X201C;Until here&#X201D;, 
-&#X201C;Until here in any case!&#X201D;, &#X201C;teXt of&#X201D;, 
-&#X201C;Evaluate&#X201D;, and &#X201C;Evaluate now!&#X201D;, respectively.
+The various control characters may be read as &#X201C;show actual&#X201D;, 
+&#X201C;set <U>b</U>reakpoint&#X201D;, &#X201C;<U>k</U>ill breakpoint&#X201D;, 
+&#X201C;<U>u</U>ntil here&#X201D;, 
+&#X201C;<U>u</U>ntil here in any case!&#X201D;, &#X201C;te<U>x</U>t of&#X201D;, 
+&#X201C;<U>e</U>valuate&#X201D;, and &#X201C;<U>e</U>valuate now!&#X201D;, respectively. 
+Evaluation is possible (i.e. the light pink background appears) 
+only if the enclosing routine belongs to the call stack 
+since only in this case <span style="font-family:monospace">Current</span> has a valid value to start evaluation. 
 </p><p>Some final remarks on the phrases &#X201C;routine in the call stack&#X201D;
 and &#X201C;next to the insertion cursor&#X201D;. 
 A routine belongs to the call stack if it is the routine 
@@ -1546,15 +1553,17 @@ The more sophisticated expressions are composed as follows:
 </p><table class="display dcenter"><tr style="vertical-align:middle"><td class="dcell">
 &#XA0;&#XA0;&#XA0;&#XA0;&#XA0;
 
-</td><td class="dcell"><table style="border-spacing:6px;border-collapse:separate;" class="cellpading0"><tr><td style="text-align:right;white-space:nowrap" >&#XA0;&#XA0;<span style="font-style:italic">expression</span>_<span style="font-style:italic">list</span></td><td style="text-align:left;white-space:nowrap" >::=&#XA0;{&#XA0;&#XA0;<span style="font-style:italic">detailed</span>_<span style="font-style:italic">expression</span>&#XA0;&#XA0;&#X201C;<span style="font-family:monospace">,</span>&#X201D;&#XA0;&#XA0;}<sup>+</sup>&#XA0;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&nbsp;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&nbsp;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&nbsp;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&nbsp;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td></tr>
+</td><td class="dcell"><table style="border-spacing:6px;border-collapse:separate;" class="cellpading0"><tr><td style="text-align:right;white-space:nowrap" >&#XA0;&#XA0;<span style="font-style:italic">expression</span>_<span style="font-style:italic">list</span></td><td style="text-align:left;white-space:nowrap" >::=&#XA0;{&#XA0;&#XA0;<span style="font-style:italic">detailed</span>_<span style="font-style:italic">expression</span>&#XA0;&#XA0;&#XA0;&#X201C;<span style="font-family:monospace">,</span>&#X201D;&#XA0;&#XA0;}<sup>+</sup>&#XA0;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&nbsp;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&nbsp;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&nbsp;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&nbsp;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td></tr>
 <tr><td style="text-align:right;white-space:nowrap" >
-<span style="font-style:italic">detailed</span>_<span style="font-style:italic">expression</span></td><td style="text-align:left;white-space:nowrap" >::=&#XA0;<span style="font-style:italic">expression</span>&#XA0;
-&#XA0;[&#XA0;&#XA0;&#X201C;<span style="font-family:monospace">[[</span>&#X201D;&#XA0;&#XA0;<span style="font-style:italic">index</span>_<span style="font-style:italic">range</span>&#XA0;&#XA0;&#X201C;<span style="font-family:monospace">]]</span>&#X201D;&#XA0;]&#XA0;&#XA0;[&#XA0;<span style="font-style:italic">details</span>&#XA0;]&#XA0;&#XA0;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&nbsp;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&nbsp;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&nbsp;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&nbsp;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td></tr>
+<span style="font-style:italic">detailed</span>_<span style="font-style:italic">expression</span></td><td style="text-align:left;white-space:nowrap" >::=&#XA0;<span style="font-style:italic">range</span>_<span style="font-style:italic">expression</span>&#XA0;&#XA0;&#XA0;[&#XA0;<span style="font-style:italic">details</span>&#XA0;]&#XA0;&#XA0;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&nbsp;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&nbsp;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&nbsp;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&nbsp;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td></tr>
 <tr><td style="text-align:right;white-space:nowrap" >
-<span style="font-style:italic">details</span></td><td style="text-align:left;white-space:nowrap" >::=&#XA0;&#XA0;&#X201C;<span style="font-family:monospace">{</span>&#X201D;&#XA0;&#XA0;<span style="font-style:italic">expression</span>_<span style="font-style:italic">list</span>&#XA0;&#XA0;&#X201C;<span style="font-family:monospace">}</span>&#X201D;&#XA0;&#XA0;&#XA0;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&nbsp;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&nbsp;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&nbsp;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&nbsp;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td></tr>
+<span style="font-style:italic">details</span></td><td style="text-align:left;white-space:nowrap" >::=&#XA0;&#XA0;&#X201C;<span style="font-family:monospace">{</span>&#X201D;&#XA0;&#XA0;<span style="font-style:italic">expression</span>_<span style="font-style:italic">list</span>&#XA0;&#XA0;&#XA0;&#X201C;<span style="font-family:monospace">}</span>&#X201D;&#XA0;&#XA0;&#XA0;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&nbsp;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&nbsp;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&nbsp;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&nbsp;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td></tr>
 <tr><td style="text-align:right;white-space:nowrap" >
-<span style="font-style:italic">index</span><span style="font-style:italic">_</span><span style="font-style:italic">range</span></td><td style="text-align:left;white-space:nowrap" >::=&#XA0;<span style="font-style:italic">first</span>&#XA0;&#XA0;&#X201C;<span style="font-family:monospace">:</span>&#X201D;&#XA0;&#XA0;<span style="font-style:italic">last</span>&#XA0;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&nbsp;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&nbsp;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&nbsp;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&nbsp;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td></tr>
-<tr><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&#XA0;&#XA0;&#XA0;&#XA0;&#X2223;&#XA0;<span style="font-style:italic">first</span>&#XA0;&#XA0;&#X201C;<span style="font-family:monospace">$</span>&#X201D;&#XA0;&#XA0;<span style="font-style:italic">count</span>&#XA0;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&nbsp;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&nbsp;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&nbsp;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&nbsp;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td></tr>
+<span style="font-style:italic">range</span>_<span style="font-style:italic">expression</span></td><td style="text-align:left;white-space:nowrap" >::=&#XA0;<span style="font-style:italic">expression</span>&#XA0;
+&#XA0;[&#XA0;&#XA0;&#XA0;&#X201C;<span style="font-family:monospace">[[</span>&#X201D;&#XA0;&#XA0;<span style="font-style:italic">index</span>_<span style="font-style:italic">range</span>&#XA0;&#XA0;&#XA0;&#X201C;<span style="font-family:monospace">]]</span>&#X201D;&#XA0;]&#XA0;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&nbsp;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&nbsp;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&nbsp;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&nbsp;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td></tr>
+<tr><td style="text-align:right;white-space:nowrap" >
+<span style="font-style:italic">index</span><span style="font-style:italic">_</span><span style="font-style:italic">range</span></td><td style="text-align:left;white-space:nowrap" >::=&#XA0;<span style="font-style:italic">first</span>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<span style="font-family:monospace">:</span>&#X201D;&#XA0;&#XA0;<span style="font-style:italic">last</span>&#XA0;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&nbsp;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&nbsp;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&nbsp;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&nbsp;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td></tr>
+<tr><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&#XA0;&#XA0;&#XA0;&#XA0;&#X2223;&#XA0;<span style="font-style:italic">first</span>&#XA0;&#XA0;&#XA0;&#XA0;&#X201C;<span style="font-family:monospace">$</span>&#X201D;&#XA0;&#XA0;<span style="font-style:italic">count</span>&#XA0;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&nbsp;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&nbsp;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&nbsp;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&nbsp;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td></tr>
 <tr><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&#XA0;&#XA0;&#XA0;&#XA0;&#X2223;&#XA0;&#XA0;&#X201C;<span style="font-family:monospace">all</span>&#X201D;&#XA0;&#XA0;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&nbsp;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&nbsp;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&nbsp;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&nbsp;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td></tr>
 <tr><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&#XA0;&#XA0;&#XA0;&#XA0;&#X2223;&#XA0;&#XA0;&#X201C;<span style="font-family:monospace">if</span>&#X201D;&#XA0;&#XA0;<span style="font-style:italic">expression</span>&#XA0;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&nbsp;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&nbsp;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&nbsp;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td><td style="text-align:left;white-space:nowrap" >&nbsp;</td><td style="text-align:right;white-space:nowrap" >&nbsp;</td></tr>
 <tr><td style="text-align:right;white-space:nowrap" >
@@ -1581,7 +1590,9 @@ the manual precisely distinguishes between
 Single items of a <span style="font-family:monospace">SPECIAL</span> object are accessible 
 in a <span style="font-style:oblique">C</span> like notation: 
 appending the index (once again an <span style="font-style:italic">expression</span>) in brackets. 
-The result is an <span style="font-style:italic">expression</span> and may be further referenced. 
+The result is an <span style="font-style:italic">expression</span> and may be further referenced 
+(semantically, this is the bracket operator of class <span style="font-family:monospace">SPECIAL</span> 
+that works even if <span style="font-style:oblique">C</span> code has not been generated). 
 </p><p>Multiple array items may be selected by specifying an <span style="font-style:italic">index_range</span> 
 within double brackets as follows:
 </p><ul class="itemize"><li class="li-itemize">two integer <span style="font-style:italic">expression</span>s separated by a colon 
@@ -1597,7 +1608,7 @@ select the items satisfying this <span style="font-style:italic">expression</spa
 where the running array item and index are referred to 
 by <span style="font-family:monospace">?</span> and <span style="font-family:monospace">!</span>, respectively. 
 </li></ul><p>
-Each of these notations define a <span style="font-style:italic">detailed_expression</span> that cannot 
+Each of these notations define a <span style="font-style:italic">range_expression</span> that cannot 
 be further referenced, but <span style="font-style:italic">details</span> in braces may be added. 
 If so then a placeholder <span style="font-family:monospace">?</span> in the <span style="font-style:italic">details</span> part refers to 
 the running array element, and the placeholder <span style="font-family:monospace">!</span> 
@@ -1608,8 +1619,10 @@ denotes the index itself.
 If query <span style="font-family:monospace">table</span> is of a <span style="font-family:monospace">HASH_TABLE</span> type 
 whose keys are of a reference type then 
 <pre class="verbatim">  table.keys [[if ? /= Void]] { table.content[!] }
-</pre>selects key and item pairs of all elements of <span style="font-family:monospace">table</span>, 
+</pre>selects key and item pairs of all valid elements of <span style="font-family:monospace">table</span>, 
 empty fields in the underlying arrays will be skipped. 
+The key will be displayed as the running value of <span style="font-family:monospace">table.keys</span>, 
+the item within its associated details. 
 </blockquote>
 <!--TOC subsection id="sec41" Alias names-->
 <h3 id="sec41" class="subsection">4.4&#XA0;&#XA0;Alias names</h3><!--SEC END --><p><a id="S:alias"></a>

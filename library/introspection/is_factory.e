@@ -47,6 +47,38 @@ feature -- Factory
 			has_class: valid_class (cid)
 		end
 
+	new_feature (c: attached like last_class; i: INTEGER)
+		note
+			action: "Create (if not exists) or provide feature."
+			c: "class text of new feature"
+			i: "index of feature"
+		require
+			not_negative: i >= 0
+		local
+			ac: like class_at
+			last: like last_feature
+			nm: READABLE_STRING_8
+			id, fid: INTEGER
+			attac: BOOLEAN
+		do
+			if c.valid_feature (i)
+				and then attached {like last_feature} c.feature_at (i) as lf
+			 then
+				last := lf
+			end
+			id := c.ident
+			fid := feature_home_ident (id, i)
+			new_feature (c, fid)
+			ac := last_class
+			check attached ac then end
+			if attached last then
+				last.scan_in_system (id, fid, Current)
+			else
+				create last.make_in_system (nm, ac, c, i, Current)
+			end
+			last_feature := last
+		end
+
 	new_type (tid: INTEGER; attac: BOOLEAN)
 		note
 			action:
@@ -138,11 +170,17 @@ feature -- Factory
 			last_field := last
 		end
 
-feature {IS_TYPE,IS_FIELD} -- Factory 
+feature {IS_NAME} -- Factory 
 
-	last_types: detachable IS_SEQUENCE [attached like type_at]
+	last_classes: detachable IS_SEQUENCE [attached like class_at]
 
 	last_class: like class_at
+
+	last_feature: detachable IS_FEATURE_TEXT
+
+	last_features: detachable IS_SEQUENCE [attached like last_feature]
+
+	last_types: detachable IS_SEQUENCE [attached like type_at]
 
 	last_type: like type_at
 
@@ -154,6 +192,73 @@ feature {IS_TYPE,IS_FIELD} -- Factory
 
 	last_once: like once_at
 
+	set_parents_of_class (c: attached like class_at)
+		local
+			pp: like last_classes
+			id, pid: INTEGER
+			i, n: INTEGER
+		do
+			id := c.ident
+			all_classes.force (c, id)
+			if c.is_basic then
+			else
+				n := parent_count (id)
+				pp := c.parents
+				from
+				until i = n loop
+					pid := parent (id, i)
+					new_class (pid, 0)
+					if to_fill and then attached {like class_at} last_class as pc then
+						if not attached pp then
+							create pp.make (n, pc)
+						end
+						check attached pp end
+						pp.add (pc)
+					end
+					i := i + 1
+				end
+				last_classes := pp
+			end
+		ensure
+			has_c: class_at (c.ident) = c
+			same_parents: attached c.parents as cp implies cp = last_classes
+		end
+
+	set_features_of_class (c: attached like class_at)
+		local
+			fs: like last_features
+			id: INTEGER
+			i, n: INTEGER
+		do
+			id := c.ident
+			all_classes.force (c, id)
+			if c.is_basic then
+			else
+				n := feature_count (id)
+				from
+				until i = n loop
+					new_feature (c, i)
+					if to_fill and then attached last_feature as f then
+						if not attached fs then
+							create fs.make (n, f)
+						end
+						check attached fs end
+						fs.add (f)
+					end
+					i := i + 1
+				end
+			end
+			if to_fill then
+				last_features := fs
+			else
+				last_features := c.features
+			end
+		ensure
+			has_t: class_at (c.ident) = c
+			same_features: attached c.features as ff implies ff = last_features
+		end
+	
+--	
 	add_type (t: attached like type_at)
 		do
 			all_types.force (t, t.ident)
@@ -440,6 +545,36 @@ feature {NONE} -- Auxiliary routines of factory
 		end
 
 feature {IS_TYPE} -- Auxiliary routines of factory 
+
+	parent_count (cid: INTEGER): INTEGER
+		require
+			class_exists: valid_class (cid)
+		deferred
+		end
+
+	parent (cid, i: INTEGER): INTEGER
+		require
+			class_exists: valid_class (cid)
+		deferred
+		end
+
+	feature_count (cid: INTEGER): INTEGER
+		require
+			class_exists: valid_class (cid)
+		deferred
+		end
+
+	feature_home_ident (cid, i: INTEGER): INTEGER
+		require
+			class_exists: valid_class (cid)
+		deferred
+		end
+
+	feature_name (cid, i: INTEGER): READABLE_STRING_8
+		require
+			class_exists: valid_class (cid)
+		deferred
+		end
 
 	agent_routine (tid: INTEGER): READABLE_STRING_8
 		require

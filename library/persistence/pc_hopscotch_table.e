@@ -7,7 +7,7 @@ note
 		 Hash codes are to be computed by implementing classes. 
 		 ]"
 
-deferred class PC_HASH_TABLE [V_ -> detachable ANY, K_ -> attached ANY]
+deferred class PC_HOPSCOTCH_TABLE [V_ -> detachable ANY, K_ -> attached ANY]
 
 inherit
 
@@ -32,10 +32,15 @@ feature {NONE} -- Initialization
 			prim := primes.higher_prime (n)
 			create keys.make_filled (k0, prim)
 			create data.make_filled (v0, prim)
-			slot := -1
+			create clashes.make_filled (0, prim)
 			count := 0
-			clash_count := 0
-			max_clash_count := prim // 6
+			slot := -1
+			from
+				prim := prim - 1
+				log2_cap := 0	until prim & 0x08000000 /= 0 loop
+				log2_cap := log2_cap + 1
+				prim := prim |<< 1
+			end
 		end
 
 feature -- Access 
@@ -44,31 +49,34 @@ feature -- Access
 		deferred
 		end
 	
-	item alias "[]" (key: K_): V_ assign put
-		do
-			if has (key) then
-				Result := data [slot]
-			end
-		end
-
-	key_of_value (v: V_): detachable K_
-		local
+	key_of_value (v: detachable V_): detachable K_
+    local
 			k, k0: detachable K_
-			h: INTEGER
+			i: INTEGER
 		do
-			slot := -1
 			from
-				h := keys.count
-			until h = 0 loop
-				h := h - 1
-				if data [h] = v then
-					Result := keys [h]
-					slot := h
-					h := 0
+				i := keys.count
+				slot := -1
+			until i = 0 loop
+				i := i - 1
+				k := keys [i]
+				if k /= k0 and then data [i] = v then
+					Result := k
+					slot := i
+					i := 0
 				end
 			end
 		end
 	
+	item alias "[]" (key: K_): V_ assign put
+		local
+			k0: K_
+		do
+			if has (key) then
+				Result := data[slot]
+			end
+		end
+
 feature -- Status 
 
 	count: INTEGER
@@ -85,7 +93,7 @@ feature -- Status
 			k0: detachable K_
 		do
 			if key /= k0 then
-				if slot < 0 or else keys [slot] /= key then
+				if slot < 0 or else keys[slot] /= key then
 					set_slot (key)
 				end
 				Result := slot >= 0
@@ -97,6 +105,8 @@ feature -- Status
 feature -- Element change 
 
 	put (value: V_; key: K_)
+	  local
+			k0: K_
 		do
 			if has (key) then
 				data [slot] := value
@@ -104,65 +114,32 @@ feature -- Element change
 				force (value, key, True)
 			end
 		end
-
+	
 feature -- Removal 
 
 	remove (key: K_)
 		note
 			action: "Remove `key' and its value if set."
 		local
-			k, k0: detachable K_
-			v0: V_
-			h, h0, hk, cap, diff: INTEGER
-			todo: BOOLEAN
+			h: INTEGER
 		do
 			if has (key) then
-				cap := keys.count
-				from
-					h0 := slot
-					h := (h0 + 1) \\ cap
-					k := keys [h]
-				until k = k0 loop
-					if k /= k0 then
-						hk := hash (k) \\ cap
-						if h > h0 then
-							todo := hk <= h0 or else hk > h
-						else
-							todo := hk <= h0 and then hk > h
-						end
-						 if todo then
-							keys [h0] := k
-							data [h0] := data [h]
-							diff := h - h0
-							 if diff < 0 then
-								 diff := diff + cap
-							 end
-							clash_count := clash_count - diff
-							h0 := h
-						end
-						h := (h + 1) \\ cap
-						k := keys [h]
-				end
-				end
-				slot := h
-				keys [h0] := k0
-				data [h0] := v0
-				count := count - 1
+				h := hash (key)
+				hash_del (h, slot - h)
 			end
 		end
 
 	clear
 		note
-			action: "Remove all elements."
+			action: "Remove all items."
 		local
 			k0: detachable K_
 			v0: V_
 		do
 			keys.fill_with (k0, 0, keys.count - 1)
 			data.fill_with (v0, 0, data.count - 1)
+			clashes.fill_with (0, 0, clashes.count - 1)
 			count := 0
-			clash_count := 0
-			slot := -1
 		end
 
 feature -- Duplication and comparison 
@@ -173,9 +150,7 @@ feature -- Duplication and comparison
 				standard_copy (other)
 				keys := other.keys.twin
 				data := other.data.twin
-				slot := other.slot
-				clash_count := other.clash_count
-				max_clash_count := other.max_clash_count
+				clashes := other.clashes.twin
 			end
 		end
 
@@ -186,6 +161,7 @@ feature -- Duplication and comparison
 		do
 			Result := other = Current
 			if not Result then
+				-- TODO
 				from 
 					Result := count = other.count
 					h := keys.count
@@ -320,68 +296,20 @@ feature {PC_HASH_TABLE, PC_HASH_TABLE_CURSOR} -- Implementation
 
 	data: SPECIAL [V_]
 
+	clashes: SPECIAL [INTEGER]
+	
 	slot: INTEGER
 
-	clash_count: INTEGER
-
-	max_clash_count: INTEGER
-
-	set_slot (key: attached K_)
-		note
-			action:
-			"[
-			 Set `slot' such that `keys[slot]=key' if `key' is in the table, 
-			 otherwise, set `slot' to a negative value.
-			 ]"
-		require
-			valid: valid_key (key)
-		local
-			k, k0: detachable K_
-			h, n: INTEGER
-		do
-			n := keys.count
-			from
-				h := hash (key) \\ n
-				k := keys [h]					
-			until k = key or else k = k0 loop
-				h := (h + 1) \\ n
-				k := keys [h]
-			end
-			if k = key then
-				slot := h
-			else
-				slot := -1
-			end
-		end
-			
 	force (value: V_; key: K_; growing: BOOLEAN)
 		note
 			action: "Insert `value' at `key'."
 		require
 			valid: valid_key (key)
 			not_has_key: not has (key)
-			slot_set: -- `slot' is set according to `key'.
-		local
-			k0: K_
-			i, n: INTEGER
 		do
-			n := keys.count
-			if growing and then (clash_count > max_clash_count
-													 or else count + 1 >= n) then	-- ensure one free slot 
-				resize (2*n)
-				n := keys.count
-			end
-			from 
-				i := hash (key) \\ n
-			until keys [i] = k0 loop
-				i := (i + 1) \\ n
-				clash_count := clash_count + 1
-			end
-			keys [i] := key
-			data [i] := value
-			slot := i
-			if growing then
-				count := count + 1
+			from
+			until hash_put (value, key) loop
+				resize (2*keys.count)
 			end
 		ensure
 			has_key: has (key)
@@ -395,7 +323,7 @@ feature {PC_HASH_TABLE, PC_HASH_TABLE_CURSOR} -- Implementation
 			old_keys: like keys
 			old_data: like data
 			k, k0: detachable K_
-			h, old_n: INTEGER
+			i, old_n: INTEGER
 		do
 			old_n := keys.count
 			if n > old_n then
@@ -403,13 +331,13 @@ feature {PC_HASH_TABLE, PC_HASH_TABLE_CURSOR} -- Implementation
 				old_data := data
 				make (n)
 				from
-					h := 0
-				until h = old_n loop
-					k := old_keys [h]
+					i := 0
+				until i = old_n loop
+					k := old_keys [i]
 					if k /= k0 then
-						force (old_data [h], k, False)
+						force (old_data [i], k, False)
 					end
-					h := h + 1
+					i := i + 1
 				end
 			end
 		ensure
@@ -422,11 +350,205 @@ feature {PC_HASH_TABLE, PC_HASH_TABLE_CURSOR} -- Implementation
 			create Result
 		end
 
+feature {NONE} -- Hopscotch implementation
+
+	log2_cap: INTEGER
+
+	set_slot (key: K_)
+		local
+			h, hi, n: INTEGER
+			i, l: INTEGER
+		do
+			n := keys.count
+			h := hash (key) \\ n
+			l := clashes[h]
+			slot := -1
+			from
+				i := succ (l, 0)
+			until i < 0 loop
+				hi := (h+i) \\ n
+				if keys[hi] = key then
+					slot := hi
+					i := -1
+				else
+					i := succ (l, i+1)
+				end
+			end
+		ensure
+			when_found: slot >= 0 implies keys [slot] = key
+		end
+	
+	succ (l: INTEGER; i: INTEGER): INTEGER
+		require
+			valid_clash: 0 < l
+		local
+			k: INTEGER
+		do
+			if l & (1 |<< i) /= 0 then
+				Result := i
+			else
+				k := l & (0x7fffffff |<< i)
+				if k = 0 then
+					Result := -1
+				else
+					Result := ffs (k)
+				end
+			end
+		end
+
+	move (h: INTEGER; i, j: INTEGER)
+		require
+			valid_hash: 0 <= h and h < clashes.count
+		local
+			v, v0: V_
+			k, k0: K_
+			l, hi, hj, n: INTEGER
+			cap: INTEGER
+		do
+			l := clashes[h]
+			l := l & (1 |<< i).bit_not
+			l := l | (1 |<< j)
+			clashes[h] := l
+			n := keys.count
+			hi := (h+i) \\ n
+			hj := (h+j) \\ n
+			k := keys[hi]
+			keys[hi] := k0
+			keys[hj] := k
+			v := data[hi]
+			data[hi] := v0
+			data[hj] := v
+		end
+
+	hash_del (h: INTEGER; i: INTEGER)
+		require
+			valid_hash: 0 <= h and h < clashes.count
+		local
+			k0: K_
+			v0: V_
+			b, j, l, n: INTEGER
+		do
+			n := keys.count
+			j := (h+i) \\ n
+			l := clashes[h]
+			b := 1 |<< i
+			if data[j] = v0 or else l & b = 0 then
+			else
+				keys[j] := k0
+				data[j] := v0
+				l := l & b.bit_not  --			unset (clashes[h], i)
+				clashes[h] := l
+				count := count - 1
+			end
+			slot := -1
+		end
+
+	probe (h: INTEGER): INTEGER
+		require
+			valid_hash: 0 <= h and h < clashes.count
+		local
+			k0: K_
+			i, n: INTEGER
+			found: BOOLEAN
+		do
+			n := keys.count
+			from
+			until h+i = n loop
+				if keys[h+i] = k0 then
+					Result := i
+					i := n - h
+					found := True
+				else
+					i := i + 1
+				end
+			end
+			if not found then
+				from
+					i := 0
+				until keys[i] = k0 loop
+					i := i + 1
+				end
+				Result := n - h + i
+			end
+		end
+
+	ffs(h: INTEGER): INTEGER
+		require
+			not_zero: h /= 0
+		local
+			l: INTEGER
+		do
+			from
+				l := h
+			until l & 1 /= 0 loop
+				Result := Result + 1
+				l := l |>> 1
+			end
+		end
+			
+	seek (h: INTEGER): INTEGER
+		require
+			valid_hash: 0 <= h and h < clashes.count
+		local
+			i, hi, n: INTEGER
+		do
+			n := keys.count
+			from
+				i := log2_cap - 1
+			until i = 0 loop
+				hi := (n+h-i) \\ n
+				hi := clashes[hi]
+				if hi /= 0 and then ffs (hi) < i then 
+					Result := i
+					i := 0
+				else
+					i := i - 1
+				end
+			end			
+		end
+
+	hash_put (value: V_; key: K_): BOOLEAN
+		local
+			v0: V_
+			d, h, hd, i, j, l, n, z: INTEGER
+		do
+			n := keys.count
+			h := hash (key) \\ n
+			d := probe (h)
+			from
+				Result := value /= v0 and count < n
+			until not Result or else d < log2_cap loop 
+				hd := (h+d) \\ n
+				z := seek (hd)
+				Result := z /= 0
+				if Result then
+					j := z
+					z := (n+hd-z) \\ n
+					i := succ (clashes[z], 0)
+					move (z, i, j)
+					d := (n+z+i-h) \\ n
+				end
+			end
+			if Result then
+				hd := (h+d) \\ n
+				keys[hd] := key
+				data[hd] := value
+				l := clashes[h]
+				l := l | (1 |<< d)
+				clashes[h] := l
+				count := count + 1
+				slot := hd
+			else
+				slot := -1
+			end
+		ensure
+			extended: Result implies count = old count + 1
+		end
+
 invariant
 
-	same_capacity: data.count = keys.count
+	same_capacity: data.count = keys.count and clashes.count = keys.count
 	has_free_slots: count < keys.count
-	clash_count_small_enough: clash_count <= max_clash_count
 	valid_slot: 0 <= slot and slot < keys.count
 
 note

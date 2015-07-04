@@ -536,6 +536,12 @@ feature -- Searching
 		end
 
 	top_type: like type_at
+		note
+			return:
+			"[
+			 The top item.
+			 The stack is supposed to be filled left too right (as usually).
+			 ]"
 		require
 			type_stack_not_empty: type_stack_count > 0
 		do
@@ -546,6 +552,12 @@ feature -- Searching
 		end
 
 	below_top_type (n: INTEGER): attached like type_at
+		note
+			return:
+			"[
+			 The `n'-th item of the stack.
+			 The stack is supposed to be filled left too right (as usually).
+			 ]"
 		require
 			enough_items: n < type_stack_count
 		do
@@ -569,22 +581,6 @@ feature -- Searching
 			type_stack_size: type_stack.count = old type_stack.count - n
 		end
 
-	extract_types (n: INTEGER; reverse, popped: BOOLEAN): IS_SEQUENCE [attached like type_at]
-		note
-			action: "Create `Result' filled by top `n' entries of `type_stack'."
-		require
-			n_valid: 0 <= n and n <= type_stack_count
-		do
-			create Result.make_from_array (n, type_stack, type_stack.count - n)
-			if popped then
-				pop_types (n)
-			end
-		ensure
-			result_count: Result.count = n
-			direction: (reverse implies Result [0] = old top_type)
-								 and (not reverse implies Result [n-1] = old top_type) 
-		end
-	
 	type_by_class_and_generics (nm: READABLE_STRING_8; gc: INTEGER; attac: BOOLEAN): like type_at
 		note
 			return:
@@ -592,131 +588,42 @@ feature -- Searching
 			 Descriptor of the type with base class name `nm'
 			 and actual generic `gc' parameters (pushed by `push_type').
 			 `Void' if no such type exists.
+			 The stack is supposed to be filled left too right (as usually).
 			 ]"
 		require
 			class_not_void: not nm.is_empty
 			gc_not_negative: gc >= 0
 			type_stack_large_enough: gc <= type_stack_count
-		local
-			this: like type_at
-			penalty, p, m: INTEGER
-			j, l, n: INTEGER
 		do
-			from
-				n := type_count
-				m := {INTEGER}.max_value
-			until m = 0 or else n = 0 loop
-				n := n - 1
-				this := Void
-				if attached all_types [n] as t then
-					if t.generic_count = gc and then STRING_.same_string( nm, t.class_name) then
-						this := t
-						if t.is_attached /= attac then
-							penalty := 0
-						else
-							penalty := 1
-						end
-					end
-				end
-				from
-					l := gc
-					j := 0
-				until not attached this as t or else j = gc loop
-					l := l - 1
-					if attached type_stack.below_top (l) as g then
-						p := t.generic_at (j).conformance (g)
-					else
-						p := {INTEGER}.max_value
-					end
-					if p < {INTEGER}.max_value - penalty then
-							penalty := penalty + p
-					else
-						this := Void
-					end
-					j := j + 1
-				end
-				if attached this and then penalty < m then
-					Result := this
-					m := penalty
-				end
-			end
-		ensure
-			when_found: attached Result as r implies all_types.has (r)
-			type_stack_size: type_stack.count = old type_stack.count
+			Result := search_type (nm, gc, attac, False)
 		end
-
+	
 	tuple_type_by_generics (gc: INTEGER; attac: BOOLEAN): detachable IS_TUPLE_TYPE
 		note
 			return:
-				"[
-				 Descriptor of a tuple type that matches best the
-				 actual generic `gc' parameters (pushed by `push_type').
-				 ]"
+			"[
+			 Descriptor of a tuple type that matches best the
+			 actual generic `gc' parameters (pushed by `push_type').
+			 The stack is supposed to be filled left too right (as usually).
+			 ]"
 		require
 			not_negative: gc >= 0
 			type_stack_large_enough: gc <= type_stack_count
-		local
-			this: like type_at
-			penalty, p, m: INTEGER
-			i, k, l, n: INTEGER
 		do
-			m := {INTEGER}.max_value
-			from
-				n := type_count
-			until m = 0 or else n = 0 loop
-				n := n - 1
-				if valid_type (n) then
-					this := type_at (n)
-					penalty := 0
-					check attached this end
-					k := this.generic_count
-					if not (this.is_tuple and then k <= gc) then
-						this := Void
-					else
-						penalty := penalty + (gc - k)
-						check not attached this end
-						from
-							l := gc - 1
-							i := 0
-						until not attached this or else i = k loop
-							p := type_stack.below_top (l).conformance (this.generic_at (i))
-							if p < {INTEGER}.max_value then
-								penalty := penalty + p
-							else
-								this := Void
-							end
-							l := l - 1
-							i := i + 1
-						end
-					end
-				end
-				if attached {IS_TUPLE_TYPE} this as t and then penalty < m then
-					Result := t
-					m := penalty
-				end
-			end
-		ensure
-			when_found: attached {like type_at} Result as r
-									implies Result.is_tuple and then all_types.has (r)
+			Result := search_tuple_type (gc, attac, False)
 		end
 
 	special_type_by_item_type (it: IS_TYPE; attac: BOOLEAN): detachable IS_SPECIAL_TYPE
 		note
-			return: "Descriptor of the SPECIAL type of `it' items."
+			return:
+			"[
+			 Descriptor of the SPECIAL type of `it' items.
+			 The stack is supposed to be filled left too right (as usually).
+			 ]"
 		do
-			if valid_type (it.ident) then
-				push_type (it.ident)
-				if attached {IS_SPECIAL_TYPE} type_by_class_and_generics (once "SPECIAL", 1, attac) as s then
-					Result := s
-				end
-				pop_types (1)
-			end
-		ensure
-			when_found: attached {like type_at} Result as r
-									implies Result.is_special and then Result.generic_at (0) = it
-									and then all_types.has (r)
+			Result := search_special_type (it,attac, False)
 		end
-
+	
 	agent_by_base_and_routine (base: IS_TYPE; ocp, nm: READABLE_STRING_8): detachable IS_AGENT_TYPE
 		note
 			return: "Agent of specific settings."
@@ -745,7 +652,107 @@ feature -- Searching
 									and then Result.open_closed_pattern.is_equal (ocp)
 									and then Result.base = base and then all_types.has (r)
 		end
+	
+	reverse_top_type: like type_at
+		note
+			return:
+			"[
+			 The top item.
+			 The stack is supposed to be filled unusually right to left.
+			 ]"
+		require
+			type_stack_not_empty: type_stack_count > 0
+		do
+			Result := type_stack [0]
+		ensure
+			stack_size: type_stack_count = old type_stack_count
+			on_top: Result = type_stack [0]
+		end
 
+	over_top_type (n: INTEGER): attached like type_at
+		note
+			return:
+			"[
+			 The `n'-th item of the stack.
+			 The stack is supposed to be filled unusually right to left.
+			 ]"
+		require
+			enough_items: n < type_stack_count
+		do
+			Result := type_stack [n]
+		ensure
+			stack_size: type_stack_count = old type_stack_count
+		end
+	
+	type_reversely_by_class_and_generics (nm: READABLE_STRING_8; gc: INTEGER; attac: BOOLEAN): like type_at
+		note
+			return:
+			"[
+			 Descriptor of the type with base class name `nm'
+			 and actual generic `gc' parameters (pushed by `push_type').
+			 `Void' if no such type exists.
+			 The stack is supposed to be filled unusually right to left.
+			 ]"
+		require
+			class_not_void: not nm.is_empty
+			gc_not_negative: gc >= 0
+			type_stack_large_enough: gc <= type_stack_count
+		do
+			Result := search_type (nm, gc, attac, True)
+		end
+	
+	tuple_type_reversely_by_generics (gc: INTEGER; attac: BOOLEAN): detachable IS_TUPLE_TYPE
+		note
+			return:
+			"[
+			 Descriptor of a tuple type that matches best the
+			 actual generic `gc' parameters (pushed by `push_type').
+			 The stack is supposed to be filled unusually right to left.
+			 ]"
+		require
+			not_negative: gc >= 0
+			type_stack_large_enough: gc <= type_stack_count
+		do
+			Result := search_tuple_type (gc, attac, True)
+		end
+
+	special_type_reversely_by_item_type (it: IS_TYPE; attac: BOOLEAN): detachable IS_SPECIAL_TYPE
+		note
+			return:
+			"[
+			 Descriptor of the SPECIAL type of `it' items.
+			 The stack is supposed to be filled unusually right to left.
+			 ]"
+		do
+			Result := search_special_type (it,attac, True)
+		end
+	
+	agent_reversely_by_base_and_routine (base: IS_TYPE; ocp, nm: READABLE_STRING_8): detachable IS_AGENT_TYPE
+		note
+			return: "Agent of specific settings."
+			base: "base type wanted"
+			ocp: "open-closed-pattern wanted"
+			nm: "routine name wanted"
+		do
+			Result := search_agent (base, ocp, nm, True)
+		end
+	
+	extract_types (n: INTEGER; reverse, popped: BOOLEAN): IS_SEQUENCE [attached like type_at]
+		note
+			action: "Create `Result' filled by top `n' entries of `type_stack'."
+		require
+			n_valid: 0 <= n and n <= type_stack_count
+		do
+			create Result.make_from_array (n, type_stack, type_stack.count - n)
+			if popped then
+				pop_types (n)
+			end
+		ensure
+			result_count: Result.count = n
+			direction: (reverse implies Result [0] = old top_type)
+								 and (not reverse implies Result [n-1] = old top_type) 
+		end
+	
 	type_by_name (type_name: READABLE_STRING_8; attac: BOOLEAN): detachable like type_at
 		note
 			return: "Type of specific settings."
@@ -873,6 +880,154 @@ feature {IS_NAME} -- Implementation
 feature {NONE} -- Implementation 
 
 	type_stack: IS_STACK [attached like type_at]
+
+	search_type (nm: READABLE_STRING_8; gc: INTEGER; attac: BOOLEAN;
+		reverse: BOOLEAN): like type_at
+		note
+			return:
+			"[
+			 Descriptor of the type with base class name `nm'
+			 and actual generic `gc' parameters (pushed by `push_type').
+			 `Void' if no such type exists.
+			 ]"
+		require
+			class_not_void: not nm.is_empty
+			gc_not_negative: gc >= 0
+			type_stack_large_enough: gc <= type_stack_count
+		local
+			stack: like type_stack
+			this: like type_at
+			penalty, p, m: INTEGER
+			j, l, n: INTEGER
+		do
+			if reverse then
+				stack := type_stack
+			else
+				stack := type_stack
+			end
+			from
+				n := type_count
+				m := {INTEGER}.max_value
+			until m = 0 or else n = 0 loop
+				n := n - 1
+				this := Void
+				if attached all_types [n] as t then
+					if t.generic_count = gc and then STRING_.same_string (nm, t.class_name) then
+						this := t
+						if t.is_attached /= attac then
+							penalty := 0
+						else
+							penalty := 1
+						end
+					end
+				end
+				from
+					l := gc
+					j := 0
+				until not attached this as t or else j = gc loop
+					l := l - 1
+					if reverse then
+						if attached stack[l] as g then
+							p := t.generic_at (j).conformance (g)
+						else
+							p := {INTEGER}.max_value
+						end
+					else
+						if attached stack.below_top (l) as g then
+							p := t.generic_at (j).conformance (g)
+						else
+							p := {INTEGER}.max_value
+						end
+					end
+					if p < {INTEGER}.max_value - penalty then
+						penalty := penalty + p
+					else
+						this := Void
+					end
+					j := j + 1
+				end
+				if attached this and then penalty < m then
+					Result := this
+					m := penalty
+				end
+			end
+		ensure
+			when_found: attached Result as r implies all_types.has (r)
+			stack_size: stack.count = old stack.count
+		end
+
+	search_tuple_type (gc: INTEGER; attac: BOOLEAN; reverse: BOOLEAN)
+		: detachable IS_TUPLE_TYPE
+		local
+			stack: like type_stack
+			this: like type_at
+			penalty, p, m: INTEGER
+			i, k, l, n: INTEGER
+		do
+			if reverse then
+				stack := type_stack
+			else
+				stack := type_stack
+			end
+			m := {INTEGER}.max_value
+			from
+				n := type_count
+			until m = 0 or else n = 0 loop
+				n := n - 1
+				if valid_type (n) then
+					this := type_at (n)
+					penalty := 0
+					check attached this end
+					k := this.generic_count
+					if not (this.is_tuple and then k <= gc) then
+						this := Void
+					else
+						penalty := penalty + (gc - k)
+						check not attached this end
+						from
+							l := gc - 1
+							i := 0
+						until not attached this or else i = k loop
+							if reverse then
+								p := stack[l].conformance (this.generic_at (i))
+							else
+								p := stack.below_top (l).conformance (this.generic_at (i))
+							end
+							if p < {INTEGER}.max_value then
+								penalty := penalty + p
+							else
+								this := Void
+							end
+							l := l - 1
+							i := i + 1
+						end
+					end
+				end
+				if attached {IS_TUPLE_TYPE} this as t and then penalty < m then
+					Result := t
+					m := penalty
+				end
+			end
+		ensure
+			when_found: attached {like type_at} Result as r
+									implies Result.is_tuple and then all_types.has (r)
+		end
+
+	search_special_type (it: IS_TYPE; attac: BOOLEAN; reverse: BOOLEAN)
+		: detachable IS_SPECIAL_TYPE
+		do
+			if valid_type (it.ident) then
+				push_type (it.ident)
+				if attached {IS_SPECIAL_TYPE} search_type (once "SPECIAL", 1, attac, reverse) as s then
+					Result := s
+				end
+				pop_types (1)
+			end
+		ensure
+			when_found: attached {like type_at} Result as r
+									implies Result.is_special and then Result.generic_at (0) = it
+									and then all_types.has (r)
+		end
 
 	type_by_subname (nm: STRING_8; attac: BOOLEAN): like type_at
 		note

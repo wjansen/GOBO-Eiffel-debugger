@@ -14,7 +14,7 @@ inherit
 
 create
 
-	make
+	make, make_in_system
 
 feature {NONE} -- Initialization 
 
@@ -41,7 +41,25 @@ feature {NONE} -- Initialization
 			column_set: column = c
 			definition_set: definition = Current
 		end
-
+	
+	make_in_system (nm: READABLE_STRING_8; res: like result_text; h: like home;
+	idx: INTEGER; f: IS_FACTORY)
+		do
+			make (nm, Void, 0, 0, 0)
+			home := h
+			result_text := res
+			scan_in_system (h.ident, idx, f)
+		ensure
+			name_set: fast_name.is_equal (nm)
+			home_set: home = h
+			result_text_set: result_text = res
+		end
+feature {IS_FACTORY} -- Initialization
+	
+	scan_in_system (cid, idx: INTEGER; f: IS_FACTORY)
+		do
+		end
+	
 feature -- Access 
 
 	alias_name: detachable STRING_8
@@ -111,6 +129,13 @@ feature -- Status
 			Result := flags & Routine_flag /= 0
 		ensure
 			definition: Result = (flags & Routine_flag /= 0)
+		end
+
+	is_query: BOOLEAN
+		do
+			Result := result_text /= Void
+		ensure
+			definition: Result = result_text /= Void
 		end
 
 	is_constant: BOOLEAN

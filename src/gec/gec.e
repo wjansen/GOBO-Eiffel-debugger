@@ -269,6 +269,9 @@ feature {NONE} -- Processing
 			end
 			create {ET_DYNAMIC_PUSH_TYPE_SET_BUILDER} l_builder.make (l_system)
 			l_system.set_dynamic_type_set_builder (l_builder)
+			if export_option.was_found then
+				a_system.set_export_filename (export_option.parameter)
+			end
 			if debugger_level > 0 then
 				create l_ast.make
 				l_ast.set_keep_all_breaks (True)
@@ -369,7 +372,8 @@ feature -- Status report
 			-- Compilation with optimizations turned on?
 		do
 			Result := finalize_flag.was_found
-			if not Result and then {x: ET_XACE_SYSTEM} last_system then
+			if not Result and then debugger_level = 0
+				and then {x: ET_XACE_SYSTEM} last_system then
 				Result := x.options.finalize_option
 			end
 		end
@@ -416,10 +420,8 @@ feature -- Status report
 	debugger_level: INTEGER
 			-- Should the application be compiled with the debugger?
 		do
-			if is_finalize then
-				Result := 0	-- none
-			else
-				Result := 1	-- pma
+			if not finalize_flag.was_found then
+				Result := 1 -- pma
 				if gedb_option.was_found then
 					if gedb_option.parameter = Void 
 						or else STRING_.same_string (gedb_option.parameter, "full") then
@@ -427,10 +429,22 @@ feature -- Status report
 					elseif STRING_.same_string (gedb_option.parameter, "none") then
 						Result := 0
 					end
+				elseif {x: ET_XACE_SYSTEM} last_system
+					and then x.options.finalize_option
+				 then
+					Result := 0
 				end
 			end
 		end
 
+	main_name: STRING
+			-- Alternative name of C main routine.
+		do
+			if export_option.was_found then
+				Result := export_option.value
+			end
+		end
+	
 	use_boehm_gc: BOOLEAN
 			-- Should the application be compiled with the Boehm GC?
 		do
@@ -480,6 +494,9 @@ feature -- Argument parsing
 
 	gedb_option: AP_ENUMERATION_OPTION
 			-- Option for '--gedb=<no|pma|yes>'
+	
+	export_option: AP_STRING_OPTION
+			-- Option for '--main=<C_main>'
 	
 	new_instance_types_option: AP_STRING_OPTION
 			-- Option for '--new_instance_types=<filename>'
@@ -560,6 +577,11 @@ feature -- Argument parsing
 			gedb_option.set_parameter_as_optional
 			gedb_option.set_parameter_description ("none|pma|full")
 			a_parser.options.force_last (gedb_option)
+				-- export
+			create export_option.make_with_long_form ("export")
+			export_option.set_parameter_description ("filename")
+			export_option.set_description ("File containing exported routine names to be called from C programs. This option forces option '--cc=no'.")
+			a_parser.options.force_last (export_option)
 				-- silent
 			create silent_flag.make_with_long_form ("silent")
 			silent_flag.set_description ("Run gec in silent mode.")

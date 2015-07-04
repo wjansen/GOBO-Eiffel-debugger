@@ -122,6 +122,8 @@ feature -- Routine flags
 
 	Default_creation_flag: INTEGER = 0x60
 
+	Polymorphy_flag: INTEGER = 0x80
+
 	Precursor_flag: INTEGER = 0x100
 
 	Rescue_flag: INTEGER = 0x200

@@ -70,8 +70,18 @@ feature {IS_FACTORY} -- Initialization
 
 	scan_in_system (f: IS_FACTORY)
 		do
+			f.set_parents_of_class (Current)
+			if f.to_fill and then attached {like parents} f.last_classes as pp then
+				parents := pp
+			end
+			if not is_basic then
+				f.set_features_of_class (Current)
+				if f.to_fill and then attached {like features} f.last_features as ff then
+					features := ff
+				end
+			end
 		end
-
+	
 feature -- Access 
 
 	ident: INTEGER

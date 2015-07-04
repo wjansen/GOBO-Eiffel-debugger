@@ -1163,12 +1163,13 @@ public class GUI : Window {
 			int w, h, pos;
 			get_size(out w, out h);
 			map.@set("WindowWidth", w.to_string());
-			if (rta)
+			if (rta) {
 				map.@set("WindowHeightRTA", h.to_string());
-			else
+				map.@set("LeftTopHeight", left_panel.position.to_string());
+			} else {
 				map.@set("WindowHeightPMA", h.to_string());
+			}
 			map.@set("LeftWidth", panel.position.to_string());
-			map.@set("LeftTopHeight", left_panel.position.to_string());
 			map.@set("RightTopHeight", right_panel.position.to_string());
 		} else {
 			string value;
@@ -1177,14 +1178,14 @@ public class GUI : Window {
 			if (rta) {
 				value = config.@get("WindowHeightRTA");
 				if (value!=null) default_height = int.parse(value); 
+				value = config.@get("LeftTopHeight");
+				if (value!=null) left_panel.position = int.parse(value); 
 			} else {
 				value = config.@get("WindowHeightPMA");
 				if (value!=null) default_height = int.parse(value); 
 			}
 			value = config.@get("LeftWidth");
 			if (value!=null) panel.position = int.parse(value); 
-			value = config.@get("LeftTopHeight");
-			if (value!=null) left_panel.position = int.parse(value); 
 			value = config.@get("RightTopHeight");
 			if (value!=null) right_panel.position = int.parse(value); 
 		}
@@ -1303,7 +1304,7 @@ public class GUI : Window {
 			do_config(config, false, as_rta);	// separate call necessary 
 		}
 
-		destroy_event.connect(() => { quit(); return false; });
+		delete_event.connect(() => { quit(); return false; });
 		new_exe(dg);
 	}
 	

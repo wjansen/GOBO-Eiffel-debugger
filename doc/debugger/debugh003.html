@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
-<meta name="generator" content="hevea 2.16">
+<meta name="generator" content="hevea 2.18">
 <link rel="stylesheet" type="text/css" href="debugh.css">
 <title>Usage</title>
 </head>
@@ -13,23 +13,23 @@
 <hr>
 Gedb &#X2013; The Gec debugger<h3 id="sec6" class="subsection">2.3&#XA0;&#XA0;Usage</h3>
 <p><a id="S:usage"></a>
-The use of the debugger is controlled by <span style="font-style:oblique">Gec</span> command line options 
-and/or options in the <span style="font-family:monospace">.xace</span> file 
-(corresponding settings in an <span style="font-family:monospace">.ace</span> file are ignored). 
-The system is not prepared for debugging 
-(and a traditional system is generated) if it is compiled 
-in finalized mode (option <span style="font-family:monospace">--finalize</span> on the command line 
-or <span style="font-family:monospace">&lt;option name="finalize" value="true"/&gt;</span> in the<span style="font-family:monospace">.xace</span> file). 
-If not in finalized mode then the presence or absence 
-of command line option <span style="font-family:monospace">--gedb=</span><span style="font-style:italic">choice</span> controls 
-which debugger variant will be added to the system:
-</p><ul class="itemize"><li class="li-itemize">option absent: the post mortem analyser is added; 
-</li><li class="li-itemize">option present without parameter: the runtime analyser is added; 
-</li><li class="li-itemize">option present with parameter: the parameter <span style="font-style:italic">choice</span> must be one of
+The use of the debugger is controlled by <span style="font-style:oblique">Gec</span> command line option 
+<span style="font-family:monospace">--gedb</span>. The option interferes with option <span style="font-family:monospace">--finalize</span>. 
+On the one hand, if <span style="font-family:monospace">--finalize</span> is set then <span style="font-family:monospace">--gedb</span> is ignored. 
+On the other hand, command line option <span style="font-family:monospace">--gedb</span> takes precedence 
+over option <span style="font-family:monospace">finalize</span> in the <span style="font-family:monospace">xace</span> file. 
+If finalization is not requested by the command line then the following happens 
+(&#X201C;<span style="font-family:monospace">finalize</span>&#X201D; means the option in the <span style="font-family:monospace">xace</span> file): 
+</p><ul class="itemize"><li class="li-itemize">option <span style="font-family:monospace">--gedb</span> absent: no debugger is added 
+if <span style="font-family:monospace">finalize</span> is set, otherwise the post mortem analyser is added; 
+</li><li class="li-itemize">option <span style="font-family:monospace">--gedb</span> present without parameter: 
+the runtime analyser is added, <span style="font-family:monospace">finalize</span> is ignored; 
+</li><li class="li-itemize">option <span style="font-family:monospace">--gedb</span> present with parameter: 
+the parameter must be one of
 <dl class="description"><dt class="dt-description">
-<span style="font-weight:bold">none</span></dt><dd class="dd-description"> : no debugger is added
-</dd><dt class="dt-description"><span style="font-weight:bold">pma</span></dt><dd class="dd-description"> : the post mortem analyser is added
-</dd><dt class="dt-description"><span style="font-weight:bold">full</span></dt><dd class="dd-description"> : the runtime analyser is added 
+<span style="font-weight:bold">none</span></dt><dd class="dd-description"> : no debugger is added, <span style="font-family:monospace">finalize</span> is respected
+</dd><dt class="dt-description"><span style="font-weight:bold">pma</span></dt><dd class="dd-description"> : the post mortem analyser is added, <span style="font-family:monospace">finalize</span> is ignored
+</dd><dt class="dt-description"><span style="font-weight:bold">full</span></dt><dd class="dd-description"> : the runtime analyser is added, <span style="font-family:monospace">finalize</span> is ignored
 </dd></dl>
 </li></ul><p>
 (so, no option or the parameterless option will be sufficient in most cases).

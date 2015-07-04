@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
-<meta name="generator" content="hevea 2.16">
+<meta name="generator" content="hevea 2.18">
 <link rel="stylesheet" type="text/css" href="debugh.css">
 <title>SPECIAL objects</title>
 </head>
@@ -16,7 +16,9 @@ Gedb &#X2013; The Gec debugger<h3 id="sec40" class="subsection">4.3&#XA0;&#XA0;<
 Single items of a <span style="font-family:monospace">SPECIAL</span> object are accessible 
 in a <span style="font-style:oblique">C</span> like notation: 
 appending the index (once again an <span style="font-style:italic">expression</span>) in brackets. 
-The result is an <span style="font-style:italic">expression</span> and may be further referenced. 
+The result is an <span style="font-style:italic">expression</span> and may be further referenced 
+(semantically, this is the bracket operator of class <span style="font-family:monospace">SPECIAL</span> 
+that works even if <span style="font-style:oblique">C</span> code has not been generated). 
 </p><p>Multiple array items may be selected by specifying an <span style="font-style:italic">index_range</span> 
 within double brackets as follows:
 </p><ul class="itemize"><li class="li-itemize">two integer <span style="font-style:italic">expression</span>s separated by a colon 
@@ -32,7 +34,7 @@ select the items satisfying this <span style="font-style:italic">expression</spa
 where the running array item and index are referred to 
 by <span style="font-family:monospace">?</span> and <span style="font-family:monospace">!</span>, respectively. 
 </li></ul><p>
-Each of these notations define a <span style="font-style:italic">detailed_expression</span> that cannot 
+Each of these notations define a <span style="font-style:italic">range_expression</span> that cannot 
 be further referenced, but <span style="font-style:italic">details</span> in braces may be added. 
 If so then a placeholder <span style="font-family:monospace">?</span> in the <span style="font-style:italic">details</span> part refers to 
 the running array element, and the placeholder <span style="font-family:monospace">!</span> 
@@ -43,8 +45,10 @@ denotes the index itself.
 If query <span style="font-family:monospace">table</span> is of a <span style="font-family:monospace">HASH_TABLE</span> type 
 whose keys are of a reference type then 
 <pre class="verbatim">  table.keys [[if ? /= Void]] { table.content[!] }
-</pre>selects key and item pairs of all elements of <span style="font-family:monospace">table</span>, 
+</pre>selects key and item pairs of all valid elements of <span style="font-family:monospace">table</span>, 
 empty fields in the underlying arrays will be skipped. 
+The key will be displayed as the running value of <span style="font-family:monospace">table.keys</span>, 
+the item within its associated details. 
 </blockquote>
 <hr>
 <a href="debugh017.html"><img src="previous_motif.gif" alt="Previous"></a>

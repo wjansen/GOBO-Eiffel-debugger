@@ -12,6 +12,7 @@ inherit
 			type_flags as c_type_flags,
 			class_ident as c_class_ident,
 			class_flags as c_class_flags,
+			feature_home_ident as c_feature_home_ident,
 			generic_count as c_generic_count,
 			generic as c_generic,
 			field_count as c_field_count,
@@ -420,6 +421,23 @@ feature {NONE} -- Factory
 		do
 			id := c_agent_declared (a.ident)
 			last_type := type_at (id)
+		end
+
+	parent_count (cid: INTEGER): INTEGER
+		do
+		end
+
+	parent (cid, i: INTEGER): INTEGER
+		do
+		end
+
+	feature_count (cid: INTEGER): INTEGER
+		do
+		end
+
+	feature_name (cid, i: INTEGER): READABLE_STRING_8
+		do
+			Result := "_"
 		end
 
 	field_name (id, i: INTEGER): STRING
@@ -927,6 +945,12 @@ feature {NONE} -- External implementation
 ]"
 		end
 
+	c_feature_home_ident (id, i: INTEGER): INTEGER
+		external "C inline"
+		alias
+			"0" -- to do
+		end
+	
 	c_type_count: INTEGER
 		external "C inline"
 		alias

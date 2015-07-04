@@ -997,9 +997,42 @@ feature -- Compilation
 								root_creation_procedure := root_type.dynamic_procedure (l_procedure, Current)
 								root_creation_procedure.set_creation (True)
 								dynamic_type_set_builder.mark_type_alive (root_type)
+								generate_exports
 								build_dynamic_type_sets
 							end
 						end
+					end
+				end
+			end
+		end
+
+	exported_features: DS_HASH_TABLE [STRING, ET_DYNAMIC_FEATURE]
+	
+	generate_exports
+		local
+			l_export_file: KL_TEXT_INPUT_FILE
+			l_export_parser: ET_EXPORT_PARSER
+			l_associations: DS_HASH_TABLE [STRING, ET_COMPILATION_ORDER]
+			l_order: ET_COMPILATION_ORDER
+		do
+			if current_system.export_filename /= Void then
+				create exported_features.make (20)
+				create l_export_file.make (current_system.export_filename)
+				l_export_file.open_read
+				if l_export_file.exists and then l_export_file.is_open_read then
+					create l_export_parser.make (l_export_file)
+					l_export_parser.parse
+					l_associations := l_export_parser.associations
+					l_export_file.close
+					from 
+						l_associations.start
+					until l_associations.after loop
+						l_order := l_associations.key_for_iteration
+						l_order.resolve (Current)
+						if l_order.ready then
+							exported_features.put (l_associations.item_for_iteration, l_order.implementation)
+						end
+						l_associations.forth
 					end
 				end
 			end

@@ -2719,6 +2719,10 @@ public abstract class Expression : Object {
 		work_name = "[[]]";
 	}
 
+	public override uint8* address() { 
+		return valid_index() ? base.address() : special.address();
+	}
+
 	public override string append_single_name(string? to, uint fmt=0) {
 		if (index>=0)
 			return base.append_single_name(to,fmt);

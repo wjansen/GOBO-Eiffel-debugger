@@ -92,8 +92,10 @@ public class SourcePart : Box, AbstractPart, ClassPosition, Searcher {
 		tag.weight_set = true;
 		tags.@add(tag);
 		tag = new TextTag("comment");
-		tag.foreground = "#a0a0a0"; 
-		tag.foreground_set = true; 
+//		tag.foreground = "#a0a0a0"; 
+//		tag.foreground_set = true;
+		tag.style = Pango.Style.OBLIQUE;
+		tag.style_set = true;
 		tags.@add(tag);
 		tag = new TextTag("ident-or-op");
 		tags.@add(tag);

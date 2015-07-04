@@ -894,7 +894,6 @@ feature {NONE} -- C code Generation
 				print_polymorphic_procedure_call_functions
 					-- Print object allocation functions.
 				print_object_allocation_functions
-					-- Print Eiffel feature functions.
 				l_root_procedure := current_dynamic_system.root_creation_procedure
 				if l_root_procedure /= Void then
 					l_root_procedure.set_generated (True)
@@ -905,6 +904,9 @@ feature {NONE} -- C code Generation
 						print_feature (l_dynamic_feature)
 					end
 				end
+				-- Generate header file for exported routines.
+				generate_export_header_file (a_system_name)				
+					-- Print Eiffel feature functions.
 					-- Print polymorphic calls to Tuple label functions.
 				print_polymorphic_tuple_label_call_functions
 					-- Print features which build manifest arrays.
@@ -999,7 +1001,176 @@ feature {NONE} -- C code Generation
 			end
 			system_name := old_system_name
 		end
+	
+	generate_export_header_file (a_system_name: STRING)
+		require
+			has_export_option: current_system.export_filename /= Void
+		local
+			l_export_file: KL_TEXT_OUTPUT_FILE
+			l_c_name: STRING
+			l_feature, l_loop_feature: ET_DYNAMIC_FEATURE
+			l_static: ET_FEATURE
+			l_type_set: ET_DYNAMIC_TYPE_SET
+			l_type: ET_DYNAMIC_TYPE
+			l_call: ET_DYNAMIC_QUALIFIED_CALL
+			l_caller: ET_DYNAMIC_FEATURE
+			l_filename: STRING
+			l_arguments: ET_FORMAL_ARGUMENT_LIST
+			l_arg: ET_FORMAL_ARGUMENT
+			l_comma: BOOLEAN
+			i, n: INTEGER
+		do
+			if attached current_dynamic_system.exported_features as l_names then
+				l_filename := a_system_name + "_0" + h_file_extension
+				create l_export_file.make (l_filename)
+				l_export_file.open_write
+				l_export_file.put_string ("#include <inttypes.h>%N%N")
+				l_export_file.put_string("typedef struct {int id;} EIF_ANY;%N%N")
+				from 
+					l_names.start
+				until l_names.after loop
+					l_feature := l_names.key_for_iteration
+					l_static := l_feature.static_feature
+					l_c_name := l_names.item_for_iteration
+					l_type := l_feature.target_type
+					if not l_feature.is_generated then
+						if l_type.is_alive then
+							l_feature.set_regular (True)
+						end
+						called_features.force_last (l_feature)
+						from until called_features.is_empty loop
+							l_loop_feature := called_features.last
+							called_features.remove_last
+							print_feature (l_loop_feature)
+						end
+					end
+					l_export_file.put_string ("/* ")
+					l_export_file.put_string(l_type.debug_output)
+					l_export_file.put_character ('.')
+					l_export_file.put_string (l_static.lower_name)
+					l_export_file.put_string (" */%N")
+					l_export_file.put_string ("#define ")
+					l_export_file.put_string (l_c_name)
+					l_export_file.put_character (' ')
+					if not l_feature.is_creation then
+						from
+							l_call := l_type.query_calls
+						until l_caller = Void implies l_call = Void loop
+							if l_call.static_feature = l_static then
+								l_caller := l_call.current_feature
+							else
+								l_call := l_call.next
+							end
+						end
+					end
+					if l_call /= Void then
+						print_call_name (l_call.static_call, l_caller, l_type, l_export_file)
+					elseif l_feature.is_creation then
+						print_creation_procedure_name (l_feature, l_type, l_export_file)
+					else
+						print_routine_name (l_feature, l_type, l_export_file)
+					end
+					l_export_file.put_new_line
+					l_export_file.put_string (c_extern)
+					l_export_file.put_character (' ')
+					if l_feature.is_creation then
+						l_type := l_feature.target_type
+						print_c_type (l_type, l_export_file)
+					else
+						l_type_set := l_feature.result_type_set
+						if l_type_set /= Void then
+							print_c_type (l_type_set.static_type, l_export_file)
+						else
+							l_export_file.put_string (c_void)
+						end
+					end
+					l_export_file.put_character (' ')
+					l_export_file.put_string (l_c_name)
+					l_export_file.put_character ('(')
+					if not l_feature.is_creation then
+						l_type := l_feature.target_type
+						print_c_type (l_type, l_export_file)
+						if l_type.is_expanded then
+							l_export_file.put_character ('*')
+						end
+						l_export_file.put_character (' ')
+						print_current_name (l_export_file)
+						l_comma := True
+					end
+					l_arguments := l_static.arguments
+					from
+						if l_arguments /= Void then
+							n := l_arguments.count
+						else
+							n := 0
+						end
+						i := 0
+					until i = n loop
+						i := i + 1
+						if l_comma then
+							l_export_file.put_character (',')
+							l_export_file.put_character (' ')
+						end
+						l_type_set := argument_type_set_in_feature (i, l_feature)
+						print_c_type (l_type_set.static_type, l_export_file)
+						l_export_file.put_character (' ')
+						l_arg := l_arguments.formal_argument(i)
+						l_export_file.put_string (l_arg.name.name)
+						l_comma := True
+					end
+					if not l_comma then
+						l_export_file.put_string(c_void)
+					end
+					l_export_file.put_character (')')
+					l_export_file.put_character (';')
+					l_export_file.put_new_line
+					l_export_file.put_new_line
+					l_names.forth
+				end
+				l_export_file.close
+			end
+		end
 
+	print_c_type (a_type: ET_DYNAMIC_TYPE; a_file: KL_TEXT_OUTPUT_FILE)
+		do
+			if a_type.is_basic then
+				inspect a_type.id
+				when 1 then
+					a_file.put_string ("char")
+				when 2 then
+					a_file.put_string ("unsigned char")
+				when 3 then
+					a_file.put_string ("uint32_t")
+				when 4 then
+					a_file.put_string ("int8_t")
+				when 5 then
+					a_file.put_string ("int16_t")
+				when 6 then
+					a_file.put_string ("int32_t")
+				when 7 then
+					a_file.put_string ("int64_t")
+				when 8 then
+					a_file.put_string ("uint8_t")
+				when 9 then
+					a_file.put_string ("uint16_t")
+				when 10 then
+					a_file.put_string ("uint32_t")
+				when 11 then
+					a_file.put_string ("uint64_t")
+				when 12 then
+					a_file.put_string ("float")
+				when 13 then
+					a_file.put_string ("double")
+				when 14 then
+					a_file.put_string ("void*")
+				end
+			elseif a_type.is_expanded then
+				a_file.put_string ("void*")
+			else
+				a_file.put_string ("EIF_ANY*");
+			end
+		end
+	
 	generate_ids
 			-- Generate types and feature ids.
 		local
@@ -8435,7 +8606,6 @@ print ("ET_C_GENERATOR.print_bit_constant%N")
 			else
 -- TODO: TYPED_POINTER vs. POINTER.
 				current_file.put_character ('0')
-print ("ET_C_GENERATOR.print_expression_address%N")
 			end
 		end
 

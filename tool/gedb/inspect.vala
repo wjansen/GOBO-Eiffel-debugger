@@ -100,6 +100,7 @@ namespace Gedb {
 		CREATION = 0x20,
 		DEFAULT_CREATION = 0x60,
 		INVARIANT = 0x80,
+		POLYMORPHY = 0x80,
 		PRECURSOR = 0x100,
 		RESCUE = 0x200,
 		NO_CURRENT = 0x400,
@@ -743,10 +744,10 @@ namespace Gedb {
 				ag = all_agents[i];
 				if (ag==null) continue;
 				dt = ag.declared_type;
-                if (dt._type.ident!=tid) continue;
-                faddr = addr+ag.function_offset;
-                if (ag.call_function!=*(void**)faddr) continue;
-                return ag._type.ident;
+				if (dt._type.ident!=tid) continue;
+				faddr = addr+ag.function_offset;
+				if (ag.call_function!=*(void**)faddr) continue;
+				return ag._type.ident;
 			}
 			return tid;
 		}
@@ -1159,6 +1160,13 @@ namespace Gedb {
 		public bool is_default_creation() {
 			return (flags & RoutineFlag.DEFAULT_CREATION)==
 				RoutineFlag.DEFAULT_CREATION;
+		}
+
+/**
+   @return Does `Current' describe the polymorphic call of a routine?
+ **/
+		public bool is_polymorph() {
+			return (flags & RoutineFlag.POLYMORPHY)==RoutineFlag.POLYMORPHY;
 		}
 
 /**

@@ -68,6 +68,22 @@ feature -- Access
 			end
 		end
 
+	var_current: IS_FEATURE_TEXT
+			--
+		do
+			if attached vars as ll then
+				Result := ll [0]
+			end
+		end
+	
+	var_result: detachable IS_FEATURE_TEXT
+			--
+		do
+			if attached vars as ll then
+				Result := ll [argument_count]
+			end
+		end
+		
 	argument_count: INTEGER;
 	
 	local_count: INTEGER;

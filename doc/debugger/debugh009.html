@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
-<meta name="generator" content="hevea 2.16">
+<meta name="generator" content="hevea 2.18">
 <link rel="stylesheet" type="text/css" href="debugh.css">
 <title>Source part</title>
 </head>
@@ -188,9 +188,14 @@ If the feature name under the mouse pointer is highlighted light pink
 then the <span style="font-family:sans-serif">Evaluation</span> part&#X2019;s <span style="font-family:sans-serif">Expr</span> field is cleared, 
 the feature is inserted in the field, and the evaluation is done immediately. 
 </dd></dl><p>
-The various control characters may be read as &#X201C;show actual&#X201D;, &#X201C;Breakpoint&#X201D;, &#X201C;Kill breakpoint&#X201D;, &#X201C;Until here&#X201D;, 
-&#X201C;Until here in any case!&#X201D;, &#X201C;teXt of&#X201D;, 
-&#X201C;Evaluate&#X201D;, and &#X201C;Evaluate now!&#X201D;, respectively.
+The various control characters may be read as &#X201C;show actual&#X201D;, 
+&#X201C;set <U>b</U>reakpoint&#X201D;, &#X201C;<U>k</U>ill breakpoint&#X201D;, 
+&#X201C;<U>u</U>ntil here&#X201D;, 
+&#X201C;<U>u</U>ntil here in any case!&#X201D;, &#X201C;te<U>x</U>t of&#X201D;, 
+&#X201C;<U>e</U>valuate&#X201D;, and &#X201C;<U>e</U>valuate now!&#X201D;, respectively. 
+Evaluation is possible (i.e. the light pink background appears) 
+only if the enclosing routine belongs to the call stack 
+since only in this case <span style="font-family:monospace">Current</span> has a valid value to start evaluation. 
 </p><p>Some final remarks on the phrases &#X201C;routine in the call stack&#X201D;
 and &#X201C;next to the insertion cursor&#X201D;. 
 A routine belongs to the call stack if it is the routine 

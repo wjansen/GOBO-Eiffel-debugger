@@ -12,7 +12,7 @@ class PC_ABSTRACT_DRIVER [TI_]
 inherit
 
 	PC_RANDOM_ACCESS_DRIVER [TI_, NATURAL]
-		redefine
+		rename
 			make as make_random_access
 		redefine
 			source,

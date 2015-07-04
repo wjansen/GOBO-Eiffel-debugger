@@ -54,7 +54,7 @@ feature {NONE} -- Initialization
 				| {ET_IS_SYSTEM}.With_typeset
 				| {ET_IS_SYSTEM}.With_once_values
 				| {ET_IS_SYSTEM}.With_parents	-- needed for `With_actionable'
-				| {ET_IS_SYSTEM}.With_actionable 
+				| {ET_IS_SYSTEM}.With_actionable
 			make (a_system, a_system.root_type, needed_categories, False, False)
 			from
 				l_types := compilee.origin.dynamic_types

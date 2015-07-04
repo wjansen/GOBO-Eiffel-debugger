@@ -393,6 +393,9 @@ feature -- Compilation options
 
 	debugger_level: INTEGER
 			-- Should the application be compiled with debugger?
+
+	export_filename: STRING
+			-- File containing feature name to C function name associations
 	
 	system_name: STRING
 			-- Name of system
@@ -454,6 +457,14 @@ feature -- Compilation options setting
 			debugger_level := l
 		ensure
 			debugger_level_set: debugger_level = l
+		end
+
+	set_export_filename (a_filename: like export_filename)
+			-- Set `export_file' to `a_filename'.
+		do
+			export_filename := a_filename
+		ensure
+			export_filename_set: export_filename = a_filename
 		end
 
 	set_system_name (a_name: like system_name)
